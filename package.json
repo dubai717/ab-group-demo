@@ -1,0 +1,11 @@
+{
+  "name": "ab-group-demo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "description": "AB Group admin system interactive demo prototype",
+  "license": "MIT"
+}
