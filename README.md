@@ -13,6 +13,7 @@ This repository contains a working interactive prototype of the AB Group adminis
 - Interactive prototype built with static front-end logic and browser storage
 - Arabic / English language switching
 - Corporate branding with logo integration
+- Updated visual identity using the official AB Group color system
 
 ## Demo accounts
 
@@ -65,10 +66,11 @@ The prototype stores data in the browser's local storage so it can be used immed
 ## Latest update
 
 This version includes:
-- official logo integration in the login page and dashboard shell
+- official AB Group logo integration in the login page and dashboard shell
 - Arabic / English toggle
 - RTL / LTR switching support
-- retail branding refinements for the AB Group identity
+- updated corporate visual identity with the official red, brown, copper and gold palette
+- consistent color system applied across login, sidebar, dashboard, buttons, tables, and controls
 - preservation of the original prototype features and test accounts
 
 ## Next steps
