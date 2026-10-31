@@ -9,8 +9,8 @@
   --primary: #0d3b66;
   --primary-strong: #072a49;
   --primary-soft: #dfeeff;
-  --accent: #f5b700;
-  --accent-soft: #fff5d6;
+  --accent: #ab2b1a;
+  --accent-soft: #fce5dc;
   --success: #1ea97c;
   --danger: #e55151;
   --warning: #f2994a;
@@ -29,16 +29,34 @@ html, body {
   color: var(--text);
 }
 
+body {
+  min-height: 100vh;
+  transition: background 0.2s ease;
+}
+
+body[dir='rtl'] {
+  direction: rtl;
+}
+
+body[dir='ltr'] {
+  direction: ltr;
+}
+
 button, input, select {
   font-family: inherit;
 }
 
-body {
-  min-height: 100vh;
+button {
+  cursor: pointer;
 }
 
 .app-shell {
   min-height: 100vh;
+  display: flex;
+}
+
+body[dir='rtl'] .app-shell {
+  flex-direction: row;
 }
 
 .login-screen {
@@ -48,7 +66,7 @@ body {
   padding: 24px;
   background:
     radial-gradient(circle at top left, rgba(13, 59, 102, 0.18), transparent 26%),
-    radial-gradient(circle at bottom right, rgba(245, 183, 0, 0.12), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(171, 43, 26, 0.12), transparent 24%),
     #f4f7fb;
 }
 
@@ -99,19 +117,22 @@ body {
 }
 
 .brand-mark {
-  width: 60px;
-  height: 60px;
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 18px;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 18px;
   display: grid;
   place-items: center;
-  font-size: 28px;
-  margin-bottom: 16px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  overflow: hidden;
 }
 
-.brand-mark span {
-  font-weight: 800;
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .brand-title {
@@ -162,8 +183,9 @@ body {
 
 .login-head {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 28px;
 }
 
@@ -180,6 +202,7 @@ body {
   padding: 8px 12px;
   border-radius: 999px;
   font-size: 0.78rem;
+  border: 0;
 }
 
 .form-group {
@@ -350,6 +373,14 @@ body {
   display: grid;
   place-items: center;
   font-weight: 800;
+  overflow: hidden;
+}
+
+.sidebar-logo-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .sidebar-logo h3 {
@@ -377,6 +408,10 @@ body {
   cursor: pointer;
 }
 
+body[dir='rtl'] .nav-item {
+  text-align: right;
+}
+
 .nav-item.active {
   background: rgba(255,255,255,0.12);
   color: white;
@@ -400,6 +435,21 @@ body {
   align-items: center;
   gap: 12px;
   margin-bottom: 24px;
+}
+
+.user-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lang-switch {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 999px;
+  padding: 10px 12px;
+  color: var(--primary);
+  font-weight: 700;
 }
 
 .topbar h1 {
@@ -498,6 +548,11 @@ th, td {
   text-align: left;
   padding: 14px 12px;
   border-bottom: 1px solid var(--line);
+}
+
+body[dir='rtl'] th,
+body[dir='rtl'] td {
+  text-align: right;
 }
 
 th {

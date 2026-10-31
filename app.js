@@ -1,4 +1,136 @@
-const STORAGE_KEY = 'ab_group_demo_state';
+const STORAGE_KEY = 'ab_group_demo_state_v2';
+const LOCALE_KEY = 'ab_group_demo_locale';
+
+const translations = {
+  ar: {
+    appName: 'AB Group',
+    loginTitle: 'تسجيل الدخول',
+    username: 'اسم المستخدم',
+    password: 'كلمة المرور',
+    show: 'إظهار',
+    hide: 'إخفاء',
+    signIn: 'تسجيل الدخول',
+    demoAccess: 'الحسابات التجريبية',
+    owner: 'مالك النظام',
+    gm: 'المدير العام',
+    regionManager: 'مدير المنطقة',
+    employee: 'موظف',
+    investor: 'مستثمر',
+    loginError: 'اسم المستخدم أو كلمة المرور غير صحيحة.',
+    inactiveError: 'هذا الحساب غير نشط.',
+    dashboard: 'لوحة التحكم',
+    userManagement: 'إدارة المستخدمين',
+    roles: 'الأدوار',
+    departments: 'الأقسام',
+    companies: 'الشركات',
+    tasks: 'المهام',
+    reports: 'التقارير',
+    notifications: 'الإشعارات',
+    logout: 'تسجيل الخروج',
+    users: 'المستخدمون',
+    addUser: 'إضافة مستخدم',
+    fullName: 'الاسم الكامل',
+    phone: 'رقم الهاتف',
+    status: 'الحالة',
+    role: 'الدور',
+    department: 'القسم',
+    createUser: 'إنشاء مستخدم',
+    recentActivity: 'النشاط الأخير',
+    task: 'المهمة',
+    assignee: 'المسؤول',
+    priority: 'الأولوية',
+    active: 'نشط',
+    pending: 'قيد الانتظار',
+    disabled: 'معطل',
+    enable: 'تفعيل',
+    disable: 'تعطيل',
+    message: 'الرسالة',
+    type: 'النوع',
+    ownerAccountReady: 'حساب المالك جاهز',
+    userManagementEnabled: 'إدارة المستخدمين مفعلة',
+    rolePermissionsAssigned: 'تم تعيين صلاحيات الأدوار',
+    noReports: 'واجهة التقارير جاهزة للمرحلة التالية. النسخة الحالية تشمل لوحات التحكم وتدفق المستخدمين.',
+    sideFeatures: 'هيكل نظام موحد',
+    feature2: 'صلاحيات حسب الدور',
+    feature3: 'إدارة المديرين والموظفين',
+    feature4: 'هيكل الأقسام والشركات',
+    readMore: 'المزيد',
+    english: 'English',
+    arabic: 'العربية',
+    switchLanguage: 'تبديل اللغة',
+    welcome: 'مرحباً',
+    screenTitle: 'لوحة إدارة AB Group',
+    openTasks: 'المهام المفتوحة',
+    activeAccounts: 'الحسابات النشطة',
+    departmentsCount: 'الأقسام',
+    usersCount: 'المستخدمون',
+    thisMonth: 'هذا الشهر'
+  },
+  en: {
+    appName: 'AB Group',
+    loginTitle: 'Login',
+    username: 'Username',
+    password: 'Password',
+    show: 'Show',
+    hide: 'Hide',
+    signIn: 'Sign in',
+    demoAccess: 'Demo accounts',
+    owner: 'Owner',
+    gm: 'General Manager',
+    regionManager: 'Regional Manager',
+    employee: 'Employee',
+    investor: 'Investor',
+    loginError: 'Incorrect username or password.',
+    inactiveError: 'This account is inactive.',
+    dashboard: 'Dashboard',
+    userManagement: 'User Management',
+    roles: 'Roles',
+    departments: 'Departments',
+    companies: 'Companies',
+    tasks: 'Tasks',
+    reports: 'Reports',
+    notifications: 'Notifications',
+    logout: 'Logout',
+    users: 'Users',
+    addUser: 'Add user',
+    fullName: 'Full name',
+    phone: 'Phone',
+    status: 'Status',
+    role: 'Role',
+    department: 'Department',
+    createUser: 'Create user',
+    recentActivity: 'Recent activity',
+    task: 'Task',
+    assignee: 'Assignee',
+    priority: 'Priority',
+    active: 'Active',
+    pending: 'Pending',
+    disabled: 'Disabled',
+    enable: 'Enable',
+    disable: 'Disable',
+    message: 'Message',
+    type: 'Type',
+    ownerAccountReady: 'Owner account ready',
+    userManagementEnabled: 'User management enabled',
+    rolePermissionsAssigned: 'Role permissions assigned',
+    noReports: 'Reports screen is ready for the next phase. The current version includes dashboard and user flow screens.',
+    sideFeatures: 'Unified system structure',
+    feature2: 'Role-based access',
+    feature3: 'Manager and staff management',
+    feature4: 'Department and company structure',
+    readMore: 'Read more',
+    english: 'English',
+    arabic: 'العربية',
+    switchLanguage: 'Switch language',
+    welcome: 'Welcome',
+    screenTitle: 'AB Group Control Panel',
+    openTasks: 'Open tasks',
+    activeAccounts: 'Active accounts',
+    departmentsCount: 'Departments',
+    usersCount: 'Users',
+    thisMonth: 'this month'
+  }
+};
 
 const seedRoles = [
   { id: 'owner', name: 'Owner', description: 'System owner', permissions: ['view_dashboard', 'create_user', 'edit_user', 'deactivate_user', 'view_company', 'create_company', 'edit_company', 'view_tasks', 'create_task', 'edit_task', 'update_task_status', 'view_reports', 'export_reports', 'view_investors', 'create_investment', 'view_finance', 'edit_finance', 'view_marketing', 'create_campaign', 'view_customer_data', 'create_customer', 'manage_notifications', 'assign_task', 'approve_request', 'reject_request', 'delegate_access'] },
@@ -73,14 +205,36 @@ const initialState = {
 
 const app = {
   state: loadState(),
-  currentUser: null,
   ui: { showPassword: false }
 };
+
+function getLocale() {
+  const stored = localStorage.getItem(LOCALE_KEY);
+  return stored || 'ar';
+}
+
+function setLocale(locale) {
+  localStorage.setItem(LOCALE_KEY, locale);
+  document.body.dir = locale === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.lang = locale;
+  document.body.setAttribute('data-locale', locale);
+  render();
+}
+
+function localeText(key) {
+  const locale = getLocale();
+  return translations[locale][key] || translations.en[key] || key;
+}
 
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : initialState;
+    const parsed = raw ? JSON.parse(raw) : initialState;
+    const locale = getLocale();
+    if (parsed.currentUser && parsed.currentUser.password) {
+      parsed.currentUser.language = locale;
+    }
+    return parsed;
   } catch {
     return initialState;
   }
@@ -94,6 +248,7 @@ function isUserAllowed(user, permission) {
   if (!user) return false;
   const role = app.state.roles.find(r => r.id === user.roleId);
   if (!role) return false;
+  if (user.roleId === 'owner') return true;
   return role.permissions.includes(permission);
 }
 
@@ -122,36 +277,56 @@ function setCurrentUser(user) {
 
 function getSidebarItems(user) {
   const allItems = [
-    { id: 'dashboard', label: 'Dashboard', permission: 'view_dashboard' },
-    { id: 'users', label: 'Users', permission: 'view_users' },
-    { id: 'roles', label: 'Roles', permission: 'view_dashboard' },
-    { id: 'departments', label: 'Departments', permission: 'view_company' },
-    { id: 'companies', label: 'Companies', permission: 'view_company' },
-    { id: 'tasks', label: 'Tasks', permission: 'view_tasks' },
-    { id: 'reports', label: 'Reports', permission: 'view_reports' },
-    { id: 'notifications', label: 'Notifications', permission: 'manage_notifications' }
+    { id: 'dashboard', label: localeText('dashboard'), permission: 'view_dashboard' },
+    { id: 'users', label: localeText('users'), permission: 'view_users' },
+    { id: 'roles', label: localeText('roles'), permission: 'view_dashboard' },
+    { id: 'departments', label: localeText('departments'), permission: 'view_company' },
+    { id: 'companies', label: localeText('companies'), permission: 'view_company' },
+    { id: 'tasks', label: localeText('tasks'), permission: 'view_tasks' },
+    { id: 'reports', label: localeText('reports'), permission: 'view_reports' },
+    { id: 'notifications', label: localeText('notifications'), permission: 'manage_notifications' }
   ];
 
   if (!user) return [];
-  return allItems.filter(item => isUserAllowed(user, item.permission) || item.id === 'dashboard');
+
+  if (user.roleId === 'owner' || user.roleId === 'general_manager' || user.roleId === 'hr_manager') {
+    return allItems;
+  }
+
+  if (user.roleId === 'regional_manager' || user.roleId === 'employee') {
+    return allItems.filter(item => ['dashboard', 'tasks', 'notifications'].includes(item.id));
+  }
+
+  if (user.roleId === 'investor' || user.roleId === 'marketing_company') {
+    return allItems.filter(item => ['dashboard', 'reports'].includes(item.id));
+  }
+
+  return allItems.filter(item => isUserAllowed(user, item.permission));
 }
 
 function render() {
   const currentUser = getCurrentUser();
+  document.body.dir = getLocale() === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.lang = getLocale();
+  document.body.setAttribute('data-locale', getLocale());
+
+  const appEl = document.getElementById('app');
+
   if (!currentUser) {
     renderLogin();
     return;
   }
 
   const sidebarItems = getSidebarItems(currentUser);
-  const appEl = document.getElementById('app');
   appEl.innerHTML = `
     <div class="app-shell">
       <aside class="sidebar">
         <div class="sidebar-logo">
-          <div class="sidebar-logo-badge">AB</div>
+          <div class="sidebar-logo-badge">
+            <img src="assets/logo.svg" alt="AB Group logo" />
+          </div>
           <div>
-            <h3>AB Group</h3>
+            <h3>${localeText('appName')}</h3>
           </div>
         </div>
 
@@ -164,18 +339,23 @@ function render() {
         </nav>
 
         <div class="sidebar-footer">
-          <button class="nav-item" data-action="logout">Logout</button>
+          <button class="nav-item" data-action="logout">${localeText('logout')}</button>
         </div>
       </aside>
 
       <main class="main">
         <header class="topbar">
           <h1>${pageTitle(app.state.currentPage)}</h1>
-          <div class="user-pill">
-            <div class="avatar">${currentUser.fullName.slice(0,1).toUpperCase()}</div>
-            <div>
-              <div>${currentUser.fullName}</div>
-              <div class="muted">${getRoleName(currentUser.roleId)}</div>
+          <div class="user-controls">
+            <button class="lang-switch" data-action="toggle-language">
+              ${getLocale() === 'ar' ? 'English' : 'العربية'}
+            </button>
+            <div class="user-pill">
+              <div class="avatar">${currentUser.fullName.slice(0,1).toUpperCase()}</div>
+              <div>
+                <div>${currentUser.fullName}</div>
+                <div class="muted">${getRoleName(currentUser.roleId)}</div>
+              </div>
             </div>
           </div>
         </header>
@@ -190,16 +370,16 @@ function render() {
 
 function pageTitle(page) {
   const titles = {
-    dashboard: 'Dashboard',
-    users: 'User Management',
-    roles: 'Roles',
-    departments: 'Departments',
-    companies: 'Companies',
-    tasks: 'Tasks',
-    reports: 'Reports',
-    notifications: 'Notifications'
+    dashboard: localeText('dashboard'),
+    users: localeText('userManagement'),
+    roles: localeText('roles'),
+    departments: localeText('departments'),
+    companies: localeText('companies'),
+    tasks: localeText('tasks'),
+    reports: localeText('reports'),
+    notifications: localeText('notifications')
   };
-  return titles[page] || 'Dashboard';
+  return titles[page] || localeText('dashboard');
 }
 
 function renderCurrentPage() {
@@ -227,22 +407,22 @@ function renderDashboard(user) {
   return `
     <div class="stats-grid">
       <div class="stat-card">
-        <span class="stat-label">Users</span>
+        <span class="stat-label">${localeText('usersCount')}</span>
         <p class="stat-value">${totalUsers}</p>
-        <div class="stat-foot">+ 3 this month</div>
+        <div class="stat-foot">+ 3 ${localeText('thisMonth')}</div>
       </div>
       <div class="stat-card">
-        <span class="stat-label">Active Accounts</span>
+        <span class="stat-label">${localeText('activeAccounts')}</span>
         <p class="stat-value">${activeUsers}</p>
         <div class="stat-foot">Healthy</div>
       </div>
       <div class="stat-card">
-        <span class="stat-label">Departments</span>
+        <span class="stat-label">${localeText('departmentsCount')}</span>
         <p class="stat-value">${departments}</p>
         <div class="stat-foot">${departments} configured</div>
       </div>
       <div class="stat-card">
-        <span class="stat-label">Open Tasks</span>
+        <span class="stat-label">${localeText('openTasks')}</span>
         <p class="stat-value">${tasks}</p>
         <div class="stat-foot">2 urgent</div>
       </div>
@@ -250,17 +430,17 @@ function renderDashboard(user) {
 
     <section class="content-panel">
       <div class="section-head">
-        <h2>Recent activity</h2>
-        <button class="secondary-btn" data-action="quick-task">New task</button>
+        <h2>${localeText('recentActivity')}</h2>
+        <button class="secondary-btn" data-action="quick-task">${localeText('addUser')}</button>
       </div>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Task</th>
-              <th>Assignee</th>
-              <th>Status</th>
-              <th>Priority</th>
+              <th>${localeText('task')}</th>
+              <th>${localeText('assignee')}</th>
+              <th>${localeText('status')}</th>
+              <th>${localeText('priority')}</th>
             </tr>
           </thead>
           <tbody>
@@ -286,55 +466,55 @@ function renderUsers(user) {
   return `
     <section class="content-panel">
       <div class="section-head">
-        <h2>User Management</h2>
-        ${canCreateUser ? '<button class="secondary-btn" data-action="open-user-form">Add user</button>' : ''}
+        <h2>${localeText('userManagement')}</h2>
+        ${canCreateUser ? `<button class="secondary-btn" data-action="open-user-form">${localeText('addUser')}</button>` : ''}
       </div>
 
       ${canCreateUser ? `
         <form id="user-form" style="margin-bottom: 20px;">
           <div class="form-grid">
             <div>
-              <label>Full name</label>
-              <input class="input" name="fullName" placeholder="Full name" required />
+              <label>${localeText('fullName')}</label>
+              <input class="input" name="fullName" placeholder="${localeText('fullName')}" required />
             </div>
             <div>
-              <label>Username</label>
-              <input class="input" name="username" placeholder="username" required />
+              <label>${localeText('username')}</label>
+              <input class="input" name="username" placeholder="${localeText('username')}" required />
             </div>
             <div>
               <label>Email</label>
               <input class="input" name="email" type="email" placeholder="email@example.com" required />
             </div>
             <div>
-              <label>Phone</label>
-              <input class="input" name="phone" placeholder="Phone" />
+              <label>${localeText('phone')}</label>
+              <input class="input" name="phone" placeholder="${localeText('phone')}" />
             </div>
             <div>
-              <label>Password</label>
-              <input class="input" name="password" type="password" placeholder="Password" required />
+              <label>${localeText('password')}</label>
+              <input class="input" name="password" type="password" placeholder="${localeText('password')}" required />
             </div>
             <div>
-              <label>Role</label>
+              <label>${localeText('role')}</label>
               <select class="input" name="roleId">
                 ${app.state.roles.map(role => `<option value="${role.id}">${role.name}</option>`).join('')}
               </select>
             </div>
             <div>
-              <label>Department</label>
+              <label>${localeText('department')}</label>
               <select class="input" name="departmentId">
                 ${app.state.departments.map(dept => `<option value="${dept.id}">${dept.name}</option>`).join('')}
               </select>
             </div>
             <div>
-              <label>Status</label>
+              <label>${localeText('status')}</label>
               <select class="input" name="status">
-                <option value="Active">Active</option>
-                <option value="Pending">Pending</option>
-                <option value="Disabled">Disabled</option>
+                <option value="Active">${localeText('active')}</option>
+                <option value="Pending">${localeText('pending')}</option>
+                <option value="Disabled">${localeText('disabled')}</option>
               </select>
             </div>
             <div class="full">
-              <button type="submit" class="primary-btn">Create user</button>
+              <button type="submit" class="primary-btn">${localeText('createUser')}</button>
             </div>
           </div>
         </form>
@@ -344,11 +524,11 @@ function renderUsers(user) {
         <table>
           <thead>
             <tr>
-              <th>User</th>
-              <th>Role</th>
-              <th>Department</th>
-              <th>Status</th>
-              <th>Actions</th>
+              <th>${localeText('users')}</th>
+              <th>${localeText('role')}</th>
+              <th>${localeText('department')}</th>
+              <th>${localeText('status')}</th>
+              <th>${localeText('type')}</th>
             </tr>
           </thead>
           <tbody>
@@ -363,7 +543,7 @@ function renderUsers(user) {
                 <td><span class="badge ${userRow.status === 'Active' ? 'active' : userRow.status === 'Pending' ? 'pending' : 'disabled'}">${userRow.status}</span></td>
                 <td>
                   <div class="row-actions">
-                    ${canEditUser ? `<button class="ghost-btn" data-action="toggle-status" data-user-id="${userRow.id}">${userRow.status === 'Active' ? 'Disable' : 'Enable'}</button>` : ''}
+                    ${canEditUser ? `<button class="ghost-btn" data-action="toggle-status" data-user-id="${userRow.id}">${userRow.status === 'Active' ? localeText('disable') : localeText('enable')}</button>` : ''}
                   </div>
                 </td>
               </tr>
@@ -375,17 +555,15 @@ function renderUsers(user) {
   `;
 }
 
-function renderRoles(user) {
+function renderRoles() {
   return `
     <section class="content-panel">
-      <div class="section-head">
-        <h2>Roles</h2>
-      </div>
+      <div class="section-head"><h2>${localeText('roles')}</h2></div>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Role</th>
+              <th>${localeText('role')}</th>
               <th>Description</th>
               <th>Permissions</th>
             </tr>
@@ -405,18 +583,16 @@ function renderRoles(user) {
   `;
 }
 
-function renderDepartments(user) {
+function renderDepartments() {
   return `
     <section class="content-panel">
-      <div class="section-head">
-        <h2>Departments</h2>
-      </div>
+      <div class="section-head"><h2>${localeText('departments')}</h2></div>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Department</th>
-              <th>Company</th>
+              <th>${localeText('department')}</th>
+              <th>${localeText('companies')}</th>
               <th>Manager</th>
             </tr>
           </thead>
@@ -438,12 +614,10 @@ function renderDepartments(user) {
   `;
 }
 
-function renderCompanies(user) {
+function renderCompanies() {
   return `
     <section class="content-panel">
-      <div class="section-head">
-        <h2>Companies</h2>
-      </div>
+      <div class="section-head"><h2>${localeText('companies')}</h2></div>
       <div class="table-wrap">
         <table>
           <thead>
@@ -451,7 +625,7 @@ function renderCompanies(user) {
               <th>Name</th>
               <th>Type</th>
               <th>City</th>
-              <th>Status</th>
+              <th>${localeText('status')}</th>
             </tr>
           </thead>
           <tbody>
@@ -470,21 +644,21 @@ function renderCompanies(user) {
   `;
 }
 
-function renderTasks(user) {
+function renderTasks() {
   return `
     <section class="content-panel">
       <div class="section-head">
-        <h2>Tasks</h2>
+        <h2>${localeText('tasks')}</h2>
         <button class="secondary-btn" data-action="quick-task">Add task</button>
       </div>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Title</th>
-              <th>Assignee</th>
-              <th>Status</th>
-              <th>Priority</th>
+              <th>${localeText('task')}</th>
+              <th>${localeText('assignee')}</th>
+              <th>${localeText('status')}</th>
+              <th>${localeText('priority')}</th>
             </tr>
           </thead>
           <tbody>
@@ -503,31 +677,25 @@ function renderTasks(user) {
   `;
 }
 
-function renderReports(user) {
+function renderReports() {
   return `
     <section class="content-panel">
-      <div class="section-head">
-        <h2>Reports</h2>
-      </div>
-      <div class="empty-state">
-        Reports view is ready for the next phase. This demo currently includes dashboards and core user access flows.
-      </div>
+      <div class="section-head"><h2>${localeText('reports')}</h2></div>
+      <div class="empty-state">${localeText('noReports')}</div>
     </section>
   `;
 }
 
-function renderNotifications(user) {
+function renderNotifications() {
   return `
     <section class="content-panel">
-      <div class="section-head">
-        <h2>Notifications</h2>
-      </div>
+      <div class="section-head"><h2>${localeText('notifications')}</h2></div>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Message</th>
-              <th>Type</th>
+              <th>${localeText('message')}</th>
+              <th>${localeText('type')}</th>
             </tr>
           </thead>
           <tbody>
@@ -546,12 +714,13 @@ function renderNotifications(user) {
 
 function renderLogin() {
   const appEl = document.getElementById('app');
+  const locale = getLocale();
   const demoAccounts = [
-    { username: 'owner', password: 'Owner@12345', label: 'Owner' },
-    { username: 'gm', password: 'Gm@12345', label: 'General Manager' },
-    { username: 'region_manager', password: 'Region@12345', label: 'Regional Manager' },
-    { username: 'employee1', password: 'Emp@12345', label: 'Employee' },
-    { username: 'investor1', password: 'Inv@12345', label: 'Investor' }
+    { username: 'owner', password: 'Owner@12345', label: locale === 'ar' ? 'مالك النظام' : 'Owner' },
+    { username: 'gm', password: 'Gm@12345', label: locale === 'ar' ? 'المدير العام' : 'General Manager' },
+    { username: 'region_manager', password: 'Region@12345', label: locale === 'ar' ? 'مدير المنطقة' : 'Regional Manager' },
+    { username: 'employee1', password: 'Emp@12345', label: locale === 'ar' ? 'موظف' : 'Employee' },
+    { username: 'investor1', password: 'Inv@12345', label: locale === 'ar' ? 'مستثمر' : 'Investor' }
   ];
 
   appEl.innerHTML = `
@@ -559,44 +728,44 @@ function renderLogin() {
       <div class="login-card">
         <div class="login-visual">
           <div class="brand-block">
-            <div class="brand-mark"><span>AB</span></div>
-            <h1 class="brand-title">AB Group</h1>
-            <div class="brand-sub">Administrative, Financial and Operational Management System</div>
+            <div class="brand-mark"><img src="assets/logo.svg" alt="AB Group" /></div>
+            <h1 class="brand-title">${localeText('appName')}</h1>
+            <div class="brand-sub">${locale === 'ar' ? 'نظام إداري ومالي وتشغيلي متكامل' : 'Administrative, Financial and Operational Management System'}</div>
           </div>
           <ul class="login-feature-list">
-            <li>Unified system structure</li>
-            <li>Role-based access</li>
-            <li>Manager and user management</li>
-            <li>Department and company structure</li>
+            <li>${localeText('sideFeatures')}</li>
+            <li>${localeText('feature2')}</li>
+            <li>${localeText('feature3')}</li>
+            <li>${localeText('feature4')}</li>
           </ul>
         </div>
 
         <div class="login-form-wrap">
           <div class="login-head">
-            <h2>Login</h2>
-            <div class="lang-badge">AR / EN</div>
+            <h2>${localeText('loginTitle')}</h2>
+            <button class="lang-badge" data-action="toggle-language">${getLocale() === 'ar' ? 'English' : 'العربية'}</button>
           </div>
 
           <form id="login-form">
             <div class="form-group">
-              <label>Username</label>
-              <input id="username" class="input" name="username" placeholder="Enter username" required />
+              <label>${localeText('username')}</label>
+              <input id="username" class="input" name="username" placeholder="${localeText('username')}" required />
             </div>
 
             <div class="form-group">
-              <label>Password</label>
+              <label>${localeText('password')}</label>
               <div class="password-wrap">
-                <input id="password" class="input" name="password" type="${app.ui.showPassword ? 'text' : 'password'}" placeholder="Enter password" required />
-                <button type="button" id="toggle-password">${app.ui.showPassword ? 'Hide' : 'Show'}</button>
+                <input id="password" class="input" name="password" type="${app.ui.showPassword ? 'text' : 'password'}" placeholder="${localeText('password')}" required />
+                <button type="button" id="toggle-password">${app.ui.showPassword ? localeText('hide') : localeText('show')}</button>
               </div>
             </div>
 
-            <button class="primary-btn" type="submit">Sign in</button>
+            <button class="primary-btn" type="submit">${localeText('signIn')}</button>
             <div id="login-error" class="error-box"></div>
           </form>
 
           <div class="demo-box">
-            <h4>Demo access</h4>
+            <h4>${localeText('demoAccess')}</h4>
             <div class="demo-users">
               ${demoAccounts.map(acc => `
                 <button class="demo-user-button" data-demo-user="${acc.username}" data-demo-pass="${acc.password}">${acc.label}</button>
@@ -609,11 +778,22 @@ function renderLogin() {
   `;
 
   const form = document.getElementById('login-form');
-  form.addEventListener('submit', handleLogin);
+  if (form) form.addEventListener('submit', handleLogin);
 
-  document.getElementById('toggle-password').addEventListener('click', () => {
-    app.ui.showPassword = !app.ui.showPassword;
-    renderLogin();
+  const togglePw = document.getElementById('toggle-password');
+  if (togglePw) {
+    togglePw.addEventListener('click', () => {
+      app.ui.showPassword = !app.ui.showPassword;
+      renderLogin();
+    });
+  }
+
+  const toggles = document.querySelectorAll('[data-action="toggle-language"]');
+  toggles.forEach(button => {
+    button.addEventListener('click', () => {
+      const nextLocale = getLocale() === 'ar' ? 'en' : 'ar';
+      setLocale(nextLocale);
+    });
   });
 
   document.querySelectorAll('[data-demo-user]').forEach(button => {
@@ -635,13 +815,13 @@ function handleLogin(event) {
   const errBox = document.getElementById('login-error');
 
   if (!user || user.password !== password) {
-    errBox.textContent = 'Incorrect username or password.';
+    errBox.textContent = localeText('loginError');
     errBox.classList.add('visible');
     return;
   }
 
   if (user.status !== 'Active') {
-    errBox.textContent = 'This account is inactive.';
+    errBox.textContent = localeText('inactiveError');
     errBox.classList.add('visible');
     return;
   }
@@ -670,9 +850,16 @@ function bindGlobalEvents() {
     });
   });
 
+  document.querySelectorAll('[data-action="toggle-language"]').forEach(button => {
+    button.addEventListener('click', () => {
+      const nextLocale = getLocale() === 'ar' ? 'en' : 'ar';
+      setLocale(nextLocale);
+    });
+  });
+
   document.querySelectorAll('[data-action="quick-task"]').forEach(button => {
     button.addEventListener('click', () => {
-      const title = prompt('Task title');
+      const title = prompt(localeText('task') || 'Task title');
       if (!title) return;
       app.state.tasks.unshift({
         id: `t${Date.now()}`,
@@ -713,7 +900,7 @@ function bindGlobalEvents() {
         departmentId: fd.get('departmentId'),
         companyId: 'company-ab',
         status: fd.get('status'),
-        language: 'ar',
+        language: getLocale(),
         managerId: null
       };
 
@@ -725,9 +912,20 @@ function bindGlobalEvents() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  const storedLocale = localStorage.getItem(LOCALE_KEY);
+  if (storedLocale) {
+    document.body.dir = storedLocale === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = storedLocale;
+  } else {
+    localStorage.setItem(LOCALE_KEY, 'ar');
+    document.body.dir = 'rtl';
+    document.documentElement.lang = 'ar';
+  }
+
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     app.state = JSON.parse(saved);
   }
+
   render();
 });

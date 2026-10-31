@@ -11,6 +11,8 @@ This repository contains a working interactive prototype of the AB Group adminis
 - Department and company views
 - Role and permission seed data
 - Interactive prototype built with static front-end logic and browser storage
+- Arabic / English language switching
+- Corporate branding with logo integration
 
 ## Demo accounts
 
@@ -38,11 +40,36 @@ npm start
 http://localhost:3000
 ```
 
+## GitHub Pages deployment
+
+This demo is designed to run as a static website. The recommended deployment method is GitHub Pages:
+
+1. Open the repository on GitHub.
+2. Go to Settings → Pages.
+3. Select `Deploy from a branch`.
+4. Choose `main` and `/root`.
+5. Save the settings.
+
+Then the app will be available at a URL in the format:
+
+```text
+https://<your-username>.github.io/ab-group-demo/
+```
+
 ## Notes
 
 This is a working front-end prototype for testing the structure, roles, access logic, screens, and user flows. It is designed for iterative refinement as part of the product design and development process.
 
 The prototype stores data in the browser's local storage so it can be used immediately without a database backend.
+
+## Latest update
+
+This version includes:
+- official logo integration in the login page and dashboard shell
+- Arabic / English toggle
+- RTL / LTR switching support
+- retail branding refinements for the AB Group identity
+- preservation of the original prototype features and test accounts
 
 ## Next steps
 
@@ -54,7 +81,3 @@ After this prototype is reviewed, the next iteration can add:
 - task lifecycle and notifications
 - reports and dashboard reporting
 - deployment setup
-
-## Repository
-
-GitHub: https://github.com/dubai717/ab-group-demo
