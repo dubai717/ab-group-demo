@@ -483,7 +483,7 @@ function render() {
       <aside class="sidebar">
         <div class="sidebar-logo">
           <div class="sidebar-logo-badge">
-            <img src="assets/logo.svg" alt="AB Group logo" />
+            <img src="assets/Untitled.png" alt="AB Group logo" />
           </div>
           <div>
             <h3>${localeText('appName')}</h3>
@@ -1059,7 +1059,7 @@ function renderLogin() {
       <div class="login-card">
         <div class="login-visual">
           <div class="brand-block">
-            <div class="brand-mark"><img src="assets/logo.svg" alt="AB Group" /></div>
+            <div class="brand-mark"><img src="assets/Untitled.png" alt="AB Group" /></div>
             <h1 class="brand-title">${localeText('appName')}</h1>
             <div class="brand-sub">${locale === 'ar' ? 'نظام إداري ومالي وتشغيلي متكامل' : 'Administrative, Financial and Operational Management System'}</div>
           </div>
