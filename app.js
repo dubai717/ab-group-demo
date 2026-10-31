@@ -1,4 +1,7 @@
-const STORAGE_KEY = 'ab_group_demo_state_v2';
+const STORAGE_KEY = 'ab_group_demo_state_v3';
+const LEGACY_STORAGE_KEY = 'ab_group_demo_state_v2';
+// Never replace an unreadable saved state with demo data.
+let stateStorageWritable = true;
 const LOCALE_KEY = 'ab_group_demo_locale';
 
 const translations = {
@@ -22,13 +25,14 @@ const translations = {
     userManagement: 'إدارة المستخدمين',
     roles: 'الأدوار',
     departments: 'الأقسام',
-    companies: 'الشركات',
+    companies: 'الشركات والكيانات',
     tasks: 'المهام',
     reports: 'التقارير',
     notifications: 'الإشعارات',
     logout: 'تسجيل الخروج',
     users: 'المستخدمون',
     addUser: 'إضافة مستخدم',
+    addCompany: 'إضافة شركة',
     fullName: 'الاسم الكامل',
     phone: 'رقم الهاتف',
     status: 'الحالة',
@@ -40,7 +44,9 @@ const translations = {
     assignee: 'المسؤول',
     priority: 'الأولوية',
     active: 'نشط',
+    inactive: 'غير نشط',
     pending: 'قيد الانتظار',
+    suspended: 'موقوف مؤقتاً',
     disabled: 'معطل',
     enable: 'تفعيل',
     disable: 'تعطيل',
@@ -64,7 +70,53 @@ const translations = {
     activeAccounts: 'الحسابات النشطة',
     departmentsCount: 'الأقسام',
     usersCount: 'المستخدمون',
-    thisMonth: 'هذا الشهر'
+    thisMonth: 'هذا الشهر',
+    companyManagement: 'إدارة الشركات والكيانات القانونية',
+    companyCode: 'كود الشركة',
+    companyArabicName: 'الاسم التجاري بالعربية',
+    companyEnglishName: 'الاسم التجاري بالإنجليزية',
+    shortName: 'الاسم المختصر',
+    companyLogo: 'شعار الشركة',
+    legalLicense: 'بيانات الرخصة التجارية',
+    tradeLicenseNumber: 'رقم الرخصة التجارية',
+    issuingAuthority: 'جهة إصدار الرخصة',
+    emirate: 'الإمارة',
+    issueDate: 'تاريخ الإصدار',
+    expiryDate: 'تاريخ الانتهاء',
+    legalType: 'نوع الرخصة / الشكل القانوني',
+    businessActivities: 'الأنشطة التجارية المرخصة',
+    contactDetails: 'بيانات التواصل والموقع',
+    companyAddress: 'عنوان الشركة',
+    region: 'المنطقة',
+    street: 'الشارع والمبنى',
+    email: 'البريد الإلكتروني',
+    website: 'الموقع الإلكتروني',
+    taxNumber: 'الرقم الضريبي (TRN)',
+    entityNumber: 'رقم المنشأة',
+    establishmentDate: 'تاريخ التأسيس',
+    responsiblePerson: 'اسم الشخص المسؤول',
+    notes: 'ملاحظات إدارية',
+    documents: 'المستندات والوثائق',
+    uploadLogo: 'رفع شعار',
+    optional: 'اختياري',
+    filterSearch: 'بحث باسم الشركة أو الكود أو الإمارة',
+    allStatuses: 'كل الحالات',
+    allEmirates: 'كل الإمارات',
+    createCompany: 'إضافة شركة جديدة',
+    companyTableCode: 'الكود',
+    companyTableArabic: 'الاسم العربي',
+    companyTableEnglish: 'الاسم الإنجليزي',
+    companyTableLicense: 'رقم الرخصة',
+    companyTableEmirate: 'الإمارة',
+    companyTableExpiry: 'تاريخ الانتهاء',
+    companyTableStatus: 'الحالة',
+    companyTableActions: 'الإجراءات',
+    legalEntitiesDesc: 'سجل مركزي لجميع الشركات التابعة للمجموعة، مع الحفاظ على استقلالية كل كيان قانوني.',
+    companySaved: 'تم حفظ الشركة بنجاح.',
+    companyStatusUpdated: 'تم تحديث حالة الشركة.',
+    search: 'بحث',
+    clear: 'مسح',
+    documentsHint: 'يمكن رفع مستندات الرخصة والتأسيس والضرائب.'
   },
   en: {
     appName: 'AB Group',
@@ -86,13 +138,14 @@ const translations = {
     userManagement: 'User Management',
     roles: 'Roles',
     departments: 'Departments',
-    companies: 'Companies',
+    companies: 'Companies & Legal Entities',
     tasks: 'Tasks',
     reports: 'Reports',
     notifications: 'Notifications',
     logout: 'Logout',
     users: 'Users',
     addUser: 'Add user',
+    addCompany: 'Add company',
     fullName: 'Full name',
     phone: 'Phone',
     status: 'Status',
@@ -104,7 +157,9 @@ const translations = {
     assignee: 'Assignee',
     priority: 'Priority',
     active: 'Active',
+    inactive: 'Inactive',
     pending: 'Pending',
+    suspended: 'Suspended',
     disabled: 'Disabled',
     enable: 'Enable',
     disable: 'Disable',
@@ -128,7 +183,53 @@ const translations = {
     activeAccounts: 'Active accounts',
     departmentsCount: 'Departments',
     usersCount: 'Users',
-    thisMonth: 'this month'
+    thisMonth: 'this month',
+    companyManagement: 'Companies & Legal Entities Management',
+    companyCode: 'Company Code',
+    companyArabicName: 'Arabic Trade Name',
+    companyEnglishName: 'English Trade Name',
+    shortName: 'Short Name',
+    companyLogo: 'Company Logo',
+    legalLicense: 'Trade License Details',
+    tradeLicenseNumber: 'Trade License Number',
+    issuingAuthority: 'Issuing Authority',
+    emirate: 'Emirate',
+    issueDate: 'Issue Date',
+    expiryDate: 'Expiry Date',
+    legalType: 'License Type / Legal Form',
+    businessActivities: 'Licensed Business Activities',
+    contactDetails: 'Contact & Location Details',
+    companyAddress: 'Company Address',
+    region: 'Region',
+    street: 'Street / Building',
+    email: 'Email',
+    website: 'Website',
+    taxNumber: 'Tax Number (TRN)',
+    entityNumber: 'Entity Number',
+    establishmentDate: 'Establishment Date',
+    responsiblePerson: 'Responsible Person',
+    notes: 'Administrative Notes',
+    documents: 'Documents & Files',
+    uploadLogo: 'Upload Logo',
+    optional: 'Optional',
+    filterSearch: 'Search by company name, code or emirate',
+    allStatuses: 'All statuses',
+    allEmirates: 'All emirates',
+    createCompany: 'Create new company',
+    companyTableCode: 'Code',
+    companyTableArabic: 'Arabic Name',
+    companyTableEnglish: 'English Name',
+    companyTableLicense: 'License No.',
+    companyTableEmirate: 'Emirate',
+    companyTableExpiry: 'Expiry',
+    companyTableStatus: 'Status',
+    companyTableActions: 'Actions',
+    legalEntitiesDesc: 'Central registry for all companies within the group while preserving entity-level legal independence.',
+    companySaved: 'Company saved successfully.',
+    companyStatusUpdated: 'Company status updated.',
+    search: 'Search',
+    clear: 'Clear',
+    documentsHint: 'You can upload trade license, tax, and legal documents.'
   }
 };
 
@@ -160,14 +261,32 @@ const seedDepartments = [
 
 const seedCompany = {
   id: 'company-ab',
-  name: 'AB Group',
-  companyType: 'Holding / Corporate Group',
-  industry: 'Transportation / Logistics / Operations',
-  city: 'Riyadh',
-  country: 'Saudi Arabia',
+  companyCode: 'AB',
+  arabicName: 'مجموعة AB',
+  englishName: 'AB Group',
+  shortName: 'AB',
+  logo: 'assets/logo.svg',
   status: 'Active',
+  tradeLicenseNumber: 'TRD-AB-001',
+  issuingAuthority: 'Department of Economic Development',
+  emirate: 'Dubai',
+  issueDate: '2020-01-15',
+  expiryDate: '2035-01-15',
+  legalType: 'Holding Company',
+  businessActivities: 'Management, investment, logistics and operations',
+  address: 'Business Bay',
+  region: 'Dubai',
+  street: 'Al Khail Road',
+  phone: '+971000000000',
   email: 'info@abgroup.local',
-  phone: '+966500000000'
+  website: 'https://abgroup.local',
+  taxNumber: 'TRN-AB-1000',
+  entityNumber: 'ENT-001',
+  establishmentDate: '2015-05-12',
+  responsiblePerson: 'Ahmed Alhaj',
+  notes: 'Main holding entity for the group.',
+  documents: ['Trade License', 'Tax Registration'],
+  createdAt: '2020-01-15'
 };
 
 const seedUsers = [
@@ -188,6 +307,7 @@ const initialState = {
   roles: seedRoles,
   departments: seedDepartments,
   companies: [seedCompany],
+  companyFilters: { query: '', status: 'all', emirate: 'all' },
   currentPage: 'dashboard',
   currentUser: null,
   notificationList: [
@@ -227,21 +347,61 @@ function localeText(key) {
 }
 
 function loadState() {
+  let raw;
+  let needsMigration = false;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : initialState;
+    raw = localStorage.getItem(STORAGE_KEY);
+    if (raw === null) {
+      raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+      needsMigration = raw !== null;
+    }
+    const parsed = raw === null ? JSON.parse(JSON.stringify(initialState)) : JSON.parse(raw);
+    if (!parsed || !['users', 'roles', 'departments', 'companies', 'tasks', 'notificationList']
+      .every(key => Array.isArray(parsed[key]))) {
+      throw new Error('Invalid saved application state');
+    }
+    if (!parsed.companyFilters) {
+      parsed.companyFilters = { query: '', status: 'all', emirate: 'all' };
+    }
+    parsed.companies = parsed.companies.map(company => ({
+      ...company,
+      companyCode: company.companyCode ?? company.id,
+      arabicName: company.arabicName ?? company.name ?? '',
+      englishName: company.englishName ?? company.name ?? '',
+      shortName: company.shortName ?? company.name ?? '',
+      emirate: company.emirate ?? company.city ?? '',
+      tradeLicenseNumber: company.tradeLicenseNumber ?? ''
+    }));
     const locale = getLocale();
     if (parsed.currentUser && parsed.currentUser.password) {
       parsed.currentUser.language = locale;
     }
+    if (needsMigration) {
+      // Create v3 only when absent. Keep the original v2 string untouched.
+      try {
+        if (localStorage.getItem(STORAGE_KEY) === null) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+        }
+      } catch (error) {
+        // The loaded v2 state remains usable if storage is full or unavailable.
+        console.warn('Could not persist migrated state; v2 remains unchanged.', error);
+      }
+    }
     return parsed;
-  } catch {
-    return initialState;
+  } catch (error) {
+    stateStorageWritable = false;
+    console.warn('Saved state could not be read; automatic writes are disabled.', error);
+    return JSON.parse(JSON.stringify(initialState));
   }
 }
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(app.state));
+  if (!stateStorageWritable) return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(app.state));
+  } catch (error) {
+    console.warn('Could not save application state; existing storage is unchanged.', error);
+  }
 }
 
 function isUserAllowed(user, permission) {
@@ -374,7 +534,7 @@ function pageTitle(page) {
     users: localeText('userManagement'),
     roles: localeText('roles'),
     departments: localeText('departments'),
-    companies: localeText('companies'),
+    companies: localeText('companyManagement'),
     tasks: localeText('tasks'),
     reports: localeText('reports'),
     notifications: localeText('notifications')
@@ -602,7 +762,7 @@ function renderDepartments() {
               return `
                 <tr>
                   <td>${dept.name}</td>
-                  <td>${app.state.companies[0].name}</td>
+                  <td>${app.state.companies[0].name || app.state.companies[0].englishName}</td>
                   <td>${manager ? manager.fullName : 'Unassigned'}</td>
                 </tr>
               `;
@@ -614,29 +774,200 @@ function renderDepartments() {
   `;
 }
 
-function renderCompanies() {
+function renderCompanies(user) {
+  const canManage = user.roleId === 'owner' || isUserAllowed(user, 'create_company') || isUserAllowed(user, 'edit_company');
+  const filters = app.state.companyFilters || { query: '', status: 'all', emirate: 'all' };
+  const companyRows = app.state.companies.filter((company) => {
+    const query = filters.query.trim().toLowerCase();
+    const matchesQuery = !query || [company.companyCode, company.arabicName, company.englishName, company.shortName, company.emirate].join(' ').toLowerCase().includes(query);
+    const matchesStatus = filters.status === 'all' || company.status === filters.status;
+    const matchesEmirate = filters.emirate === 'all' || company.emirate === filters.emirate;
+    return matchesQuery && matchesStatus && matchesEmirate;
+  });
+
+  const emirates = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'];
+
   return `
-    <section class="content-panel">
-      <div class="section-head"><h2>${localeText('companies')}</h2></div>
-      <div class="table-wrap">
+    <section class="content-panel company-panel">
+      <div class="section-head">
+        <h2>${localeText('companyManagement')}</h2>
+        ${canManage ? `<button class="secondary-btn" data-action="open-company-form">${localeText('addCompany')}</button>` : ''}
+      </div>
+
+      <div class="company-desc">${localeText('legalEntitiesDesc')}</div>
+
+      ${canManage ? `
+        <form id="company-form" class="company-form">
+          <div class="form-grid">
+            <div>
+              <label>${localeText('companyArabicName')}</label>
+              <input class="input" name="arabicName" required />
+            </div>
+            <div>
+              <label>${localeText('companyEnglishName')}</label>
+              <input class="input" name="englishName" required />
+            </div>
+            <div>
+              <label>${localeText('companyCode')}</label>
+              <input class="input" name="companyCode" required />
+            </div>
+            <div>
+              <label>${localeText('shortName')}</label>
+              <input class="input" name="shortName" />
+            </div>
+            <div>
+              <label>${localeText('status')}</label>
+              <select class="input" name="status">
+                <option value="Active">${localeText('active')}</option>
+                <option value="Inactive">${localeText('inactive')}</option>
+                <option value="Suspended">${localeText('suspended')}</option>
+              </select>
+            </div>
+            <div>
+              <label>${localeText('companyLogo')}</label>
+              <input class="input" type="file" name="logo" accept="image/*" />
+            </div>
+
+            <div class="full split-title">${localeText('legalLicense')}</div>
+            <div>
+              <label>${localeText('tradeLicenseNumber')}</label>
+              <input class="input" name="tradeLicenseNumber" required />
+            </div>
+            <div>
+              <label>${localeText('issuingAuthority')}</label>
+              <input class="input" name="issuingAuthority" />
+            </div>
+            <div>
+              <label>${localeText('emirate')}</label>
+              <select class="input" name="emirate">
+                ${emirates.map(v => `<option value="${v}">${v}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label>${localeText('issueDate')}</label>
+              <input class="input" type="date" name="issueDate" />
+            </div>
+            <div>
+              <label>${localeText('expiryDate')}</label>
+              <input class="input" type="date" name="expiryDate" />
+            </div>
+            <div>
+              <label>${localeText('legalType')}</label>
+              <input class="input" name="legalType" />
+            </div>
+            <div class="full">
+              <label>${localeText('businessActivities')}</label>
+              <textarea class="input" name="businessActivities" rows="3"></textarea>
+            </div>
+
+            <div class="full split-title">${localeText('contactDetails')}</div>
+            <div>
+              <label>${localeText('companyAddress')}</label>
+              <input class="input" name="address" />
+            </div>
+            <div>
+              <label>${localeText('region')}</label>
+              <input class="input" name="region" />
+            </div>
+            <div>
+              <label>${localeText('street')}</label>
+              <input class="input" name="street" />
+            </div>
+            <div>
+              <label>${localeText('phone')}</label>
+              <input class="input" name="phone" />
+            </div>
+            <div>
+              <label>${localeText('email')}</label>
+              <input class="input" type="email" name="email" />
+            </div>
+            <div>
+              <label>${localeText('website')}</label>
+              <input class="input" name="website" />
+            </div>
+
+            <div class="full split-title">${localeText('documents')}</div>
+            <div>
+              <label>${localeText('taxNumber')}</label>
+              <input class="input" name="taxNumber" />
+            </div>
+            <div>
+              <label>${localeText('entityNumber')}</label>
+              <input class="input" name="entityNumber" />
+            </div>
+            <div>
+              <label>${localeText('establishmentDate')}</label>
+              <input class="input" type="date" name="establishmentDate" />
+            </div>
+            <div>
+              <label>${localeText('responsiblePerson')}</label>
+              <input class="input" name="responsiblePerson" />
+            </div>
+            <div class="full">
+              <label>${localeText('notes')}</label>
+              <textarea class="input" name="notes" rows="3"></textarea>
+            </div>
+            <div class="full">
+              <label>${localeText('documentsHint')}</label>
+              <input class="input" type="file" name="documents" multiple />
+            </div>
+
+            <div class="full controls-row">
+              <button type="submit" class="primary-btn">${localeText('createCompany')}</button>
+            </div>
+          </div>
+        </form>
+      ` : ''}
+
+      <div class="filter-row">
+        <input id="company-search" class="input" placeholder="${localeText('filterSearch')}" value="${filters.query}" />
+        <select id="company-status-filter" class="input">
+          <option value="all">${localeText('allStatuses')}</option>
+          <option value="Active" ${filters.status === 'Active' ? 'selected' : ''}>${localeText('active')}</option>
+          <option value="Inactive" ${filters.status === 'Inactive' ? 'selected' : ''}>${localeText('inactive')}</option>
+          <option value="Suspended" ${filters.status === 'Suspended' ? 'selected' : ''}>${localeText('suspended')}</option>
+        </select>
+        <select id="company-emirate-filter" class="input">
+          <option value="all">${localeText('allEmirates')}</option>
+          ${emirates.map(v => `<option value="${v}" ${filters.emirate === v ? 'selected' : ''}>${v}</option>`).join('')}
+        </select>
+      </div>
+
+      <div class="table-wrap company-table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Type</th>
-              <th>City</th>
-              <th>${localeText('status')}</th>
+              <th>${localeText('companyTableCode')}</th>
+              <th>${localeText('companyTableArabic')}</th>
+              <th>${localeText('companyTableEnglish')}</th>
+              <th>${localeText('companyTableLicense')}</th>
+              <th>${localeText('companyTableEmirate')}</th>
+              <th>${localeText('companyTableExpiry')}</th>
+              <th>${localeText('companyTableStatus')}</th>
+              <th>${localeText('companyTableActions')}</th>
             </tr>
           </thead>
           <tbody>
-            ${app.state.companies.map(company => `
+            ${companyRows.length ? companyRows.map(company => `
               <tr>
-                <td>${company.name}</td>
-                <td>${company.companyType}</td>
-                <td>${company.city}</td>
-                <td><span class="badge active">${company.status}</span></td>
+                <td><strong>${company.companyCode}</strong></td>
+                <td>${company.arabicName}</td>
+                <td>${company.englishName}</td>
+                <td>${company.tradeLicenseNumber}</td>
+                <td>${company.emirate}</td>
+                <td>${company.expiryDate || '-'}</td>
+                <td><span class="badge ${company.status === 'Active' ? 'active' : company.status === 'Inactive' ? 'pending' : 'disabled'}">${company.status}</span></td>
+                <td>
+                  <div class="row-actions">
+                    <button class="ghost-btn" data-action="toggle-company-status" data-company-id="${company.id}">${company.status === 'Active' ? localeText('disable') : localeText('enable')}</button>
+                  </div>
+                </td>
               </tr>
-            `).join('')}
+            `).join('') : `
+              <tr>
+                <td colspan="8" class="empty-state-table">${localeText('noReports')}</td>
+              </tr>
+            `}
           </tbody>
         </table>
       </div>
@@ -884,6 +1215,17 @@ function bindGlobalEvents() {
     });
   });
 
+  document.querySelectorAll('[data-action="toggle-company-status"]').forEach(button => {
+    button.addEventListener('click', () => {
+      const companyId = button.dataset.companyId;
+      const target = app.state.companies.find(c => c.id === companyId);
+      if (!target) return;
+      target.status = target.status === 'Active' ? 'Inactive' : 'Active';
+      saveState();
+      render();
+    });
+  });
+
   const userForm = document.getElementById('user-form');
   if (userForm) {
     userForm.addEventListener('submit', (event) => {
@@ -909,6 +1251,106 @@ function bindGlobalEvents() {
       render();
     });
   }
+
+  const companyForm = document.getElementById('company-form');
+  if (companyForm) {
+    companyForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const fd = new FormData(companyForm);
+      const logoFile = fd.get('logo');
+      const docs = fd.getAll('documents');
+
+      let logoData = '';
+      if (logoFile && logoFile.name) {
+        logoData = await readFileAsDataUrl(logoFile);
+      }
+
+      const newCompany = {
+        id: `company-${Date.now()}`,
+        companyCode: String(fd.get('companyCode') || '').trim(),
+        arabicName: String(fd.get('arabicName') || '').trim(),
+        englishName: String(fd.get('englishName') || '').trim(),
+        shortName: String(fd.get('shortName') || '').trim(),
+        logo: logoData || 'assets/logo.svg',
+        status: String(fd.get('status') || 'Active'),
+        tradeLicenseNumber: String(fd.get('tradeLicenseNumber') || '').trim(),
+        issuingAuthority: String(fd.get('issuingAuthority') || '').trim(),
+        emirate: String(fd.get('emirate') || '').trim(),
+        issueDate: String(fd.get('issueDate') || '').trim(),
+        expiryDate: String(fd.get('expiryDate') || '').trim(),
+        legalType: String(fd.get('legalType') || '').trim(),
+        businessActivities: String(fd.get('businessActivities') || '').trim(),
+        address: String(fd.get('address') || '').trim(),
+        region: String(fd.get('region') || '').trim(),
+        street: String(fd.get('street') || '').trim(),
+        phone: String(fd.get('phone') || '').trim(),
+        email: String(fd.get('email') || '').trim(),
+        website: String(fd.get('website') || '').trim(),
+        taxNumber: String(fd.get('taxNumber') || '').trim(),
+        entityNumber: String(fd.get('entityNumber') || '').trim(),
+        establishmentDate: String(fd.get('establishmentDate') || '').trim(),
+        responsiblePerson: String(fd.get('responsiblePerson') || '').trim(),
+        notes: String(fd.get('notes') || '').trim(),
+        documents: docs.filter(f => f && f.name).map(f => f.name),
+        createdAt: new Date().toISOString()
+      };
+
+      app.state.companies.push(newCompany);
+      app.state.companyFilters = { query: '', status: 'all', emirate: 'all' };
+      saveState();
+      render();
+    });
+  }
+
+  const companySearch = document.getElementById('company-search');
+  if (companySearch) {
+    companySearch.addEventListener('input', (event) => {
+      app.state.companyFilters.query = event.target.value;
+      saveState();
+      render();
+    });
+  }
+
+  const companyStatusFilter = document.getElementById('company-status-filter');
+  if (companyStatusFilter) {
+    companyStatusFilter.addEventListener('change', (event) => {
+      app.state.companyFilters.status = event.target.value;
+      saveState();
+      render();
+    });
+  }
+
+  const companyEmirateFilter = document.getElementById('company-emirate-filter');
+  if (companyEmirateFilter) {
+    companyEmirateFilter.addEventListener('change', (event) => {
+      app.state.companyFilters.emirate = event.target.value;
+      saveState();
+      render();
+    });
+  }
+
+  const openCompanyBtn = document.querySelector('[data-action="open-company-form"]');
+  if (openCompanyBtn) {
+    openCompanyBtn.addEventListener('click', () => {
+      const form = document.getElementById('company-form');
+      if (form) {
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }
+}
+
+async function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.name) {
+      resolve('');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject('Failed to load file');
+    reader.readAsDataURL(file);
+  });
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -922,9 +1364,8 @@ window.addEventListener('DOMContentLoaded', () => {
     document.documentElement.lang = 'ar';
   }
 
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    app.state = JSON.parse(saved);
+  if (!app.state.companyFilters) {
+    app.state.companyFilters = { query: '', status: 'all', emirate: 'all' };
   }
 
   render();

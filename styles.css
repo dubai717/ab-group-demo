@@ -1,1338 +1,723 @@
-const STORAGE_KEY = 'ab_group_demo_state_v3';
-const LOCALE_KEY = 'ab_group_demo_locale';
-
-const translations = {
-  ar: {
-    appName: 'AB Group',
-    loginTitle: 'تسجيل الدخول',
-    username: 'اسم المستخدم',
-    password: 'كلمة المرور',
-    show: 'إظهار',
-    hide: 'إخفاء',
-    signIn: 'تسجيل الدخول',
-    demoAccess: 'الحسابات التجريبية',
-    owner: 'مالك النظام',
-    gm: 'المدير العام',
-    regionManager: 'مدير المنطقة',
-    employee: 'موظف',
-    investor: 'مستثمر',
-    loginError: 'اسم المستخدم أو كلمة المرور غير صحيحة.',
-    inactiveError: 'هذا الحساب غير نشط.',
-    dashboard: 'لوحة التحكم',
-    userManagement: 'إدارة المستخدمين',
-    roles: 'الأدوار',
-    departments: 'الأقسام',
-    companies: 'الشركات والكيانات',
-    tasks: 'المهام',
-    reports: 'التقارير',
-    notifications: 'الإشعارات',
-    logout: 'تسجيل الخروج',
-    users: 'المستخدمون',
-    addUser: 'إضافة مستخدم',
-    addCompany: 'إضافة شركة',
-    fullName: 'الاسم الكامل',
-    phone: 'رقم الهاتف',
-    status: 'الحالة',
-    role: 'الدور',
-    department: 'القسم',
-    createUser: 'إنشاء مستخدم',
-    recentActivity: 'النشاط الأخير',
-    task: 'المهمة',
-    assignee: 'المسؤول',
-    priority: 'الأولوية',
-    active: 'نشط',
-    inactive: 'غير نشط',
-    pending: 'قيد الانتظار',
-    suspended: 'موقوف مؤقتاً',
-    disabled: 'معطل',
-    enable: 'تفعيل',
-    disable: 'تعطيل',
-    message: 'الرسالة',
-    type: 'النوع',
-    ownerAccountReady: 'حساب المالك جاهز',
-    userManagementEnabled: 'إدارة المستخدمين مفعلة',
-    rolePermissionsAssigned: 'تم تعيين صلاحيات الأدوار',
-    noReports: 'واجهة التقارير جاهزة للمرحلة التالية. النسخة الحالية تشمل لوحات التحكم وتدفق المستخدمين.',
-    sideFeatures: 'هيكل نظام موحد',
-    feature2: 'صلاحيات حسب الدور',
-    feature3: 'إدارة المديرين والموظفين',
-    feature4: 'هيكل الأقسام والشركات',
-    readMore: 'المزيد',
-    english: 'English',
-    arabic: 'العربية',
-    switchLanguage: 'تبديل اللغة',
-    welcome: 'مرحباً',
-    screenTitle: 'لوحة إدارة AB Group',
-    openTasks: 'المهام المفتوحة',
-    activeAccounts: 'الحسابات النشطة',
-    departmentsCount: 'الأقسام',
-    usersCount: 'المستخدمون',
-    thisMonth: 'هذا الشهر',
-    companyManagement: 'إدارة الشركات والكيانات القانونية',
-    companyCode: 'كود الشركة',
-    companyArabicName: 'الاسم التجاري بالعربية',
-    companyEnglishName: 'الاسم التجاري بالإنجليزية',
-    shortName: 'الاسم المختصر',
-    companyLogo: 'شعار الشركة',
-    legalLicense: 'بيانات الرخصة التجارية',
-    tradeLicenseNumber: 'رقم الرخصة التجارية',
-    issuingAuthority: 'جهة إصدار الرخصة',
-    emirate: 'الإمارة',
-    issueDate: 'تاريخ الإصدار',
-    expiryDate: 'تاريخ الانتهاء',
-    legalType: 'نوع الرخصة / الشكل القانوني',
-    businessActivities: 'الأنشطة التجارية المرخصة',
-    contactDetails: 'بيانات التواصل والموقع',
-    companyAddress: 'عنوان الشركة',
-    region: 'المنطقة',
-    street: 'الشارع والمبنى',
-    email: 'البريد الإلكتروني',
-    website: 'الموقع الإلكتروني',
-    taxNumber: 'الرقم الضريبي (TRN)',
-    entityNumber: 'رقم المنشأة',
-    establishmentDate: 'تاريخ التأسيس',
-    responsiblePerson: 'اسم الشخص المسؤول',
-    notes: 'ملاحظات إدارية',
-    documents: 'المستندات والوثائق',
-    uploadLogo: 'رفع شعار',
-    optional: 'اختياري',
-    filterSearch: 'بحث باسم الشركة أو الكود أو الإمارة',
-    allStatuses: 'كل الحالات',
-    allEmirates: 'كل الإمارات',
-    createCompany: 'إضافة شركة جديدة',
-    companyTableCode: 'الكود',
-    companyTableArabic: 'الاسم العربي',
-    companyTableEnglish: 'الاسم الإنجليزي',
-    companyTableLicense: 'رقم الرخصة',
-    companyTableEmirate: 'الإمارة',
-    companyTableExpiry: 'تاريخ الانتهاء',
-    companyTableStatus: 'الحالة',
-    companyTableActions: 'الإجراءات',
-    legalEntitiesDesc: 'سجل مركزي لجميع الشركات التابعة للمجموعة، مع الحفاظ على استقلالية كل كيان قانوني.',
-    companySaved: 'تم حفظ الشركة بنجاح.',
-    companyStatusUpdated: 'تم تحديث حالة الشركة.',
-    search: 'بحث',
-    clear: 'مسح',
-    documentsHint: 'يمكن رفع مستندات الرخصة والتأسيس والضرائب.'
-  },
-  en: {
-    appName: 'AB Group',
-    loginTitle: 'Login',
-    username: 'Username',
-    password: 'Password',
-    show: 'Show',
-    hide: 'Hide',
-    signIn: 'Sign in',
-    demoAccess: 'Demo accounts',
-    owner: 'Owner',
-    gm: 'General Manager',
-    regionManager: 'Regional Manager',
-    employee: 'Employee',
-    investor: 'Investor',
-    loginError: 'Incorrect username or password.',
-    inactiveError: 'This account is inactive.',
-    dashboard: 'Dashboard',
-    userManagement: 'User Management',
-    roles: 'Roles',
-    departments: 'Departments',
-    companies: 'Companies & Legal Entities',
-    tasks: 'Tasks',
-    reports: 'Reports',
-    notifications: 'Notifications',
-    logout: 'Logout',
-    users: 'Users',
-    addUser: 'Add user',
-    addCompany: 'Add company',
-    fullName: 'Full name',
-    phone: 'Phone',
-    status: 'Status',
-    role: 'Role',
-    department: 'Department',
-    createUser: 'Create user',
-    recentActivity: 'Recent activity',
-    task: 'Task',
-    assignee: 'Assignee',
-    priority: 'Priority',
-    active: 'Active',
-    inactive: 'Inactive',
-    pending: 'Pending',
-    suspended: 'Suspended',
-    disabled: 'Disabled',
-    enable: 'Enable',
-    disable: 'Disable',
-    message: 'Message',
-    type: 'Type',
-    ownerAccountReady: 'Owner account ready',
-    userManagementEnabled: 'User management enabled',
-    rolePermissionsAssigned: 'Role permissions assigned',
-    noReports: 'Reports screen is ready for the next phase. The current version includes dashboard and user flow screens.',
-    sideFeatures: 'Unified system structure',
-    feature2: 'Role-based access',
-    feature3: 'Manager and staff management',
-    feature4: 'Department and company structure',
-    readMore: 'Read more',
-    english: 'English',
-    arabic: 'العربية',
-    switchLanguage: 'Switch language',
-    welcome: 'Welcome',
-    screenTitle: 'AB Group Control Panel',
-    openTasks: 'Open tasks',
-    activeAccounts: 'Active accounts',
-    departmentsCount: 'Departments',
-    usersCount: 'Users',
-    thisMonth: 'this month',
-    companyManagement: 'Companies & Legal Entities Management',
-    companyCode: 'Company Code',
-    companyArabicName: 'Arabic Trade Name',
-    companyEnglishName: 'English Trade Name',
-    shortName: 'Short Name',
-    companyLogo: 'Company Logo',
-    legalLicense: 'Trade License Details',
-    tradeLicenseNumber: 'Trade License Number',
-    issuingAuthority: 'Issuing Authority',
-    emirate: 'Emirate',
-    issueDate: 'Issue Date',
-    expiryDate: 'Expiry Date',
-    legalType: 'License Type / Legal Form',
-    businessActivities: 'Licensed Business Activities',
-    contactDetails: 'Contact & Location Details',
-    companyAddress: 'Company Address',
-    region: 'Region',
-    street: 'Street / Building',
-    email: 'Email',
-    website: 'Website',
-    taxNumber: 'Tax Number (TRN)',
-    entityNumber: 'Entity Number',
-    establishmentDate: 'Establishment Date',
-    responsiblePerson: 'Responsible Person',
-    notes: 'Administrative Notes',
-    documents: 'Documents & Files',
-    uploadLogo: 'Upload Logo',
-    optional: 'Optional',
-    filterSearch: 'Search by company name, code or emirate',
-    allStatuses: 'All statuses',
-    allEmirates: 'All emirates',
-    createCompany: 'Create new company',
-    companyTableCode: 'Code',
-    companyTableArabic: 'Arabic Name',
-    companyTableEnglish: 'English Name',
-    companyTableLicense: 'License No.',
-    companyTableEmirate: 'Emirate',
-    companyTableExpiry: 'Expiry',
-    companyTableStatus: 'Status',
-    companyTableActions: 'Actions',
-    legalEntitiesDesc: 'Central registry for all companies within the group while preserving entity-level legal independence.',
-    companySaved: 'Company saved successfully.',
-    companyStatusUpdated: 'Company status updated.',
-    search: 'Search',
-    clear: 'Clear',
-    documentsHint: 'You can upload trade license, tax, and legal documents.'
-  }
-};
-
-const seedRoles = [
-  { id: 'owner', name: 'Owner', description: 'System owner', permissions: ['view_dashboard', 'create_user', 'edit_user', 'deactivate_user', 'view_company', 'create_company', 'edit_company', 'view_tasks', 'create_task', 'edit_task', 'update_task_status', 'view_reports', 'export_reports', 'view_investors', 'create_investment', 'view_finance', 'edit_finance', 'view_marketing', 'create_campaign', 'view_customer_data', 'create_customer', 'manage_notifications', 'assign_task', 'approve_request', 'reject_request', 'delegate_access'] },
-  { id: 'general_manager', name: 'General Manager', description: 'Administrative leadership', permissions: ['view_dashboard', 'view_company', 'edit_company', 'view_tasks', 'create_task', 'edit_task', 'update_task_status', 'view_reports', 'export_reports', 'view_investors', 'view_finance', 'view_marketing', 'manage_notifications', 'assign_task', 'approve_request', 'reject_request'] },
-  { id: 'regional_manager', name: 'Regional Manager', description: 'Regional leadership', permissions: ['view_dashboard', 'view_tasks', 'create_task', 'edit_task', 'update_task_status', 'view_reports', 'manage_notifications', 'assign_task', 'approve_request'] },
-  { id: 'hr_manager', name: 'HR Manager', description: 'Human resources', permissions: ['view_dashboard', 'view_users', 'create_user', 'edit_user', 'view_company', 'view_reports', 'manage_notifications'] },
-  { id: 'pr_manager', name: 'Public Relations Manager', description: 'Public relations', permissions: ['view_dashboard', 'view_company', 'view_tasks', 'create_task', 'manage_notifications', 'view_reports'] },
-  { id: 'marketing_manager', name: 'Development & Marketing Manager', description: 'Marketing and growth', permissions: ['view_dashboard', 'view_company', 'view_marketing', 'create_campaign', 'view_reports', 'manage_notifications'] },
-  { id: 'finance_manager', name: 'Finance Manager', description: 'Finance and accounts', permissions: ['view_dashboard', 'view_finance', 'edit_finance', 'view_reports', 'export_reports', 'manage_notifications'] },
-  { id: 'employee', name: 'Employee', description: 'Operational staff', permissions: ['view_dashboard', 'view_tasks', 'create_task', 'edit_task', 'update_task_status', 'manage_notifications'] },
-  { id: 'investor', name: 'Investor', description: 'External investor', permissions: ['view_dashboard', 'view_investors', 'view_reports'] },
-  { id: 'marketing_company', name: 'Marketing Company', description: 'External partner', permissions: ['view_dashboard', 'view_company', 'view_reports'] }
-];
-
-const seedDepartments = [
-  { id: 'dept-management', name: 'Management', companyId: 'company-ab', managerId: null },
-  { id: 'dept-regional', name: 'Regional Management', companyId: 'company-ab', managerId: null },
-  { id: 'dept-pr', name: 'Public Relations', companyId: 'company-ab', managerId: null },
-  { id: 'dept-hr', name: 'Human Resources', companyId: 'company-ab', managerId: null },
-  { id: 'dept-finance', name: 'Finance', companyId: 'company-ab', managerId: null },
-  { id: 'dept-operations', name: 'Operations', companyId: 'company-ab', managerId: null },
-  { id: 'dept-marketing', name: 'Marketing', companyId: 'company-ab', managerId: null },
-  { id: 'dept-investor', name: 'Investor Management', companyId: 'company-ab', managerId: null },
-  { id: 'dept-external', name: 'External Partners', companyId: 'company-ab', managerId: null },
-  { id: 'dept-customer', name: 'Customer Service', companyId: 'company-ab', managerId: null }
-];
-
-const seedCompany = {
-  id: 'company-ab',
-  companyCode: 'AB',
-  arabicName: 'مجموعة AB',
-  englishName: 'AB Group',
-  shortName: 'AB',
-  logo: 'assets/logo.svg',
-  status: 'Active',
-  tradeLicenseNumber: 'TRD-AB-001',
-  issuingAuthority: 'Department of Economic Development',
-  emirate: 'Dubai',
-  issueDate: '2020-01-15',
-  expiryDate: '2035-01-15',
-  legalType: 'Holding Company',
-  businessActivities: 'Management, investment, logistics and operations',
-  address: 'Business Bay',
-  region: 'Dubai',
-  street: 'Al Khail Road',
-  phone: '+971000000000',
-  email: 'info@abgroup.local',
-  website: 'https://abgroup.local',
-  taxNumber: 'TRN-AB-1000',
-  entityNumber: 'ENT-001',
-  establishmentDate: '2015-05-12',
-  responsiblePerson: 'Ahmed Alhaj',
-  notes: 'Main holding entity for the group.',
-  documents: ['Trade License', 'Tax Registration'],
-  createdAt: '2020-01-15'
-};
-
-const seedUsers = [
-  { id: 'u-owner', fullName: 'Ahmed Alhaj', username: 'owner', email: 'owner@abgroup.local', phone: '966500000001', password: 'Owner@12345', roleId: 'owner', departmentId: 'dept-management', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: null },
-  { id: 'u-gm', fullName: 'Khalid Ahmed', username: 'gm', email: 'gm@abgroup.local', phone: '966500000002', password: 'Gm@12345', roleId: 'general_manager', departmentId: 'dept-management', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-owner' },
-  { id: 'u-region', fullName: 'Samir Hassan', username: 'region_manager', email: 'region1@abgroup.local', phone: '966500000003', password: 'Region@12345', roleId: 'regional_manager', departmentId: 'dept-regional', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-gm' },
-  { id: 'u-hr', fullName: 'Nora Alsaeed', username: 'hr_manager', email: 'hr@abgroup.local', phone: '966500000004', password: 'Hr@12345', roleId: 'hr_manager', departmentId: 'dept-hr', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-gm' },
-  { id: 'u-pr', fullName: 'Omar Younis', username: 'pr_manager', email: 'pr@abgroup.local', phone: '966500000005', password: 'Pr@12345', roleId: 'pr_manager', departmentId: 'dept-pr', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-gm' },
-  { id: 'u-marketing', fullName: 'Faisal Hadi', username: 'marketing_manager', email: 'marketing@abgroup.local', phone: '966500000006', password: 'Mkt@12345', roleId: 'marketing_manager', departmentId: 'dept-marketing', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-gm' },
-  { id: 'u-finance', fullName: 'Ali Mustafa', username: 'finance_manager', email: 'finance@abgroup.local', phone: '966500000007', password: 'Fin@12345', roleId: 'finance_manager', departmentId: 'dept-finance', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-gm' },
-  { id: 'u-employee', fullName: 'Hassan Saleh', username: 'employee1', email: 'employee1@abgroup.local', phone: '966500000008', password: 'Emp@12345', roleId: 'employee', departmentId: 'dept-operations', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-region' },
-  { id: 'u-investor', fullName: 'Investor Trial', username: 'investor1', email: 'investor1@abgroup.local', phone: '966500000009', password: 'Inv@12345', roleId: 'investor', departmentId: 'dept-investor', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: null },
-  { id: 'u-partner', fullName: 'Marketing Company Trial', username: 'marketing_company', email: 'marketingcompany@abgroup.local', phone: '966500000010', password: 'MCompany@12345', roleId: 'marketing_company', departmentId: 'dept-external', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: null }
-];
-
-const initialState = {
-  users: seedUsers,
-  roles: seedRoles,
-  departments: seedDepartments,
-  companies: [seedCompany],
-  companyFilters: { query: '', status: 'all', emirate: 'all' },
-  currentPage: 'dashboard',
-  currentUser: null,
-  notificationList: [
-    { id: 1, text: 'Owner account ready', type: 'info' },
-    { id: 2, text: 'User management enabled', type: 'success' },
-    { id: 3, text: 'Role permissions assigned', type: 'warning' }
-  ],
-  tasks: [
-    { id: 't1', title: 'Review monthly report', assignee: 'Khalid Ahmed', status: 'In Progress', priority: 'High' },
-    { id: 't2', title: 'Create HR onboarding form', assignee: 'Nora Alsaeed', status: 'Pending', priority: 'Medium' },
-    { id: 't3', title: 'Regional follow-up call', assignee: 'Samir Hassan', status: 'Pending', priority: 'High' },
-    { id: 't4', title: 'Company profile review', assignee: 'Ahmed Alhaj', status: 'Completed', priority: 'Low' }
-  ]
-};
-
-const app = {
-  state: loadState(),
-  ui: { showPassword: false }
-};
-
-function getLocale() {
-  const stored = localStorage.getItem(LOCALE_KEY);
-  return stored || 'ar';
+* {
+  box-sizing: border-box;
 }
 
-function setLocale(locale) {
-  localStorage.setItem(LOCALE_KEY, locale);
-  document.body.dir = locale === 'ar' ? 'rtl' : 'ltr';
-  document.documentElement.lang = locale;
-  document.body.setAttribute('data-locale', locale);
-  render();
+:root {
+  --bg: #f6f1ea;
+  --panel: #fffdfb;
+  --panel-alt: #f1e6df;
+  --primary: #5a110d;
+  --primary-strong: #3d0d0a;
+  --primary-soft: #f5d9d1;
+  --accent: #a84b2b;
+  --accent-strong: #8a3a24;
+  --copper: #be6b2e;
+  --gold: #d9ad5d;
+  --gold-soft: #f7e7bf;
+  --warm-ivory: #f8f3ee;
+  --warm-paper: #fffdf9;
+  --success: #346e5f;
+  --danger: #b64a3f;
+  --warning: #b36b2b;
+  --text: #241918;
+  --muted: #685a58;
+  --line: #e8d7cf;
+  --shadow: 0 18px 46px rgba(74, 18, 13, 0.12);
+  --radius: 18px;
 }
 
-function localeText(key) {
-  const locale = getLocale();
-  return translations[locale][key] || translations.en[key] || key;
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: linear-gradient(180deg, #f9f5f2 0%, #f2ece7 100%);
+  font-family: 'Cairo', sans-serif;
+  color: var(--text);
 }
 
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : initialState;
-    if (!parsed.companyFilters) {
-      parsed.companyFilters = { query: '', status: 'all', emirate: 'all' };
-    }
-    const locale = getLocale();
-    if (parsed.currentUser && parsed.currentUser.password) {
-      parsed.currentUser.language = locale;
-    }
-    return parsed;
-  } catch {
-    return initialState;
-  }
+body {
+  min-height: 100vh;
+  transition: background 0.2s ease;
 }
 
-function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(app.state));
+body[dir='rtl'] {
+  direction: rtl;
 }
 
-function isUserAllowed(user, permission) {
-  if (!user) return false;
-  const role = app.state.roles.find(r => r.id === user.roleId);
-  if (!role) return false;
-  if (user.roleId === 'owner') return true;
-  return role.permissions.includes(permission);
+body[dir='ltr'] {
+  direction: ltr;
 }
 
-function getRoleName(roleId) {
-  const role = app.state.roles.find(r => r.id === roleId);
-  return role ? role.name : 'Unknown';
+button, input, select, textarea {
+  font-family: inherit;
 }
 
-function getDepartmentName(deptId) {
-  const dept = app.state.departments.find(d => d.id === deptId);
-  return dept ? dept.name : 'Unassigned';
+button {
+  cursor: pointer;
 }
 
-function getUserById(id) {
-  return app.state.users.find(u => u.id === id);
+.app-shell {
+  min-height: 100vh;
+  display: flex;
 }
 
-function getCurrentUser() {
-  return app.state.currentUser || null;
+.login-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(90, 17, 13, 0.12), transparent 25%),
+    radial-gradient(circle at bottom right, rgba(184, 107, 46, 0.12), transparent 20%),
+    #f8f3ee;
 }
 
-function setCurrentUser(user) {
-  app.state.currentUser = user;
-  saveState();
+.login-card {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  width: min(1100px, 100%);
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(232, 215, 207, 0.9);
+  box-shadow: var(--shadow);
+  border-radius: 28px;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
 }
 
-function getSidebarItems(user) {
-  const allItems = [
-    { id: 'dashboard', label: localeText('dashboard'), permission: 'view_dashboard' },
-    { id: 'users', label: localeText('users'), permission: 'view_users' },
-    { id: 'roles', label: localeText('roles'), permission: 'view_dashboard' },
-    { id: 'departments', label: localeText('departments'), permission: 'view_company' },
-    { id: 'companies', label: localeText('companies'), permission: 'view_company' },
-    { id: 'tasks', label: localeText('tasks'), permission: 'view_tasks' },
-    { id: 'reports', label: localeText('reports'), permission: 'view_reports' },
-    { id: 'notifications', label: localeText('notifications'), permission: 'manage_notifications' }
-  ];
-
-  if (!user) return [];
-
-  if (user.roleId === 'owner' || user.roleId === 'general_manager' || user.roleId === 'hr_manager') {
-    return allItems;
-  }
-
-  if (user.roleId === 'regional_manager' || user.roleId === 'employee') {
-    return allItems.filter(item => ['dashboard', 'tasks', 'notifications'].includes(item.id));
-  }
-
-  if (user.roleId === 'investor' || user.roleId === 'marketing_company') {
-    return allItems.filter(item => ['dashboard', 'reports'].includes(item.id));
-  }
-
-  return allItems.filter(item => isUserAllowed(user, item.permission));
+.login-visual {
+  background: linear-gradient(180deg, var(--primary) 0%, var(--primary-strong) 100%);
+  position: relative;
+  padding: 36px 32px;
+  color: #fff8f4;
 }
 
-function render() {
-  const currentUser = getCurrentUser();
-  document.body.dir = getLocale() === 'ar' ? 'rtl' : 'ltr';
-  document.documentElement.lang = getLocale();
-  document.body.setAttribute('data-locale', getLocale());
-
-  const appEl = document.getElementById('app');
-
-  if (!currentUser) {
-    renderLogin();
-    return;
-  }
-
-  const sidebarItems = getSidebarItems(currentUser);
-  appEl.innerHTML = `
-    <div class="app-shell">
-      <aside class="sidebar">
-        <div class="sidebar-logo">
-          <div class="sidebar-logo-badge">
-            <img src="assets/logo.svg" alt="AB Group logo" />
-          </div>
-          <div>
-            <h3>${localeText('appName')}</h3>
-          </div>
-        </div>
-
-        <nav class="sidebar-nav">
-          ${sidebarItems.map(item => `
-            <button class="nav-item ${app.state.currentPage === item.id ? 'active' : ''}" data-page="${item.id}">
-              ${item.label}
-            </button>
-          `).join('')}
-        </nav>
-
-        <div class="sidebar-footer">
-          <button class="nav-item" data-action="logout">${localeText('logout')}</button>
-        </div>
-      </aside>
-
-      <main class="main">
-        <header class="topbar">
-          <h1>${pageTitle(app.state.currentPage)}</h1>
-          <div class="user-controls">
-            <button class="lang-switch" data-action="toggle-language">
-              ${getLocale() === 'ar' ? 'English' : 'العربية'}
-            </button>
-            <div class="user-pill">
-              <div class="avatar">${currentUser.fullName.slice(0,1).toUpperCase()}</div>
-              <div>
-                <div>${currentUser.fullName}</div>
-                <div class="muted">${getRoleName(currentUser.roleId)}</div>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        ${renderCurrentPage()}
-      </main>
-    </div>
-  `;
-
-  bindGlobalEvents();
+.login-visual::before,
+.login-visual::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
 }
 
-function pageTitle(page) {
-  const titles = {
-    dashboard: localeText('dashboard'),
-    users: localeText('userManagement'),
-    roles: localeText('roles'),
-    departments: localeText('departments'),
-    companies: localeText('companyManagement'),
-    tasks: localeText('tasks'),
-    reports: localeText('reports'),
-    notifications: localeText('notifications')
-  };
-  return titles[page] || localeText('dashboard');
+.login-visual::before {
+  width: 260px;
+  height: 260px;
+  top: -60px;
+  right: -80px;
 }
 
-function renderCurrentPage() {
-  const user = getCurrentUser();
-  const page = app.state.currentPage;
-
-  if (page === 'dashboard') return renderDashboard(user);
-  if (page === 'users') return renderUsers(user);
-  if (page === 'roles') return renderRoles(user);
-  if (page === 'departments') return renderDepartments(user);
-  if (page === 'companies') return renderCompanies(user);
-  if (page === 'tasks') return renderTasks(user);
-  if (page === 'reports') return renderReports(user);
-  if (page === 'notifications') return renderNotifications(user);
-  return renderDashboard(user);
+.login-visual::after {
+  width: 150px;
+  height: 150px;
+  bottom: -40px;
+  left: -16px;
 }
 
-function renderDashboard(user) {
-  const totalUsers = app.state.users.length;
-  const activeUsers = app.state.users.filter(u => u.status === 'Active').length;
-  const departments = app.state.departments.length;
-  const companies = app.state.companies.length;
-  const tasks = app.state.tasks.length;
-
-  return `
-    <div class="stats-grid">
-      <div class="stat-card">
-        <span class="stat-label">${localeText('usersCount')}</span>
-        <p class="stat-value">${totalUsers}</p>
-        <div class="stat-foot">+ 3 ${localeText('thisMonth')}</div>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">${localeText('activeAccounts')}</span>
-        <p class="stat-value">${activeUsers}</p>
-        <div class="stat-foot">Healthy</div>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">${localeText('departmentsCount')}</span>
-        <p class="stat-value">${departments}</p>
-        <div class="stat-foot">${departments} configured</div>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">${localeText('openTasks')}</span>
-        <p class="stat-value">${tasks}</p>
-        <div class="stat-foot">2 urgent</div>
-      </div>
-    </div>
-
-    <section class="content-panel">
-      <div class="section-head">
-        <h2>${localeText('recentActivity')}</h2>
-        <button class="secondary-btn" data-action="quick-task">${localeText('addUser')}</button>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>${localeText('task')}</th>
-              <th>${localeText('assignee')}</th>
-              <th>${localeText('status')}</th>
-              <th>${localeText('priority')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${app.state.tasks.map(task => `
-              <tr>
-                <td>${task.title}</td>
-                <td>${task.assignee}</td>
-                <td><span class="badge ${task.status === 'Completed' ? 'active' : task.status === 'Pending' ? 'pending' : 'disabled'}">${task.status}</span></td>
-                <td>${task.priority}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  `;
+.brand-block {
+  position: relative;
+  z-index: 1;
 }
 
-function renderUsers(user) {
-  const canCreateUser = isUserAllowed(user, 'create_user') || user.roleId === 'owner';
-  const canEditUser = isUserAllowed(user, 'edit_user') || user.roleId === 'owner';
-
-  return `
-    <section class="content-panel">
-      <div class="section-head">
-        <h2>${localeText('userManagement')}</h2>
-        ${canCreateUser ? `<button class="secondary-btn" data-action="open-user-form">${localeText('addUser')}</button>` : ''}
-      </div>
-
-      ${canCreateUser ? `
-        <form id="user-form" style="margin-bottom: 20px;">
-          <div class="form-grid">
-            <div>
-              <label>${localeText('fullName')}</label>
-              <input class="input" name="fullName" placeholder="${localeText('fullName')}" required />
-            </div>
-            <div>
-              <label>${localeText('username')}</label>
-              <input class="input" name="username" placeholder="${localeText('username')}" required />
-            </div>
-            <div>
-              <label>Email</label>
-              <input class="input" name="email" type="email" placeholder="email@example.com" required />
-            </div>
-            <div>
-              <label>${localeText('phone')}</label>
-              <input class="input" name="phone" placeholder="${localeText('phone')}" />
-            </div>
-            <div>
-              <label>${localeText('password')}</label>
-              <input class="input" name="password" type="password" placeholder="${localeText('password')}" required />
-            </div>
-            <div>
-              <label>${localeText('role')}</label>
-              <select class="input" name="roleId">
-                ${app.state.roles.map(role => `<option value="${role.id}">${role.name}</option>`).join('')}
-              </select>
-            </div>
-            <div>
-              <label>${localeText('department')}</label>
-              <select class="input" name="departmentId">
-                ${app.state.departments.map(dept => `<option value="${dept.id}">${dept.name}</option>`).join('')}
-              </select>
-            </div>
-            <div>
-              <label>${localeText('status')}</label>
-              <select class="input" name="status">
-                <option value="Active">${localeText('active')}</option>
-                <option value="Pending">${localeText('pending')}</option>
-                <option value="Disabled">${localeText('disabled')}</option>
-              </select>
-            </div>
-            <div class="full">
-              <button type="submit" class="primary-btn">${localeText('createUser')}</button>
-            </div>
-          </div>
-        </form>
-      ` : ''}
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>${localeText('users')}</th>
-              <th>${localeText('role')}</th>
-              <th>${localeText('department')}</th>
-              <th>${localeText('status')}</th>
-              <th>${localeText('type')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${app.state.users.map(userRow => `
-              <tr>
-                <td>
-                  <strong>${userRow.fullName}</strong><br>
-                  <span class="muted">${userRow.email}</span>
-                </td>
-                <td>${getRoleName(userRow.roleId)}</td>
-                <td>${getDepartmentName(userRow.departmentId)}</td>
-                <td><span class="badge ${userRow.status === 'Active' ? 'active' : userRow.status === 'Pending' ? 'pending' : 'disabled'}">${userRow.status}</span></td>
-                <td>
-                  <div class="row-actions">
-                    ${canEditUser ? `<button class="ghost-btn" data-action="toggle-status" data-user-id="${userRow.id}">${userRow.status === 'Active' ? localeText('disable') : localeText('enable')}</button>` : ''}
-                  </div>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  `;
+.brand-mark {
+  width: 94px;
+  height: 94px;
+  margin-bottom: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
 }
 
-function renderRoles() {
-  return `
-    <section class="content-panel">
-      <div class="section-head"><h2>${localeText('roles')}</h2></div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>${localeText('role')}</th>
-              <th>Description</th>
-              <th>Permissions</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${app.state.roles.map(role => `
-              <tr>
-                <td>${role.name}</td>
-                <td>${role.description}</td>
-                <td>${role.permissions.slice(0, 3).join(', ')}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  `;
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
-function renderDepartments() {
-  return `
-    <section class="content-panel">
-      <div class="section-head"><h2>${localeText('departments')}</h2></div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>${localeText('department')}</th>
-              <th>${localeText('companies')}</th>
-              <th>Manager</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${app.state.departments.map(dept => {
-              const manager = getUserById(dept.managerId);
-              return `
-                <tr>
-                  <td>${dept.name}</td>
-                  <td>${app.state.companies[0].name || app.state.companies[0].englishName}</td>
-                  <td>${manager ? manager.fullName : 'Unassigned'}</td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  `;
+.brand-title {
+  font-size: clamp(2rem, 3vw, 3rem);
+  margin: 0;
+  font-weight: 800;
+  color: #fff8f3;
 }
 
-function renderCompanies(user) {
-  const canManage = user.roleId === 'owner' || isUserAllowed(user, 'create_company') || isUserAllowed(user, 'edit_company');
-  const filters = app.state.companyFilters || { query: '', status: 'all', emirate: 'all' };
-  const companyRows = app.state.companies.filter((company) => {
-    const query = filters.query.trim().toLowerCase();
-    const matchesQuery = !query || [company.companyCode, company.arabicName, company.englishName, company.shortName, company.emirate].join(' ').toLowerCase().includes(query);
-    const matchesStatus = filters.status === 'all' || company.status === filters.status;
-    const matchesEmirate = filters.emirate === 'all' || company.emirate === filters.emirate;
-    return matchesQuery && matchesStatus && matchesEmirate;
-  });
-
-  const emirates = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'];
-
-  return `
-    <section class="content-panel company-panel">
-      <div class="section-head">
-        <h2>${localeText('companyManagement')}</h2>
-        ${canManage ? `<button class="secondary-btn" data-action="open-company-form">${localeText('addCompany')}</button>` : ''}
-      </div>
-
-      <div class="company-desc">${localeText('legalEntitiesDesc')}</div>
-
-      ${canManage ? `
-        <form id="company-form" class="company-form">
-          <div class="form-grid">
-            <div>
-              <label>${localeText('companyArabicName')}</label>
-              <input class="input" name="arabicName" required />
-            </div>
-            <div>
-              <label>${localeText('companyEnglishName')}</label>
-              <input class="input" name="englishName" required />
-            </div>
-            <div>
-              <label>${localeText('companyCode')}</label>
-              <input class="input" name="companyCode" required />
-            </div>
-            <div>
-              <label>${localeText('shortName')}</label>
-              <input class="input" name="shortName" />
-            </div>
-            <div>
-              <label>${localeText('status')}</label>
-              <select class="input" name="status">
-                <option value="Active">${localeText('active')}</option>
-                <option value="Inactive">${localeText('inactive')}</option>
-                <option value="Suspended">${localeText('suspended')}</option>
-              </select>
-            </div>
-            <div>
-              <label>${localeText('companyLogo')}</label>
-              <input class="input" type="file" name="logo" accept="image/*" />
-            </div>
-
-            <div class="full split-title">${localeText('legalLicense')}</div>
-            <div>
-              <label>${localeText('tradeLicenseNumber')}</label>
-              <input class="input" name="tradeLicenseNumber" required />
-            </div>
-            <div>
-              <label>${localeText('issuingAuthority')}</label>
-              <input class="input" name="issuingAuthority" />
-            </div>
-            <div>
-              <label>${localeText('emirate')}</label>
-              <select class="input" name="emirate">
-                ${emirates.map(v => `<option value="${v}">${v}</option>`).join('')}
-              </select>
-            </div>
-            <div>
-              <label>${localeText('issueDate')}</label>
-              <input class="input" type="date" name="issueDate" />
-            </div>
-            <div>
-              <label>${localeText('expiryDate')}</label>
-              <input class="input" type="date" name="expiryDate" />
-            </div>
-            <div>
-              <label>${localeText('legalType')}</label>
-              <input class="input" name="legalType" />
-            </div>
-            <div class="full">
-              <label>${localeText('businessActivities')}</label>
-              <textarea class="input" name="businessActivities" rows="3"></textarea>
-            </div>
-
-            <div class="full split-title">${localeText('contactDetails')}</div>
-            <div>
-              <label>${localeText('companyAddress')}</label>
-              <input class="input" name="address" />
-            </div>
-            <div>
-              <label>${localeText('region')}</label>
-              <input class="input" name="region" />
-            </div>
-            <div>
-              <label>${localeText('street')}</label>
-              <input class="input" name="street" />
-            </div>
-            <div>
-              <label>${localeText('phone')}</label>
-              <input class="input" name="phone" />
-            </div>
-            <div>
-              <label>${localeText('email')}</label>
-              <input class="input" type="email" name="email" />
-            </div>
-            <div>
-              <label>${localeText('website')}</label>
-              <input class="input" name="website" />
-            </div>
-
-            <div class="full split-title">${localeText('documents')}</div>
-            <div>
-              <label>${localeText('taxNumber')}</label>
-              <input class="input" name="taxNumber" />
-            </div>
-            <div>
-              <label>${localeText('entityNumber')}</label>
-              <input class="input" name="entityNumber" />
-            </div>
-            <div>
-              <label>${localeText('establishmentDate')}</label>
-              <input class="input" type="date" name="establishmentDate" />
-            </div>
-            <div>
-              <label>${localeText('responsiblePerson')}</label>
-              <input class="input" name="responsiblePerson" />
-            </div>
-            <div class="full">
-              <label>${localeText('notes')}</label>
-              <textarea class="input" name="notes" rows="3"></textarea>
-            </div>
-            <div class="full">
-              <label>${localeText('documentsHint')}</label>
-              <input class="input" type="file" name="documents" multiple />
-            </div>
-
-            <div class="full controls-row">
-              <button type="submit" class="primary-btn">${localeText('createCompany')}</button>
-            </div>
-          </div>
-        </form>
-      ` : ''}
-
-      <div class="filter-row">
-        <input id="company-search" class="input" placeholder="${localeText('filterSearch')}" value="${filters.query}" />
-        <select id="company-status-filter" class="input">
-          <option value="all">${localeText('allStatuses')}</option>
-          <option value="Active" ${filters.status === 'Active' ? 'selected' : ''}>${localeText('active')}</option>
-          <option value="Inactive" ${filters.status === 'Inactive' ? 'selected' : ''}>${localeText('inactive')}</option>
-          <option value="Suspended" ${filters.status === 'Suspended' ? 'selected' : ''}>${localeText('suspended')}</option>
-        </select>
-        <select id="company-emirate-filter" class="input">
-          <option value="all">${localeText('allEmirates')}</option>
-          ${emirates.map(v => `<option value="${v}" ${filters.emirate === v ? 'selected' : ''}>${v}</option>`).join('')}
-        </select>
-      </div>
-
-      <div class="table-wrap company-table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>${localeText('companyTableCode')}</th>
-              <th>${localeText('companyTableArabic')}</th>
-              <th>${localeText('companyTableEnglish')}</th>
-              <th>${localeText('companyTableLicense')}</th>
-              <th>${localeText('companyTableEmirate')}</th>
-              <th>${localeText('companyTableExpiry')}</th>
-              <th>${localeText('companyTableStatus')}</th>
-              <th>${localeText('companyTableActions')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${companyRows.length ? companyRows.map(company => `
-              <tr>
-                <td><strong>${company.companyCode}</strong></td>
-                <td>${company.arabicName}</td>
-                <td>${company.englishName}</td>
-                <td>${company.tradeLicenseNumber}</td>
-                <td>${company.emirate}</td>
-                <td>${company.expiryDate || '-'}</td>
-                <td><span class="badge ${company.status === 'Active' ? 'active' : company.status === 'Inactive' ? 'pending' : 'disabled'}">${company.status}</span></td>
-                <td>
-                  <div class="row-actions">
-                    <button class="ghost-btn" data-action="toggle-company-status" data-company-id="${company.id}">${company.status === 'Active' ? localeText('disable') : localeText('enable')}</button>
-                  </div>
-                </td>
-              </tr>
-            `).join('') : `
-              <tr>
-                <td colspan="8" class="empty-state-table">${localeText('noReports')}</td>
-              </tr>
-            `}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  `;
+.brand-sub {
+  margin-top: 12px;
+  color: rgba(255,255,255,0.82);
+  font-size: 1rem;
 }
 
-function renderTasks() {
-  return `
-    <section class="content-panel">
-      <div class="section-head">
-        <h2>${localeText('tasks')}</h2>
-        <button class="secondary-btn" data-action="quick-task">Add task</button>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>${localeText('task')}</th>
-              <th>${localeText('assignee')}</th>
-              <th>${localeText('status')}</th>
-              <th>${localeText('priority')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${app.state.tasks.map(task => `
-              <tr>
-                <td>${task.title}</td>
-                <td>${task.assignee}</td>
-                <td><span class="badge ${task.status === 'Completed' ? 'active' : task.status === 'Pending' ? 'pending' : 'disabled'}">${task.status}</span></td>
-                <td>${task.priority}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  `;
+.login-feature-list {
+  position: relative;
+  z-index: 1;
+  list-style: none;
+  padding: 0;
+  margin: 28px 0 0;
+  display: grid;
+  gap: 14px;
 }
 
-function renderReports() {
-  return `
-    <section class="content-panel">
-      <div class="section-head"><h2>${localeText('reports')}</h2></div>
-      <div class="empty-state">${localeText('noReports')}</div>
-    </section>
-  `;
+.login-feature-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255,255,255,0.86);
+  font-weight: 600;
 }
 
-function renderNotifications() {
-  return `
-    <section class="content-panel">
-      <div class="section-head"><h2>${localeText('notifications')}</h2></div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>${localeText('message')}</th>
-              <th>${localeText('type')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${app.state.notificationList.map(item => `
-              <tr>
-                <td>${item.text}</td>
-                <td>${item.type}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  `;
+.login-feature-list li::before {
+  content: "✓";
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  font-weight: 800;
 }
 
-function renderLogin() {
-  const appEl = document.getElementById('app');
-  const locale = getLocale();
-  const demoAccounts = [
-    { username: 'owner', password: 'Owner@12345', label: locale === 'ar' ? 'مالك النظام' : 'Owner' },
-    { username: 'gm', password: 'Gm@12345', label: locale === 'ar' ? 'المدير العام' : 'General Manager' },
-    { username: 'region_manager', password: 'Region@12345', label: locale === 'ar' ? 'مدير المنطقة' : 'Regional Manager' },
-    { username: 'employee1', password: 'Emp@12345', label: locale === 'ar' ? 'موظف' : 'Employee' },
-    { username: 'investor1', password: 'Inv@12345', label: locale === 'ar' ? 'مستثمر' : 'Investor' }
-  ];
+.login-form-wrap {
+  padding: 36px 28px;
+  background: rgba(255,255,255,0.96);
+}
 
-  appEl.innerHTML = `
-    <div class="login-screen">
-      <div class="login-card">
-        <div class="login-visual">
-          <div class="brand-block">
-            <div class="brand-mark"><img src="assets/logo.svg" alt="AB Group" /></div>
-            <h1 class="brand-title">${localeText('appName')}</h1>
-            <div class="brand-sub">${locale === 'ar' ? 'نظام إداري ومالي وتشغيلي متكامل' : 'Administrative, Financial and Operational Management System'}</div>
-          </div>
-          <ul class="login-feature-list">
-            <li>${localeText('sideFeatures')}</li>
-            <li>${localeText('feature2')}</li>
-            <li>${localeText('feature3')}</li>
-            <li>${localeText('feature4')}</li>
-          </ul>
-        </div>
+.login-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 28px;
+}
 
-        <div class="login-form-wrap">
-          <div class="login-head">
-            <h2>${localeText('loginTitle')}</h2>
-            <button class="lang-badge" data-action="toggle-language">${getLocale() === 'ar' ? 'English' : 'العربية'}</button>
-          </div>
+.login-head h2 {
+  margin: 0;
+  font-size: 2rem;
+  color: var(--text);
+}
 
-          <form id="login-form">
-            <div class="form-group">
-              <label>${localeText('username')}</label>
-              <input id="username" class="input" name="username" placeholder="${localeText('username')}" required />
-            </div>
+.lang-badge {
+  background: linear-gradient(135deg, var(--gold-soft), #f3e8cf);
+  color: var(--primary-strong);
+  font-weight: 800;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  border: 0;
+  box-shadow: 0 8px 18px rgba(184, 107, 46, 0.1);
+}
 
-            <div class="form-group">
-              <label>${localeText('password')}</label>
-              <div class="password-wrap">
-                <input id="password" class="input" name="password" type="${app.ui.showPassword ? 'text' : 'password'}" placeholder="${localeText('password')}" required />
-                <button type="button" id="toggle-password">${app.ui.showPassword ? localeText('hide') : localeText('show')}</button>
-              </div>
-            </div>
+.form-group {
+  margin-bottom: 18px;
+}
 
-            <button class="primary-btn" type="submit">${localeText('signIn')}</button>
-            <div id="login-error" class="error-box"></div>
-          </form>
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+}
 
-          <div class="demo-box">
-            <h4>${localeText('demoAccess')}</h4>
-            <div class="demo-users">
-              ${demoAccounts.map(acc => `
-                <button class="demo-user-button" data-demo-user="${acc.username}" data-demo-pass="${acc.password}">${acc.label}</button>
-              `).join('')}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
+.input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: #fffdfc;
+  font-size: 1rem;
+  color: var(--text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
 
-  const form = document.getElementById('login-form');
-  if (form) form.addEventListener('submit', handleLogin);
+textarea.input {
+  min-height: 90px;
+  resize: vertical;
+}
 
-  const togglePw = document.getElementById('toggle-password');
-  if (togglePw) {
-    togglePw.addEventListener('click', () => {
-      app.ui.showPassword = !app.ui.showPassword;
-      renderLogin();
-    });
+.input:focus {
+  outline: none;
+  border-color: rgba(90, 17, 13, 0.65);
+  box-shadow: 0 0 0 4px rgba(90, 17, 13, 0.08);
+}
+
+.password-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fffdfc;
+  overflow: hidden;
+}
+
+.password-wrap .input {
+  border: none;
+  background: transparent;
+}
+
+.password-wrap button {
+  border: none;
+  background: transparent;
+  padding: 0 14px;
+  color: var(--muted);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.primary-btn, .secondary-btn, .ghost-btn, .danger-btn {
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.primary-btn:hover, .secondary-btn:hover, .ghost-btn:hover, .danger-btn:hover {
+  transform: translateY(-1px);
+}
+
+.primary-btn {
+  display: block;
+  width: 100%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  color: #fff8f4;
+  padding: 15px 18px;
+  font-size: 1rem;
+  margin-top: 10px;
+  box-shadow: 0 10px 24px rgba(90, 17, 13, 0.18);
+}
+
+.secondary-btn {
+  background: linear-gradient(135deg, var(--gold-soft), #f4dcc1);
+  color: var(--primary-strong);
+  padding: 12px 18px;
+  border: 1px solid rgba(184, 107, 46, 0.12);
+}
+
+.ghost-btn {
+  background: linear-gradient(135deg, #f7efe2, #f4e2d7);
+  color: var(--primary);
+  padding: 10px 14px;
+  border: 1px solid rgba(90, 17, 13, 0.08);
+}
+
+.danger-btn {
+  background: rgba(182, 74, 63, 0.08);
+  color: var(--danger);
+  padding: 10px 14px;
+}
+
+.demo-box {
+  margin-top: 22px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, #fff9f4, #f9efe9);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.demo-box h4 {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.demo-users {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.demo-user-button {
+  border: 1px solid rgba(184, 107, 46, 0.2);
+  background: #fffefb;
+  border-radius: 999px;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.error-box {
+  margin-top: 12px;
+  background: rgba(182, 74, 63, 0.08);
+  border: 1px solid rgba(182, 74, 63, 0.18);
+  color: var(--danger);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 700;
+  display: none;
+}
+
+.error-box.visible {
+  display: block;
+}
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 280px;
+  background: linear-gradient(180deg, var(--primary) 0%, var(--primary-strong) 100%);
+  color: #fff8f5;
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.sidebar-logo-badge {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.08);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+.sidebar-logo-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.sidebar-logo h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #fff6f2;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-item {
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.8);
+  border-radius: 12px;
+  padding: 12px 14px;
+  text-align: left;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+body[dir='rtl'] .nav-item {
+  text-align: right;
+}
+
+.nav-item.active {
+  background: linear-gradient(135deg, rgba(216,173,93,0.16), rgba(255,255,255,0.08));
+  color: white;
+  border: 1px solid rgba(216,173,93,0.18);
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 26px;
+  background: linear-gradient(180deg, #fffdfb 0%, #f5efe9 100%);
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.user-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lang-switch {
+  border: 1px solid rgba(90, 17, 13, 0.12);
+  background: #fff8f3;
+  border-radius: 999px;
+  padding: 10px 12px;
+  color: var(--primary-strong);
+  font-weight: 800;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  color: var(--primary-strong);
+}
+
+.user-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fffdfb;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 700;
+  box-shadow: 0 10px 20px rgba(90, 17, 13, 0.04);
+}
+
+.user-pill .avatar {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold-soft), #f3d7bb);
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: linear-gradient(180deg, #fffdfb 0%, #fffaf4 100%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 18px 16px;
+  box-shadow: 0 10px 24px rgba(90, 17, 13, 0.04);
+}
+
+.stat-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 0;
+}
+
+.stat-foot {
+  margin-top: 14px;
+  color: var(--success);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.content-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 24px rgba(74, 18, 13, 0.04);
+  padding: 20px;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.section-head h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  color: var(--primary-strong);
+}
+
+.table-wrap {
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  text-align: left;
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+body[dir='rtl'] th,
+body[dir='rtl'] td {
+  text-align: right;
+}
+
+th {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.badge.active {
+  background: rgba(52, 110, 95, 0.12);
+  color: var(--success);
+}
+
+.badge.pending {
+  background: rgba(179, 107, 43, 0.12);
+  color: var(--warning);
+}
+
+.badge.disabled {
+  background: rgba(182, 74, 63, 0.08);
+  color: var(--danger);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+
+.split-title {
+  font-weight: 800;
+  color: var(--primary-strong);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+  margin-top: 8px;
+}
+
+.row-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.empty-state {
+  padding: 24px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  text-align: center;
+  color: var(--muted);
+  background: linear-gradient(180deg, #fffefc, #f7f0ea);
+}
+
+.company-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.company-desc {
+  color: var(--muted);
+  background: linear-gradient(180deg, #fff9f5, #faf1ea);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.company-form {
+  padding: 10px 0 0;
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) minmax(160px, 0.8fr) minmax(160px, 0.8fr);
+  gap: 12px;
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
+.company-table-wrap {
+  margin-top: 10px;
+}
+
+.empty-state-table {
+  text-align: center;
+  color: var(--muted);
+  padding: 20px;
+  background: #fffaf6;
+}
+
+.controls-row {
+  display: flex;
+  justify-content: stretch;
+}
+
+@media (max-width: 960px) {
+  .login-card {
+    grid-template-columns: 1fr;
   }
 
-  const toggles = document.querySelectorAll('[data-action="toggle-language"]');
-  toggles.forEach(button => {
-    button.addEventListener('click', () => {
-      const nextLocale = getLocale() === 'ar' ? 'en' : 'ar';
-      setLocale(nextLocale);
-    });
-  });
-
-  document.querySelectorAll('[data-demo-user]').forEach(button => {
-    button.addEventListener('click', () => {
-      const username = button.dataset.demoUser;
-      const password = button.dataset.demoPass;
-      document.getElementById('username').value = username;
-      document.getElementById('password').value = password;
-      handleLogin({ preventDefault: () => {} });
-    });
-  });
-}
-
-function handleLogin(event) {
-  event.preventDefault();
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value;
-  const user = app.state.users.find(u => u.username === username);
-  const errBox = document.getElementById('login-error');
-
-  if (!user || user.password !== password) {
-    errBox.textContent = localeText('loginError');
-    errBox.classList.add('visible');
-    return;
+  .app-shell {
+    flex-direction: column;
   }
 
-  if (user.status !== 'Active') {
-    errBox.textContent = localeText('inactiveError');
-    errBox.classList.add('visible');
-    return;
+  .sidebar {
+    width: 100%;
   }
 
-  errBox.classList.remove('visible');
-  setCurrentUser(user);
-  app.state.currentPage = 'dashboard';
-  render();
-}
-
-function bindGlobalEvents() {
-  document.querySelectorAll('[data-page]').forEach(button => {
-    button.addEventListener('click', () => {
-      const page = button.dataset.page;
-      app.state.currentPage = page;
-      saveState();
-      render();
-    });
-  });
-
-  document.querySelectorAll('[data-action="logout"]').forEach(button => {
-    button.addEventListener('click', () => {
-      setCurrentUser(null);
-      app.state.currentPage = 'dashboard';
-      render();
-    });
-  });
-
-  document.querySelectorAll('[data-action="toggle-language"]').forEach(button => {
-    button.addEventListener('click', () => {
-      const nextLocale = getLocale() === 'ar' ? 'en' : 'ar';
-      setLocale(nextLocale);
-    });
-  });
-
-  document.querySelectorAll('[data-action="quick-task"]').forEach(button => {
-    button.addEventListener('click', () => {
-      const title = prompt(localeText('task') || 'Task title');
-      if (!title) return;
-      app.state.tasks.unshift({
-        id: `t${Date.now()}`,
-        title,
-        assignee: getCurrentUser().fullName,
-        status: 'Pending',
-        priority: 'Medium'
-      });
-      saveState();
-      render();
-    });
-  });
-
-  document.querySelectorAll('[data-action="toggle-status"]').forEach(button => {
-    button.addEventListener('click', () => {
-      const userId = button.dataset.userId;
-      const target = app.state.users.find(u => u.id === userId);
-      if (!target) return;
-      target.status = target.status === 'Active' ? 'Disabled' : 'Active';
-      saveState();
-      render();
-    });
-  });
-
-  document.querySelectorAll('[data-action="toggle-company-status"]').forEach(button => {
-    button.addEventListener('click', () => {
-      const companyId = button.dataset.companyId;
-      const target = app.state.companies.find(c => c.id === companyId);
-      if (!target) return;
-      target.status = target.status === 'Active' ? 'Inactive' : 'Active';
-      saveState();
-      render();
-    });
-  });
-
-  const userForm = document.getElementById('user-form');
-  if (userForm) {
-    userForm.addEventListener('submit', (event) => {
-      event.preventDefault();
-      const fd = new FormData(userForm);
-      const newUser = {
-        id: `u-${Date.now()}`,
-        fullName: fd.get('fullName'),
-        username: fd.get('username'),
-        email: fd.get('email'),
-        phone: fd.get('phone') || '',
-        password: fd.get('password'),
-        roleId: fd.get('roleId'),
-        departmentId: fd.get('departmentId'),
-        companyId: 'company-ab',
-        status: fd.get('status'),
-        language: getLocale(),
-        managerId: null
-      };
-
-      app.state.users.push(newUser);
-      saveState();
-      render();
-    });
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
   }
 
-  const companyForm = document.getElementById('company-form');
-  if (companyForm) {
-    companyForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const fd = new FormData(companyForm);
-      const logoFile = fd.get('logo');
-      const docs = fd.getAll('documents');
-
-      let logoData = '';
-      if (logoFile && logoFile.name) {
-        logoData = await readFileAsDataUrl(logoFile);
-      }
-
-      const newCompany = {
-        id: `company-${Date.now()}`,
-        companyCode: String(fd.get('companyCode') || '').trim(),
-        arabicName: String(fd.get('arabicName') || '').trim(),
-        englishName: String(fd.get('englishName') || '').trim(),
-        shortName: String(fd.get('shortName') || '').trim(),
-        logo: logoData || 'assets/logo.svg',
-        status: String(fd.get('status') || 'Active'),
-        tradeLicenseNumber: String(fd.get('tradeLicenseNumber') || '').trim(),
-        issuingAuthority: String(fd.get('issuingAuthority') || '').trim(),
-        emirate: String(fd.get('emirate') || '').trim(),
-        issueDate: String(fd.get('issueDate') || '').trim(),
-        expiryDate: String(fd.get('expiryDate') || '').trim(),
-        legalType: String(fd.get('legalType') || '').trim(),
-        businessActivities: String(fd.get('businessActivities') || '').trim(),
-        address: String(fd.get('address') || '').trim(),
-        region: String(fd.get('region') || '').trim(),
-        street: String(fd.get('street') || '').trim(),
-        phone: String(fd.get('phone') || '').trim(),
-        email: String(fd.get('email') || '').trim(),
-        website: String(fd.get('website') || '').trim(),
-        taxNumber: String(fd.get('taxNumber') || '').trim(),
-        entityNumber: String(fd.get('entityNumber') || '').trim(),
-        establishmentDate: String(fd.get('establishmentDate') || '').trim(),
-        responsiblePerson: String(fd.get('responsiblePerson') || '').trim(),
-        notes: String(fd.get('notes') || '').trim(),
-        documents: docs.filter(f => f && f.name).map(f => f.name),
-        createdAt: new Date().toISOString()
-      };
-
-      app.state.companies.push(newCompany);
-      app.state.companyFilters = { query: '', status: 'all', emirate: 'all' };
-      saveState();
-      render();
-    });
-  }
-
-  const companySearch = document.getElementById('company-search');
-  if (companySearch) {
-    companySearch.addEventListener('input', (event) => {
-      app.state.companyFilters.query = event.target.value;
-      saveState();
-      render();
-    });
-  }
-
-  const companyStatusFilter = document.getElementById('company-status-filter');
-  if (companyStatusFilter) {
-    companyStatusFilter.addEventListener('change', (event) => {
-      app.state.companyFilters.status = event.target.value;
-      saveState();
-      render();
-    });
-  }
-
-  const companyEmirateFilter = document.getElementById('company-emirate-filter');
-  if (companyEmirateFilter) {
-    companyEmirateFilter.addEventListener('change', (event) => {
-      app.state.companyFilters.emirate = event.target.value;
-      saveState();
-      render();
-    });
-  }
-
-  const openCompanyBtn = document.querySelector('[data-action="open-company-form"]');
-  if (openCompanyBtn) {
-    openCompanyBtn.addEventListener('click', () => {
-      const form = document.getElementById('company-form');
-      if (form) {
-        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    });
+  .filter-row {
+    grid-template-columns: 1fr;
   }
 }
 
-async function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    if (!file || !file.name) {
-      resolve('');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ''));
-    reader.onerror = () => reject('Failed to load file');
-    reader.readAsDataURL(file);
-  });
+@media (max-width: 640px) {
+  .stats-grid,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .main {
+    padding: 14px;
+  }
 }
-
-window.addEventListener('DOMContentLoaded', () => {
-  const storedLocale = localStorage.getItem(LOCALE_KEY);
-  if (storedLocale) {
-    document.body.dir = storedLocale === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.lang = storedLocale;
-  } else {
-    localStorage.setItem(LOCALE_KEY, 'ar');
-    document.body.dir = 'rtl';
-    document.documentElement.lang = 'ar';
-  }
-
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    app.state = JSON.parse(saved);
-  }
-
-  if (!app.state.companyFilters) {
-    app.state.companyFilters = { query: '', status: 'all', emirate: 'all' };
-  }
-
-  render();
-});
 
