@@ -89,3 +89,11 @@ After this prototype is reviewed, the next iteration can add:
 The current prototype also includes company registration, legal entity records, status controls, search and emirate/status filters, and local document uploads.
 
 CSS lives in `styles.css`; browser JavaScript lives in `app.js`. Existing v2 browser data is retained when loading the v3 application.
+
+## Browser storage migration
+
+On startup, existing `ab_group_demo_state_v3` data takes precedence and is not rewritten. If v3 is absent, valid `ab_group_demo_state_v2` data is copied to v3, adding missing company fields and filters while retaining existing records and custom fields. The original v2 value is never changed or deleted. Migration runs once; subsequent saves use v3.
+
+If a storage write fails, the loaded data remains available in memory and the stored source remains intact. If saved data cannot be parsed or has an invalid structure, automatic state writes are disabled for that session to avoid replacing it with demo data; the app displays its demo state. Storage recovery requires correcting the saved data and reloading.
+
+Run the storage regression checks with `node tests/storage.test.cjs` (no dependencies required).

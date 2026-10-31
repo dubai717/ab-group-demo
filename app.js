@@ -1,4 +1,7 @@
 const STORAGE_KEY = 'ab_group_demo_state_v3';
+const LEGACY_STORAGE_KEY = 'ab_group_demo_state_v2';
+// Never replace an unreadable saved state with demo data.
+let stateStorageWritable = true;
 const LOCALE_KEY = 'ab_group_demo_locale';
 
 const translations = {
@@ -344,9 +347,19 @@ function localeText(key) {
 }
 
 function loadState() {
+  let raw;
+  let needsMigration = false;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('ab_group_demo_state_v2');
-    const parsed = raw ? JSON.parse(raw) : initialState;
+    raw = localStorage.getItem(STORAGE_KEY);
+    if (raw === null) {
+      raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+      needsMigration = raw !== null;
+    }
+    const parsed = raw === null ? JSON.parse(JSON.stringify(initialState)) : JSON.parse(raw);
+    if (!parsed || !['users', 'roles', 'departments', 'companies', 'tasks', 'notificationList']
+      .every(key => Array.isArray(parsed[key]))) {
+      throw new Error('Invalid saved application state');
+    }
     if (!parsed.companyFilters) {
       parsed.companyFilters = { query: '', status: 'all', emirate: 'all' };
     }
@@ -363,14 +376,32 @@ function loadState() {
     if (parsed.currentUser && parsed.currentUser.password) {
       parsed.currentUser.language = locale;
     }
+    if (needsMigration) {
+      // Create v3 only when absent. Keep the original v2 string untouched.
+      try {
+        if (localStorage.getItem(STORAGE_KEY) === null) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+        }
+      } catch (error) {
+        // The loaded v2 state remains usable if storage is full or unavailable.
+        console.warn('Could not persist migrated state; v2 remains unchanged.', error);
+      }
+    }
     return parsed;
-  } catch {
-    return initialState;
+  } catch (error) {
+    stateStorageWritable = false;
+    console.warn('Saved state could not be read; automatic writes are disabled.', error);
+    return JSON.parse(JSON.stringify(initialState));
   }
 }
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(app.state));
+  if (!stateStorageWritable) return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(app.state));
+  } catch (error) {
+    console.warn('Could not save application state; existing storage is unchanged.', error);
+  }
 }
 
 function isUserAllowed(user, permission) {
