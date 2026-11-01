@@ -725,3 +725,19 @@ th {
   }
 }
 
+
+/* Shared emirate/area reference controls, using the existing corporate palette. */
+.area-picker { display: flex; align-items: end; gap: 12px; }
+.area-picker > div { flex: 1; min-width: 0; }
+.area-picker .area-select-label { margin-top: 12px; }
+.area-reference label { display: block; margin-bottom: 8px; }
+.area-reference .area-history { margin-top: 16px; }
+.area-reference .area-history summary { cursor: pointer; color: var(--primary); font-weight: 700; }
+.area-reference #area-new { border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin: 16px 0; }
+.area-reference #area-new .row-actions { margin-top: 14px; }
+#area-message:not(:empty) { padding: 12px; border-radius: 12px; background: var(--gold-soft); color: var(--primary-strong); }
+@media (max-width: 640px) { .area-picker { flex-direction: column; align-items: stretch; } }
+.company-panel { grid-template-columns: minmax(0, 1fr); }
+.company-panel > *, .company-form .form-grid > *, .area-reference { min-width: 0; }
+.area-reference select { min-width: 0; max-width: 100%; }
+@media (max-width: 640px) { body:has(.company-panel) .topbar { flex-wrap: wrap; } }

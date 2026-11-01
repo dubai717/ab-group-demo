@@ -97,3 +97,11 @@ On startup, existing `ab_group_demo_state_v3` data takes precedence and is not r
 If a storage write fails, the loaded data remains available in memory and the stored source remains intact. If saved data cannot be parsed or has an invalid structure, automatic state writes are disabled for that session to avoid replacing it with demo data; the app displays its demo state. Storage recovery requires correcting the saved data and reloading.
 
 Run the storage regression checks with `node tests/storage.test.cjs` (no dependencies required).
+
+## Shared emirate/area reference
+
+The company contact/location section uses seven emirates and a searchable emirate-scoped area dropdown, with authorized local additions, duplicate checks and creator/date history. `data/uae-areas.js` and `area-reference.js` are the shared reference for future customer/vehicle/geographic integrations. Existing company locations are preserved.
+
+The initial source-attributed reference has 367 entries and is not exhaustive or certified as the latest official register. **Manual additions are saved in this browser only, not shared centrally across all users.** See [area reference design and sources](docs/AREA-REFERENCE.md) for per-emirate coverage, provenance, duplicate policy, storage limits and the required central database/API design.
+
+Run `node tests/area-reference.test.cjs` and `node tests/storage.test.cjs`. Optional Playwright coverage is in `tests/area-reference.browser.cjs`.
