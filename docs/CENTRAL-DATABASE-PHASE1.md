@@ -89,3 +89,7 @@ No production readiness, central cloud availability, scheduled backup, verified 
 - Public static assets returned 200; backend secret/source, `.git` and local secret artifact paths returned 404 on the restarted static server.
 - `npm audit --omit=dev`: zero reported vulnerabilities at verification time; this is not a full security audit.
 - Integration baseline remains `6f14eb0`; PR #10 remains an open unmerged draft. No live cloud test or deployment was performed.
+
+## Follow-up verification — 2026-11-02 (Dubai)
+
+The subsequent review found six unresolved SQL constraint gaps despite passing application-flow tests. Do not treat the schema as approved for cloud activation. See [verification results](PHASE1-VERIFICATION-RESULTS.md), [sanitized machine-readable findings](verification/schema-review-2026-11-02.json) and [gated Supabase runbook](SUPABASE-VERIFICATION-RUNBOOK.md). No runtime logic or applied migration was changed during this verification.
