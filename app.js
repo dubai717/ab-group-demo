@@ -398,7 +398,9 @@ function loadState() {
 function saveState() {
   if (!stateStorageWritable) return false;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(app.state));
+    const serialized = JSON.stringify(app.state);
+    localStorage.setItem(STORAGE_KEY, serialized);
+    if (localStorage.getItem(STORAGE_KEY) !== serialized) throw new Error('Storage verification failed');
     return true;
   } catch (error) {
     console.warn('Could not save application state; existing storage is unchanged.', error);
@@ -764,7 +766,7 @@ function renderDepartments() {
               return `
                 <tr>
                   <td>${dept.name}</td>
-                  <td>${app.state.companies[0].name || app.state.companies[0].englishName}</td>
+                  <td>${CompanyDocuments.escape(app.state.companies[0].name || app.state.companies[0].englishName)}</td>
                   <td>${manager ? manager.fullName : 'Unassigned'}</td>
                 </tr>
               `;
@@ -797,6 +799,7 @@ function renderCompanies(user) {
       </div>
 
       <div class="company-desc">${localeText('legalEntitiesDesc')}</div>
+      ${CompanyDocuments.renderSaveNotice()}
 
       ${canManage ? `
         <form id="company-form" class="company-form">
@@ -911,7 +914,7 @@ function renderCompanies(user) {
 
             ${CompanyDocuments.creationFields()}
             <div class="full controls-row">
-              <button type="submit" class="primary-btn">${localeText('createCompany')}</button>
+              <button type="submit" class="primary-btn">${CompanyDocuments.text('saveData')}</button>
             </div>
           </div>
         </form>
@@ -949,13 +952,13 @@ function renderCompanies(user) {
           <tbody>
             ${companyRows.length ? companyRows.map(company => `
               <tr>
-                <td><strong>${company.companyCode}</strong></td>
-                <td>${company.arabicName}</td>
-                <td>${company.englishName}</td>
-                <td>${company.tradeLicenseNumber}</td>
-                <td>${company.emirate}</td>
-                <td>${company.expiryDate || '-'}</td>
-                <td><span class="badge ${company.status === 'Active' ? 'active' : company.status === 'Inactive' ? 'pending' : 'disabled'}">${company.status}</span></td>
+                <td><strong>${CompanyDocuments.escape(company.companyCode)}</strong></td>
+                <td>${CompanyDocuments.escape(company.arabicName)}</td>
+                <td>${CompanyDocuments.escape(company.englishName)}</td>
+                <td>${CompanyDocuments.escape(company.tradeLicenseNumber)}</td>
+                <td>${CompanyDocuments.escape(company.emirate)}</td>
+                <td>${CompanyDocuments.escape(company.expiryDate || '-')}</td>
+                <td><span class="badge ${company.status === 'Active' ? 'active' : company.status === 'Inactive' ? 'pending' : 'disabled'}">${CompanyDocuments.escape(company.status)}</span></td>
                 <td>
                   <div class="row-actions">
                     ${CompanyDocuments.profileButton(company.id)}
@@ -1259,8 +1262,14 @@ function bindGlobalEvents() {
   AreaReference.bind();
   const companyForm = document.getElementById('company-form');
   if (companyForm) {
+    companyForm.addEventListener('input', () => CompanyDocuments.beginCreate());
     companyForm.addEventListener('submit', async (event) => {
       event.preventDefault();
+      const submitButton = companyForm.querySelector('button[type=submit]');
+      if (submitButton.disabled) return;
+      submitButton.disabled = true;
+      CompanyDocuments.beginCreate();
+      try {
       const fd = new FormData(companyForm);
       const logoFile = fd.get('logo');
       const docs = fd.getAll('documents');
@@ -1322,7 +1331,14 @@ function bindGlobalEvents() {
         return;
       }
       CompanyDocuments.captureNew(newCompany.id, documentData.files);
+      CompanyDocuments.markCreated();
       render();
+      } catch (error) {
+        const message = companyForm.querySelector('#company-doc-message');
+        if (message) message.textContent = CompanyDocuments.text('storageFailed');
+      } finally {
+        if (submitButton.isConnected) submitButton.disabled = false;
+      }
     });
   }
 
