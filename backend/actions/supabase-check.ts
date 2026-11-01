@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import { appendFile, readdir, readFile } from "node:fs/promises";
 import { Pool } from "pg";
 import { databaseOptions } from "../src/database.js";
+import {diagnosticCodes} from "../src/connection-diagnostics.js";
 import { sha } from "../src/core.js";
 
 export function approvedActionsContext(e: NodeJS.ProcessEnv) {
@@ -141,7 +142,12 @@ export async function run() {
         maxBuffer: 65536,
       },
     );
-    if (check.status !== 0) throw Error("connection verification failed");
+    if (check.status !== 0) {
+      let code='CHECK_FAILED';
+      for(const line of (check.stdout||'').split('\n')){try{const record=JSON.parse(line);if(record.status==='FAIL'&&diagnosticCodes.includes(record.diagnostic))code=record.diagnostic;}catch{}}
+      console.log('Connection diagnostic: '+code);
+      throw Error('connection verification failed');
+    }
     passed.push(
       "Actual TLS PostgreSQL/API connectivity and existing private bucket",
     );

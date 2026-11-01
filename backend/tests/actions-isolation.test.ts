@@ -107,3 +107,10 @@ test('Read-only inspector leaves absent schema untouched',async()=>{
  const source=await readFile(new URL('../actions/supabase-check.ts',import.meta.url),'utf8');
  assert(!source.includes('await migrate('));assert(!source.includes('from "../src/migrate.js"'));
 });
+
+test('Read-only diagnostics never include raw provider messages or unknown codes',async()=>{
+ const {connectionDiagnostic}=await import('../src/connection-diagnostics.js');
+ assert.equal(connectionDiagnostic({code:'SELF_SIGNED_CERT_IN_CHAIN',message:'CANARY_SECRET'}),'TLS_CERTIFICATE');
+ assert.equal(connectionDiagnostic({code:'28P01',message:'CANARY_SECRET'}),'DATABASE_CREDENTIALS');
+ assert.equal(connectionDiagnostic({code:'CANARY_SECRET',message:'CANARY_SECRET'}),'CHECK_FAILED');
+});
