@@ -35,7 +35,7 @@ Demo schema read from the canonical user record:
 }
 ```
 
-This is an integration schema, not an authorization-management UI or a claim that browser grants are secure. This change does not modify the existing users/roles or provision grants. Production grants must come from an authenticated server and the approved permission-management workflow. Existing broad financial role permissions are unchanged and do not silently confer these new company/document rights.
+In the original standalone bank branch this was only an integration schema. The unified integration now connects the Users delegation UI to separate bank_* actions for group/company scopes, using the same effective actor. Explicit legacy companyBankPermissions are retained; session grants add only the selected actions and expire on reload. Bank grants never confer personal-profile access. No existing role is modified and no grant is provisioned automatically. Browser grants are still a demo, not a security boundary; production grants must come from an authenticated server. Existing broad financial role permissions do not silently confer these new company/document rights.
 
 - Company pickers expose only companies available for the relevant action. View-only users cannot edit; close-only users cannot edit ordinary fields. No-op view submissions are denied.
 - Reassignment needs edit on the original company plus view/create on the destination; a closed account also requires close rights in the destination. No unauthorized company can be linked through a forged payload.

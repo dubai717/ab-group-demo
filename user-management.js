@@ -5,11 +5,12 @@
   else root.UserManagement = api;
 })(typeof window !== 'undefined' ? window : globalThis, function () {
   'use strict';
-  const actions = ['create', 'edit', 'status', 'assign', 'grant', 'reset', 'attachments', 'redelegate'];
+  const bankActions = ['view', 'create', 'edit', 'close', 'view_documents', 'manage_documents'];
+  const actions = ['create', 'edit', 'status', 'assign', 'grant', 'reset', 'attachments', 'redelegate', ...bankActions.map(a => 'bank_' + a)];
   const legacy = { create: 'create_user', edit: 'edit_user', status: 'deactivate_user' };
   const copy = value => JSON.parse(JSON.stringify(value));
   const clean = user => { const value = copy(user); delete value.password; return value; };
-  function createService(source, now = () => new Date().toISOString()) {
+  function createService(source, now = () => new Date().toISOString(), persistence = {}) {
     const records = new Map(source.users.map(user => [user.id, clean(user)]));
     const roles = copy(source.roles), companies = copy(source.companies), departments = copy(source.departments);
     const grants = new Map(), files = new Map(), audit = [];
@@ -53,6 +54,11 @@
       if (isOwner(id) || (legacy[action] && role?.permissions.includes(legacy[action]))) {
         result.push({ action, scope: { type: 'group', id: '' }, delegable: isOwner(id) });
       }
+      if (action.startsWith('bank_')) {
+        for (const entry of (Array.isArray(actor.companyBankPermissions) ? actor.companyBankPermissions : [])) {
+          if (Array.isArray(entry.permissions) && entry.permissions.includes(action.slice(5)) && companies.some(c => c.id === entry.companyId)) result.push({action, scope:{type:'company',id:entry.companyId}, delegable:false});
+        }
+      }
       return result;
     }
     function can(id, action, target) {
@@ -70,7 +76,7 @@
       if (!target?.id) return false;
       const actor = user(id);
       const legacyViewer = actor?.status === 'Active' && (actor.roleId === 'general_manager' || roles.find(r => r.id === actor.roleId)?.permissions.includes('view_users'));
-      return actor?.status === 'Active' && (id === target.id || legacyViewer || actions.some(action => can(id, action, target)));
+      return actor?.status === 'Active' && (id === target.id || legacyViewer || actions.filter(action => !action.startsWith('bank_')).some(action => can(id, action, target)));
     }
     function validate(data, targetId) {
       if (((!records.has(targetId) || user(targetId)?.nameAr) && !data.nameAr?.trim()) || !data.nameEn?.trim() || !/^[A-Za-z0-9_.-]{3,64}$/.test(data.username || '') || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email || '')) throw new Error('invalid');
@@ -90,11 +96,16 @@
     }
     const assignmentKeys = ['jobTitle', 'hireDate', 'managerId', 'companyIds', 'departmentIds'];
     const profileKeys = ['nameAr', 'nameEn', 'emiratesId', 'nationality', 'phone', 'email', 'username'];
-    function update(actorId, targetId, data, attachments = []) {
+    function update(actorId, targetId, data, attachments = [], options = {}) {
       const previous = user(targetId);
       if (targetId && !previous) throw new Error('denied');
       const isNew = !previous;
-      const candidate = { ...(previous || {id: `demo-${++sequence}`, roleId: 'employee', status: 'Pending'}), ...Object.fromEntries([...profileKeys, ...assignmentKeys, 'status'].map(k => [k, data[k]])) };
+      const candidate = { ...(previous || {id: `demo-${crypto.randomUUID()}`, roleId: 'employee', status: 'Pending'}), ...Object.fromEntries([...profileKeys, ...assignmentKeys, 'status'].map(k => [k, data[k]])) };
+      if (isNew && options.roleId && options.roleId !== 'employee') {
+        if (!isOwner(actorId) || options.roleId === 'owner' || !roles.some(r => r.id === options.roleId)) throw new Error('denied');
+        candidate.roleId = options.roleId;
+      }
+      if (!isNew && options.verifier) throw new Error('denied');
       validate(candidate, candidate.id);
       const baseline = { nameEn:previous?.fullName || '', nameAr:'', jobTitle:'', hireDate:'', managerId:'', companyIds:previous ? associations(previous, 'company') : [], departmentIds:previous ? associations(previous, 'department') : [], ...previous };
       const changed = keys => keys.filter(key => JSON.stringify(candidate[key]) !== JSON.stringify(baseline[key] ?? ''));
@@ -111,7 +122,9 @@
       candidate.fullName = candidate.nameEn;
       candidate.companyId = candidate.companyIds[0] || '';
       candidate.departmentId = candidate.departmentIds[0] || '';
+      const localLogin = persistence.save?.(copy(candidate), options.verifier) === true;
       records.set(candidate.id, copy(candidate));
+      if (localLogin) log(actorId, 'demoLoginSaved', candidate.id, ['username', 'roleId', 'status']);
       if (attachments.length) {
         const stored = files.get(candidate.id) || new Map();
         attachments.forEach(({slot, file}) => stored.set(slot, file)); files.set(candidate.id, stored);
@@ -126,10 +139,12 @@
       const target = user(targetId); requireAction(actorId, 'status', target);
       if (targetId === actorId || target.roleId === 'owner') throw new Error('ownerProtected');
       if (!['Active', 'Disabled', 'Pending'].includes(status)) throw new Error('invalid');
+      persistence.save?.({...copy(target), status});
       const before = target.status; target.status = status; log(actorId, 'statusChanged', targetId, ['status', before, status]);
     }
     function grant(actorId, targetId, entry) {
       const target = user(targetId); requireAction(actorId, 'grant', target);
+      if (String(entry.action).startsWith('bank_') && !['group', 'company'].includes(entry.scope?.type)) throw new Error('denied');
       if (targetId === actorId || target.roleId === 'owner' || !actions.includes(entry.action) || !validScope(entry.scope)) throw new Error('denied');
       if (!effective(actorId, 'grant').some(g => scopeContains(g.scope, entry.scope))) throw new Error('denied');
       if (!isOwner(actorId) && !effective(actorId, 'redelegate').some(g => scopeContains(g.scope, entry.scope))) throw new Error('denied');
@@ -161,6 +176,8 @@
     }
     return {
       actions, companies, departments,
+      summary() { const rows=[...records.values()];return {total:rows.length,active:rows.filter(u=>u.status==='Active').length,byRole:Object.fromEntries(roles.map(r=>[r.id,rows.filter(u=>u.roleId===r.id).length]))}; },
+      bankPermissions(id, companyId) { return bankActions.filter(action => effective(id, 'bank_' + action).some(g => g.scope.type === 'group' || g.scope.type === 'company' && g.scope.id === companyId)); },
       syncDirectories(state) { companies.splice(0, companies.length, ...copy(state.companies)); departments.splice(0, departments.length, ...copy(state.departments)); },
       get: (actorId, id) => visible(actorId, user(id) || {}) ? clean(user(id)) : null,
       list: actorId => [...records.values()].filter(u => visible(actorId, u)).map(clean),
@@ -201,10 +218,28 @@
       activate:'Activate', disable:'Disable', filePreview:'Attachment preview', close:'Close preview', confirmRevoke:'Revoke this grant and its downstream grants?', total:'Visible users',
     }
   };
+  Object.assign(messages.ar, {
+    demo:'وضع تجريبي — استخدم بيانات وهمية فقط. الملفات الشخصية الحساسة والمرفقات والتفويضات والتدقيق في ذاكرة الصفحة. خيار الدخول المحلي يحفظ بيانات الدليل الأساسية ومشتق كلمة المرور في هذا المتصفح فقط؛ ليس مصادقة آمنة أو حساباً مركزياً.',
+    legacyLoginNote:'هذا حساب دخول تجريبي سابق. تعديل الملف واسم المستخدم هنا للجلسة فقط ولا يغيّر بيانات دخوله الأصلية المحفوظة. تغيير بيانات الدخول الفعلي يحتاج خدمة مصادقة آمنة.',
+    demoLogin:'بيانات دخول تجريبية محلية (اختياري)', enableDemoLogin:'إنشاء دخول تجريبي محفوظ في هذا المتصفح',
+    demoLoginNote:'استخدم كلمة مرور وهمية من 12 إلى 128 حرفاً تشمل حرفاً كبيراً وصغيراً ورقماً ورمزاً، دون مسافات. يُحفظ مشتق مملّح فقط مع الاسم وبيانات التواصل والارتباطات الأساسية؛ لا تُحفظ الهوية أو الجنسية أو المرفقات. الحساب النشط يمكنه الدخول هنا فقط. دون هذا الخيار يبقى الملف للجلسة. اختيار دور غير الموظف عند الإنشاء متاح للمالك فقط.',
+    demoPassword:'كلمة مرور تجريبية', demoConfirm:'تأكيد كلمة المرور التجريبية', baseRole:'الدور الأساسي', savedLocalLogin:'حُفظ دليل الدخول التجريبي محلياً؛ البيانات الحساسة والمرفقات والتفويضات تبقى للجلسة فقط.',
+    demoLoginSaved:'حفظ دليل الدخول التجريبي', mismatch:'كلمتا المرور غير متطابقتين.', weak:'كلمة المرور لا تستوفي المتطلبات المعروضة.', cryptoUnavailable:'تجهيز الدخول المحلي غير متاح؛ يلزم متصفح يدعم Web Crypto عبر HTTPS أو localhost.', credentialStorageInvalid:'تعذر قراءة دليل الدخول المحلي؛ لم يُستبدل أو يُحذف.', storageFailed:'فشل حفظ دليل الدخول والتحقق منه؛ لم يُعتمد التغيير.',
+    bank_view:'البنوك: عرض الحسابات', bank_create:'البنوك: إنشاء حساب', bank_edit:'البنوك: تعديل حساب', bank_close:'البنوك: إغلاق حساب', bank_view_documents:'البنوك: عرض المستندات', bank_manage_documents:'البنوك: إضافة مستندات'
+  });
+  Object.assign(messages.en, {
+    demo:'Demo — use fictional data only. Sensitive profiles, files, grants and audit stay in page memory. Optional local sign-in saves basic directory metadata and a password verifier in this browser only; it is not secure authentication or a central account.',
+    legacyLoginNote:'This is a legacy demo sign-in account. Session profile/username edits do not change its existing saved sign-in credentials. Actual credential changes require secure authentication services.',
+    demoLogin:'Local demo sign-in (optional)', enableDemoLogin:'Create sign-in saved in this browser',
+    demoLoginNote:'Use a fictional 12–128 character password with uppercase, lowercase, digit and symbol, without spaces. Only a salted verifier plus names, contact and basic membership metadata are saved; never ID, nationality or files. Active accounts can sign in here only. Without this option the profile is session-only. Only the owner can choose a non-employee role at creation.',
+    demoPassword:'Demo password', demoConfirm:'Confirm demo password', baseRole:'Base role', savedLocalLogin:'Demo sign-in directory saved locally; sensitive data, files and grants remain session-only.',
+    demoLoginSaved:'Demo sign-in directory saved', mismatch:'Passwords do not match.', weak:'Password does not meet the displayed requirements.', cryptoUnavailable:'Local sign-in setup unavailable; use a Web Crypto browser over HTTPS or localhost.', credentialStorageInvalid:'Local sign-in directory could not be read; it was not overwritten or deleted.', storageFailed:'Sign-in directory saving/verification failed; changes were not committed.',
+    bank_view:'Bank accounts: view', bank_create:'Bank accounts: create', bank_edit:'Bank accounts: edit', bank_close:'Bank accounts: close', bank_view_documents:'Bank documents: view', bank_manage_documents:'Bank documents: add'
+  });
   let service, selected = null, notice = '', query = '', filterStatus = '', filterCompany = '', filterDept = '', previewUrl;
   function t(key) { return messages[getLocale() === 'ar' ? 'ar' : 'en'][key] || key; }
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  function getService() { if (!service) service = createService(app.state); else service.syncDirectories(app.state); return service; }
+  function getService() { if (!service) service = createService({...app.state, users:[...app.state.users, ...DemoCredentials.directory()]}, undefined, {save:(candidate, verifier)=>DemoCredentials.saveProfile(candidate, verifier)}); else service.syncDirectories(app.state); return service; }
   function actorId() { return app.state.currentUser?.id; }
   function name(user) { return (getLocale() === 'ar' ? user.nameAr : user.nameEn) || user.fullName || user.username; }
   function hydrated(u) {
@@ -212,7 +247,7 @@
   }
   function option(value, label, chosen) { return `<option value="${esc(value)}" ${chosen ? 'selected' : ''}>${esc(label)}</option>`; }
   function field(key, value, disabled, type = 'text', required = false) {
-    return `<div class="form-group"><label for="um-${key}">${t(key)}</label><input id="um-${key}" class="input" name="${key}" type="${type}" value="${esc(value)}" ${disabled ? 'disabled' : ''} ${required ? 'required' : ''} maxlength="${key === 'emiratesId' ? '18' : '160'}" /></div>`;
+    return `<div class="form-group"><label for="um-${key}">${t(key)}</label><input id="um-${key}" class="input" name="${key}" type="${type}" value="${esc(value)}" ${disabled ? 'disabled' : ''} ${required ? 'required' : ''} maxlength="${type === 'password' ? '128' : key === 'emiratesId' ? '18' : '160'}" ${type==='password'?'autocomplete="new-password"':''} /></div>`;
   }
   function selectField(key, options, values, disabled, multiple = false) {
     return `<div class="form-group"><label for="um-${key}">${t(key)}</label><select id="um-${key}" class="input" name="${key}" ${disabled ? 'disabled' : ''} ${multiple ? 'multiple size="4"' : ''}>${multiple ? '' : option('',t('none'),!values[0])}${options.map(o=>option(o.id,o.label,values.includes(o.id))).join('')}</select></div>`;
@@ -231,11 +266,11 @@
     const attachmentAllowed=has('attachments'), attachmentWritable=attachmentAllowed&&basic;
     const attachmentList=!isNew&&attachmentAllowed?s.files(actor,selected):[];
     return `<section class="content-panel um-editor" id="um-editor"><div class="section-head"><h2>${isNew?t('add'):esc(name(existing))}</h2><button class="ghost-btn" type="button" data-um="close">${t('cancel')}</button></div>
-      <p class="muted">${t('inherited')}</p><p class="muted">${localeText('role')}: ${esc(getRoleName(existing?.roleId || 'employee'))}</p>
+      <p class="muted">${t('inherited')}</p>${existing&&app.state.users.some(v=>v.id===existing.id)?`<p class="muted">${t('legacyLoginNote')}</p>`:''}<p class="muted">${localeText('role')}: ${esc(getRoleName(existing?.roleId || 'employee'))}</p>
       <form id="um-profile"><h3>${t('identity')}</h3><div class="form-grid">
       ${['nameAr','nameEn','emiratesId','nationality','phone','email','username'].map(k=>field(k,u[k],!basic,k==='email'?'email':k==='phone'?'tel':'text',['nameAr','nameEn','email','username'].includes(k))).join('')}
       <div class="form-group"><label for="um-status">${t('status')}</label><select id="um-status" name="status" class="input" ${status?'':'disabled'}>${['Pending','Active','Disabled'].map(v=>option(v,t(v),v===(u.status||'Pending'))).join('')}</select></div>
-      </div><h3>${t('assignment')}</h3><div class="form-grid">
+      </div>${isNew?`<fieldset class="um-login-setup"><legend>${t('demoLogin')}</legend><p class="muted">${t('demoLoginNote')}</p><label class="um-checkbox"><input type="checkbox" id="um-local-login" name="localLogin" />${t('enableDemoLogin')}</label><div class="form-grid">${field('demoPassword','',true,'password')}${field('demoConfirm','',true,'password')}<div><label for="um-base-role">${t('baseRole')}</label><select class="input" id="um-base-role" name="baseRole" ${s.actor(actor)?.roleId==='owner'?'':'disabled'}>${app.state.roles.filter(r=>r.id!=='owner').map(r=>option(r.id,r.name,r.id==='employee')).join('')}</select></div></div></fieldset>`:''}<h3>${t('assignment')}</h3><div class="form-grid">
       ${field('jobTitle',u.jobTitle,!assign)}${field('hireDate',u.hireDate,!assign,'date')}
       ${selectField('managerId',managerOptions,[u.managerId],!assign)}
       ${selectField('companyIds',companyOptions,u.companyIds,!assign,true)}
@@ -284,18 +319,27 @@
       if(action==='close-preview'){document.getElementById('um-preview').close();if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=null;refresh();}
     })));
     document.getElementById('um-filters')?.addEventListener('submit',event=>{event.preventDefault();const fd=new FormData(event.target);query=String(fd.get('query'));filterStatus=String(fd.get('status'));filterCompany=String(fd.get('company'));filterDept=String(fd.get('department'));refresh();});
-    document.getElementById('um-profile')?.addEventListener('submit',event=>{event.preventDefault();run(()=>{
+    document.getElementById('um-local-login')?.addEventListener('change',event=>{for(const key of ['demoPassword','demoConfirm']){const input=document.getElementById('um-'+key);input.disabled=!event.target.checked;input.required=event.target.checked;}});
+    document.getElementById('um-profile')?.addEventListener('submit',async event=>{event.preventDefault();const form=event.target,submittedActor=actorId(),submittedTarget=selected,button=form.querySelector('button[type=submit]');if(button.disabled)return;button.disabled=true;try {
       const previous=selected?s.get(actorId(),selected):null,u=hydrated(previous),fd=new FormData(event.target),data={};
       for(const key of ['nameAr','nameEn','emiratesId','nationality','phone','email','username','jobTitle','hireDate','managerId','status'])data[key]=fd.has(key)?String(fd.get(key)).trim():(u[key]??(key==='status'?'Pending':''));
       for(const key of ['companyIds','departmentIds'])data[key]=event.target.elements[key].disabled?u[key]:fd.getAll(key);
       const attachments=['photo','idFront','idBack','passport','contract','driving'].map(slot=>({slot,file:fd.get(`file-${slot}`)})).filter(f=>f.file&&f.file.name);
-      const saved=s.update(actorId(),selected||null,data,attachments);selected=saved.id;refresh('saved');
-    });});
-    document.getElementById('um-scope')?.addEventListener('change',scopeOptions);scopeOptions();
+      const localLogin=fd.get('localLogin')==='on';
+      const verifier=localLogin?await DemoCredentials.prepare(String(fd.get('demoPassword')||''),String(fd.get('demoConfirm')||'')):undefined;
+      if(actorId()!==submittedActor||selected!==submittedTarget||!form.isConnected)throw new Error('denied');
+      const saved=s.update(submittedActor,submittedTarget||null,data,attachments,{roleId:previous?undefined:String(fd.get('baseRole')||'employee'),verifier});selected=saved.id;refresh(localLogin||DemoCredentials.directory().some(u=>u.id===saved.id)?'savedLocalLogin':'saved');
+    } catch(error) { const node=document.getElementById('um-notice');if(node)node.textContent=t(error.message); } finally { if(button.isConnected)button.disabled=false; } });
+    function grantScopeChoices(){const action=document.getElementById('um-action')?.value,scope=document.getElementById('um-scope');if(!scope)return;for(const option of scope.options)option.disabled=action?.startsWith('bank_')&&!['group','company'].includes(option.value);if(scope.selectedOptions[0]?.disabled)scope.value='company';scopeOptions();}
+    document.getElementById('um-action')?.addEventListener('change',grantScopeChoices);document.getElementById('um-scope')?.addEventListener('change',scopeOptions);grantScopeChoices();
     document.getElementById('um-grant')?.addEventListener('submit',event=>{event.preventDefault();run(()=>{const fd=new FormData(event.target);s.grant(actorId(),selected,{action:String(fd.get('action')),scope:{type:String(fd.get('scope')),id:String(fd.get('scopeId')||'')},delegable:fd.get('delegable')==='on'});refresh('granted');});});
   }
   return { createService, render:renderPage, bind, escape:esc,
-    effectiveUser(user) { return user && service ? service.actor(user.id) || user : user; },
+    effectiveUser(user) { return user ? getService().actor(user.id) : null; },
+    visibleUsers() { return getService().list(actorId()); },
+    summary() { return getService().summary(); },
+    actorForModules(user) { const s=getService(),u=user&&s.actor(user.id);return u?{...u,permissions:app.state.roles.find(r=>r.id===u.roleId)?.permissions||[],companyBankPermissions:s.companies.map(c=>({companyId:c.id,permissions:s.bankPermissions(u.id,c.id)}))}:null; },
+    cleanup() { if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=null; },
     logout() { selected=null;notice='';if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=null; }
   };
 });

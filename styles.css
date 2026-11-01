@@ -817,3 +817,8 @@ th {
 #auth-message:not(:empty) { padding: 12px; border: 1px solid var(--line); background: var(--gold-soft); border-radius: 12px; }
 .auth-settings .section-head { flex-wrap: wrap; }
 @media (max-width: 640px) { .auth-channels { flex-direction: column; } .account-popover { min-width: 160px; } }
+
+/* Local demo sign-in uses existing panel colors and responsive form sizing. */
+.um-login-setup { min-width: 0; border: 1px solid var(--line); border-radius: 12px; margin: 20px 0; padding: 16px; }
+.um-login-setup .form-grid > * { min-width: 0; }
+@media (max-width: 640px) { .topbar { flex-wrap: wrap; } .account-menu { max-width: 100%; } }

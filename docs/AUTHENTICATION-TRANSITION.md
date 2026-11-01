@@ -4,9 +4,9 @@
 
 The base is `main` at `8f25b79`. No `AGENTS.md` was found in the workspace. `server.js` is a static Node HTTP file server, not an authentication service; there is no user database, session service, verified-contact registry or notification provider. `app.js` compares demo usernames/passwords and persists its existing application state in localStorage. Existing demo passwords and client-asserted roles are not a production security boundary.
 
-This change preserves that demo login and all existing stored users/roles. It does **not** migrate or overwrite credentials. The earlier local user-management development remains on its independent branch; this PR adds only password-flow presentation to current main.
+This change preserves that demo login and all existing stored users/roles. It does **not** migrate or overwrite credentials. This document originally accompanied the standalone password-flow branch. The unified integration now includes user management and company/bank work while preserving the original branches. Optional new-account local demo enrollment is described in INTEGRATION-REVIEW.md; it is separate from the still-blocked password reset/change flows and does not supply secure authentication.
 
-The new module never stores submitted passwords, OTPs or recovery identifiers. It makes no authentication/provider requests. No OTP is generated, no message is claimed to have been sent, no local password verification is presented as secure, and no password operation can return success. Valid-looking password submissions are explicitly rejected as backend unavailable. Existing demo authentication/storage is still unsuitable for real credentials; do not use real accounts or personal data.
+The new module never stores submitted passwords, OTPs or recovery identifiers. It makes no authentication/provider requests. No OTP is generated, no message is claimed to have been sent, no local password verification is presented as secure, and no recovery or change-password operation can return success. Valid-looking password submissions are explicitly rejected as backend unavailable. Existing demo authentication/storage is still unsuitable for real credentials; do not use real accounts or personal data.
 
 ## Implemented interface
 

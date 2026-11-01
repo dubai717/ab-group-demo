@@ -100,7 +100,7 @@
       ${passwordField('auth-current','current','current-password')}${passwordField('auth-new','newPassword','new-password')}${passwordField('auth-confirm','confirm','new-password')}<button class="primary-btn" type="submit">${text('save')}</button></form><p id="auth-message" tabindex="-1" role="status" aria-live="polite">${notice?text(notice):''}</p>${auditHTML(user.id)}</section>`;
   }
   function bindApp() {
-    document.querySelector('[data-auth="settings"]')?.addEventListener('click',()=>{if(!getCurrentUser())return;mode='settings';notice='';render();});
+    document.querySelector('[data-auth="settings"]')?.addEventListener('click',()=>{if(!getCurrentUser())return;BankAccounts.cleanup();CompanyDocuments.cleanupPreview();UserManagement.cleanup();mode='settings';notice='';render();});
     document.querySelector('[data-auth="return"]')?.addEventListener('click',()=>{leave();render();});
     document.getElementById('auth-change')?.addEventListener('submit',event=>{
       event.preventDefault();const user=getCurrentUser();const current=document.getElementById('auth-current'),password=document.getElementById('auth-new'),confirmation=document.getElementById('auth-confirm');

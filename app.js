@@ -435,8 +435,13 @@ function getCurrentUser() {
   return user?.status === 'Active' ? user : null;
 }
 
+function getCanonicalActor() {
+  return UserManagement.actorForModules(getCurrentUser());
+}
+
 function setCurrentUser(user) {
-  app.state.currentUser = user;
+  // Persist only the selected demo ID, never a session profile or new credential.
+  app.state.currentUser = user ? {id:user.id} : null;
   saveState();
 }
 
@@ -566,8 +571,9 @@ function renderCurrentPage() {
 }
 
 function renderDashboard(user) {
-  const totalUsers = app.state.users.length;
-  const activeUsers = app.state.users.filter(u => u.status === 'Active').length;
+  const summary = UserManagement.summary();
+  const totalUsers = summary.total;
+  const activeUsers = summary.active;
   const departments = app.state.departments.length;
   const companies = app.state.companies.length;
   const tasks = app.state.tasks.length;
@@ -874,7 +880,7 @@ function renderCompanies(user) {
                 <td>
                   <div class="row-actions">
                     ${CompanyDocuments.profileButton(company.id)}
-                    <button class="ghost-btn" data-action="toggle-company-status" data-company-id="${company.id}">${company.status === 'Active' ? localeText('disable') : localeText('enable')}</button>
+                    ${user.roleId==='owner'||isUserAllowed(user,'edit_company')?`<button class="ghost-btn" data-action="toggle-company-status" data-company-id="${company.id}">${company.status === 'Active' ? localeText('disable') : localeText('enable')}</button>`:''}
                   </div>
                 </td>
               </tr>
@@ -1058,33 +1064,37 @@ function renderLogin() {
   });
 }
 
-function handleLogin(event) {
+let loginAttempt = 0;
+async function handleLogin(event) {
   event.preventDefault();
+  const form = document.getElementById('login-form');
+  if (!form || form.dataset.busy === 'true') return;
+  form.dataset.busy = 'true';
+  const attempt = ++loginAttempt;
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
-  const user = app.state.users.find(u => u.username === username);
   const errBox = document.getElementById('login-error');
-
-  if (!user || user.password !== password) {
-    AuthFlows.record('login_failed');
-    errBox.textContent = localeText('loginError');
-    errBox.classList.add('visible');
-    return;
+  try {
+    // Keep legacy demo credentials intact. New local accounts use a separate verifier.
+    const legacy = app.state.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+    let user = legacy && legacy.username === username && legacy.password === password ? legacy : null;
+    if (!legacy) user = await DemoCredentials.authenticate(username, password);
+    if (attempt !== loginAttempt || !form.isConnected) return;
+    if (!user || legacy && legacy.status !== 'Active' || UserManagement.effectiveUser(user)?.status !== 'Active') throw new Error('login');
+    AuthFlows.leave();
+    AuthFlows.record('login_succeeded', user.id);
+    setCurrentUser(user);
+    app.state.currentPage = 'dashboard';
+    render();
+  } catch {
+    if (attempt === loginAttempt && form.isConnected) {
+      AuthFlows.record('login_failed');
+      errBox.textContent = localeText('loginError');
+      errBox.classList.add('visible');
+    }
+  } finally {
+    if (form.isConnected) delete form.dataset.busy;
   }
-
-  if (UserManagement.effectiveUser(user).status !== 'Active') {
-    AuthFlows.record('login_failed');
-    errBox.textContent = localeText('loginError');
-    errBox.classList.add('visible');
-    return;
-  }
-
-  errBox.classList.remove('visible');
-  AuthFlows.leave();
-  AuthFlows.record('login_succeeded', user.id);
-  setCurrentUser(user);
-  app.state.currentPage = 'dashboard';
-  render();
 }
 
 function bindGlobalEvents() {
@@ -1094,6 +1104,7 @@ function bindGlobalEvents() {
   document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', () => {
       AuthFlows.leave();
+      UserManagement.cleanup();
       BankAccounts.cleanup();
       CompanyDocuments.cleanupPreview();
       const page = button.dataset.page;
@@ -1140,6 +1151,8 @@ function bindGlobalEvents() {
 
   document.querySelectorAll('[data-action="toggle-company-status"]').forEach(button => {
     button.addEventListener('click', () => {
+      const actor = getCanonicalActor();
+      if(!actor || actor.status!=='Active' || !(actor.roleId==='owner'||isUserAllowed(actor,'edit_company'))) return;
       const companyId = button.dataset.companyId;
       const target = app.state.companies.find(c => c.id === companyId);
       if (!target) return;
