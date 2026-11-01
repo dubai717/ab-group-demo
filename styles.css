@@ -761,3 +761,19 @@ th {
 @media (max-width: 640px) { body:has(.cd-alerts, .cd-report, .cd-profile) .topbar { flex-wrap: wrap; } }
 
 .cd-company-logo { display: block; width: 80px; height: 80px; object-fit: contain; margin: 8px 0; }
+
+/* Bank register extends the existing palette and panel layout. */
+.bk-page { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); min-width: 0; }
+.bk-page > *, .bk-page .form-grid > * { min-width: 0; }
+.bk-page label { display: block; margin: 8px 0; }
+.bk-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; margin-bottom: 20px; }
+.bk-documents, .bk-reference { margin-top: 24px; }
+.bk-doc-draft { min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin: 16px 0; }
+.bk-doc-draft legend { overflow-wrap: anywhere; }
+.bk-page input[type=file] { max-width: 100%; }
+#bk-notice:not(:empty), #bk-editor-message:not(:empty), #bk-doc-message:not(:empty) { padding: 12px; border-radius: 12px; background: var(--gold-soft); }
+#bk-preview { width: min(900px, 94vw); max-height: 90vh; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
+#bk-preview img { max-width: 100%; max-height: 70vh; object-fit: contain; display: block; margin: auto; }
+#bk-preview iframe { width: 100%; height: 65vh; border: 0; }
+#bk-preview::backdrop { background: rgba(36,25,24,.5); }
+@media(max-width:640px) { .bk-filters { grid-template-columns: minmax(0, 1fr); } body:has(.bk-page) .topbar { flex-wrap: wrap; } }

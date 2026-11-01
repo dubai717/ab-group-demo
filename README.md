@@ -119,3 +119,11 @@ Run `node tests/company-documents.test.cjs`, `node tests/storage.test.cjs` and `
 The existing company-file action now opens all existing company fields for authorized editing, with **Save changes**. Initial creation uses **Save data** and confirms success after storage write/readback verification. Salik/traffic fields and the previous document/area features are reused. Edits patch only changed fields and preserve old data; storage failure never shows a success message.
 
 This is still browser-local demo persistence. See [limited save-fix report](docs/COMPANY-SAVE-FIX.md) for the retained functionality, exact scope, tests and storage limits. Tests: `node tests/company-profile-save.test.cjs`; optional Playwright flow: `tests/company-profile-save.browser.cjs`.
+
+## Bank accounts (demo)
+
+The owner/company-authorized bank menu provides account creation, editing, closure, search/filters and expandable bank/purpose references. Each account links to an existing authorized company and has an independent ID. IBAN/identity duplicates are checked, and closed accounts are retained.
+
+The account document section supports multiple classified, linked and versioned documents without replacing prior records. **Protected central storage is not available:** account metadata is local demo data; files and document history remain in memory and disappear on logout/reload. Do not use real bank data or documents. See [bank-account scope, permissions and backend requirements](docs/BANK-ACCOUNTS.md).
+
+Tests: `node tests/bank-accounts.test.cjs`; optional Playwright: `tests/bank-accounts.browser.cjs`.
