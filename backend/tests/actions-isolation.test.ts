@@ -114,3 +114,12 @@ test('Read-only diagnostics never include raw provider messages or unknown codes
  assert.equal(connectionDiagnostic({code:'28P01',message:'CANARY_SECRET'}),'DATABASE_CREDENTIALS');
  assert.equal(connectionDiagnostic({code:'CANARY_SECRET',message:'CANARY_SECRET'}),'CHECK_FAILED');
 });
+
+test('Read-only TLS trusts only the reviewed Supabase public CA without disabling verification',async()=>{
+ const {X509Certificate}=await import('node:crypto');
+ const ca=new X509Certificate(await readFile(new URL('../certificates/supabase-prod-ca-2021.crt',import.meta.url)));
+ assert.equal(ca.fingerprint256,'80:70:25:AD:50:D4:ED:21:9D:2C:9C:7D:29:9C:00:4F:82:4E:B0:0C:F7:F6:5A:FE:F6:07:D0:7B:72:E6:CA:FA');
+ assert(ca.ca);assert(ca.verify(ca.publicKey));assert(new Date(ca.validTo)>new Date());
+ const workflow=await readFile(new URL('../../.github/workflows/supabase-test.yml',import.meta.url),'utf8');
+ assert(workflow.includes('NODE_EXTRA_CA_CERTS:'));assert(!workflow.includes('NODE_TLS_REJECT_UNAUTHORIZED'));
+});
