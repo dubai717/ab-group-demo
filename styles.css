@@ -759,3 +759,5 @@ th {
 @media (max-width: 640px) { .cd-code-filters { grid-template-columns: minmax(0, 1fr); } }
 .cd-document p { overflow-wrap: anywhere; }
 @media (max-width: 640px) { body:has(.cd-alerts, .cd-report, .cd-profile) .topbar { flex-wrap: wrap; } }
+
+.cd-company-logo { display: block; width: 80px; height: 80px; object-fit: contain; margin: 8px 0; }

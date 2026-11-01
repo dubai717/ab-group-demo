@@ -113,3 +113,9 @@ Company files now contain optional trade-licence, establishment-card and labour-
 **Protected storage is not available in this static demo.** New typed files stay in page memory and are discarded on logout/reload; dates and codes use the existing local company state. No new sensitive file bytes are stored in localStorage and no background notifications are sent. Use dummy files only. See [company-document impact review and backend requirements](docs/COMPANY-DOCUMENTS.md).
 
 Run `node tests/company-documents.test.cjs`, `node tests/storage.test.cjs` and `node tests/area-reference.test.cjs`. Optional Playwright tests are in `tests/company-documents.browser.cjs`.
+
+## Company profile save confirmation
+
+The existing company-file action now opens all existing company fields for authorized editing, with **Save changes**. Initial creation uses **Save data** and confirms success after storage write/readback verification. Salik/traffic fields and the previous document/area features are reused. Edits patch only changed fields and preserve old data; storage failure never shows a success message.
+
+This is still browser-local demo persistence. See [limited save-fix report](docs/COMPANY-SAVE-FIX.md) for the retained functionality, exact scope, tests and storage limits. Tests: `node tests/company-profile-save.test.cjs`; optional Playwright flow: `tests/company-profile-save.browser.cjs`.
