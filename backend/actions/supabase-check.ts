@@ -4,7 +4,11 @@ import { spawnSync } from "node:child_process";
 import { appendFile, readdir, readFile } from "node:fs/promises";
 import { Pool } from "pg";
 import { databaseOptions } from "../src/database.js";
-import {diagnosticCodes} from "../src/connection-diagnostics.js";
+import {
+  formatCheckNames,
+  formatWarningNames,
+} from "../src/connection-format.js";
+import { diagnosticCodes } from "../src/connection-diagnostics.js";
 import { sha } from "../src/core.js";
 
 export function approvedActionsContext(e: NodeJS.ProcessEnv) {
@@ -21,27 +25,40 @@ export function approvedActionsContext(e: NodeJS.ProcessEnv) {
   );
 }
 export async function inspectSchema(pool: Pool) {
-  const c=await pool.connect();
-  let present=false;
+  const c = await pool.connect();
+  let present = false;
   try {
-    await c.query('BEGIN READ ONLY');
-    const r=(await c.query("select to_regclass('public.ab_schema_migrations') ledger,to_regnamespace('ab') app_schema")).rows[0];
-    if(!r.ledger&&!r.app_schema)return 'NOT_APPLIED' as const;
-    if(!r.ledger||!r.app_schema)throw Error('partial schema');
-    present=true;
-  } finally {await c.query('ROLLBACK');c.release();}
-  if(present)await checkSchema(pool);
-  return 'VERIFIED' as const;
+    await c.query("BEGIN READ ONLY");
+    const r = (
+      await c.query(
+        "select to_regclass('public.ab_schema_migrations') ledger,to_regnamespace('ab') app_schema",
+      )
+    ).rows[0];
+    if (!r.ledger && !r.app_schema) return "NOT_APPLIED" as const;
+    if (!r.ledger || !r.app_schema) throw Error("partial schema");
+    present = true;
+  } finally {
+    await c.query("ROLLBACK");
+    c.release();
+  }
+  if (present) await checkSchema(pool);
+  return "VERIFIED" as const;
 }
 export async function checkSchema(pool: Pool) {
   const c = await pool.connect();
   try {
     await c.query("BEGIN READ ONLY");
-    const dir=new URL('../../supabase/migrations/',import.meta.url);
-    const files=(await readdir(dir)).filter(x=>x.endsWith('.sql')).sort();
-    const ledger=(await c.query('select name,sha256 from public.ab_schema_migrations')).rows;
-    if(ledger.length!==files.length)throw Error('migration count');
-    for(const file of files){const checksum=sha(await readFile(new URL(file,dir),'utf8'));if(!ledger.some(r=>r.name===file&&r.sha256===checksum))throw Error('migration checksum mismatch');}
+    const dir = new URL("../../supabase/migrations/", import.meta.url);
+    const files = (await readdir(dir)).filter((x) => x.endsWith(".sql")).sort();
+    const ledger = (
+      await c.query("select name,sha256 from public.ab_schema_migrations")
+    ).rows;
+    if (ledger.length !== files.length) throw Error("migration count");
+    for (const file of files) {
+      const checksum = sha(await readFile(new URL(file, dir), "utf8"));
+      if (!ledger.some((r) => r.name === file && r.sha256 === checksum))
+        throw Error("migration checksum mismatch");
+    }
     const missingRls = (
       await c.query(
         "select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='ab' and c.relkind='r' and c.relname not in('roles','permissions','role_permissions','emirates') and not c.relrowsecurity",
@@ -142,11 +159,40 @@ export async function run() {
         maxBuffer: 65536,
       },
     );
+    for (const line of (check.stdout || "").split("\n")) {
+      try {
+        const record = JSON.parse(line);
+        if (record.status === "FORMAT") {
+          for (const id of formatCheckNames) {
+            const item = record.checks?.find((x: any) => x.id === id);
+            if (typeof item?.pass === "boolean")
+              console.log(
+                "Connection format: " +
+                  id +
+                  " " +
+                  (item.pass ? "PASS" : "FAIL"),
+              );
+          }
+          for (const warning of formatWarningNames)
+            if (record.warnings?.includes(warning))
+              console.log("Connection warning: " + warning);
+        }
+      } catch {}
+    }
     if (check.status !== 0) {
-      let code='CHECK_FAILED';
-      for(const line of (check.stdout||'').split('\n')){try{const record=JSON.parse(line);if(record.status==='FAIL'&&diagnosticCodes.includes(record.diagnostic))code=record.diagnostic;}catch{}}
-      console.log('Connection diagnostic: '+code);
-      throw Error('connection verification failed');
+      let code = "CHECK_FAILED";
+      for (const line of (check.stdout || "").split("\n")) {
+        try {
+          const record = JSON.parse(line);
+          if (
+            record.status === "FAIL" &&
+            diagnosticCodes.includes(record.diagnostic)
+          )
+            code = record.diagnostic;
+        } catch {}
+      }
+      console.log("Connection diagnostic: " + code);
+      throw Error("connection verification failed");
     }
     passed.push(
       "Actual TLS PostgreSQL/API connectivity and existing private bucket",
@@ -160,10 +206,16 @@ export async function run() {
       process.exitCode = 1;
       console.log("FAIL: database connection lost; details withheld.");
     });
-    phase = 'read-only migration status and RLS';
-    const schema=await inspectSchema(pool);
-    if(schema==='NOT_APPLIED')passed.push('Migration files ready; cloud schema NOT_APPLIED; RLS cannot yet be verified; no writes performed');
-    else passed.push('Existing migration checksums, RLS, runtime privileges and integrity verified read-only');
+    phase = "read-only migration status and RLS";
+    const schema = await inspectSchema(pool);
+    if (schema === "NOT_APPLIED")
+      passed.push(
+        "Migration files ready; cloud schema NOT_APPLIED; RLS cannot yet be verified; no writes performed",
+      );
+    else
+      passed.push(
+        "Existing migration checksums, RLS, runtime privileges and integrity verified read-only",
+      );
     if (connectionFailed) throw Error("database connection lost");
     console.log("PASS: " + passed.join("; "));
     if (process.env.GITHUB_STEP_SUMMARY)

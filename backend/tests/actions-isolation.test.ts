@@ -99,27 +99,71 @@ test("Actions schema checks succeed on actual local migrations without changing 
   }
 });
 
-test('Read-only inspector leaves absent schema untouched',async()=>{
- const queries:string[]=[];
- const client={query:async(q:string)=>{queries.push(q);return {rows:[{ledger:null,app_schema:null}]};},release:()=>{}};
- assert.equal(await inspectSchema({connect:async()=>client} as any),'NOT_APPLIED');
- assert.deepEqual(queries,['BEGIN READ ONLY',"select to_regclass('public.ab_schema_migrations') ledger,to_regnamespace('ab') app_schema",'ROLLBACK']);
- const source=await readFile(new URL('../actions/supabase-check.ts',import.meta.url),'utf8');
- assert(!source.includes('await migrate('));assert(!source.includes('from "../src/migrate.js"'));
+test("Read-only inspector leaves absent schema untouched", async () => {
+  const queries: string[] = [];
+  const client = {
+    query: async (q: string) => {
+      queries.push(q);
+      return { rows: [{ ledger: null, app_schema: null }] };
+    },
+    release: () => {},
+  };
+  assert.equal(
+    await inspectSchema({ connect: async () => client } as any),
+    "NOT_APPLIED",
+  );
+  assert.deepEqual(queries, [
+    "BEGIN READ ONLY",
+    "select to_regclass('public.ab_schema_migrations') ledger,to_regnamespace('ab') app_schema",
+    "ROLLBACK",
+  ]);
+  const source = await readFile(
+    new URL("../actions/supabase-check.ts", import.meta.url),
+    "utf8",
+  );
+  assert(!source.includes("await migrate("));
+  assert(!source.includes('from "../src/migrate.js"'));
 });
 
-test('Read-only diagnostics never include raw provider messages or unknown codes',async()=>{
- const {connectionDiagnostic}=await import('../src/connection-diagnostics.js');
- assert.equal(connectionDiagnostic({code:'SELF_SIGNED_CERT_IN_CHAIN',message:'CANARY_SECRET'}),'TLS_CERTIFICATE');
- assert.equal(connectionDiagnostic({code:'28P01',message:'CANARY_SECRET'}),'DATABASE_CREDENTIALS');
- assert.equal(connectionDiagnostic({code:'CANARY_SECRET',message:'CANARY_SECRET'}),'CHECK_FAILED');
+test("Read-only diagnostics never include raw provider messages or unknown codes", async () => {
+  const { connectionDiagnostic } = await import(
+    "../src/connection-diagnostics.js"
+  );
+  assert.equal(
+    connectionDiagnostic({
+      code: "SELF_SIGNED_CERT_IN_CHAIN",
+      message: "CANARY_SECRET",
+    }),
+    "TLS_CERTIFICATE",
+  );
+  assert.equal(
+    connectionDiagnostic({ code: "28P01", message: "CANARY_SECRET" }),
+    "DATABASE_PASSWORD_REJECTED",
+  );
+  assert.equal(
+    connectionDiagnostic({ code: "CANARY_SECRET", message: "CANARY_SECRET" }),
+    "CHECK_FAILED",
+  );
 });
 
-test('Read-only TLS trusts only the reviewed Supabase public CA without disabling verification',async()=>{
- const {X509Certificate}=await import('node:crypto');
- const ca=new X509Certificate(await readFile(new URL('../certificates/supabase-prod-ca-2021.crt',import.meta.url)));
- assert.equal(ca.fingerprint256,'80:70:25:AD:50:D4:ED:21:9D:2C:9C:7D:29:9C:00:4F:82:4E:B0:0C:F7:F6:5A:FE:F6:07:D0:7B:72:E6:CA:FA');
- assert(ca.ca);assert(ca.verify(ca.publicKey));assert(new Date(ca.validTo)>new Date());
- const workflow=await readFile(new URL('../../.github/workflows/supabase-test.yml',import.meta.url),'utf8');
- assert(workflow.includes('NODE_EXTRA_CA_CERTS:'));assert(!workflow.includes('NODE_TLS_REJECT_UNAUTHORIZED'));
+test("Read-only TLS trusts only the reviewed Supabase public CA without disabling verification", async () => {
+  const { X509Certificate } = await import("node:crypto");
+  const ca = new X509Certificate(
+    await readFile(
+      new URL("../certificates/supabase-prod-ca-2021.crt", import.meta.url),
+    ),
+  );
+  assert.equal(
+    ca.fingerprint256,
+    "80:70:25:AD:50:D4:ED:21:9D:2C:9C:7D:29:9C:00:4F:82:4E:B0:0C:F7:F6:5A:FE:F6:07:D0:7B:72:E6:CA:FA",
+  );
+  assert(ca.ca);
+  assert(ca.verify(ca.publicKey));
+  assert(new Date(ca.validTo) > new Date());
+  const workflow = await readFile(
+    new URL("../../.github/workflows/supabase-test.yml", import.meta.url),
+    "utf8",
+  );
+  assert(workflow.includes("NODE_EXTRA_CA_CERTS:"));
+  assert(!workflow.includes("NODE_TLS_REJECT_UNAUTHORIZED"));
 });
