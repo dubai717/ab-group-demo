@@ -75,3 +75,14 @@ No central storage, banking API, money movement, production migration, publicati
 - Existing company/profile, document, area, storage and legacy application regressions are re-run separately. Browser tests accept `ERP_DEMO_URL`/`CHROMIUM_PATH`; screenshots are local `work/bank-artifacts/` output.
 
 Actual shared encrypted storage, authenticated server authorization, durable version history/audit and multi-user concurrency cannot be verified until the backend exists.
+
+### Bank relationship manager
+
+Each account optionally stores `relationshipManagerName`, `relationshipManagerPhone`
+(including the international dialling code), and `relationshipManagerEmail`.
+The existing create/edit form displays these in an Arabic/English section;
+view-only accounts show disabled fields. Existing company-scoped create/edit
+permissions and save buttons apply. Changes are recorded by field name in the
+existing account audit trail. Legacy accounts need no migration; absent fields
+appear empty. These contact details have the same browser-local demo storage
+limitation as the account metadata, not central storage.
