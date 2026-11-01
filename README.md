@@ -127,3 +127,39 @@ The owner/company-authorized bank menu provides account creation, editing, closu
 The account document section supports multiple classified, linked and versioned documents without replacing prior records. **Protected central storage is not available:** account metadata is local demo data; files and document history remain in memory and disappear on logout/reload. Do not use real bank data or documents. See [bank-account scope, permissions and backend requirements](docs/BANK-ACCOUNTS.md).
 
 Tests: `node tests/bank-accounts.test.cjs`; optional Playwright: `tests/bank-accounts.browser.cjs`.
+## Users, appointments and delegated access (session demo)
+
+The vertical **Users** menu now opens the extended user administration workflow. Arabic/English and RTL/LTR follow the existing language switch. Existing role definitions, saved users, demo accounts, corporate palette and official logo are retained.
+
+Implemented workflows:
+
+- Scoped user list with name/username/email search and account/company/department filters.
+- New user and editable profile: Arabic/English names, Emirates ID, nationality, phone, email, username, job title, hire date, manager, multiple companies and departments, and account status.
+- Separate checks for create, edit, status changes, assignments, permission management, reset requests and attachment access. A fully authorized appointment saves and activates directly, without an extra approval step. New accounts have the employee base role; existing role IDs cannot be changed through profile payloads.
+- Group, company, department and reporting-line scopes. Both original and proposed memberships are checked on reassignment. Management cycles and duplicate usernames/emails are rejected. A company/department scope is explicit; restricted delegates may re-grant the same scope, while group authority can grant narrower scopes.
+- Existing create/edit/deactivate role rights are honored without adding new rights to existing roles. Existing basic user-list visibility is retained for the owner, general manager and roles with `view_users`. Other users see themselves and records within their delegated actions. Menu visibility does not confer write access.
+- A non-owner cannot modify the owner, grant powers they do not hold, grant broader scopes or grant themselves powers. Passing on delegation management requires explicit re-delegation authority; each passed-on right must also be marked delegable. Revocation conservatively removes grants issued downstream by the recipient, with audit events. Existing inherited role rights cannot be revoked here.
+- Profile photo, Emirates ID front/back, passport, employment contract and optional driving licence: add, preview and replace per session. PNG/JPEG/PDF up to 5 MB; photos must be PNG/JPEG. Viewing requires attachment access; updating an existing user's files additionally requires edit access. Files and identity data are never added to the legacy application state by this module.
+- Audit events for creation, edits, assignments, grants, revocations, status changes, file updates/views and reset requests. The owner sees session events; other actors see their own events. The log contains identifiers and field names, not document contents or identity-number values. Display times use Dubai time.
+
+### Data and security boundaries
+
+**This is a UI/authorization simulation, not a secure ERP backend. Use fictional data only.** New profiles, edits, status changes, grants, attachments and audit events stay in page memory. Reloading discards them. They are deliberately not serialized into localStorage, sessionStorage, IndexedDB or a remote service; existing stored records and permissions remain untouched. File previews use temporary object URLs. Logout switches the acting account but retains the page's demo workflow so delegated scenarios can be tested; reload ends it.
+
+The existing demo authentication and legacy localStorage behavior remain unchanged and are not suitable for real credentials or personal records. The new workflow has no password field and does not generate or store passwords. The reset button only logs a **simulated reset request**; it sends no message and changes no credential. Editing a profile username here does not replace the legacy demo sign-in identity. New accounts cannot sign in until a backend provides authentication.
+
+Before real use, implement all of the following on a trusted server:
+
+1. Authenticated sessions (secure HttpOnly cookies), CSRF protection, rate limits, server-side authorization on every operation and attachment read, and revocation/session invalidation. Never trust browser role or grant claims.
+2. A relational database for profiles, company/department memberships, reporting lines, grant provenance and scope. Validate assignments, activation and delegation atomically in transactions, with concurrency controls and no escalation. Preserve existing production data through a reviewed migration.
+3. A credential service with salted password hashing (e.g. Argon2id), verified reset delivery and single-use, expiring reset tokens. No plaintext credentials or reset tokens in browser storage or logs. Replace the legacy demo authentication before onboarding real users.
+4. Private encrypted object storage with authorization-checked uploads/downloads, content validation/malware scanning, size/type limits, short-lived signed links, retention/access policies and encryption for personal identifiers. Browser file checks here are only demonstration checks.
+5. Durable, access-controlled, append-only audit records including actor, target, action, grant/scope provenance and permitted before/after metadata. The in-memory log is neither durable nor tamper-resistant.
+
+### Validation
+
+Run `node tests/user-management.test.cjs` and `node tests/storage.test.cjs` without installing dependencies. The permission tests cover owner protection, legacy permissions, all scope types, no escalation, explicit delegation, revocation, activation, cycles, attachment access/update restrictions, duplicate data, immutable source records and reset simulation.
+
+Browser validation exercised owner creation/edit/activation, file preview/replacement, simulated reset, audit/search, scoped operator and read-only employee flows, reload behavior and the absence of new sensitive values in localStorage. It also checked Arabic/English layouts at 1440 px and 390 px, zero JavaScript exceptions, and regression flows for login, navigation, companies/uploads/filters, tasks and v2/v3 storage preservation.
+
+An optional repeatable browser flow is included in `tests/user-management.browser.cjs`. With Playwright and its Chromium installed in your development environment, run `npm start` in one terminal, then `node tests/user-management.browser.cjs` in another. `ERP_DEMO_URL` selects a different local port and `CHROMIUM_PATH` selects an installed Chromium executable. Screenshots are written to `work/ui-artifacts/`; the flow uses generated dummy data and isolated browser storage.

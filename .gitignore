@@ -149,4 +149,5 @@ vite.config.ts.timestamp-*
 .turbo
 
 # Local research and browser-test artifacts
+# Local UI test artifacts and scratch files
 work/
