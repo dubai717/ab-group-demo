@@ -52,8 +52,8 @@ try {
   ).rows;
   record(
     "M01",
-    before.length === 7 && JSON.stringify(before) === JSON.stringify(after),
-    "7 unchanged migration checksums",
+    before.length === 8 && JSON.stringify(before) === JSON.stringify(after),
+    "8 unchanged migration checksums",
     "count=" + after.length,
   );
   const tables = (
@@ -349,7 +349,7 @@ try {
   const out = {
     date: "2026-11-02",
     timezone: "Asia/Dubai",
-    baseline: "d68283a",
+    baseline: "c3418ad + forward migration 008",
     scope:
       "local isolated synthetic PostgreSQL; SQL probes roll back; no cloud",
     results,

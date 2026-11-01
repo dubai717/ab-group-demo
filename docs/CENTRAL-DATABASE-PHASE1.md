@@ -93,3 +93,5 @@ No production readiness, central cloud availability, scheduled backup, verified 
 ## Follow-up verification — 2026-11-02 (Dubai)
 
 The subsequent review found six unresolved SQL constraint gaps despite passing application-flow tests. Do not treat the schema as approved for cloud activation. See [verification results](PHASE1-VERIFICATION-RESULTS.md), [sanitized machine-readable findings](verification/schema-review-2026-11-02.json) and [gated Supabase runbook](SUPABASE-VERIFICATION-RUNBOOK.md). No runtime logic or applied migration was changed during this verification.
+
+The owner subsequently authorized and received forward migration 008: all 29 schema checks now pass. The earlier failed review is retained historically. See the execution update and [short owner setup steps](SUPABASE-QUICKSTART-OWNER.md); live Supabase remains pending project/secret/network setup.
