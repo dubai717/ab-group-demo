@@ -37,3 +37,15 @@ test("every PostgreSQL entrypoint requires verified TLS for remote connections",
     ),
   );
 });
+
+test("invalid PostgreSQL URL never appears in CLI output", async () => {
+  const {spawnSync}=await import('node:child_process');
+  const marker='SYNTHETIC_SECRET_CANARY_83a2';
+  const run=spawnSync(process.execPath,['--import','tsx','backend/src/migrate.ts'],{
+    cwd:process.cwd(),encoding:'utf8',env:{PATH:process.env.PATH,MIGRATION_DATABASE_URL:'invalid connection '+marker,APP_ENV:'local'}
+  });
+  assert.notEqual(run.status,0);
+  const output=run.stdout+run.stderr;
+  assert(output.includes('value withheld'));
+  assert(!output.includes(marker));
+});
