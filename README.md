@@ -105,3 +105,11 @@ The company contact/location section uses seven emirates and a searchable emirat
 The initial source-attributed reference has 367 entries and is not exhaustive or certified as the latest official register. **Manual additions are saved in this browser only, not shared centrally across all users.** See [area reference design and sources](docs/AREA-REFERENCE.md) for per-emirate coverage, provenance, duplicate policy, storage limits and the required central database/API design.
 
 Run `node tests/area-reference.test.cjs` and `node tests/storage.test.cjs`. Optional Playwright coverage is in `tests/area-reference.browser.cjs`.
+
+## Official company documents and government codes
+
+Company files now contain optional trade-licence, establishment-card and labour-card previews with expiry dates, traffic codes and Salik account numbers. The existing `expiryDate` is reused for the trade licence. Search/code filters, read-only document reports and calculated 60/30/7-day alerts are included; an authorized owner can adjust durations.
+
+**Protected storage is not available in this static demo.** New typed files stay in page memory and are discarded on logout/reload; dates and codes use the existing local company state. No new sensitive file bytes are stored in localStorage and no background notifications are sent. Use dummy files only. See [company-document impact review and backend requirements](docs/COMPANY-DOCUMENTS.md).
+
+Run `node tests/company-documents.test.cjs`, `node tests/storage.test.cjs` and `node tests/area-reference.test.cjs`. Optional Playwright tests are in `tests/company-documents.browser.cjs`.
