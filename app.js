@@ -785,7 +785,7 @@ function renderCompanies(user) {
     return matchesQuery && matchesStatus && matchesEmirate;
   });
 
-  const emirates = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'];
+  const emirates = AreaReference.emirates.map(e => e.legacy);
 
   return `
     <section class="content-panel company-panel">
@@ -838,12 +838,6 @@ function renderCompanies(user) {
               <input class="input" name="issuingAuthority" />
             </div>
             <div>
-              <label>${localeText('emirate')}</label>
-              <select class="input" name="emirate">
-                ${emirates.map(v => `<option value="${v}">${v}</option>`).join('')}
-              </select>
-            </div>
-            <div>
               <label>${localeText('issueDate')}</label>
               <input class="input" type="date" name="issueDate" />
             </div>
@@ -866,9 +860,10 @@ function renderCompanies(user) {
               <input class="input" name="address" />
             </div>
             <div>
-              <label>${localeText('region')}</label>
-              <input class="input" name="region" />
+              <label for="company-emirate">${localeText('emirate')}</label>
+              <select class="input" id="company-emirate" name="emirate">${AreaReference.emirateOptions()}</select>
             </div>
+            ${AreaReference.renderFields()}
             <div>
               <label>${localeText('street')}</label>
               <input class="input" name="street" />
@@ -1252,6 +1247,7 @@ function bindGlobalEvents() {
     });
   }
 
+  AreaReference.bind();
   const companyForm = document.getElementById('company-form');
   if (companyForm) {
     companyForm.addEventListener('submit', async (event) => {
@@ -1265,6 +1261,13 @@ function bindGlobalEvents() {
         logoData = await readFileAsDataUrl(logoFile);
       }
 
+      const actor = getCurrentUser();
+      if (!actor || actor.status !== 'Active' || !(actor.roleId === 'owner' || isUserAllowed(actor, 'create_company') || isUserAllowed(actor, 'edit_company'))) return;
+      let location;
+      try { location = AreaReference.selected(companyForm); } catch (error) {
+        companyForm.querySelector('#area-message').textContent = getLocale() === 'ar' ? 'تعذر حفظ الموقع. تحقق من الإمارة والمنطقة والمرجع المحلي.' : 'Location could not be saved. Check the emirate, area and local reference.';
+        return;
+      }
       const newCompany = {
         id: `company-${Date.now()}`,
         companyCode: String(fd.get('companyCode') || '').trim(),
@@ -1275,13 +1278,12 @@ function bindGlobalEvents() {
         status: String(fd.get('status') || 'Active'),
         tradeLicenseNumber: String(fd.get('tradeLicenseNumber') || '').trim(),
         issuingAuthority: String(fd.get('issuingAuthority') || '').trim(),
-        emirate: String(fd.get('emirate') || '').trim(),
+        ...location,
         issueDate: String(fd.get('issueDate') || '').trim(),
         expiryDate: String(fd.get('expiryDate') || '').trim(),
         legalType: String(fd.get('legalType') || '').trim(),
         businessActivities: String(fd.get('businessActivities') || '').trim(),
         address: String(fd.get('address') || '').trim(),
-        region: String(fd.get('region') || '').trim(),
         street: String(fd.get('street') || '').trim(),
         phone: String(fd.get('phone') || '').trim(),
         email: String(fd.get('email') || '').trim(),
