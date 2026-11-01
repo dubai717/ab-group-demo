@@ -511,22 +511,22 @@ function render() {
 
       <main class="main">
         <header class="topbar">
-          <h1>${pageTitle(app.state.currentPage)}</h1>
+          <h1>${AuthFlows.isSettings() ? AuthFlows.text('accountSettings') : pageTitle(app.state.currentPage)}</h1>
           <div class="user-controls">
             <button class="lang-switch" data-action="toggle-language">
               ${getLocale() === 'ar' ? 'English' : 'العربية'}
             </button>
-            <div class="user-pill">
-              <div class="avatar">${UserManagement.escape(currentUser.fullName.slice(0,1).toUpperCase())}</div>
-              <div>
-                <div>${UserManagement.escape(currentUser.fullName)}</div>
-                <div class="muted">${getRoleName(currentUser.roleId)}</div>
-              </div>
-            </div>
+            <details class="account-menu">
+              <summary class="user-pill">
+                <span class="avatar">${AuthFlows.escape(currentUser.fullName.slice(0,1).toUpperCase())}</span>
+                <span><span>${AuthFlows.escape(currentUser.fullName)}</span><span class="muted account-role">${getRoleName(currentUser.roleId)}</span></span>
+              </summary>
+              <div class="account-popover"><button class="ghost-btn" type="button" data-auth="settings">${AuthFlows.text('accountSettings')}</button></div>
+            </details>
           </div>
         </header>
 
-        ${renderCurrentPage()}
+        ${AuthFlows.isSettings() ? AuthFlows.renderSettings() : renderCurrentPage()}
       </main>
     </div>
   `;
@@ -995,20 +995,21 @@ function renderLogin() {
 
           <form id="login-form">
             <div class="form-group">
-              <label>${localeText('username')}</label>
-              <input id="username" class="input" name="username" placeholder="${localeText('username')}" required />
+              <label for="username">${localeText('username')}</label>
+              <input id="username" autocomplete="username" class="input" name="username" placeholder="${localeText('username')}" required />
             </div>
 
             <div class="form-group">
-              <label>${localeText('password')}</label>
+              <label for="password">${localeText('password')}</label>
               <div class="password-wrap">
-                <input id="password" class="input" name="password" type="${app.ui.showPassword ? 'text' : 'password'}" placeholder="${localeText('password')}" required />
+                <input id="password" autocomplete="current-password" class="input" name="password" type="${app.ui.showPassword ? 'text' : 'password'}" placeholder="${localeText('password')}" required />
                 <button type="button" id="toggle-password">${app.ui.showPassword ? localeText('hide') : localeText('show')}</button>
               </div>
             </div>
 
+            <button class="auth-link" type="button" data-auth="forgot">${AuthFlows.text('forgot')}</button>
             <button class="primary-btn" type="submit">${localeText('signIn')}</button>
-            <div id="login-error" class="error-box"></div>
+            <div id="login-error" class="error-box" role="alert" aria-live="polite"></div>
           </form>
 
           <div class="demo-box">
@@ -1024,6 +1025,7 @@ function renderLogin() {
     </div>
   `;
 
+  AuthFlows.mountLogin();
   const form = document.getElementById('login-form');
   if (form) form.addEventListener('submit', handleLogin);
 
@@ -1031,7 +1033,9 @@ function renderLogin() {
   if (togglePw) {
     togglePw.addEventListener('click', () => {
       app.ui.showPassword = !app.ui.showPassword;
-      renderLogin();
+      const input = document.getElementById('password');
+      input.type = app.ui.showPassword ? 'text' : 'password';
+      togglePw.textContent = app.ui.showPassword ? localeText('hide') : localeText('show');
     });
   }
 
@@ -1062,28 +1066,34 @@ function handleLogin(event) {
   const errBox = document.getElementById('login-error');
 
   if (!user || user.password !== password) {
+    AuthFlows.record('login_failed');
     errBox.textContent = localeText('loginError');
     errBox.classList.add('visible');
     return;
   }
 
   if (UserManagement.effectiveUser(user).status !== 'Active') {
-    errBox.textContent = localeText('inactiveError');
+    AuthFlows.record('login_failed');
+    errBox.textContent = localeText('loginError');
     errBox.classList.add('visible');
     return;
   }
 
   errBox.classList.remove('visible');
+  AuthFlows.leave();
+  AuthFlows.record('login_succeeded', user.id);
   setCurrentUser(user);
   app.state.currentPage = 'dashboard';
   render();
 }
 
 function bindGlobalEvents() {
+  AuthFlows.bindApp();
   BankAccounts.bind();
   CompanyDocuments.bind();
   document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', () => {
+      AuthFlows.leave();
       BankAccounts.cleanup();
       CompanyDocuments.cleanupPreview();
       const page = button.dataset.page;
@@ -1098,6 +1108,7 @@ function bindGlobalEvents() {
       BankAccounts.logout();
       CompanyDocuments.logout();
       UserManagement.logout();
+      AuthFlows.logout();
       setCurrentUser(null);
       app.state.currentPage = 'dashboard';
       render();

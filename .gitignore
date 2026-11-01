@@ -150,4 +150,5 @@ vite.config.ts.timestamp-*
 
 # Local research and browser-test artifacts
 # Local UI test artifacts and scratch files
+# Local interface test artifacts
 work/

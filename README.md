@@ -163,3 +163,10 @@ Run `node tests/user-management.test.cjs` and `node tests/storage.test.cjs` with
 Browser validation exercised owner creation/edit/activation, file preview/replacement, simulated reset, audit/search, scoped operator and read-only employee flows, reload behavior and the absence of new sensitive values in localStorage. It also checked Arabic/English layouts at 1440 px and 390 px, zero JavaScript exceptions, and regression flows for login, navigation, companies/uploads/filters, tasks and v2/v3 storage preservation.
 
 An optional repeatable browser flow is included in `tests/user-management.browser.cjs`. With Playwright and its Chromium installed in your development environment, run `npm start` in one terminal, then `node tests/user-management.browser.cjs` in another. `ERP_DEMO_URL` selects a different local port and `CHROMIUM_PATH` selects an installed Chromium executable. Screenshots are written to `work/ui-artifacts/`; the flow uses generated dummy data and isolated browser storage.
+## Login, recovery and personal password settings
+
+The login now links to a bilingual recovery interface with SMS/email/WhatsApp channel previews. The personal account menu opens **Account settings → Change password** for every signed-in role. These are presentation-only flows: recovery delivery, OTP verification, password storage and notifications remain unavailable until a secure backend is connected. The UI never claims a code was sent or that a password changed. Existing demo login, accounts and permissions are preserved; use test data only.
+
+See [Authentication transition plan](docs/AUTHENTICATION-TRANSITION.md) for the inspection, approved UI boundary, provider requirements, server security policy, migration/review sequence and test limitations. No authentication migration or production activation is included.
+
+Run `node tests/auth-flows.test.cjs` and `node tests/storage.test.cjs`. Optional browser checks are in `tests/auth-flows.browser.cjs` (Playwright); screenshots are local artifacts in `work/`.
