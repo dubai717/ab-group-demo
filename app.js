@@ -446,10 +446,11 @@ function getSidebarItems(user) {
     { id: 'roles', label: localeText('roles'), permission: 'view_dashboard' },
     { id: 'departments', label: localeText('departments'), permission: 'view_company' },
     { id: 'companies', label: localeText('companies'), permission: 'view_company' },
+    { id: 'bankAccounts', label: BankAccounts.text('title'), permission: 'view_finance' },
     { id: 'tasks', label: localeText('tasks'), permission: 'view_tasks' },
     { id: 'reports', label: localeText('reports'), permission: 'view_reports' },
     { id: 'notifications', label: localeText('notifications'), permission: 'manage_notifications' }
-  ];
+  ].filter(item => item.id !== 'bankAccounts' || BankAccounts.canEnter());
 
   if (!user) return [];
 
@@ -458,14 +459,14 @@ function getSidebarItems(user) {
   }
 
   if (user.roleId === 'regional_manager' || user.roleId === 'employee') {
-    return allItems.filter(item => ['dashboard', 'tasks', 'notifications'].includes(item.id));
+    return allItems.filter(item => item.id === 'bankAccounts' || ['dashboard', 'tasks', 'notifications'].includes(item.id));
   }
 
   if (user.roleId === 'investor' || user.roleId === 'marketing_company') {
-    return allItems.filter(item => ['dashboard', 'reports'].includes(item.id));
+    return allItems.filter(item => item.id === 'bankAccounts' || ['dashboard', 'reports'].includes(item.id));
   }
 
-  return allItems.filter(item => isUserAllowed(user, item.permission));
+  return allItems.filter(item => item.id === 'bankAccounts' || isUserAllowed(user, item.permission));
 }
 
 function render() {
@@ -539,6 +540,7 @@ function pageTitle(page) {
     roles: localeText('roles'),
     departments: localeText('departments'),
     companies: localeText('companyManagement'),
+    bankAccounts: BankAccounts.text('title'),
     tasks: localeText('tasks'),
     reports: localeText('reports'),
     notifications: localeText('notifications')
@@ -555,6 +557,7 @@ function renderCurrentPage() {
   if (page === 'roles') return renderRoles(user);
   if (page === 'departments') return renderDepartments(user);
   if (page === 'companies') return renderCompanies(user);
+  if (page === 'bankAccounts') return BankAccounts.render();
   if (page === 'tasks') return renderTasks(user);
   if (page === 'reports') return renderReports(user);
   if (page === 'notifications') return renderNotifications(user);
@@ -1168,9 +1171,11 @@ function handleLogin(event) {
 }
 
 function bindGlobalEvents() {
+  BankAccounts.bind();
   CompanyDocuments.bind();
   document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', () => {
+      BankAccounts.cleanup();
       CompanyDocuments.cleanupPreview();
       const page = button.dataset.page;
       app.state.currentPage = page;
@@ -1181,6 +1186,7 @@ function bindGlobalEvents() {
 
   document.querySelectorAll('[data-action="logout"]').forEach(button => {
     button.addEventListener('click', () => {
+      BankAccounts.logout();
       CompanyDocuments.logout();
       setCurrentUser(null);
       app.state.currentPage = 'dashboard';
