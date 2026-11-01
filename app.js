@@ -396,11 +396,15 @@ function loadState() {
 }
 
 function saveState() {
-  if (!stateStorageWritable) return;
+  if (!stateStorageWritable) return false;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(app.state));
+    const serialized = JSON.stringify(app.state);
+    localStorage.setItem(STORAGE_KEY, serialized);
+    if (localStorage.getItem(STORAGE_KEY) !== serialized) throw new Error('Storage verification failed');
+    return true;
   } catch (error) {
     console.warn('Could not save application state; existing storage is unchanged.', error);
+    return false;
   }
 }
 
@@ -427,11 +431,17 @@ function getUserById(id) {
 }
 
 function getCurrentUser() {
-  return app.state.currentUser || null;
+  const user = UserManagement.effectiveUser(app.state.currentUser);
+  return user?.status === 'Active' ? user : null;
+}
+
+function getCanonicalActor() {
+  return UserManagement.actorForModules(getCurrentUser());
 }
 
 function setCurrentUser(user) {
-  app.state.currentUser = user;
+  // Persist only the selected demo ID, never a session profile or new credential.
+  app.state.currentUser = user ? {id:user.id} : null;
   saveState();
 }
 
@@ -442,10 +452,11 @@ function getSidebarItems(user) {
     { id: 'roles', label: localeText('roles'), permission: 'view_dashboard' },
     { id: 'departments', label: localeText('departments'), permission: 'view_company' },
     { id: 'companies', label: localeText('companies'), permission: 'view_company' },
+    { id: 'bankAccounts', label: BankAccounts.text('title'), permission: 'view_finance' },
     { id: 'tasks', label: localeText('tasks'), permission: 'view_tasks' },
     { id: 'reports', label: localeText('reports'), permission: 'view_reports' },
     { id: 'notifications', label: localeText('notifications'), permission: 'manage_notifications' }
-  ];
+  ].filter(item => item.id !== 'bankAccounts' || BankAccounts.canEnter());
 
   if (!user) return [];
 
@@ -454,14 +465,14 @@ function getSidebarItems(user) {
   }
 
   if (user.roleId === 'regional_manager' || user.roleId === 'employee') {
-    return allItems.filter(item => ['dashboard', 'tasks', 'notifications'].includes(item.id));
+    return allItems.filter(item => item.id === 'bankAccounts' || ['dashboard', 'users', 'tasks', 'notifications'].includes(item.id));
   }
 
   if (user.roleId === 'investor' || user.roleId === 'marketing_company') {
-    return allItems.filter(item => ['dashboard', 'reports'].includes(item.id));
+    return allItems.filter(item => item.id === 'bankAccounts' || ['dashboard', 'users', 'reports'].includes(item.id));
   }
 
-  return allItems.filter(item => isUserAllowed(user, item.permission));
+  return allItems.filter(item => ['bankAccounts', 'users'].includes(item.id) || isUserAllowed(user, item.permission));
 }
 
 function render() {
@@ -505,22 +516,22 @@ function render() {
 
       <main class="main">
         <header class="topbar">
-          <h1>${pageTitle(app.state.currentPage)}</h1>
+          <h1>${AuthFlows.isSettings() ? AuthFlows.text('accountSettings') : pageTitle(app.state.currentPage)}</h1>
           <div class="user-controls">
             <button class="lang-switch" data-action="toggle-language">
               ${getLocale() === 'ar' ? 'English' : 'العربية'}
             </button>
-            <div class="user-pill">
-              <div class="avatar">${currentUser.fullName.slice(0,1).toUpperCase()}</div>
-              <div>
-                <div>${currentUser.fullName}</div>
-                <div class="muted">${getRoleName(currentUser.roleId)}</div>
-              </div>
-            </div>
+            <details class="account-menu">
+              <summary class="user-pill">
+                <span class="avatar">${AuthFlows.escape(currentUser.fullName.slice(0,1).toUpperCase())}</span>
+                <span><span>${AuthFlows.escape(currentUser.fullName)}</span><span class="muted account-role">${getRoleName(currentUser.roleId)}</span></span>
+              </summary>
+              <div class="account-popover"><button class="ghost-btn" type="button" data-auth="settings">${AuthFlows.text('accountSettings')}</button></div>
+            </details>
           </div>
         </header>
 
-        ${renderCurrentPage()}
+        ${AuthFlows.isSettings() ? AuthFlows.renderSettings() : renderCurrentPage()}
       </main>
     </div>
   `;
@@ -535,6 +546,7 @@ function pageTitle(page) {
     roles: localeText('roles'),
     departments: localeText('departments'),
     companies: localeText('companyManagement'),
+    bankAccounts: BankAccounts.text('title'),
     tasks: localeText('tasks'),
     reports: localeText('reports'),
     notifications: localeText('notifications')
@@ -551,6 +563,7 @@ function renderCurrentPage() {
   if (page === 'roles') return renderRoles(user);
   if (page === 'departments') return renderDepartments(user);
   if (page === 'companies') return renderCompanies(user);
+  if (page === 'bankAccounts') return BankAccounts.render();
   if (page === 'tasks') return renderTasks(user);
   if (page === 'reports') return renderReports(user);
   if (page === 'notifications') return renderNotifications(user);
@@ -558,8 +571,9 @@ function renderCurrentPage() {
 }
 
 function renderDashboard(user) {
-  const totalUsers = app.state.users.length;
-  const activeUsers = app.state.users.filter(u => u.status === 'Active').length;
+  const summary = UserManagement.summary();
+  const totalUsers = summary.total;
+  const activeUsers = summary.active;
   const departments = app.state.departments.length;
   const companies = app.state.companies.length;
   const tasks = app.state.tasks.length;
@@ -607,7 +621,7 @@ function renderDashboard(user) {
             ${app.state.tasks.map(task => `
               <tr>
                 <td>${task.title}</td>
-                <td>${task.assignee}</td>
+                <td>${UserManagement.escape(task.assignee)}</td>
                 <td><span class="badge ${task.status === 'Completed' ? 'active' : task.status === 'Pending' ? 'pending' : 'disabled'}">${task.status}</span></td>
                 <td>${task.priority}</td>
               </tr>
@@ -620,99 +634,7 @@ function renderDashboard(user) {
 }
 
 function renderUsers(user) {
-  const canCreateUser = isUserAllowed(user, 'create_user') || user.roleId === 'owner';
-  const canEditUser = isUserAllowed(user, 'edit_user') || user.roleId === 'owner';
-
-  return `
-    <section class="content-panel">
-      <div class="section-head">
-        <h2>${localeText('userManagement')}</h2>
-        ${canCreateUser ? `<button class="secondary-btn" data-action="open-user-form">${localeText('addUser')}</button>` : ''}
-      </div>
-
-      ${canCreateUser ? `
-        <form id="user-form" style="margin-bottom: 20px;">
-          <div class="form-grid">
-            <div>
-              <label>${localeText('fullName')}</label>
-              <input class="input" name="fullName" placeholder="${localeText('fullName')}" required />
-            </div>
-            <div>
-              <label>${localeText('username')}</label>
-              <input class="input" name="username" placeholder="${localeText('username')}" required />
-            </div>
-            <div>
-              <label>Email</label>
-              <input class="input" name="email" type="email" placeholder="email@example.com" required />
-            </div>
-            <div>
-              <label>${localeText('phone')}</label>
-              <input class="input" name="phone" placeholder="${localeText('phone')}" />
-            </div>
-            <div>
-              <label>${localeText('password')}</label>
-              <input class="input" name="password" type="password" placeholder="${localeText('password')}" required />
-            </div>
-            <div>
-              <label>${localeText('role')}</label>
-              <select class="input" name="roleId">
-                ${app.state.roles.map(role => `<option value="${role.id}">${role.name}</option>`).join('')}
-              </select>
-            </div>
-            <div>
-              <label>${localeText('department')}</label>
-              <select class="input" name="departmentId">
-                ${app.state.departments.map(dept => `<option value="${dept.id}">${dept.name}</option>`).join('')}
-              </select>
-            </div>
-            <div>
-              <label>${localeText('status')}</label>
-              <select class="input" name="status">
-                <option value="Active">${localeText('active')}</option>
-                <option value="Pending">${localeText('pending')}</option>
-                <option value="Disabled">${localeText('disabled')}</option>
-              </select>
-            </div>
-            <div class="full">
-              <button type="submit" class="primary-btn">${localeText('createUser')}</button>
-            </div>
-          </div>
-        </form>
-      ` : ''}
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>${localeText('users')}</th>
-              <th>${localeText('role')}</th>
-              <th>${localeText('department')}</th>
-              <th>${localeText('status')}</th>
-              <th>${localeText('type')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${app.state.users.map(userRow => `
-              <tr>
-                <td>
-                  <strong>${userRow.fullName}</strong><br>
-                  <span class="muted">${userRow.email}</span>
-                </td>
-                <td>${getRoleName(userRow.roleId)}</td>
-                <td>${getDepartmentName(userRow.departmentId)}</td>
-                <td><span class="badge ${userRow.status === 'Active' ? 'active' : userRow.status === 'Pending' ? 'pending' : 'disabled'}">${userRow.status}</span></td>
-                <td>
-                  <div class="row-actions">
-                    ${canEditUser ? `<button class="ghost-btn" data-action="toggle-status" data-user-id="${userRow.id}">${userRow.status === 'Active' ? localeText('disable') : localeText('enable')}</button>` : ''}
-                  </div>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  `;
+  return UserManagement.render();
 }
 
 function renderRoles() {
@@ -762,7 +684,7 @@ function renderDepartments() {
               return `
                 <tr>
                   <td>${dept.name}</td>
-                  <td>${app.state.companies[0].name || app.state.companies[0].englishName}</td>
+                  <td>${CompanyDocuments.escape(app.state.companies[0].name || app.state.companies[0].englishName)}</td>
                   <td>${manager ? manager.fullName : 'Unassigned'}</td>
                 </tr>
               `;
@@ -779,13 +701,13 @@ function renderCompanies(user) {
   const filters = app.state.companyFilters || { query: '', status: 'all', emirate: 'all' };
   const companyRows = app.state.companies.filter((company) => {
     const query = filters.query.trim().toLowerCase();
-    const matchesQuery = !query || [company.companyCode, company.arabicName, company.englishName, company.shortName, company.emirate].join(' ').toLowerCase().includes(query);
+    const matchesQuery = !query || [company.companyCode, company.arabicName, company.englishName, company.shortName, company.emirate, company.trafficCode, company.salikAccountNumber].join(' ').toLowerCase().includes(query) || CompanyDocuments.codeSearch(company, query);
     const matchesStatus = filters.status === 'all' || company.status === filters.status;
     const matchesEmirate = filters.emirate === 'all' || company.emirate === filters.emirate;
-    return matchesQuery && matchesStatus && matchesEmirate;
+    return matchesQuery && matchesStatus && matchesEmirate && CompanyDocuments.matchesFilters(company, filters);
   });
 
-  const emirates = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'];
+  const emirates = AreaReference.emirates.map(e => e.legacy);
 
   return `
     <section class="content-panel company-panel">
@@ -795,6 +717,7 @@ function renderCompanies(user) {
       </div>
 
       <div class="company-desc">${localeText('legalEntitiesDesc')}</div>
+      ${CompanyDocuments.renderSaveNotice()}
 
       ${canManage ? `
         <form id="company-form" class="company-form">
@@ -838,12 +761,6 @@ function renderCompanies(user) {
               <input class="input" name="issuingAuthority" />
             </div>
             <div>
-              <label>${localeText('emirate')}</label>
-              <select class="input" name="emirate">
-                ${emirates.map(v => `<option value="${v}">${v}</option>`).join('')}
-              </select>
-            </div>
-            <div>
               <label>${localeText('issueDate')}</label>
               <input class="input" type="date" name="issueDate" />
             </div>
@@ -866,9 +783,10 @@ function renderCompanies(user) {
               <input class="input" name="address" />
             </div>
             <div>
-              <label>${localeText('region')}</label>
-              <input class="input" name="region" />
+              <label for="company-emirate">${localeText('emirate')}</label>
+              <select class="input" id="company-emirate" name="emirate">${AreaReference.emirateOptions()}</select>
             </div>
+            ${AreaReference.renderFields()}
             <div>
               <label>${localeText('street')}</label>
               <input class="input" name="street" />
@@ -912,8 +830,9 @@ function renderCompanies(user) {
               <input class="input" type="file" name="documents" multiple />
             </div>
 
+            ${CompanyDocuments.creationFields()}
             <div class="full controls-row">
-              <button type="submit" class="primary-btn">${localeText('createCompany')}</button>
+              <button type="submit" class="primary-btn">${CompanyDocuments.text('saveData')}</button>
             </div>
           </div>
         </form>
@@ -933,6 +852,7 @@ function renderCompanies(user) {
         </select>
       </div>
 
+      ${CompanyDocuments.filterFields(filters)}
       <div class="table-wrap company-table-wrap">
         <table>
           <thead>
@@ -950,16 +870,17 @@ function renderCompanies(user) {
           <tbody>
             ${companyRows.length ? companyRows.map(company => `
               <tr>
-                <td><strong>${company.companyCode}</strong></td>
-                <td>${company.arabicName}</td>
-                <td>${company.englishName}</td>
-                <td>${company.tradeLicenseNumber}</td>
-                <td>${company.emirate}</td>
-                <td>${company.expiryDate || '-'}</td>
-                <td><span class="badge ${company.status === 'Active' ? 'active' : company.status === 'Inactive' ? 'pending' : 'disabled'}">${company.status}</span></td>
+                <td><strong>${CompanyDocuments.escape(company.companyCode)}</strong></td>
+                <td>${CompanyDocuments.escape(company.arabicName)}</td>
+                <td>${CompanyDocuments.escape(company.englishName)}</td>
+                <td>${CompanyDocuments.escape(company.tradeLicenseNumber)}</td>
+                <td>${CompanyDocuments.escape(company.emirate)}</td>
+                <td>${CompanyDocuments.escape(company.expiryDate || '-')}</td>
+                <td><span class="badge ${company.status === 'Active' ? 'active' : company.status === 'Inactive' ? 'pending' : 'disabled'}">${CompanyDocuments.escape(company.status)}</span></td>
                 <td>
                   <div class="row-actions">
-                    <button class="ghost-btn" data-action="toggle-company-status" data-company-id="${company.id}">${company.status === 'Active' ? localeText('disable') : localeText('enable')}</button>
+                    ${CompanyDocuments.profileButton(company.id)}
+                    ${user.roleId==='owner'||isUserAllowed(user,'edit_company')?`<button class="ghost-btn" data-action="toggle-company-status" data-company-id="${company.id}">${company.status === 'Active' ? localeText('disable') : localeText('enable')}</button>`:''}
                   </div>
                 </td>
               </tr>
@@ -972,7 +893,7 @@ function renderCompanies(user) {
         </table>
       </div>
     </section>
-  `;
+  ` + CompanyDocuments.renderProfile();
 }
 
 function renderTasks() {
@@ -996,7 +917,7 @@ function renderTasks() {
             ${app.state.tasks.map(task => `
               <tr>
                 <td>${task.title}</td>
-                <td>${task.assignee}</td>
+                <td>${UserManagement.escape(task.assignee)}</td>
                 <td><span class="badge ${task.status === 'Completed' ? 'active' : task.status === 'Pending' ? 'pending' : 'disabled'}">${task.status}</span></td>
                 <td>${task.priority}</td>
               </tr>
@@ -1012,7 +933,7 @@ function renderReports() {
   return `
     <section class="content-panel">
       <div class="section-head"><h2>${localeText('reports')}</h2></div>
-      <div class="empty-state">${localeText('noReports')}</div>
+      ${CompanyDocuments.renderReport() || `<div class="empty-state">${localeText('noReports')}</div>`}
     </section>
   `;
 }
@@ -1021,6 +942,7 @@ function renderNotifications() {
   return `
     <section class="content-panel">
       <div class="section-head"><h2>${localeText('notifications')}</h2></div>
+      ${CompanyDocuments.renderAlerts()}
       <div class="table-wrap">
         <table>
           <thead>
@@ -1079,20 +1001,21 @@ function renderLogin() {
 
           <form id="login-form">
             <div class="form-group">
-              <label>${localeText('username')}</label>
-              <input id="username" class="input" name="username" placeholder="${localeText('username')}" required />
+              <label for="username">${localeText('username')}</label>
+              <input id="username" autocomplete="username" class="input" name="username" placeholder="${localeText('username')}" required />
             </div>
 
             <div class="form-group">
-              <label>${localeText('password')}</label>
+              <label for="password">${localeText('password')}</label>
               <div class="password-wrap">
-                <input id="password" class="input" name="password" type="${app.ui.showPassword ? 'text' : 'password'}" placeholder="${localeText('password')}" required />
+                <input id="password" autocomplete="current-password" class="input" name="password" type="${app.ui.showPassword ? 'text' : 'password'}" placeholder="${localeText('password')}" required />
                 <button type="button" id="toggle-password">${app.ui.showPassword ? localeText('hide') : localeText('show')}</button>
               </div>
             </div>
 
+            <button class="auth-link" type="button" data-auth="forgot">${AuthFlows.text('forgot')}</button>
             <button class="primary-btn" type="submit">${localeText('signIn')}</button>
-            <div id="login-error" class="error-box"></div>
+            <div id="login-error" class="error-box" role="alert" aria-live="polite"></div>
           </form>
 
           <div class="demo-box">
@@ -1108,6 +1031,7 @@ function renderLogin() {
     </div>
   `;
 
+  AuthFlows.mountLogin();
   const form = document.getElementById('login-form');
   if (form) form.addEventListener('submit', handleLogin);
 
@@ -1115,7 +1039,9 @@ function renderLogin() {
   if (togglePw) {
     togglePw.addEventListener('click', () => {
       app.ui.showPassword = !app.ui.showPassword;
-      renderLogin();
+      const input = document.getElementById('password');
+      input.type = app.ui.showPassword ? 'text' : 'password';
+      togglePw.textContent = app.ui.showPassword ? localeText('hide') : localeText('show');
     });
   }
 
@@ -1138,34 +1064,49 @@ function renderLogin() {
   });
 }
 
-function handleLogin(event) {
+let loginAttempt = 0;
+async function handleLogin(event) {
   event.preventDefault();
+  const form = document.getElementById('login-form');
+  if (!form || form.dataset.busy === 'true') return;
+  form.dataset.busy = 'true';
+  const attempt = ++loginAttempt;
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
-  const user = app.state.users.find(u => u.username === username);
   const errBox = document.getElementById('login-error');
-
-  if (!user || user.password !== password) {
-    errBox.textContent = localeText('loginError');
-    errBox.classList.add('visible');
-    return;
+  try {
+    // Keep legacy demo credentials intact. New local accounts use a separate verifier.
+    const legacy = app.state.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+    let user = legacy && legacy.username === username && legacy.password === password ? legacy : null;
+    if (!legacy) user = await DemoCredentials.authenticate(username, password);
+    if (attempt !== loginAttempt || !form.isConnected) return;
+    if (!user || legacy && legacy.status !== 'Active' || UserManagement.effectiveUser(user)?.status !== 'Active') throw new Error('login');
+    AuthFlows.leave();
+    AuthFlows.record('login_succeeded', user.id);
+    setCurrentUser(user);
+    app.state.currentPage = 'dashboard';
+    render();
+  } catch {
+    if (attempt === loginAttempt && form.isConnected) {
+      AuthFlows.record('login_failed');
+      errBox.textContent = localeText('loginError');
+      errBox.classList.add('visible');
+    }
+  } finally {
+    if (form.isConnected) delete form.dataset.busy;
   }
-
-  if (user.status !== 'Active') {
-    errBox.textContent = localeText('inactiveError');
-    errBox.classList.add('visible');
-    return;
-  }
-
-  errBox.classList.remove('visible');
-  setCurrentUser(user);
-  app.state.currentPage = 'dashboard';
-  render();
 }
 
 function bindGlobalEvents() {
+  AuthFlows.bindApp();
+  BankAccounts.bind();
+  CompanyDocuments.bind();
   document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', () => {
+      AuthFlows.leave();
+      UserManagement.cleanup();
+      BankAccounts.cleanup();
+      CompanyDocuments.cleanupPreview();
       const page = button.dataset.page;
       app.state.currentPage = page;
       saveState();
@@ -1175,6 +1116,10 @@ function bindGlobalEvents() {
 
   document.querySelectorAll('[data-action="logout"]').forEach(button => {
     button.addEventListener('click', () => {
+      BankAccounts.logout();
+      CompanyDocuments.logout();
+      UserManagement.logout();
+      AuthFlows.logout();
       setCurrentUser(null);
       app.state.currentPage = 'dashboard';
       render();
@@ -1204,19 +1149,10 @@ function bindGlobalEvents() {
     });
   });
 
-  document.querySelectorAll('[data-action="toggle-status"]').forEach(button => {
-    button.addEventListener('click', () => {
-      const userId = button.dataset.userId;
-      const target = app.state.users.find(u => u.id === userId);
-      if (!target) return;
-      target.status = target.status === 'Active' ? 'Disabled' : 'Active';
-      saveState();
-      render();
-    });
-  });
-
   document.querySelectorAll('[data-action="toggle-company-status"]').forEach(button => {
     button.addEventListener('click', () => {
+      const actor = getCanonicalActor();
+      if(!actor || actor.status!=='Active' || !(actor.roleId==='owner'||isUserAllowed(actor,'edit_company'))) return;
       const companyId = button.dataset.companyId;
       const target = app.state.companies.find(c => c.id === companyId);
       if (!target) return;
@@ -1226,36 +1162,19 @@ function bindGlobalEvents() {
     });
   });
 
-  const userForm = document.getElementById('user-form');
-  if (userForm) {
-    userForm.addEventListener('submit', (event) => {
-      event.preventDefault();
-      const fd = new FormData(userForm);
-      const newUser = {
-        id: `u-${Date.now()}`,
-        fullName: fd.get('fullName'),
-        username: fd.get('username'),
-        email: fd.get('email'),
-        phone: fd.get('phone') || '',
-        password: fd.get('password'),
-        roleId: fd.get('roleId'),
-        departmentId: fd.get('departmentId'),
-        companyId: 'company-ab',
-        status: fd.get('status'),
-        language: getLocale(),
-        managerId: null
-      };
+  UserManagement.bind();
 
-      app.state.users.push(newUser);
-      saveState();
-      render();
-    });
-  }
-
+  AreaReference.bind();
   const companyForm = document.getElementById('company-form');
   if (companyForm) {
+    companyForm.addEventListener('input', () => CompanyDocuments.beginCreate());
     companyForm.addEventListener('submit', async (event) => {
       event.preventDefault();
+      const submitButton = companyForm.querySelector('button[type=submit]');
+      if (submitButton.disabled) return;
+      submitButton.disabled = true;
+      CompanyDocuments.beginCreate();
+      try {
       const fd = new FormData(companyForm);
       const logoFile = fd.get('logo');
       const docs = fd.getAll('documents');
@@ -1265,8 +1184,21 @@ function bindGlobalEvents() {
         logoData = await readFileAsDataUrl(logoFile);
       }
 
+      const actor = getCurrentUser();
+      if (!actor || actor.status !== 'Active' || !(actor.roleId === 'owner' || isUserAllowed(actor, 'create_company') || isUserAllowed(actor, 'edit_company'))) return;
+      let location;
+      try { location = AreaReference.selected(companyForm); } catch (error) {
+        companyForm.querySelector('#area-message').textContent = getLocale() === 'ar' ? 'تعذر حفظ الموقع. تحقق من الإمارة والمنطقة والمرجع المحلي.' : 'Location could not be saved. Check the emirate, area and local reference.';
+        return;
+      }
+      let documentData;
+      try { documentData = CompanyDocuments.prepareCreation(companyForm); } catch (error) {
+        companyForm.querySelector('#company-doc-message').textContent = CompanyDocuments.text(error.message);
+        return;
+      }
       const newCompany = {
-        id: `company-${Date.now()}`,
+        id: `company-${crypto.randomUUID()}`,
+        ...documentData.data,
         companyCode: String(fd.get('companyCode') || '').trim(),
         arabicName: String(fd.get('arabicName') || '').trim(),
         englishName: String(fd.get('englishName') || '').trim(),
@@ -1275,13 +1207,12 @@ function bindGlobalEvents() {
         status: String(fd.get('status') || 'Active'),
         tradeLicenseNumber: String(fd.get('tradeLicenseNumber') || '').trim(),
         issuingAuthority: String(fd.get('issuingAuthority') || '').trim(),
-        emirate: String(fd.get('emirate') || '').trim(),
+        ...location,
         issueDate: String(fd.get('issueDate') || '').trim(),
         expiryDate: String(fd.get('expiryDate') || '').trim(),
         legalType: String(fd.get('legalType') || '').trim(),
         businessActivities: String(fd.get('businessActivities') || '').trim(),
         address: String(fd.get('address') || '').trim(),
-        region: String(fd.get('region') || '').trim(),
         street: String(fd.get('street') || '').trim(),
         phone: String(fd.get('phone') || '').trim(),
         email: String(fd.get('email') || '').trim(),
@@ -1295,10 +1226,24 @@ function bindGlobalEvents() {
         createdAt: new Date().toISOString()
       };
 
+      const previousFilters = app.state.companyFilters;
       app.state.companies.push(newCompany);
       app.state.companyFilters = { query: '', status: 'all', emirate: 'all' };
-      saveState();
+      if (!saveState()) {
+        app.state.companies.pop();
+        app.state.companyFilters = previousFilters;
+        companyForm.querySelector('#company-doc-message').textContent = CompanyDocuments.text('storageFailed');
+        return;
+      }
+      CompanyDocuments.captureNew(newCompany.id, documentData.files);
+      CompanyDocuments.markCreated();
       render();
+      } catch (error) {
+        const message = companyForm.querySelector('#company-doc-message');
+        if (message) message.textContent = CompanyDocuments.text('storageFailed');
+      } finally {
+        if (submitButton.isConnected) submitButton.disabled = false;
+      }
     });
   }
 
