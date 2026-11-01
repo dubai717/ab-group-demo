@@ -97,3 +97,11 @@ On startup, existing `ab_group_demo_state_v3` data takes precedence and is not r
 If a storage write fails, the loaded data remains available in memory and the stored source remains intact. If saved data cannot be parsed or has an invalid structure, automatic state writes are disabled for that session to avoid replacing it with demo data; the app displays its demo state. Storage recovery requires correcting the saved data and reloading.
 
 Run the storage regression checks with `node tests/storage.test.cjs` (no dependencies required).
+
+## Login, recovery and personal password settings
+
+The login now links to a bilingual recovery interface with SMS/email/WhatsApp channel previews. The personal account menu opens **Account settings → Change password** for every signed-in role. These are presentation-only flows: recovery delivery, OTP verification, password storage and notifications remain unavailable until a secure backend is connected. The UI never claims a code was sent or that a password changed. Existing demo login, accounts and permissions are preserved; use test data only.
+
+See [Authentication transition plan](docs/AUTHENTICATION-TRANSITION.md) for the inspection, approved UI boundary, provider requirements, server security policy, migration/review sequence and test limitations. No authentication migration or production activation is included.
+
+Run `node tests/auth-flows.test.cjs` and `node tests/storage.test.cjs`. Optional browser checks are in `tests/auth-flows.browser.cjs` (Playwright); screenshots are local artifacts in `work/`.
