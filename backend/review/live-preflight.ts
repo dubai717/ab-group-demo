@@ -2,7 +2,7 @@
 // Actual cloud checks require separate approval and an existing synthetic-only project.
 import { Pool } from "pg";
 import { z } from "zod";
-import { supabase } from "../src/core.js";
+import { supabase, supabaseKeys } from "../src/core.js";
 const phases: string[] = [];
 let pool: Pool | undefined,
   token: string | undefined,
@@ -26,7 +26,6 @@ async function main() {
       AB_EXPECTED_PROJECT_REF: z.string().regex(/^[a-z0-9]{20}$/),
       AB_EXPECTED_DATABASE_HOST: z.string().min(1),
       SUPABASE_URL: z.url(),
-      SUPABASE_ANON_KEY: z.string().min(1),
       DATABASE_URL: z.string().min(1),
       LIVE_TEST_USERNAME: z.string().min(3),
       LIVE_TEST_PASSWORD: z.string().min(1),
@@ -85,7 +84,7 @@ async function main() {
     ])
   ).rows[0]?.email;
   if (!email) throw Error("synthetic account mapping absent");
-  provider = supabase(expected, e.SUPABASE_ANON_KEY, "", "unused");
+  provider = supabase(expected, supabaseKeys().publishable, "", "unused");
   const login = await provider.auth.login(email, e.LIVE_TEST_PASSWORD);
   token = login.token;
   if (

@@ -83,6 +83,27 @@ export interface ObjectStore {
   put(key: string, bytes: Buffer): Promise<void>;
   get(key: string): Promise<Buffer>;
 }
+// Modern keys identify the application via apikey; they are not user JWTs.
+// Keep legacy variable names as aliases without accepting conflicting values.
+export function supabaseKeys(
+  env: Record<string, string | undefined> = process.env,
+) {
+  const select = (modern: string, legacy: string) => {
+    const a = env[modern]?.trim(),
+      b = env[legacy]?.trim();
+    requireOk(!a || !b || a === b, 500, "conflictingSupabaseKeys");
+    return a || b || "";
+  };
+  const publishable = select("SUPABASE_PUBLISHABLE_KEY", "SUPABASE_ANON_KEY");
+  const secret = select("SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY");
+  requireOk(
+    publishable && !publishable.startsWith("sb_secret_"),
+    500,
+    "invalidPublishableKey",
+  );
+  requireOk(!secret.startsWith("sb_publishable_"), 500, "invalidSecretKey");
+  return { publishable, secret };
+}
 export function supabase(
   url: string,
   key: string,
@@ -93,6 +114,13 @@ export function supabase(
     url.startsWith("https://") || url.startsWith("http://127.0.0.1:"),
     500,
     "invalidSupabaseUrl",
+  );
+  requireOk(
+    key &&
+      !key.startsWith("sb_secret_") &&
+      !adminKey.startsWith("sb_publishable_"),
+    500,
+    "invalidSupabaseKeyRole",
   );
   const call = async (
     path: string,
@@ -105,7 +133,10 @@ export function supabase(
       signal: AbortSignal.timeout(15000),
       headers: {
         apikey: apiKey,
-        Authorization: "Bearer " + token,
+        // Opaque sb_* API keys must not be treated as user access JWTs.
+        ...(!/^sb_(publishable|secret)_/.test(token)
+          ? { Authorization: "Bearer " + token }
+          : {}),
         ...options.headers,
       },
     });
@@ -132,6 +163,7 @@ export function supabase(
       return { id: d.user.id, token: d.access_token, expiresIn: d.expires_in };
     },
     async verify(token) {
+      requireOk(token && !token.startsWith("sb_"), 401, "loginRequired");
       const r = await call("/auth/v1/user", token);
       const d = (await r.json()) as any;
       requireOk(d.id, 401, "loginRequired");
@@ -153,6 +185,7 @@ export function supabase(
       return d.id;
     },
     async logout(token) {
+      requireOk(token && !token.startsWith("sb_"), 401, "loginRequired");
       await call("/auth/v1/logout", token, { method: "POST" });
     },
   };
@@ -179,6 +212,7 @@ export function supabase(
       );
     },
     async get(name) {
+      requireOk(adminKey, 503, "storageNotConfigured");
       const r = await call(objectPath(name), adminKey, {}, adminKey);
       return Buffer.from(await r.arrayBuffer());
     },

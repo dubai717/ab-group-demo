@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { databaseOptions } from "./database.js";
 import { z } from "zod";
 import { initializeOrganization } from "./bootstrap.js";
 if (process.env.APP_ENV !== "local" && process.env.APP_ENV !== "staging")
@@ -12,7 +13,9 @@ const data = z
     BOOTSTRAP_NAME: z.string().min(1),
   })
   .parse(process.env);
-const p = new Pool({ connectionString: data.MIGRATION_DATABASE_URL });
+const p = new Pool(
+  databaseOptions(data.MIGRATION_DATABASE_URL, process.env.APP_ENV === "local"),
+);
 try {
   const created = await initializeOrganization(p, {
     authId: data.BOOTSTRAP_AUTH_ID,

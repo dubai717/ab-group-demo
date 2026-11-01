@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { databaseOptions } from "./database.js";
 import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { sha } from "./core.js";
@@ -50,7 +51,10 @@ if (process.argv[1] && /migrate\.(ts|js)$/.test(process.argv[1])) {
   if (!process.env.MIGRATION_DATABASE_URL)
     throw Error("MIGRATION_DATABASE_URL required");
   const pool = new Pool({
-    connectionString: process.env.MIGRATION_DATABASE_URL,
+    ...databaseOptions(
+      process.env.MIGRATION_DATABASE_URL,
+      process.env.APP_ENV === "local",
+    ),
   });
   await migrate(pool);
   await pool.end();

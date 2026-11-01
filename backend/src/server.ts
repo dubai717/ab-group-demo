@@ -1,11 +1,11 @@
 import { Pool } from "pg";
+import { databaseOptions } from "./database.js";
 import { build } from "./app.js";
-import { supabase } from "./core.js";
+import { supabase, supabaseKeys } from "./core.js";
 const required = [
   "DATABASE_URL",
   "DATA_ENCRYPTION_KEY",
   "SUPABASE_URL",
-  "SUPABASE_ANON_KEY",
   "PUBLIC_ORIGIN",
 ] as const;
 for (const key of required)
@@ -19,22 +19,10 @@ const local = process.env.APP_ENV === "local";
 if (!local && !origin.startsWith("https://")) throw Error("HTTPS required");
 if (local && !/^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin))
   throw Error("Local cookie mode is loopback-only");
-const dbUrl = new URL(process.env.DATABASE_URL!);
-if (
-  !local &&
-  dbUrl.searchParams.has("sslmode") &&
-  dbUrl.searchParams.get("sslmode") !== "verify-full"
-)
-  throw Error("Use verified TLS for the database");
+const keys = supabaseKeys();
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl:
-    local && ["localhost", "127.0.0.1"].includes(dbUrl.hostname)
-      ? false
-      : { rejectUnauthorized: true },
+  ...databaseOptions(process.env.DATABASE_URL!, local),
   max: 10,
-  connectionTimeoutMillis: 5000,
-  statement_timeout: 15000,
 });
 const role = (
   await pool.query(
@@ -51,8 +39,8 @@ if (
   throw Error("Web process cannot use owner/superuser/bypass-RLS credentials");
 const { auth, objects } = supabase(
   process.env.SUPABASE_URL!,
-  process.env.SUPABASE_ANON_KEY!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+  keys.publishable,
+  keys.secret,
   process.env.SUPABASE_BUCKET || "ab-private-test",
 );
 const app = await build({

@@ -1,5 +1,6 @@
 import { Pool } from "pg";
-import { security, sha, supabase } from "./core.js";
+import { databaseOptions } from "./database.js";
+import { security, sha, supabase, supabaseKeys } from "./core.js";
 // Explicit worker, separate DB identity. No scanner URL => files remain quarantined.
 for (const key of [
   "SCANNER_DATABASE_URL",
@@ -7,8 +8,6 @@ for (const key of [
   "SCANNER_TOKEN",
   "DATA_ENCRYPTION_KEY",
   "SUPABASE_URL",
-  "SUPABASE_ANON_KEY",
-  "SUPABASE_SERVICE_ROLE_KEY",
 ])
   if (!process.env[key]) throw Error(key + " required");
 const endpoint = new URL(process.env.SCANNER_URL!);
@@ -18,14 +17,18 @@ if (
 )
   throw Error("Scanner requires HTTPS");
 const pool = new Pool({
-    connectionString: process.env.SCANNER_DATABASE_URL,
-    ssl: process.env.APP_ENV === "local" ? false : { rejectUnauthorized: true },
+    ...databaseOptions(
+      process.env.SCANNER_DATABASE_URL!,
+      process.env.APP_ENV === "local",
+    ),
   }),
   cipher = security(process.env.DATA_ENCRYPTION_KEY!);
+const keys = supabaseKeys();
+if (!keys.secret) throw Error("SUPABASE_SECRET_KEY required");
 const { objects } = supabase(
   process.env.SUPABASE_URL!,
-  process.env.SUPABASE_ANON_KEY!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  keys.publishable,
+  keys.secret,
   process.env.SUPABASE_BUCKET || "ab-private-test",
 );
 try {
