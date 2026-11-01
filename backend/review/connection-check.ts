@@ -5,6 +5,7 @@ import { supabaseKeys } from "../src/core.js";
 import { databaseOptions } from "../src/database.js";
 let pool: Pool | undefined;
 const completed: string[] = [];
+let connectionFailed = false;
 try {
   const needed = ["SUPABASE_URL", "MIGRATION_DATABASE_URL"];
   if (
@@ -16,7 +17,7 @@ try {
       JSON.stringify({
         status: "NOT_RUN",
         reason:
-          "Enter the four connection values in the protected file; no network attempted",
+          "Provide the four protected connection values; no network attempted",
       }),
     );
     process.exitCode = 2;
@@ -42,6 +43,11 @@ try {
     )
       throw Error("Project-matched direct/session admin connection required");
     pool = new Pool({ ...databaseOptions(db.href), max: 1 });
+    pool.on("error", () => {
+      connectionFailed = true;
+      process.exitCode = 1;
+      console.log("FAIL: database connection lost; details withheld.");
+    });
     await pool.query("BEGIN READ ONLY");
     await pool.query("select current_database()");
     if (
@@ -82,6 +88,7 @@ try {
     });
     if (!auth.ok) throw Error("Publishable/Auth endpoint check failed");
     completed.push("actual publishable key and Auth endpoint");
+    if (connectionFailed) throw Error("database connection lost");
     console.log(
       JSON.stringify({
         status: "PASS",

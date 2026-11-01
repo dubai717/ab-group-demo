@@ -8,6 +8,8 @@ An opt-in Node.js/TypeScript + PostgreSQL/Supabase foundation is prepared on top
 
 See [phase 1 architecture, setup, verification and limitations](docs/CENTRAL-DATABASE-PHASE1.md) and [server configuration template](backend/.env.example). Recovery services, live Supabase verification and operational cloud backup remain pending.
 
+Current safe trial setup: [GitHub Actions protected environment and Supabase check](docs/GITHUB-ACTIONS-SUPABASE.md). No secrets are entered into the current workspace or public page, and no merge/deployment is required.
+
 ## What is included
 
 - Login screen

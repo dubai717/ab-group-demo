@@ -1,3 +1,9 @@
+# المسار المعتمد حالياً: GitHub Actions Secrets
+
+لا تستخدم ملف backend.env في مساحة العمل الحالية. انتقل إلى [خطوة إعداد GitHub Environment المحمية](GITHUB-ACTIONS-SUPABASE.md). النص التالي سجل للطريقة السابقة التي لم تعد مطلوبة.
+
+---
+
 # Supabase التجريبي — إدخال الاتصال فقط
 
 المشروع `ab-group-erp-test` والـBucket الخاص `ab-private-test` أُنشئا بالفعل بواسطة المالك. **لا تعِد إنشاءهما ولا تحتاج إلى مفاتيح Legacy أو خدمة مدفوعة.** Backend يدعم الآن `sb_publishable_...` و`sb_secret_...`، مع الإبقاء على الأسماء القديمة للتوافق.

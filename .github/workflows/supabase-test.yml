@@ -1,0 +1,65 @@
+name: Supabase isolated test (no deployment)
+
+# Deliberately no PR, pull_request_target, schedule, or default-branch dependency.
+# After secrets are configured, push an explicitly reviewed verification branch.
+on:
+  push:
+    branches:
+      - 'verify/supabase-test-*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ab-group-supabase-test
+  cancel-in-progress: false
+
+jobs:
+  local-validation:
+    if: github.repository == 'dubai717/ab-group-demo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run backend:check
+      - run: node --test tests/*.test.cjs
+      - run: npm run backend:test:db
+      - run: npm run backend:test
+      - run: node --import tsx backend/review/schema-review.ts
+
+  supabase-connection-and-schema:
+    needs: local-validation
+    if: github.repository == 'dubai717/ab-group-demo' && startsWith(github.ref, 'refs/heads/verify/supabase-test-')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Environment secrets must be configured by the owner, with owner approval.
+    # An environment record is an Actions secret gate, not a website deployment.
+    environment: supabase-test
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24'
+      # No project secrets in job-level env, checkout, installation or other actions.
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check existing project, apply migrations and verify isolation
+        env:
+          AB_SYNTHETIC_PROJECT: 'yes'
+          APP_ENV: staging
+          SUPABASE_BUCKET: ab-private-test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        run: node --import tsx backend/actions/supabase-check.ts
+      # No artifact upload, cache, Pages, deployment, or third-party post-test action.
