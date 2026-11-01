@@ -2,6 +2,12 @@
 
 This repository contains a working interactive prototype of the AB Group administrative system.
 
+## Central database foundation (review only)
+
+An opt-in Node.js/TypeScript + PostgreSQL/Supabase foundation is prepared on top of the integration branch. No cloud resources or deployment were created. `npm start` still runs the original browser-storage demo; use synthetic data only. Central mode is served exclusively by the backend and does not import browser data.
+
+See [phase 1 architecture, setup, verification and limitations](docs/CENTRAL-DATABASE-PHASE1.md) and [server configuration template](backend/.env.example). Recovery services, live Supabase verification and operational cloud backup remain pending.
+
 ## What is included
 
 - Login screen

@@ -1,0 +1,160 @@
+[
+  {
+    "id": "owner",
+    "name": "Owner",
+    "description": "System owner",
+    "permissions": [
+      "view_dashboard",
+      "create_user",
+      "edit_user",
+      "deactivate_user",
+      "view_company",
+      "create_company",
+      "edit_company",
+      "view_tasks",
+      "create_task",
+      "edit_task",
+      "update_task_status",
+      "view_reports",
+      "export_reports",
+      "view_investors",
+      "create_investment",
+      "view_finance",
+      "edit_finance",
+      "view_marketing",
+      "create_campaign",
+      "view_customer_data",
+      "create_customer",
+      "manage_notifications",
+      "assign_task",
+      "approve_request",
+      "reject_request",
+      "delegate_access"
+    ]
+  },
+  {
+    "id": "general_manager",
+    "name": "General Manager",
+    "description": "Administrative leadership",
+    "permissions": [
+      "view_dashboard",
+      "view_company",
+      "edit_company",
+      "view_tasks",
+      "create_task",
+      "edit_task",
+      "update_task_status",
+      "view_reports",
+      "export_reports",
+      "view_investors",
+      "view_finance",
+      "view_marketing",
+      "manage_notifications",
+      "assign_task",
+      "approve_request",
+      "reject_request"
+    ]
+  },
+  {
+    "id": "regional_manager",
+    "name": "Regional Manager",
+    "description": "Regional leadership",
+    "permissions": [
+      "view_dashboard",
+      "view_tasks",
+      "create_task",
+      "edit_task",
+      "update_task_status",
+      "view_reports",
+      "manage_notifications",
+      "assign_task",
+      "approve_request"
+    ]
+  },
+  {
+    "id": "hr_manager",
+    "name": "HR Manager",
+    "description": "Human resources",
+    "permissions": [
+      "view_dashboard",
+      "view_users",
+      "create_user",
+      "edit_user",
+      "view_company",
+      "view_reports",
+      "manage_notifications"
+    ]
+  },
+  {
+    "id": "pr_manager",
+    "name": "Public Relations Manager",
+    "description": "Public relations",
+    "permissions": [
+      "view_dashboard",
+      "view_company",
+      "view_tasks",
+      "create_task",
+      "manage_notifications",
+      "view_reports"
+    ]
+  },
+  {
+    "id": "marketing_manager",
+    "name": "Development & Marketing Manager",
+    "description": "Marketing and growth",
+    "permissions": [
+      "view_dashboard",
+      "view_company",
+      "view_marketing",
+      "create_campaign",
+      "view_reports",
+      "manage_notifications"
+    ]
+  },
+  {
+    "id": "finance_manager",
+    "name": "Finance Manager",
+    "description": "Finance and accounts",
+    "permissions": [
+      "view_dashboard",
+      "view_finance",
+      "edit_finance",
+      "view_reports",
+      "export_reports",
+      "manage_notifications"
+    ]
+  },
+  {
+    "id": "employee",
+    "name": "Employee",
+    "description": "Operational staff",
+    "permissions": [
+      "view_dashboard",
+      "view_tasks",
+      "create_task",
+      "edit_task",
+      "update_task_status",
+      "manage_notifications"
+    ]
+  },
+  {
+    "id": "investor",
+    "name": "Investor",
+    "description": "External investor",
+    "permissions": [
+      "view_dashboard",
+      "view_investors",
+      "view_reports"
+    ]
+  },
+  {
+    "id": "marketing_company",
+    "name": "Marketing Company",
+    "description": "External partner",
+    "permissions": [
+      "view_dashboard",
+      "view_company",
+      "view_reports"
+    ]
+  }
+]
