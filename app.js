@@ -396,11 +396,13 @@ function loadState() {
 }
 
 function saveState() {
-  if (!stateStorageWritable) return;
+  if (!stateStorageWritable) return false;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(app.state));
+    return true;
   } catch (error) {
     console.warn('Could not save application state; existing storage is unchanged.', error);
+    return false;
   }
 }
 
@@ -779,10 +781,10 @@ function renderCompanies(user) {
   const filters = app.state.companyFilters || { query: '', status: 'all', emirate: 'all' };
   const companyRows = app.state.companies.filter((company) => {
     const query = filters.query.trim().toLowerCase();
-    const matchesQuery = !query || [company.companyCode, company.arabicName, company.englishName, company.shortName, company.emirate].join(' ').toLowerCase().includes(query);
+    const matchesQuery = !query || [company.companyCode, company.arabicName, company.englishName, company.shortName, company.emirate, company.trafficCode, company.salikAccountNumber].join(' ').toLowerCase().includes(query) || CompanyDocuments.codeSearch(company, query);
     const matchesStatus = filters.status === 'all' || company.status === filters.status;
     const matchesEmirate = filters.emirate === 'all' || company.emirate === filters.emirate;
-    return matchesQuery && matchesStatus && matchesEmirate;
+    return matchesQuery && matchesStatus && matchesEmirate && CompanyDocuments.matchesFilters(company, filters);
   });
 
   const emirates = AreaReference.emirates.map(e => e.legacy);
@@ -907,6 +909,7 @@ function renderCompanies(user) {
               <input class="input" type="file" name="documents" multiple />
             </div>
 
+            ${CompanyDocuments.creationFields()}
             <div class="full controls-row">
               <button type="submit" class="primary-btn">${localeText('createCompany')}</button>
             </div>
@@ -928,6 +931,7 @@ function renderCompanies(user) {
         </select>
       </div>
 
+      ${CompanyDocuments.filterFields(filters)}
       <div class="table-wrap company-table-wrap">
         <table>
           <thead>
@@ -954,6 +958,7 @@ function renderCompanies(user) {
                 <td><span class="badge ${company.status === 'Active' ? 'active' : company.status === 'Inactive' ? 'pending' : 'disabled'}">${company.status}</span></td>
                 <td>
                   <div class="row-actions">
+                    ${CompanyDocuments.profileButton(company.id)}
                     <button class="ghost-btn" data-action="toggle-company-status" data-company-id="${company.id}">${company.status === 'Active' ? localeText('disable') : localeText('enable')}</button>
                   </div>
                 </td>
@@ -967,7 +972,7 @@ function renderCompanies(user) {
         </table>
       </div>
     </section>
-  `;
+  ` + CompanyDocuments.renderProfile();
 }
 
 function renderTasks() {
@@ -1007,7 +1012,7 @@ function renderReports() {
   return `
     <section class="content-panel">
       <div class="section-head"><h2>${localeText('reports')}</h2></div>
-      <div class="empty-state">${localeText('noReports')}</div>
+      ${CompanyDocuments.renderReport() || `<div class="empty-state">${localeText('noReports')}</div>`}
     </section>
   `;
 }
@@ -1016,6 +1021,7 @@ function renderNotifications() {
   return `
     <section class="content-panel">
       <div class="section-head"><h2>${localeText('notifications')}</h2></div>
+      ${CompanyDocuments.renderAlerts()}
       <div class="table-wrap">
         <table>
           <thead>
@@ -1159,8 +1165,10 @@ function handleLogin(event) {
 }
 
 function bindGlobalEvents() {
+  CompanyDocuments.bind();
   document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', () => {
+      CompanyDocuments.cleanupPreview();
       const page = button.dataset.page;
       app.state.currentPage = page;
       saveState();
@@ -1170,6 +1178,7 @@ function bindGlobalEvents() {
 
   document.querySelectorAll('[data-action="logout"]').forEach(button => {
     button.addEventListener('click', () => {
+      CompanyDocuments.logout();
       setCurrentUser(null);
       app.state.currentPage = 'dashboard';
       render();
@@ -1268,8 +1277,14 @@ function bindGlobalEvents() {
         companyForm.querySelector('#area-message').textContent = getLocale() === 'ar' ? 'تعذر حفظ الموقع. تحقق من الإمارة والمنطقة والمرجع المحلي.' : 'Location could not be saved. Check the emirate, area and local reference.';
         return;
       }
+      let documentData;
+      try { documentData = CompanyDocuments.prepareCreation(companyForm); } catch (error) {
+        companyForm.querySelector('#company-doc-message').textContent = CompanyDocuments.text(error.message);
+        return;
+      }
       const newCompany = {
-        id: `company-${Date.now()}`,
+        id: `company-${crypto.randomUUID()}`,
+        ...documentData.data,
         companyCode: String(fd.get('companyCode') || '').trim(),
         arabicName: String(fd.get('arabicName') || '').trim(),
         englishName: String(fd.get('englishName') || '').trim(),
@@ -1297,9 +1312,16 @@ function bindGlobalEvents() {
         createdAt: new Date().toISOString()
       };
 
+      const previousFilters = app.state.companyFilters;
       app.state.companies.push(newCompany);
       app.state.companyFilters = { query: '', status: 'all', emirate: 'all' };
-      saveState();
+      if (!saveState()) {
+        app.state.companies.pop();
+        app.state.companyFilters = previousFilters;
+        companyForm.querySelector('#company-doc-message').textContent = CompanyDocuments.text('storageFailed');
+        return;
+      }
+      CompanyDocuments.captureNew(newCompany.id, documentData.files);
       render();
     });
   }
