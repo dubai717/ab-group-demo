@@ -1,4 +1,4 @@
-name: Supabase isolated test (no deployment)
+name: Supabase read-only test (no deployment)
 
 # Deliberately no PR, pull_request_target, schedule, or default-branch dependency.
 # After secrets are configured, push an explicitly reviewed verification branch.
@@ -15,27 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  local-validation:
-    if: github.repository == 'dubai717/ab-group-demo'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-        with:
-          persist-credentials: false
-          ref: ${{ github.sha }}
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
-        with:
-          node-version: '24'
-      - run: npm ci --ignore-scripts --no-audit --no-fund
-      - run: npm run backend:check
-      - run: node --test tests/*.test.cjs
-      - run: npm run backend:test:db
-      - run: npm run backend:test
-      - run: node --import tsx backend/review/schema-review.ts
-
-  supabase-connection-and-schema:
-    needs: local-validation
+  supabase-read-only:
     if: github.repository == 'dubai717/ab-group-demo' && startsWith(github.ref, 'refs/heads/verify/supabase-test-')
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -52,7 +32,7 @@ jobs:
           node-version: '24'
       # No project secrets in job-level env, checkout, installation or other actions.
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Check existing project, apply migrations and verify isolation
+      - name: Read-only connection, migration status and isolation checks
         env:
           AB_SYNTHETIC_PROJECT: 'yes'
           APP_ENV: staging

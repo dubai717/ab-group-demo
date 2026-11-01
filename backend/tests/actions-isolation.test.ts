@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import {
   approvedActionsContext,
   checkSchema,
+  inspectSchema,
 } from "../actions/supabase-check.js";
 import { fixture } from "./fixture.js";
 const trusted = {
@@ -70,7 +71,7 @@ test("Workflow has pinned actions, isolated secrets, read-only token and no publ
     assert(/@[a-f0-9]{40}$/.test(ref));
   assert(yaml.includes("persist-credentials: false"));
   assert(yaml.includes("environment: supabase-test"));
-  const [local, remote] = yaml.split("  supabase-connection-and-schema:");
+  const [local, remote] = yaml.split("  supabase-read-only:");
   assert(!local.includes("${{ secrets."));
   assert(
     remote.indexOf("npm ci --ignore-scripts") < remote.indexOf("${{ secrets."),
@@ -96,4 +97,13 @@ test("Actions schema checks succeed on actual local migrations without changing 
     await f.runtime.end();
     await f.admin.end();
   }
+});
+
+test('Read-only inspector leaves absent schema untouched',async()=>{
+ const queries:string[]=[];
+ const client={query:async(q:string)=>{queries.push(q);return {rows:[{ledger:null,app_schema:null}]};},release:()=>{}};
+ assert.equal(await inspectSchema({connect:async()=>client} as any),'NOT_APPLIED');
+ assert.deepEqual(queries,['BEGIN READ ONLY',"select to_regclass('public.ab_schema_migrations') ledger,to_regnamespace('ab') app_schema",'ROLLBACK']);
+ const source=await readFile(new URL('../actions/supabase-check.ts',import.meta.url),'utf8');
+ assert(!source.includes('await migrate('));assert(!source.includes('from "../src/migrate.js"'));
 });
