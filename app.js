@@ -427,7 +427,8 @@ function getUserById(id) {
 }
 
 function getCurrentUser() {
-  return app.state.currentUser || null;
+  const user = UserManagement.effectiveUser(app.state.currentUser);
+  return user?.status === 'Active' ? user : null;
 }
 
 function setCurrentUser(user) {
@@ -454,14 +455,14 @@ function getSidebarItems(user) {
   }
 
   if (user.roleId === 'regional_manager' || user.roleId === 'employee') {
-    return allItems.filter(item => ['dashboard', 'tasks', 'notifications'].includes(item.id));
+    return allItems.filter(item => ['dashboard', 'users', 'tasks', 'notifications'].includes(item.id));
   }
 
   if (user.roleId === 'investor' || user.roleId === 'marketing_company') {
-    return allItems.filter(item => ['dashboard', 'reports'].includes(item.id));
+    return allItems.filter(item => ['dashboard', 'users', 'reports'].includes(item.id));
   }
 
-  return allItems.filter(item => isUserAllowed(user, item.permission));
+  return allItems.filter(item => item.id === 'users' || isUserAllowed(user, item.permission));
 }
 
 function render() {
@@ -511,9 +512,9 @@ function render() {
               ${getLocale() === 'ar' ? 'English' : 'العربية'}
             </button>
             <div class="user-pill">
-              <div class="avatar">${currentUser.fullName.slice(0,1).toUpperCase()}</div>
+              <div class="avatar">${UserManagement.escape(currentUser.fullName.slice(0,1).toUpperCase())}</div>
               <div>
-                <div>${currentUser.fullName}</div>
+                <div>${UserManagement.escape(currentUser.fullName)}</div>
                 <div class="muted">${getRoleName(currentUser.roleId)}</div>
               </div>
             </div>
@@ -607,7 +608,7 @@ function renderDashboard(user) {
             ${app.state.tasks.map(task => `
               <tr>
                 <td>${task.title}</td>
-                <td>${task.assignee}</td>
+                <td>${UserManagement.escape(task.assignee)}</td>
                 <td><span class="badge ${task.status === 'Completed' ? 'active' : task.status === 'Pending' ? 'pending' : 'disabled'}">${task.status}</span></td>
                 <td>${task.priority}</td>
               </tr>
@@ -620,99 +621,7 @@ function renderDashboard(user) {
 }
 
 function renderUsers(user) {
-  const canCreateUser = isUserAllowed(user, 'create_user') || user.roleId === 'owner';
-  const canEditUser = isUserAllowed(user, 'edit_user') || user.roleId === 'owner';
-
-  return `
-    <section class="content-panel">
-      <div class="section-head">
-        <h2>${localeText('userManagement')}</h2>
-        ${canCreateUser ? `<button class="secondary-btn" data-action="open-user-form">${localeText('addUser')}</button>` : ''}
-      </div>
-
-      ${canCreateUser ? `
-        <form id="user-form" style="margin-bottom: 20px;">
-          <div class="form-grid">
-            <div>
-              <label>${localeText('fullName')}</label>
-              <input class="input" name="fullName" placeholder="${localeText('fullName')}" required />
-            </div>
-            <div>
-              <label>${localeText('username')}</label>
-              <input class="input" name="username" placeholder="${localeText('username')}" required />
-            </div>
-            <div>
-              <label>Email</label>
-              <input class="input" name="email" type="email" placeholder="email@example.com" required />
-            </div>
-            <div>
-              <label>${localeText('phone')}</label>
-              <input class="input" name="phone" placeholder="${localeText('phone')}" />
-            </div>
-            <div>
-              <label>${localeText('password')}</label>
-              <input class="input" name="password" type="password" placeholder="${localeText('password')}" required />
-            </div>
-            <div>
-              <label>${localeText('role')}</label>
-              <select class="input" name="roleId">
-                ${app.state.roles.map(role => `<option value="${role.id}">${role.name}</option>`).join('')}
-              </select>
-            </div>
-            <div>
-              <label>${localeText('department')}</label>
-              <select class="input" name="departmentId">
-                ${app.state.departments.map(dept => `<option value="${dept.id}">${dept.name}</option>`).join('')}
-              </select>
-            </div>
-            <div>
-              <label>${localeText('status')}</label>
-              <select class="input" name="status">
-                <option value="Active">${localeText('active')}</option>
-                <option value="Pending">${localeText('pending')}</option>
-                <option value="Disabled">${localeText('disabled')}</option>
-              </select>
-            </div>
-            <div class="full">
-              <button type="submit" class="primary-btn">${localeText('createUser')}</button>
-            </div>
-          </div>
-        </form>
-      ` : ''}
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>${localeText('users')}</th>
-              <th>${localeText('role')}</th>
-              <th>${localeText('department')}</th>
-              <th>${localeText('status')}</th>
-              <th>${localeText('type')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${app.state.users.map(userRow => `
-              <tr>
-                <td>
-                  <strong>${userRow.fullName}</strong><br>
-                  <span class="muted">${userRow.email}</span>
-                </td>
-                <td>${getRoleName(userRow.roleId)}</td>
-                <td>${getDepartmentName(userRow.departmentId)}</td>
-                <td><span class="badge ${userRow.status === 'Active' ? 'active' : userRow.status === 'Pending' ? 'pending' : 'disabled'}">${userRow.status}</span></td>
-                <td>
-                  <div class="row-actions">
-                    ${canEditUser ? `<button class="ghost-btn" data-action="toggle-status" data-user-id="${userRow.id}">${userRow.status === 'Active' ? localeText('disable') : localeText('enable')}</button>` : ''}
-                  </div>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  `;
+  return UserManagement.render();
 }
 
 function renderRoles() {
@@ -996,7 +905,7 @@ function renderTasks() {
             ${app.state.tasks.map(task => `
               <tr>
                 <td>${task.title}</td>
-                <td>${task.assignee}</td>
+                <td>${UserManagement.escape(task.assignee)}</td>
                 <td><span class="badge ${task.status === 'Completed' ? 'active' : task.status === 'Pending' ? 'pending' : 'disabled'}">${task.status}</span></td>
                 <td>${task.priority}</td>
               </tr>
@@ -1151,7 +1060,7 @@ function handleLogin(event) {
     return;
   }
 
-  if (user.status !== 'Active') {
+  if (UserManagement.effectiveUser(user).status !== 'Active') {
     errBox.textContent = localeText('inactiveError');
     errBox.classList.add('visible');
     return;
@@ -1175,6 +1084,7 @@ function bindGlobalEvents() {
 
   document.querySelectorAll('[data-action="logout"]').forEach(button => {
     button.addEventListener('click', () => {
+      UserManagement.logout();
       setCurrentUser(null);
       app.state.currentPage = 'dashboard';
       render();
@@ -1204,17 +1114,6 @@ function bindGlobalEvents() {
     });
   });
 
-  document.querySelectorAll('[data-action="toggle-status"]').forEach(button => {
-    button.addEventListener('click', () => {
-      const userId = button.dataset.userId;
-      const target = app.state.users.find(u => u.id === userId);
-      if (!target) return;
-      target.status = target.status === 'Active' ? 'Disabled' : 'Active';
-      saveState();
-      render();
-    });
-  });
-
   document.querySelectorAll('[data-action="toggle-company-status"]').forEach(button => {
     button.addEventListener('click', () => {
       const companyId = button.dataset.companyId;
@@ -1226,31 +1125,7 @@ function bindGlobalEvents() {
     });
   });
 
-  const userForm = document.getElementById('user-form');
-  if (userForm) {
-    userForm.addEventListener('submit', (event) => {
-      event.preventDefault();
-      const fd = new FormData(userForm);
-      const newUser = {
-        id: `u-${Date.now()}`,
-        fullName: fd.get('fullName'),
-        username: fd.get('username'),
-        email: fd.get('email'),
-        phone: fd.get('phone') || '',
-        password: fd.get('password'),
-        roleId: fd.get('roleId'),
-        departmentId: fd.get('departmentId'),
-        companyId: 'company-ab',
-        status: fd.get('status'),
-        language: getLocale(),
-        managerId: null
-      };
-
-      app.state.users.push(newUser);
-      saveState();
-      render();
-    });
-  }
+  UserManagement.bind();
 
   const companyForm = document.getElementById('company-form');
   if (companyForm) {
