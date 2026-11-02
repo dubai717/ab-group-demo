@@ -227,3 +227,21 @@ test('read-only stored-verifier diagnosis emits only a fixed verdict and always 
  assert.deepEqual(output,['DIAGNOSTIC: runtime role password not expired','DIAGNOSTIC: stored runtime verifier matches DATABASE_URL password']);
  assert(!output.join().includes(password));assert(!output.join().includes(verifier));
 });
+
+test('approved rehash preserves the password, refuses mismatch and does not rewrite on retry',async()=>{
+ const {setupDatabase}=await import('./setup.js');const d=await setupDatabase();
+ try{
+  const previous=scramVerifier(d.secret.runtime,Buffer.alloc(32,7),65536);
+  await d.admin.query("ALTER ROLE ab_runtime PASSWORD '"+previous+"'");
+  await assert.rejects(()=>provisionRuntimePassword(d.admin,'WRONG_SYNTHETIC_PASSWORD_1234567890',true));
+  assert.equal((await d.admin.query("select rolpassword from pg_authid where rolname='ab_runtime'")).rows[0].rolpassword,previous);
+  await provisionRuntimePassword(d.admin,d.secret.runtime,true);
+  const corrected=(await d.admin.query("select rolpassword from pg_authid where rolname='ab_runtime'")).rows[0].rolpassword;
+  assert(corrected.startsWith('SCRAM-SHA-256$4096:'));
+  await provisionRuntimePassword(d.admin,d.secret.runtime,true);
+  assert.equal((await d.admin.query("select rolpassword from pg_authid where rolname='ab_runtime'")).rows[0].rolpassword,corrected);
+  const {Pool}=await import('pg');
+  const cold=new Pool({...d.runtime.options,max:1});
+  try{await verifyRuntimeAccess(cold);}finally{await cold.end();}
+ }finally{await d.admin.end();await d.runtime.end();}
+});

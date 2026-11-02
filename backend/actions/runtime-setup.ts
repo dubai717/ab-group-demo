@@ -131,7 +131,7 @@ async function permissionSnapshot(c: any) {
     throw Error("RLS not enabled");
   return JSON.stringify({ role, memberships, privileges, policies });
 }
-export async function provisionRuntimePassword(admin: Pool, password: string) {
+export async function provisionRuntimePassword(admin: Pool, password: string, samePasswordOnly=false) {
   const c = await admin.connect();
   try {
     await c.query("BEGIN");
@@ -153,6 +153,15 @@ export async function provisionRuntimePassword(admin: Pool, password: string) {
     )
       throw Error("approved schema not ready");
     const before = await permissionSnapshot(c);
+    if(samePasswordOnly){
+      const current=(await c.query("select rolpassword from pg_authid where rolname='ab_runtime'")).rows[0]?.rolpassword;
+      const match=/^SCRAM-SHA-256\$(\d+):([A-Za-z0-9+/]+=*)\$/.exec(current||'');
+      const cost=Number(match?.[1]);
+      if(!match||cost<4096||cost>1000000||scramVerifier(password,Buffer.from(match[2],'base64'),cost)!==current)throw Error('current password does not match; rehash refused');
+      // A retry must not rotate the verifier again after the approved correction.
+      if(cost===4096){await c.query('COMMIT');return;}
+      if(cost!==65536)throw Error('unexpected existing SCRAM cost; rehash refused');
+    }
     const verifier = scramVerifier(password);
     // Verifier alphabet cannot contain SQL quotes. Neither plaintext nor verifier is logged.
     if (
@@ -277,7 +286,7 @@ export async function run() {
       a.release();
     }
     phase = "existing runtime role password assignment";
-    await provisionRuntimePassword(admin, cfg.password);
+    await provisionRuntimePassword(admin, cfg.password,process.argv.includes('--rehash-current-password'));
     console.log(
       "PASS: existing ab_runtime password configured; role attributes, memberships and RLS/table privileges unchanged",
     );
