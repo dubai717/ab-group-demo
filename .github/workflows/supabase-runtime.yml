@@ -23,6 +23,11 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check protected runtime inputs before any database change
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
+        run: node --import tsx backend/actions/runtime-readiness.ts
       - name: Set only the existing runtime role password and verify independent access
         env:
           AB_SYNTHETIC_PROJECT: 'yes'
