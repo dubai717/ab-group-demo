@@ -38,3 +38,13 @@ Development workflow restored to verify-only mode for future pushes. The histori
 ## Next interface trial (prepared, not deployed)
 
 After synthetic API/storage trials pass, serve the current frontend and backend together on a trusted local machine (`APP_ENV=local`, `PUBLIC_ORIGIN=http://127.0.0.1:3100`, backend bound to loopback). Inject secrets from that machine's protected secret store into the backend process only; never into runtime-config.js, browser storage, GitHub Pages or a public runner port. Use a separately provisioned synthetic user, not runner fixture passwords printed into logs. A controlled staging endpoint would need separate deployment approval. GitHub Actions by itself is not an interactive hosting environment. A scanner is still required before quarantined documents can be marked clean; no fake clean status.
+
+## Actual synthetic trial passed — 2026-11-02 12:10 UTC
+
+[Run 41441112863, attempt 3](https://github.com/dubai717/ab-group-demo/actions/runs/41441112863/attempts/3) reran only the previously failed synthetic-trial job. The successful credential-correction job was reused. DATA_ENCRYPTION_KEY was observed present with the required canonical Base64 encoding of exactly 32 bytes; its value was never printed.
+
+All 14 live stages passed: independent runtime authentication; rejection of wrong credentials; actual Auth login; company central persistence/retrieval (including Salik/Traffic Code); multiple bank accounts for one company; bank-manager persistence; new fictional-user login; unscoped RLS denial; application bank-access denial; encrypted private-object upload and decryption check; anonymous-object denial; ordinary authenticated-user object denial; pending-document quarantine; logout. The workflow completed successfully without an impactful error in these tested flows. No migration, role/grant/RLS change, deletion, restart, merge or deployment was performed in this attempt. Fictional accounts/records/files were retained.
+
+This is a real API/Auth/PostgreSQL/Storage integration test, **not** an interactive cloud UI trial or evidence of production readiness. File downloads remain quarantined until a real scanner is configured. Existing local browser tests are not rerun or represented as live-cloud browser coverage.
+
+The next practical step is to identify the user's trusted desktop OS (Windows/macOS/Linux), then provide its protected-secret-store setup for the existing loopback backend and frontend. No plaintext backend.env, public tunnel or GitHub Pages secret injection is needed. A separate synthetic interactive login must be provisioned securely; automated fixture passwords are not recoverable from logs and must not be published. There is no interactive endpoint deployed by this workflow.
