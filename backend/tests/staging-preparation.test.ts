@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {spawnSync} from 'node:child_process';
 import {randomBytes} from 'node:crypto';
+import {stagingOrigin} from '../deploy/server.js';
 import {backupConnection} from '../deploy/backup-staging.js';
 test('staging blueprint defines one service, no database/admin connection and no automatic deploy',async()=>{
  const yaml=await readFile('render.yaml','utf8');
@@ -30,4 +31,12 @@ test('deployment and cloud backup remain inert templates and deployment pins the
  const backup=await readFile('.github/workflows/staging-backup.yml.example','utf8');
  assert(!backup.includes('uses: actions/upload-artifact'));assert(!backup.includes('pg_restore'));
  const docker=await readFile('Dockerfile.staging','utf8');assert(docker.includes('USER node'));assert(!/COPY.*\.env|ARG.*SECRET|ENV.*DATABASE_URL/.test(docker));
+});
+
+test('staging origin follows the platform-assigned HTTPS address without manual URL guessing',()=>{
+ assert.equal(stagingOrigin({RENDER:'true',RENDER_EXTERNAL_URL:'https://ab-test-unique.onrender.com/'}),'https://ab-test-unique.onrender.com');
+ assert.equal(stagingOrigin({PUBLIC_ORIGIN:'https://trial.example.com'}),'https://trial.example.com');
+ assert.throws(()=>stagingOrigin({RENDER_EXTERNAL_URL:'https://ab.onrender.com'}));
+ assert.throws(()=>stagingOrigin({RENDER:'true',RENDER_EXTERNAL_URL:'https://other.example.com'}));
+ assert.throws(()=>stagingOrigin({PUBLIC_ORIGIN:'https://trial.example.com/path'}));
 });

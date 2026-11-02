@@ -23,7 +23,7 @@
 - Build: `npm ci --ignore-scripts --include=dev --omit=optional --no-audit --no-fund && node backend/deploy/build.mjs`
 - Start: `node backend-build/deploy/server.js`؛ لا تستخدم npm start لأنه ما زال يشغّل العرض التجريبي القديم. Build/start لا ينفذان migrations أو provisioning.
 - في مخزن أسرار Render فقط: DATABASE_URL الحالية للدور ab_runtime، DATA_ENCRYPTION_KEY الأصلية، SUPABASE_URL، SUPABASE_PUBLISHABLE_KEY، SUPABASE_SECRET_KEY. GitHub لا يتيح قراءة القيم المحفوظة؛ يُدخل المالك النسخ الأصلية المحمية مرة واحدة، دون المحادثة أو ملفات المستودع. لا تُدخل MIGRATION_DATABASE_URL أو مفاتيح scanner في خدمة الويب.
-- الإعدادات غير السرية: APP_ENV=staging، NODE_ENV=production، SUPABASE_BUCKET=ab-private-test، NODE_EXTRA_CA_CERTS=./backend/certificates/supabase-prod-ca-2021.crt، PUBLIC_ORIGIN=https://اسم-الخدمة.onrender.com **دون /** في النهاية. PORT تحدده Render. HTTPS من Render، وSecure/HttpOnly session cookies من Backend. الواجهة لا تتلقى أي مفاتيح.
+- الإعدادات غير السرية: APP_ENV=staging، NODE_ENV=production، SUPABASE_BUCKET=ab-private-test، NODE_EXTRA_CA_CERTS=./backend/certificates/supabase-prod-ca-2021.crt. رابط PUBLIC_ORIGIN يؤخذ تلقائياً من RENDER_EXTERNAL_URL الموثوق لدى Render؛ لا يلزم تخمين الرابط قبل إنشاء الخدمة. للنطاق المخصص مستقبلاً يمكن ضبط PUBLIC_ORIGIN صراحةً على أصل HTTPS. PORT تحدده Render. HTTPS من Render، وSecure/HttpOnly session cookies من Backend. الواجهة لا تتلقى أي مفاتيح.
 - الخدمة تقدم الواجهة وAPI من الأصل نفسه. لا تعديل ألوان/شعار/لغات/صلاحيات. المرفقات تبقى محجورة دون فاحص حقيقي.
 - يلزم حساب دخول وهمي محدد للمتصفح؛ حسابات CI السابقة كلمات مرورها لم تُنشر ولا نفترض إمكانية استعادتها. بعد وجود الخدمة نجهز إنشاء حساب وهمي مع حفظ كلمة مروره في مخزن أسرار المالك، دون تعديل أي حساب قديم أو طباعتها في السجلات.
 

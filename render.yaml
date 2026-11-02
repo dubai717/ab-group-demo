@@ -23,8 +23,6 @@ services:
         value: ab-private-test
       - key: NODE_EXTRA_CA_CERTS
         value: ./backend/certificates/supabase-prod-ca-2021.crt
-      - key: PUBLIC_ORIGIN
-        sync: false
       - key: DATABASE_URL
         sync: false
       - key: DATA_ENCRYPTION_KEY
