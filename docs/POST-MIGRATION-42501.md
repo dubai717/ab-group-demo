@@ -9,3 +9,7 @@ Verified 2026-11-02 (Dubai): https://github.com/dubai717/ab-group-demo/actions/r
 - No migrations were reapplied during diagnosis; no schema/privilege/data changes, deletes, merges or website publication occurred.
 
 Before real ERP API/UI trials, use a dedicated protected runtime connection authenticated as the existing `ab_runtime` role rather than granting the administrative inspection account extra role-switch rights. Provisioning that role's password is outside the eight approved SQL files and requires separate owner approval; no password or privilege change was performed. The owner must then supply DATABASE_URL through the protected GitHub Environment. A persistent DATA_ENCRYPTION_KEY is also required before retaining encrypted trial records. No ERP login/company/bank trial is claimed completed by catalog inspection.
+
+## Owner-approved next step
+
+The owner approved setting an independent password on the existing role without permission changes. The runtime setup/trial workflow is prepared, with no live execution yet. The only pending manual action is protected DATABASE_URL and durable DATA_ENCRYPTION_KEY setup: [current instructions](RUNTIME-SECRET-SETUP.md). No new role or SET-role grant is proposed.

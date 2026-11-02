@@ -45,25 +45,32 @@ export async function initializeOrganization(
         },
       ],
     );
-    for (const e of seed.emirates)
-      await c.query(
-        "insert into ab.emirates values($1,$2) on conflict do nothing",
-        [e.id, e],
-      );
-    for (const a of seed.areas) {
-      await c.query(
-        "insert into ab.areas(tenant_id,id,emirate_id,data)values($1,$2,$3,$4)",
-        [tenant, a.id, a.emirateId, a],
-      );
-      for (const key of new Set(
-        [a.ar, a.en, ...(a.aliases || [])].map(area.normalize).filter(Boolean),
-      )) {
-        await c.query(
-          "insert into ab.area_aliases values($1,$2,$3,$4) on conflict do nothing",
-          [tenant, a.emirateId, key, a.id],
-        );
-      }
-    }
+    // Same reference rows/alias precedence, inserted in batches for remote trials.
+    await c.query(
+      "insert into ab.emirates(id,data) select x->>'id',x from jsonb_array_elements($1::jsonb) x on conflict do nothing",
+      [JSON.stringify(seed.emirates)],
+    );
+    await c.query(
+      "insert into ab.areas(tenant_id,id,emirate_id,data) select $1::uuid,x->>'id',x->>'emirateId',x from jsonb_array_elements($2::jsonb) x",
+      [tenant, JSON.stringify(seed.areas)],
+    );
+    const aliases = seed.areas.flatMap((a: any) =>
+      [
+        ...new Set(
+          [a.ar, a.en, ...(a.aliases || [])]
+            .map(area.normalize)
+            .filter(Boolean),
+        ),
+      ].map((normalized_name) => ({
+        area_id: a.id,
+        emirate_id: a.emirateId,
+        normalized_name,
+      })),
+    );
+    await c.query(
+      "insert into ab.area_aliases(tenant_id,emirate_id,normalized_name,area_id) select $1::uuid,x.emirate_id,x.normalized_name,x.area_id from jsonb_to_recordset($2::jsonb) as x(emirate_id text,normalized_name text,area_id text) on conflict do nothing",
+      [tenant, JSON.stringify(aliases)],
+    );
     const references = [
       [
         "bank",

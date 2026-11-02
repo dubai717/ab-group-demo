@@ -7,6 +7,7 @@ on:
     branches:
       - 'verify/supabase-test-*'
       - '!verify/supabase-test-migrate-*'
+      - '!verify/supabase-test-runtime-*'
 
 permissions:
   contents: read
