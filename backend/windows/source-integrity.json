@@ -34,7 +34,7 @@
     "backend/windows/bootstrap-trial.ts": "f9e5ed8ebb5a91747bcfb6b0bb781e24aa0559704e9c93093da559e87972317c",
     "backend/windows/local-server.ts": "a2cb15c99e4f15f14245a61e78fe917bc93196d1dcc6492d5cdcb74e997c85ba",
     "backend/windows/terminal-trial.ts": "a8bcf3d4df7debeda5534aeac104bbcbb83a028f9669cc47f911d3b01b59b34c",
-    "backend/windows/verify-source.mjs": "154fc26e574dbcd7fafb31750bd25450cdcc943092593f00f224d657360bf757",
+    "backend/windows/verify-source.mjs": "04bfcf26fc099f73bd814b6614b4a1f22b668c5f6cc843206ad76808597be122",
     "bank-accounts.js": "898d91dd29b4472bbe4ea334acee0fe9c56d99237d64738fa3d6a27814c06373",
     "central-client.js": "900e1d9f77b079f21e4cbdafce488ac1b89a79f9c323f42131a653aa9a545e4a",
     "company-documents.js": "709aa06101928ae3317221a04fc6abe6791c3378040686b2fc6a1148f32aff86",
