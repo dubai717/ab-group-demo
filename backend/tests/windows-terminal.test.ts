@@ -7,7 +7,7 @@ test('terminal backend environment excludes administrator, platform and unrelate
  assert.equal(env.DATABASE_URL,'runtime');assert(!JSON.stringify(env).includes('CANARY'));
 });
 test('manual terminal path runs emitted JavaScript without CMD, PS1, native esbuild or policy overrides',async()=>{
- const source=await readFile(new URL('../windows/terminal-trial.ts',import.meta.url),'utf8');
+ const source=await readFile(new URL('../../backend/windows/terminal-trial.ts',import.meta.url),'utf8');
  assert(!/cmd\.exe|\.ps1|ExecutionPolicy|Unblock-File|eval\(|writeFile|setEnvironmentVariable/i.test(source));
  assert(source.includes('setRawMode(true)'));assert(source.includes("bootstrap-trial.js"));assert(source.includes("local-server.js"));
 });
