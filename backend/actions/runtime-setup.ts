@@ -226,6 +226,8 @@ export async function diagnoseStoredPassword(pool: Pool,password:string){
  try{
   await c.query('BEGIN READ ONLY');
   assertVerifiedDatabaseTls(c);
+  const flags=(await c.query("select rolvaliduntil is not null and rolvaliduntil < now() expired,rolcanlogin from pg_roles where rolname='ab_runtime'")).rows[0];
+  console.log(flags?.expired?'DIAGNOSTIC: runtime role password expiration reached':'DIAGNOSTIC: runtime role password not expired');
   const row=(await c.query("select rolpassword from pg_authid where rolname='ab_runtime'")).rows[0];
   const match=/^SCRAM-SHA-256\$(\d+):([A-Za-z0-9+/]+=*)\$/.exec(row?.rolpassword||'');
   if(!match){console.log('DIAGNOSTIC: runtime stored SCRAM verifier unavailable or unsupported');return;}
@@ -236,6 +238,18 @@ export async function diagnoseStoredPassword(pool: Pool,password:string){
  }catch(error){
   console.log((error as any)?.code==='42501'?'DIAGNOSTIC: stored verifier inspection denied; no privileges requested':'DIAGNOSTIC: stored verifier inspection unavailable; details withheld');
  }finally{await c.query('ROLLBACK').catch(()=>{});c.release();}
+}
+async function diagnoseDirectRuntime(uri:string,endpoint:string){
+ const direct=new URL(uri);direct.hostname='db.'+new URL(endpoint).hostname;direct.username='ab_runtime';
+ const client=new Client(databaseOptions(direct.href));
+ client.on('error',()=>{});
+ try{
+  await client.connect();assertVerifiedDatabaseTls(client);
+  const identity=(await client.query('select current_user actor,session_user authenticated_role')).rows[0];
+  if(identity.actor!=='ab_runtime'||identity.authenticated_role!=='ab_runtime')throw Error('unexpected role');
+  console.log('DIAGNOSTIC: direct runtime authentication succeeds; pooler route alone rejects authentication');
+ }catch(error){console.log('DIAGNOSTIC: direct runtime authentication probe='+connectionDiagnostic(error));}
+ finally{await client.end().catch(()=>{});}
 }
 export async function run() {
   let admin: Pool | undefined,
@@ -274,6 +288,7 @@ export async function run() {
      admin.on('error',()=>{process.exitCode=1;console.log('STOP: diagnostic connection lost; details withheld');});
      await diagnoseStoredPassword(admin,cfg.password);
      await admin.end();admin=undefined;
+     await diagnoseDirectRuntime(cfg.runtimeUri,process.env.SUPABASE_URL!);
     }
     phase = "independent runtime authentication";
     runtime = new Pool({ ...databaseOptions(cfg.runtimeUri), max: 1 });

@@ -223,7 +223,7 @@ test('read-only stored-verifier diagnosis emits only a fixed verdict and always 
  const c={connection:{stream:{encrypted:true,authorized:true}},query:async(sql:string)=>{queries.push(sql);return {rows:[{rolpassword:verifier}]};},release:()=>{}};
  const original=console.log; console.log=(line:string)=>{output.push(line);};
  try{await diagnoseStoredPassword({connect:async()=>c} as any,password);}finally{console.log=original;}
- assert.deepEqual(queries,['BEGIN READ ONLY',"select rolpassword from pg_authid where rolname='ab_runtime'",'ROLLBACK']);
- assert.deepEqual(output,['DIAGNOSTIC: stored runtime verifier matches DATABASE_URL password']);
+ assert.deepEqual(queries,['BEGIN READ ONLY',"select rolvaliduntil is not null and rolvaliduntil < now() expired,rolcanlogin from pg_roles where rolname='ab_runtime'","select rolpassword from pg_authid where rolname='ab_runtime'",'ROLLBACK']);
+ assert.deepEqual(output,['DIAGNOSTIC: runtime role password not expired','DIAGNOSTIC: stored runtime verifier matches DATABASE_URL password']);
  assert(!output.join().includes(password));assert(!output.join().includes(verifier));
 });
