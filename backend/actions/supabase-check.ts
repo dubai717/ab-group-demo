@@ -162,6 +162,11 @@ export async function run() {
     for (const line of (check.stdout || "").split("\n")) {
       try {
         const record = JSON.parse(line);
+        if(['PASS','FAIL'].includes(record.status)){
+          for(const milestone of ['verified TLS SQL connection','no direct public/ordinary-user storage policies','actual secret key and existing private bucket','actual publishable key and Auth endpoint']){
+            if(Array.isArray(record.completed)&&record.completed.includes(milestone))console.log('Connection milestone: '+milestone+' PASS');
+          }
+        }
         if (record.status === "FORMAT") {
           for (const id of formatCheckNames) {
             const item = record.checks?.find((x: any) => x.id === id);

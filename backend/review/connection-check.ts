@@ -4,7 +4,7 @@ import { inspectSessionUrl } from "../src/connection-format.js";
 import { Pool } from "pg";
 import { supabaseKeys } from "../src/core.js";
 import { connectionDiagnostic } from "../src/connection-diagnostics.js";
-import { databaseOptions } from "../src/database.js";
+import { databaseOptions, assertVerifiedDatabaseTls } from "../src/database.js";
 let pool: Pool | undefined;
 const completed: string[] = [];
 let failureCode = "CHECK_FAILED";
@@ -66,24 +66,18 @@ try {
       process.exitCode = 1;
       console.log("FAIL: database connection lost; details withheld.");
     });
-    await pool.query("BEGIN READ ONLY");
-    await pool.query("select current_database()");
-    if (
-      (
-        await pool.query(
-          "select ssl from pg_stat_ssl where pid=pg_backend_pid()",
-        )
-      ).rows[0]?.ssl !== true
-    )
-      throw Error("Database TLS not active");
-    completed.push("verified TLS SQL connection");
-    const rules = await pool.query(
-      "select policyname from pg_policies where schemaname='storage' and tablename='objects' and roles && ARRAY['public','anon','authenticated']::name[]",
-    );
-    if (rules.rowCount)
-      throw Error("Storage client policies require review; not modified");
-    completed.push("no direct public/ordinary-user storage policies");
-    await pool.query("ROLLBACK");
+    const c=await pool.connect();
+    try {
+      assertVerifiedDatabaseTls(c);
+      await c.query('BEGIN READ ONLY');
+      try {
+        await c.query('select current_database()');
+        completed.push('verified TLS SQL connection');
+        const rules=await c.query("select policyname from pg_policies where schemaname='storage' and tablename='objects' and roles && ARRAY['public','anon','authenticated']::name[]");
+        if(rules.rowCount)throw Error('Storage client policies require review; not modified');
+        completed.push('no direct public/ordinary-user storage policies');
+      } finally {await c.query('ROLLBACK');}
+    } finally {c.release();}
     const bucket = process.env.SUPABASE_BUCKET || "ab-private-test";
     const headers = (key: string) => ({
       apikey: key,

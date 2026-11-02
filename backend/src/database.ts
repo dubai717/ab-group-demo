@@ -32,3 +32,10 @@ export function databaseOptions(
     statement_timeout: 15000,
   };
 }
+
+// Behind a pooler pg_stat_ssl describes the pooler->database hop, not this
+// client's TLS connection. Inspect the verified TLSSocket used by node-postgres.
+export function assertVerifiedDatabaseTls(client:unknown){
+ const stream=(client as {connection?:{stream?:{encrypted?:boolean;authorized?:boolean}}})?.connection?.stream;
+ if(stream?.encrypted!==true||stream?.authorized!==true)throw Error('Unverified database TLS connection');
+}

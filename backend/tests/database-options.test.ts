@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { databaseOptions } from "../src/database.js";
+import { databaseOptions, assertVerifiedDatabaseTls } from "../src/database.js";
 test("every PostgreSQL entrypoint requires verified TLS for remote connections", () => {
   assert.equal(
     databaseOptions("postgres://user:synthetic@127.0.0.1/test", true).ssl,
@@ -48,4 +48,10 @@ test("invalid PostgreSQL URL never appears in CLI output", async () => {
   const output=run.stdout+run.stderr;
   assert(output.includes('value withheld'));
   assert(!output.includes(marker));
+});
+
+test('pooler TLS is verified on the client socket, independently of pg_stat_ssl',()=>{
+ assert.doesNotThrow(()=>assertVerifiedDatabaseTls({connection:{stream:{encrypted:true,authorized:true}}}));
+ for(const stream of [{encrypted:false,authorized:true},{encrypted:true,authorized:false},{encrypted:true},{}])assert.throws(()=>assertVerifiedDatabaseTls({connection:{stream}}),/Unverified database TLS/);
+ assert.throws(()=>assertVerifiedDatabaseTls({}),/Unverified database TLS/);
 });
