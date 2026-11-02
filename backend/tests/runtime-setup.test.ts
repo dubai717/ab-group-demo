@@ -36,7 +36,7 @@ test("SCRAM verifier is standards-shaped and never embeds plaintext", () => {
   const pw = "SYNTHETIC_PASSWORD_ONLY_" + randomBytes(24).toString("hex");
   const value = scramVerifier(pw);
   assert(
-    /^SCRAM-SHA-256\$65536:[A-Za-z0-9+/]+=*\$[A-Za-z0-9+/]+=*:[A-Za-z0-9+/]+=*$/.test(
+    /^SCRAM-SHA-256\$4096:[A-Za-z0-9+/]+=*\$[A-Za-z0-9+/]+=*:[A-Za-z0-9+/]+=*$/.test(
       value,
     ),
   );

@@ -8,6 +8,7 @@ on:
       - 'verify/supabase-test-*'
       - '!verify/supabase-test-migrate-*'
       - '!verify/supabase-test-runtime-*'
+      - '!verify/supabase-test-auth-inspect-*'
 
 permissions:
   contents: read

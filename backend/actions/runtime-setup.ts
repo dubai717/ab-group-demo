@@ -71,7 +71,8 @@ export function runtimeConfiguration(e: NodeJS.ProcessEnv) {
 export function scramVerifier(
   password: string,
   salt = randomBytes(32),
-  iterations = 65536,
+  // Shared Supavisor compatibility, including older fixed-4096 challenges.
+  iterations = 4096,
 ) {
   const salted = pbkdf2Sync(password, salt, iterations, 32, "sha256");
   const client = createHmac("sha256", salted).update("Client Key").digest();
@@ -155,7 +156,7 @@ export async function provisionRuntimePassword(admin: Pool, password: string) {
     const verifier = scramVerifier(password);
     // Verifier alphabet cannot contain SQL quotes. Neither plaintext nor verifier is logged.
     if (
-      !/^SCRAM-SHA-256\$65536:[A-Za-z0-9+/]+=*\$[A-Za-z0-9+/]+=*:[A-Za-z0-9+/]+=*$/.test(
+      !/^SCRAM-SHA-256\$4096:[A-Za-z0-9+/]+=*\$[A-Za-z0-9+/]+=*:[A-Za-z0-9+/]+=*$/.test(
         verifier,
       )
     )
