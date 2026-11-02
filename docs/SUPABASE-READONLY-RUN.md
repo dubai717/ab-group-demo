@@ -24,3 +24,16 @@ Source: `8484ac4979df7c56553bdf3787b28433954765ea`.
 The immutable workflow uses `environment: supabase-test` and the expected secret binding. The new runner-only checks all passed: Session pooler endpoint syntax, project-qualified username, effective port 5432, postgres database, password presence, valid percent encoding, exact once-only driver decoding, no placeholder and no API-key-shaped password. No possible-double-encoding warning appeared. These are format checks, not disclosure of values.
 
 The server response was specifically SQLSTATE **28P01**, now classified as **DATABASE_PASSWORD_REJECTED**, rather than the distinct tenant-routing or generic authorization conditions formerly combined under DATABASE_CREDENTIALS. The required correction is the current database password in the existing Environment URI. If it is unavailable, a password reset is a separate database change requiring owner approval; no reset was performed. No further identical run is useful before that correction. No data/schema writes or disclosure of secret values occurred.
+
+## Successful actual read-only verification — 2026-11-02 (Dubai)
+
+Run: https://github.com/dubai717/ab-group-demo/actions/runs/41365931859
+Source: `6b75a816a09aad9abef8093c929e545ffb1d4298`.
+
+After the owner reset the database password and updated the Environment URI, actual PostgreSQL authentication and verified client TLS succeeded. The pooler-aware client TLS check inspects node-postgres' encrypted, authorized TLS socket; pg_stat_ssl on the backend describes a different hop and is not used to misclassify client TLS.
+
+The actual run also passed the four API-key/private-storage checks: no direct public/ordinary-user storage policies, existing ab-private-test bucket confirmed private, real Secret key accepted for bucket metadata, and real Publishable key accepted by the Auth settings endpoint. This does not prove password login for an ERP user or a real document upload/download.
+
+**Cloud application schema: NOT_APPLIED.** The app schema/migration ledger were absent, so no claim is made that application RLS has been verified on the cloud. All checks were read-only; no migrations, roles, users, records or files were created/modified. Earlier failure reports above are historical.
+
+Next owner approval needed: apply the eight reviewed forward SQL migrations to this existing synthetic project, without reset/deletion/import, then verify RLS/privileges before preparing Auth test subjects and ERP CRUD. No main merge, website publication or paid service is involved. Runtime and durable encryption-secret provisioning remain prerequisites before saving encrypted ERP trial records; no disposable encryption key will be used for durable records.
