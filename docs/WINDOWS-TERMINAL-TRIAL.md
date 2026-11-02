@@ -14,12 +14,13 @@ if ($LASTEXITCODE -ne 0) { throw 'Stop: source integrity check failed.' }
 $npm = Join-Path (Split-Path $node) 'node_modules\npm\bin\npm-cli.js'
 & $node $npm ci --ignore-scripts --omit=optional --no-audit --no-fund
 if ($LASTEXITCODE -ne 0) { throw 'Stop: dependency install failed.' }
-& $node .\node_modules\typescript\bin\tsc -p .\backend\tsconfig.json --noEmit false --outDir backend-build
+& $node .\node_modules\typescript-portable\bin\tsc -p .\backend\tsconfig.json --noEmit false --outDir backend-build
 if ($LASTEXITCODE -ne 0) { throw 'Stop: TypeScript build failed.' }
+Copy-Item .\backend\package.json .\backend-build\package.json
 & $node .\backend-build\windows\terminal-trial.js
 ```
 
-تتحقق بصمات SHA-256 من ملفات الحزمة مقابل manifest المرفق؛ هذه سلامة محتوى وليست توقيع Authenticode للتطبيق. npm ci يتحقق من integrity لكل dependency مقابل lockfile؛ install scripts والاعتماديات الاختيارية متوقفة. بناء TypeScript هنا JavaScript خالص ولا يستدعي esbuild.exe. لا تغيّر الحزمة أو تخلطها مع ملفات النسخة القديمة قبل فحص البصمات. Get-AuthenticodeSignature يتحقق من توقيع Node الموجود على جهازك؛ لا تدّعي نتيجة فحصه قبل تنفيذ الأمر محلياً.
+تتحقق بصمات SHA-256 من ملفات الحزمة مقابل manifest المرفق؛ هذه سلامة محتوى وليست توقيع Authenticode للتطبيق. npm ci يتحقق من integrity لكل dependency مقابل lockfile؛ install scripts والاعتماديات الاختيارية متوقفة. البناء يستخدم typescript-portable، وهو alias مثبت للنسخة الرسمية typescript@6.0.3 العاملة بـJavaScript؛ TypeScript 7 الأصلي بقي دون تغيير. بناء TypeScript هنا JavaScript خالص ولا يستدعي esbuild.exe. لا تغيّر الحزمة أو تخلطها مع ملفات النسخة القديمة قبل فحص البصمات. Get-AuthenticodeSignature يتحقق من توقيع Node الموجود على جهازك؛ لا تدّعي نتيجة فحصه قبل تنفيذ الأمر محلياً.
 
 بعد بدء البرنامج، أدخل القيم الخمس الأصلية عند الطلب **بإدخال مخفي داخل Terminal فقط**: SUPABASE_URL وSUPABASE_PUBLISHABLE_KEY وSUPABASE_SECRET_KEY وDATABASE_URL وDATA_ENCRYPTION_KEY. الأسرار تبقى في ذاكرة عمليات محلية فقط، ولا تُحفظ في ملف أو سجل أو command line أو متغيرات نظام دائمة. هذا المسار لا يقرأ أو يمسح خزنة DPAPI السابقة، ويطلب القيم مجدداً بعد إغلاق البرنامج. لا تغير قيمة مفتاح التشفير. GitHub لا يتيح استرجاع قيم Secrets؛ استخدم نسخك الأصلية المحمية.
 
@@ -31,7 +32,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Stop: TypeScript build failed.' }
 
 ## فحص التجهيز
 
-- git fsck نجح. جميع dependency entries الـ120 في lockfile لها registry.npmjs.org URL وintegrity.
+- git fsck نجح. جميع dependency entries الـ121 في lockfile لها registry.npmjs.org URL وintegrity.
 - npm audit الكامل بتاريخ 2026-11-02 أظهر صفر تنبيهات معروفة؛ لا يعني ذلك ضمان خلو كل مكتبة من العيوب أو ضمان قبول SAC.
 - نجح بناء JavaScript مباشرة عبر Node وTypeScript دون tsx/esbuild.
 - اختباران جديدان نجحا لعزل الأسرار وعدم وجود تشغيل CMD/PS1 أو تغيير سياسة في المسار البديل.

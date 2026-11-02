@@ -26,8 +26,9 @@ jobs:
           $npm = Join-Path (Split-Path $node) 'node_modules\npm\bin\npm-cli.js'
           & $node $npm ci --ignore-scripts --omit=optional --no-audit --no-fund
           if ($LASTEXITCODE -ne 0) { throw 'Install failed' }
-          & $node .\node_modules\typescript\bin\tsc -p .\backend\tsconfig.json --noEmit false --outDir backend-build
+          & $node .\node_modules\typescript-portable\bin\tsc -p .\backend\tsconfig.json --noEmit false --outDir backend-build
           if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
+          Copy-Item .\backend\package.json .\backend-build\package.json
           & $node --test .\backend-build\tests\windows-terminal.test.js
           if ($LASTEXITCODE -ne 0) { throw 'Isolation checks failed' }
           Write-Host 'PASS: signed Node, package integrity, locked dependencies and emitted JavaScript without native esbuild'
