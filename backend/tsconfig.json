@@ -15,6 +15,7 @@
     "src/**/*.ts",
     "tests/**/*.ts",
     "review/**/*.ts",
-    "actions/**/*.ts"
+    "actions/**/*.ts",
+    "windows/**/*.ts"
   ]
 }
