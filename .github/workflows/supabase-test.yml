@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - 'verify/supabase-test-*'
+      - '!verify/supabase-test-migrate-*'
 
 permissions:
   contents: read
