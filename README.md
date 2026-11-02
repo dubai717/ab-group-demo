@@ -1,5 +1,7 @@
 # AB Group Demo Prototype
 
+Windows 11 local browser trial (protected DPAPI vault, no deployment): [setup instructions](docs/WINDOWS-LOCAL-TRIAL.md). Run `Start-ABGroup.cmd` after installing Node.js 24 LTS.
+
 This repository contains a working interactive prototype of the AB Group administrative system.
 
 ## Central database foundation (review only)
