@@ -23,11 +23,10 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Check protected runtime inputs before any database change
+      - name: Check protected runtime connection before role setup
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
-        run: node --import tsx backend/actions/runtime-readiness.ts
+        run: node --import tsx backend/actions/runtime-readiness.ts --runtime-only
       - name: Set only the existing runtime role password and verify independent access
         env:
           AB_SYNTHETIC_PROJECT: 'yes'
@@ -51,6 +50,11 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Require durable encryption before creating any trial data
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
+        run: node --import tsx backend/actions/runtime-readiness.ts
       - name: Provision only fictional fixture and run isolated runtime-only API trials
         env:
           APP_ENV: staging

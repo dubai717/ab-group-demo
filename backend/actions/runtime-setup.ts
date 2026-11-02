@@ -1,5 +1,6 @@
 // Existing ab_runtime password only: no new roles, grants, flags or RLS changes.
 import { Pool } from "pg";
+import {connectionDiagnostic} from "../src/connection-diagnostics.js";
 import { readFile } from "node:fs/promises";
 import { createHash, createHmac, pbkdf2Sync, randomBytes } from "node:crypto";
 import { databaseOptions, assertVerifiedDatabaseTls } from "../src/database.js";
@@ -263,11 +264,14 @@ export async function run() {
     console.log(
       "PASS: independently authenticated ab_runtime with verified TLS; actual unscoped RLS denial and protected-table permissions confirmed",
     );
-  } catch {
+  } catch(error) {
+    const own:Record<string,string>={"project/role mismatch":"RUNTIME_TARGET_MISMATCH","strong independent ASCII runtime password required":"RUNTIME_PASSWORD_FORMAT","session pooler target required":"RUNTIME_POOLER_FORMAT","connection override rejected":"RUNTIME_URL_OVERRIDE","existing role missing/unsafe":"RUNTIME_ROLE_UNSAFE","runtime ownership or inherited rights unsafe":"RUNTIME_ROLE_UNSAFE","approved schema not ready":"SCHEMA_NOT_READY"};
+    const message=(error as any)?.message;
+    const code=typeof message==='string'&&Object.hasOwn(own,message)?own[message]:connectionDiagnostic(error);
     console.log(
       "STOP: " +
         phase +
-        "; no credentials/provider details logged; no automatic privilege expansion",
+        "; diagnostic="+code+"; no credentials/provider details logged; no automatic privilege expansion",
     );
     process.exitCode = 1;
   } finally {

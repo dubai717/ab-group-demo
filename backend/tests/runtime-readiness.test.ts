@@ -7,3 +7,9 @@ test('readiness distinguishes missing protected inputs without exposing values',
 test('invalid encryption secret blocks role provisioning without logs or network',()=>{
  const marker='READINESS_SECRET_CANARY';const r=spawnSync(process.execPath,['--import','tsx','backend/actions/runtime-readiness.ts'],{encoding:'utf8',env:{PATH:process.env.PATH,DATABASE_URL:marker,DATA_ENCRYPTION_KEY:marker}});assert.equal(r.status,2);assert(r.stdout.includes('MANUAL_REQUIRED'));assert(!(r.stdout+r.stderr).includes(marker));
 });
+
+test('role setup can proceed without a data key, while fixture creation remains blocked',()=>{
+ const e={DATABASE_URL:'synthetic protected URL'};
+ assert(runtimeReadiness(e,false).ready);
+ const trial=runtimeReadiness(e);assert(!trial.ready);assert.deepEqual(trial.missing,['DATA_ENCRYPTION_KEY']);
+});
