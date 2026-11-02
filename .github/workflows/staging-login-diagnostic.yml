@@ -1,0 +1,33 @@
+name: Staging login diagnosis (read only, no deployment)
+on:
+  push:
+    branches: [diagnose/render-staging-login]
+permissions:
+  contents: read
+concurrency:
+  group: ab-group-supabase-test
+  cancel-in-progress: false
+jobs:
+  read-only-login-diagnosis:
+    if: github.repository == 'dubai717/ab-group-demo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: supabase-test
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --omit=optional --include=dev --no-audit --no-fund
+      - run: node backend/deploy/build.mjs
+      - name: Inspect profile linkage and provider without credentials in output
+        env:
+          DIAGNOSTIC_USERNAME: trial_4db27b82b8bf
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node backend-build/actions/staging-login-diagnostic.js
