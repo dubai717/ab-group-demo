@@ -29,7 +29,7 @@ export async function applyApprovedSchema(pool:Pool,files:Awaited<ReturnType<typ
  if(files.tables.some(name=>!after.some(a=>a.nspname==='ab'&&a.relname===name)))throw Error('expected tables missing');
  const invalid=(await pool.query("select 1 from pg_constraint where connamespace='ab'::regnamespace and contype='f' and not convalidated")).rowCount;
  if(invalid)throw Error('unvalidated relationships');
- await checkSchema(pool);
+ await checkSchema(pool,{catalogOnly:true});
  const actual=(await pool.query('select data from ab.roles order by id')).rows.map(r=>r.data);
  const expected=JSON.parse(await readFile(new URL('../fixtures/roles.json',import.meta.url),'utf8')).sort((a:any,b:any)=>a.id.localeCompare(b.id));
  const canonical=(x:any):any=>Array.isArray(x)?x.map(canonical):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,canonical(x[k])])):x;
@@ -52,8 +52,8 @@ export async function run(){
   const result=await applyApprovedSchema(pool,files);
   if(failed)throw Error('connection lost');
   progress='EIGHT_APPLIED';
-  console.log(`PASS: eight migrations applied/verified; ${result.tableCount} expected tables; previous tables retained; foreign keys, role catalog, RLS and append-only checks passed`);
-  if(process.env.GITHUB_STEP_SUMMARY)await appendFile(process.env.GITHUB_STEP_SUMMARY,'## Approved Supabase schema\n\n- PASS: eight approved forward migrations applied/verified, no table/data deletion.\n- PASS: expected tables, validated foreign keys, original role catalog, RLS and protected append-only tables.\n- PASS: existing private bucket and API connectivity preflight.\n- NOT RUN: ERP login/company/bank/document live trials; durable DATA_ENCRYPTION_KEY is required before encrypted record creation.\n');
+  console.log(`PASS: eight migrations applied/verified; ${result.tableCount} expected tables; previous tables retained; foreign keys, role catalog, RLS catalog and append-only checks passed; runtime execution pending dedicated connection`);
+  if(process.env.GITHUB_STEP_SUMMARY)await appendFile(process.env.GITHUB_STEP_SUMMARY,'## Approved Supabase schema\n\n- PASS: eight approved forward migrations applied/verified, no table/data deletion.\n- PASS: expected tables, validated foreign keys, original role catalog, RLS catalog and protected append-only tables; runtime execution remains pending.\n- PASS: existing private bucket and API connectivity preflight.\n- NOT RUN: ERP login/company/bank/document live trials; durable DATA_ENCRYPTION_KEY is required before encrypted record creation.\n');
  }catch(e:any){
   let count='unknown',next='unknown';
   if(pool){try{const exists=(await pool.query("select to_regclass('public.ab_schema_migrations') t")).rows[0]?.t;const rows=exists?(await pool.query('select name from public.ab_schema_migrations order by name')).rows:[];const files=await approvedFiles();count=String(rows.length);next=files.manifest.migrations.find((x:any)=>!rows.some(r=>r.name===x.name))?.name||'POSTCHECK';}catch{}}

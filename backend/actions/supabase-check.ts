@@ -44,7 +44,7 @@ export async function inspectSchema(pool: Pool) {
   if (present) await checkSchema(pool);
   return "VERIFIED" as const;
 }
-export async function checkSchema(pool: Pool) {
+export async function checkSchema(pool: Pool, options: {catalogOnly?:boolean} = {}) {
   const c = await pool.connect();
   try {
     await c.query("BEGIN READ ONLY");
@@ -118,6 +118,7 @@ export async function checkSchema(pool: Pool) {
       )
     ).rows[0].n;
     if (triggers !== 3) throw Error("integrity triggers missing");
+    if(options.catalogOnly)return {runtimeVerified:false as const};
     await c.query("SET LOCAL ROLE ab_runtime");
     await c.query("select set_config('ab.tenant','',true)");
     if (
@@ -125,6 +126,7 @@ export async function checkSchema(pool: Pool) {
       (await c.query("select id from ab.bank_accounts limit 1")).rowCount
     )
       throw Error("unscoped data visible");
+    return {runtimeVerified:true as const};
   } finally {
     await c.query("ROLLBACK");
     c.release();

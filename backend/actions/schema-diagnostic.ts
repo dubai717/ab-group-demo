@@ -55,6 +55,8 @@ export async function diagnoseSchema(pool:Pool){
  catch{
   console.log(`SCHEMA_FAILURE: operation=${failedProbe||'UNKNOWN'}; sqlstate=${sqlstate||'WITHHELD'}`);
   if(failedProbe==='OPERATOR_SET_RUNTIME_ROLE'&&sqlstate==='42501'){
+   await checkSchema(pool,{catalogOnly:true});
+   console.log('INSPECTOR_FIXED: catalog verification succeeds without impersonation or privilege changes; runtime RLS execution remains pending a dedicated runtime connection.');
    console.log('DIAGNOSIS: inspection connection cannot SET ROLE ab_runtime; this requires SET-role membership, not a grant on an application table. Catalog checks passed; runtime RLS execution remains untested.');
    return {operatorOnly:true,verified:false};
   }
