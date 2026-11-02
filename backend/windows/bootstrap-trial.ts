@@ -40,4 +40,4 @@ async function run(){
  }catch(error){console.log('STOP: INTERACTIVE_OWNER_SETUP; diagnostic='+connectionDiagnostic(error)+'; details withheld; no automatic reset or cleanup');process.exitCode=1;}
  finally{if(pool)await pool.end().catch(()=>{process.exitCode=1;});}
 }
-if(process.argv[1]?.endsWith('/bootstrap-trial.ts')||process.argv[1]?.endsWith('\\bootstrap-trial.ts'))await run();
+if(/[/\\]bootstrap-trial\.(ts|js)$/.test(process.argv[1]||''))await run();

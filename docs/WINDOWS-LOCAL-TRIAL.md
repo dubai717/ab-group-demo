@@ -1,3 +1,5 @@
+> إذا منع Smart App Control المشغّل، استخدم [مسار Terminal دون CMD أو تجاوز حماية Windows](WINDOWS-TERMINAL-TRIAL.md). لا تستخدم ExecutionPolicy Bypass أو Unblock-File.
+
 # تجربة AB Group محلياً على Windows 11
 
 الرابط بعد نجاح التشغيل: **http://127.0.0.1:3100**. لا يوجد Backend منشور دائماً؛ سينشئ المشغّل عملية Backend محلية تتصل بقاعدة Supabase التجريبية الحالية، ويقدّم الواجهة نفسها من الأصل نفسه. لا يشغّل خادم العرض التجريبي القديم على المنفذ 3000.
