@@ -20,6 +20,8 @@ function Assert-PlainPath([string]$Path) {
     if ((Test-Path -LiteralPath $Path) -and ((Get-Item -LiteralPath $Path -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Reparse path refused' }
 }
 function New-Child([string]$Exe,[string]$Arguments,[hashtable]$Secrets,[string]$InputText = '') {
+    if (![IO.File]::Exists($Exe)) { throw 'Child executable unavailable' }
+    if (![IO.Directory]::Exists($repo)) { throw 'Child working directory unavailable' }
     $info = New-Object Diagnostics.ProcessStartInfo
     $info.FileName = $Exe; $info.Arguments = $Arguments; $info.WorkingDirectory = $repo
     $info.UseShellExecute = $false; $info.CreateNoWindow = $true
@@ -62,7 +64,7 @@ function Save-Vault($Vault,[string]$File) {
 }
 try {
     if ($env:OS -ne 'Windows_NT') { throw 'Windows required' }
-    $node = (Get-Command node.exe -CommandType Application -ErrorAction Stop).Source
+    $node = (Get-Command node.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1 -ExpandProperty Source)
     $version = & $node --version
     if ([int]($version.TrimStart('v').Split('.')[0]) -lt 24) { throw 'Node.js 24 LTS or newer required' }
     # Refuse an occupied port rather than opening an unrelated local service.

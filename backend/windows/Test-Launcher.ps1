@@ -24,7 +24,8 @@ $file=Join-Path $folder 'vault.dpapi.json'
 Save-Vault ([pscustomobject]@{value=$encrypted}) $file
 if((Get-Content $file -Raw).Contains($plain)){throw 'Plaintext persisted'}
 $env:MIGRATION_DATABASE_URL='ADMIN_SYNTHETIC_CANARY'
-$node=(Get-Command node.exe -CommandType Application).Source
+$node=(Get-Command node.exe -CommandType Application | Select-Object -First 1 -ExpandProperty Source)
+Write-Host ('DIAGNOSTIC: executable exists='+[IO.File]::Exists($node)+'; repository exists='+[IO.Directory]::Exists($repo))
 $child=New-Child $node '-e "if(process.env.MIGRATION_DATABASE_URL||process.env.DATA_ENCRYPTION_KEY)process.exit(3);console.log(''SAFE'')"' @{}
 $out=Complete-Child $child
 if($out.Trim() -ne 'SAFE'){throw 'Child isolation failure'}
