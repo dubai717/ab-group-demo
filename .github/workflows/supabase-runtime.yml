@@ -27,7 +27,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node --import tsx backend/actions/runtime-readiness.ts --runtime-only
-      - name: Set only the existing runtime role password and verify independent access
+      - name: Verify existing independent runtime access without reassigning password
         env:
           AB_SYNTHETIC_PROJECT: 'yes'
           APP_ENV: staging
@@ -35,7 +35,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: node --import tsx backend/actions/runtime-setup.ts
+        run: node --import tsx backend/actions/runtime-setup.ts --verify-only
   synthetic-trial:
     needs: configure-runtime
     runs-on: ubuntu-latest

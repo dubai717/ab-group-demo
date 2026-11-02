@@ -1,5 +1,5 @@
 // Existing ab_runtime password only: no new roles, grants, flags or RLS changes.
-import { Pool } from "pg";
+import { Pool, Client } from "pg";
 import {connectionDiagnostic} from "../src/connection-diagnostics.js";
 import { readFile } from "node:fs/promises";
 import { createHash, createHmac, pbkdf2Sync, randomBytes } from "node:crypto";
@@ -63,6 +63,8 @@ export function runtimeConfiguration(e: NodeJS.ProcessEnv) {
     /^sb_(publishable|secret)_/.test(password)
   )
     throw Error("strong independent ASCII runtime password required");
+  const parsed=(new Client({...databaseOptions(runtime.href)}) as any).connectionParameters;
+  if(parsed.password!==password||parsed.user!=='ab_runtime.'+ref)throw Error('runtime driver URL interpretation mismatch');
   return { administratorUri: admin.href, runtimeUri: runtime.href, password };
 }
 // The plaintext never occurs in an ALTER ROLE statement; use a standard SCRAM verifier.
@@ -230,6 +232,7 @@ export async function run() {
       throw Error("unapproved context");
     phase = "protected DATABASE_URL configuration";
     const cfg = runtimeConfiguration(process.env);
+    if(!process.argv.includes('--verify-only')){
     admin = new Pool({ ...databaseOptions(cfg.administratorUri), max: 1 });
     admin.on("error", () => {
       process.exitCode = 1;
@@ -248,6 +251,7 @@ export async function run() {
     );
     await admin.end();
     admin = undefined;
+    }else console.log('PASS: verify-only mode; existing runtime password is not reassigned');
     phase = "independent runtime authentication";
     runtime = new Pool({ ...databaseOptions(cfg.runtimeUri), max: 1 });
     runtime.on("error", () => {
@@ -265,7 +269,7 @@ export async function run() {
       "PASS: independently authenticated ab_runtime with verified TLS; actual unscoped RLS denial and protected-table permissions confirmed",
     );
   } catch(error) {
-    const own:Record<string,string>={"project/role mismatch":"RUNTIME_TARGET_MISMATCH","strong independent ASCII runtime password required":"RUNTIME_PASSWORD_FORMAT","session pooler target required":"RUNTIME_POOLER_FORMAT","connection override rejected":"RUNTIME_URL_OVERRIDE","existing role missing/unsafe":"RUNTIME_ROLE_UNSAFE","runtime ownership or inherited rights unsafe":"RUNTIME_ROLE_UNSAFE","approved schema not ready":"SCHEMA_NOT_READY"};
+    const own:Record<string,string>={"project/role mismatch":"RUNTIME_TARGET_MISMATCH","runtime driver URL interpretation mismatch":"RUNTIME_URL_INTERPRETATION","strong independent ASCII runtime password required":"RUNTIME_PASSWORD_FORMAT","session pooler target required":"RUNTIME_POOLER_FORMAT","connection override rejected":"RUNTIME_URL_OVERRIDE","existing role missing/unsafe":"RUNTIME_ROLE_UNSAFE","runtime ownership or inherited rights unsafe":"RUNTIME_ROLE_UNSAFE","approved schema not ready":"SCHEMA_NOT_READY"};
     const message=(error as any)?.message;
     const code=typeof message==='string'&&Object.hasOwn(own,message)?own[message]:connectionDiagnostic(error);
     console.log(

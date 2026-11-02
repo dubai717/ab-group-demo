@@ -211,3 +211,7 @@ test("backend child rejects an administrator SQL connection before processing fi
   assert(r.stdout.includes("protected runtime child"));
   assert(!(r.stdout + r.stderr).includes("ADMIN_CHILD_CANARY"));
 });
+
+test('runtime configuration and actual driver interpret encoded passwords identically',()=>{
+ const pw='ABCDEFGHIJKLMNOPQRSTUVWXYZ123456!@#$%&+/:?';assert.equal(runtimeConfiguration(config(pw)).password,pw);
+});
