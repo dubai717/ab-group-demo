@@ -220,6 +220,23 @@ export async function verifyRuntimeAccess(pool: Pool) {
     c.release();
   }
 }
+// Read-only comparison in runner memory. Never return or print the stored verifier.
+export async function diagnoseStoredPassword(pool: Pool,password:string){
+ const c=await pool.connect();
+ try{
+  await c.query('BEGIN READ ONLY');
+  assertVerifiedDatabaseTls(c);
+  const row=(await c.query("select rolpassword from pg_authid where rolname='ab_runtime'")).rows[0];
+  const match=/^SCRAM-SHA-256\$(\d+):([A-Za-z0-9+/]+=*)\$/.exec(row?.rolpassword||'');
+  if(!match){console.log('DIAGNOSTIC: runtime stored SCRAM verifier unavailable or unsupported');return;}
+  const iterations=Number(match[1]);
+  if(iterations<4096||iterations>1000000)throw Error('unsupported verifier parameters');
+  const expected=scramVerifier(password,Buffer.from(match[2],'base64'),iterations);
+  console.log(expected===row.rolpassword?'DIAGNOSTIC: stored runtime verifier matches DATABASE_URL password':'DIAGNOSTIC: stored runtime verifier does not match DATABASE_URL password');
+ }catch(error){
+  console.log((error as any)?.code==='42501'?'DIAGNOSTIC: stored verifier inspection denied; no privileges requested':'DIAGNOSTIC: stored verifier inspection unavailable; details withheld');
+ }finally{await c.query('ROLLBACK').catch(()=>{});c.release();}
+}
 export async function run() {
   let admin: Pool | undefined,
     runtime: Pool | undefined,
@@ -251,7 +268,13 @@ export async function run() {
     );
     await admin.end();
     admin = undefined;
-    }else console.log('PASS: verify-only mode; existing runtime password is not reassigned');
+    }else {
+     console.log('PASS: verify-only mode; existing runtime password is not reassigned');
+     admin=new Pool({...databaseOptions(cfg.administratorUri),max:1});
+     admin.on('error',()=>{process.exitCode=1;console.log('STOP: diagnostic connection lost; details withheld');});
+     await diagnoseStoredPassword(admin,cfg.password);
+     await admin.end();admin=undefined;
+    }
     phase = "independent runtime authentication";
     runtime = new Pool({ ...databaseOptions(cfg.runtimeUri), max: 1 });
     runtime.on("error", () => {

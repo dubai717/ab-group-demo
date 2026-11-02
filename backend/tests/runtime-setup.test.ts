@@ -4,6 +4,7 @@ import { randomBytes } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import {
+  diagnoseStoredPassword,
   runtimeBranch,
   runtimeConfiguration,
   scramVerifier,
@@ -214,4 +215,15 @@ test("backend child rejects an administrator SQL connection before processing fi
 
 test('runtime configuration and actual driver interpret encoded passwords identically',()=>{
  const pw='ABCDEFGHIJKLMNOPQRSTUVWXYZ123456!@#$%&+/:?';assert.equal(runtimeConfiguration(config(pw)).password,pw);
+});
+
+test('read-only stored-verifier diagnosis emits only a fixed verdict and always rolls back',async()=>{
+ const password='SYNTHETIC_DIAGNOSTIC_ONLY_1234567890!';
+ const verifier=scramVerifier(password), queries:string[]=[],output:string[]=[];
+ const c={connection:{stream:{encrypted:true,authorized:true}},query:async(sql:string)=>{queries.push(sql);return {rows:[{rolpassword:verifier}]};},release:()=>{}};
+ const original=console.log; console.log=(line:string)=>{output.push(line);};
+ try{await diagnoseStoredPassword({connect:async()=>c} as any,password);}finally{console.log=original;}
+ assert.deepEqual(queries,['BEGIN READ ONLY',"select rolpassword from pg_authid where rolname='ab_runtime'",'ROLLBACK']);
+ assert.deepEqual(output,['DIAGNOSTIC: stored runtime verifier matches DATABASE_URL password']);
+ assert(!output.join().includes(password));assert(!output.join().includes(verifier));
 });
