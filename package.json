@@ -4,8 +4,30 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "backend:check": "tsc -p backend/tsconfig.json",
+    "backend:start": "tsx backend/src/server.ts",
+    "db:migrate": "tsx backend/src/migrate.ts",
+    "backend:test": "tsx --test --test-concurrency=1 backend/tests/*.test.ts",
+    "backend:test:db": "node backend/tests/local-db.mjs",
+    "backend:test:serve": "tsx backend/tests/serve-fixture.ts",
+    "backend:test:browser": "node backend/tests/central.browser.cjs",
+    "db:provision": "tsx backend/src/provision.ts",
+    "documents:scan": "tsx backend/src/scan.ts"
   },
   "description": "AB Group admin system interactive demo prototype",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@fastify/cookie": "^11.1.5",
+    "@fastify/rate-limit": "^11.2.1",
+    "fastify": "^5.12.7",
+    "pg": "^8.23.1",
+    "tsx": "^4.23.15",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "typescript": "^7.0.2"
+  }
 }

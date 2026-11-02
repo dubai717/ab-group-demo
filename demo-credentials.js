@@ -98,7 +98,7 @@
     return store ||= createStore({ storage: localStorage, legacyUsers: () => app.state.users, roleIds: () => app.state.roles.map(r => r.id) });
   }
   return { KEY, ITERATIONS, fields, passwordError, createStore,
-    directory() { try { return getStore().directory(); } catch { return []; } },
+    directory() { if(globalThis.ABCentral?.enabled)return [];try { return getStore().directory(); } catch { return []; } },
     prepare: (password, confirmation) => getStore().prepare(password, confirmation),
     saveProfile: (candidate, verifier) => getStore().saveProfile(candidate, verifier),
     authenticate: (username, password) => getStore().authenticate(username, password)

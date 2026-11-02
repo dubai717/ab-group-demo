@@ -347,6 +347,7 @@ function localeText(key) {
 }
 
 function loadState() {
+  if(globalThis.ABCentral?.enabled)return globalThis.ABCentral.emptyState();
   let raw;
   let needsMigration = false;
   try {
@@ -396,6 +397,7 @@ function loadState() {
 }
 
 function saveState() {
+  if(globalThis.ABCentral?.enabled)return false;
   if (!stateStorageWritable) return false;
   try {
     const serialized = JSON.stringify(app.state);
@@ -431,11 +433,13 @@ function getUserById(id) {
 }
 
 function getCurrentUser() {
+  if(globalThis.ABCentral?.enabled)return globalThis.ABCentral.actor;
   const user = UserManagement.effectiveUser(app.state.currentUser);
   return user?.status === 'Active' ? user : null;
 }
 
 function getCanonicalActor() {
+  if(globalThis.ABCentral?.enabled)return globalThis.ABCentral.actor;
   return UserManagement.actorForModules(getCurrentUser());
 }
 
@@ -476,6 +480,7 @@ function getSidebarItems(user) {
 }
 
 function render() {
+  if(globalThis.ABCentral?.enabled&&!globalThis.ABCentral.ready){globalThis.ABCentral.loading();return;}
   const currentUser = getCurrentUser();
   document.body.dir = getLocale() === 'ar' ? 'rtl' : 'ltr';
   document.documentElement.lang = getLocale();
@@ -1032,6 +1037,7 @@ function renderLogin() {
   `;
 
   AuthFlows.mountLogin();
+  globalThis.ABCentral?.enabled&&globalThis.ABCentral.bind();
   const form = document.getElementById('login-form');
   if (form) form.addEventListener('submit', handleLogin);
 
@@ -1098,6 +1104,7 @@ async function handleLogin(event) {
 }
 
 function bindGlobalEvents() {
+  globalThis.ABCentral?.enabled&&globalThis.ABCentral.bind();
   AuthFlows.bindApp();
   BankAccounts.bind();
   CompanyDocuments.bind();

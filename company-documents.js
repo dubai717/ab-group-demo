@@ -94,5 +94,5 @@ function bind(){const s=getService();if(document.getElementById('cd-profile-form
 function beginCreate(){listNotice='';document.getElementById('company-save-confirmation')?.remove();const node=document.getElementById('company-doc-message');if(node)node.textContent='';}
 function renderSaveNotice(){return listNotice?`<p class="company-desc" id="company-save-confirmation" role="status" aria-live="polite">${t(listNotice)}</p>`:'';}
 function logout(){selectedId=null;notice='';listNotice='';cleanupPreview();getService().clearFiles();}
-return {beginCreate,escape:esc,markCreated:()=>{listNotice='created';},renderSaveNotice,types,validDate,daysUntil,alertDays,matches,codeSearch,normalizeCode,createService,creationFields,prepareCreation,captureNew:(id,files)=>getService().captureNew(id,files),filterFields,matchesFilters,profileButton,renderProfile,renderAlerts,renderReport,bind,logout,cleanupPreview,text:t};
+return {centralSelect(id){selectedId=id;service=undefined;},beginCreate,escape:esc,markCreated:()=>{listNotice='created';},renderSaveNotice,types,validDate,daysUntil,alertDays,matches,codeSearch,normalizeCode,createService,creationFields,prepareCreation,captureNew:(id,files)=>getService().captureNew(id,files),filterFields,matchesFilters,profileButton,renderProfile,renderAlerts,renderReport,bind,logout,cleanupPreview,text:t};
 });
