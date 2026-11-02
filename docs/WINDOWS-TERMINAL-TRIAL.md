@@ -7,6 +7,7 @@
 نفّذ الأسطر التالية بالترتيب. تستخدم npm وTypeScript مباشرة عبر Node، وليس npm.cmd أو npm.ps1 أو npx أو tsx/esbuild:
 
 ```powershell
+$ErrorActionPreference = 'Stop'
 $node = Get-Command node.exe -CommandType Application | Select-Object -First 1 -ExpandProperty Source
 if ((Get-AuthenticodeSignature $node).Status -ne 'Valid') { throw 'Stop: install the official signed Node.js build.' }
 & $node .\backend\windows\verify-source.mjs
@@ -36,3 +37,6 @@ Copy-Item .\backend\package.json .\backend-build\package.json
 - npm audit الكامل بتاريخ 2026-11-02 أظهر صفر تنبيهات معروفة؛ لا يعني ذلك ضمان خلو كل مكتبة من العيوب أو ضمان قبول SAC.
 - نجح بناء JavaScript مباشرة عبر Node وTypeScript دون tsx/esbuild.
 - اختباران جديدان نجحا لعزل الأسرار وعدم وجود تشغيل CMD/PS1 أو تغيير سياسة في المسار البديل.
+
+
+فحص Windows النهائي [41458696873](https://github.com/dubai717/ab-group-demo/actions/runs/41458696873) نجح: توقيع Node صالح، وبصمات 47 ملفاً مطابقة، وتثبيت 73 حزمة مع استبعاد optional/install scripts، وبناء TypeScript JavaScript ونجاح اختباري العزل. هذا ليس اختباراً على جهاز المستخدم مع SAC مفعلاً، ولا تصريحاً لتجاوز أي حظر إضافي. لم تُستخدم أسرار أو تغييرات سحابية في هذا الفحص.
