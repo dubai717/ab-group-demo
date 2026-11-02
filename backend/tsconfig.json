@@ -16,6 +16,7 @@
     "tests/**/*.ts",
     "review/**/*.ts",
     "actions/**/*.ts",
-    "windows/**/*.ts"
+    "windows/**/*.ts",
+    "deploy/**/*.ts"
   ]
 }

@@ -9,7 +9,7 @@ const { chromium } = require("playwright"),
       ),
     ),
     b = await chromium.launch({
-      executablePath: "/usr/bin/chromium",
+      executablePath: process.env.AB_BROWSER_EXECUTABLE || (fs.existsSync("/usr/bin/chromium") ? "/usr/bin/chromium" : undefined),
       headless: true,
       args: ["--no-sandbox"],
     }),
