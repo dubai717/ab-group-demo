@@ -29,6 +29,7 @@ import {
   assertRevision,
   bounded,
 } from "./data.js";
+import {registerFinance,bankNotice} from "./finance.js";
 export interface Options {
   pool: Pool;
   key: string;
@@ -199,6 +200,7 @@ export async function build(options: Options) {
         return result;
       });
     };
+  registerFinance(app,call,cipher);
   app.get("/api/health", async () => {
     await pool.query("select 1");
     return {
@@ -416,25 +418,16 @@ export async function build(options: Options) {
     "/api/companies/:id",
     call(async (c, m, s, req) => m.company.get(uuid(req.params.id))),
   );
-  app.post(
-    "/api/bank-accounts",
-    call(async (c, m, s, req) => ({
-      id: await persistBank(c, m, cipher, s.tenant_id, req.body),
-    })),
-  );
-  app.patch(
-    "/api/bank-accounts/:id",
-    call(async (c, m, s, req) => ({
-      id: await persistBank(
-        c,
-        m,
-        cipher,
-        s.tenant_id,
-        req.body,
-        uuid(req.params.id),
-      ),
-    })),
-  );
+  const saveBank=async(c:any,m:any,s:any,req:any,bankId?:string)=>{
+    const prior=bankId?m.bank.get(bankId):null;
+    const saved=await persistBank(c,m,cipher,s.tenant_id,req.body,bankId);
+    const row=(await c.query('select company_id,status,revision from ab.bank_accounts where id=$1',[saved])).rows[0];
+    const action=!prior?'created':prior.status!==row.status?(row.status==='Closed'?'closed':'status'):'updated';
+    if(!prior||prior.revision!==row.revision)await bankNotice(c,m,s,saved,row.company_id,action,row.revision,prior,cipher.open((await c.query('select payload_cipher from ab.bank_accounts where id=$1',[saved])).rows[0].payload_cipher),cipher);
+    return {id:saved};
+  };
+  app.post('/api/bank-accounts',call((c,m,s,req)=>saveBank(c,m,s,req)));
+  app.patch('/api/bank-accounts/:id',call((c,m,s,req)=>saveBank(c,m,s,req,uuid(req.params.id))));
   app.get(
     "/api/bank-accounts/:id",
     call(async (c, m, s, req) => m.bank.get(uuid(req.params.id))),
@@ -1121,6 +1114,9 @@ export async function build(options: Options) {
       "demo-credentials.js",
       "auth-flows.js",
       "central-client.js",
+      "finance-policy.js",
+      "finance-workbench.js",
+      "workspace-ui.js",
       "data/uae-areas.js",
       "assets/Untitled.png",
       "assets/logo.svg",
