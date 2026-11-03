@@ -15,7 +15,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         assert.equal(await p.locator('[data-ld-form="invoice"]').count(), 0);
     }
     else {
-        await p.locator('#ld-company').waitFor();
+        await p.locator('#ld-company').waitFor();await p.evaluate(async co=>{LedgerUI.reset();await LedgerUI.openNotification(co);},f.otherCompanyId);await p.waitForFunction(co=>document.querySelector('#ld-company')?.value===co,f.otherCompanyId);
         await p.locator('#ld-company').selectOption(f.companyId);
         await p.locator('[data-ld="tab"][data-id="invoices"]').click();
         const form = p.locator('[data-ld-form="invoice"]');

@@ -593,5 +593,5 @@
         }
         await load();
     }
-    root.LedgerUI = { openNotification: async (companyId) => { co = companyId; tab = 'dashboard'; app.state.currentPage = 'financialManagement'; await load(); }, render: renderPage, bind, reset, openCollection, canEnter: () => ABCentral?.enabled && (getCurrentUser()?.roleId === 'owner' || (ABCentral.grants || []).some(g => g.userId === ABCentral.actor?.id && g.entry?.action?.startsWith('ledger_'))) };
+    root.LedgerUI = { openNotification: async (companyId) => { if(actor!==ABCentral.actor?.id){reset();actor=ABCentral.actor?.id;}context={companyId};co = companyId; tab = 'dashboard'; app.state.currentPage = 'financialManagement'; await load();context=null; }, render: renderPage, bind, reset, openCollection, canEnter: () => ABCentral?.enabled && (getCurrentUser()?.roleId === 'owner' || (ABCentral.grants || []).some(g => g.userId === ABCentral.actor?.id && g.entry?.action?.startsWith('ledger_'))) };
 })(globalThis);
