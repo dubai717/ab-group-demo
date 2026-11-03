@@ -749,7 +749,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
     app.post('/api/ledger/group-close', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ companyIds: z.array(id).min(1), month: day.refine(x => x.endsWith('-01')), confirm: z.literal(true) }).strict().parse(req.body);
         const cos = [...new Set(d.companyIds)];
-        requireOk(cos.length === m.state.companies.filter((co: any) => co.status === 'Active').length, 422, 'allActiveCompaniesRequired');
+        const activeCompanyIds=m.state.companies.filter((co:any)=>co.status==='Active').map((co:any)=>co.id);requireOk(cos.length===activeCompanyIds.length&&activeCompanyIds.every((co:string)=>cos.includes(co)),422,'allActiveCompaniesRequired');
         for (const co of cos) {
             need(m, 'group_close', co);
             requireOk((await c.query('select 1 from ab.finance_periods where company_id=$1 and month=$2', [co, d.month])).rowCount, 409, 'companyNotClosed');

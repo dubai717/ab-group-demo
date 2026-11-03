@@ -42,7 +42,7 @@
     "backend/src/finance.ts": "68584adbd2cb099a9ab489303866e1078ce26b6fd23e832ce5445829fa81182d",
     "backend/src/financial-jobs.ts": "84a1450cedc32ff4afb5880be0a83414aa485a1d848486858397d551e6a3b57b",
     "backend/src/ledger-domain.ts": "5b22094d4524686ae45a44a306f7782bcb4b616b00d8a514f44d085711deac29",
-    "backend/src/ledger.ts": "64f048a45bd78c9f908e340d0403cb201fa6586d86025da05edf9e47e310458a",
+    "backend/src/ledger.ts": "d023df7175d622f2157e3228333a87d29d56e80a13046eb1a1225c958343a355",
     "backend/src/migrate.ts": "dda13588de08527806f35ce401c8121c4dada98075c25a74adeaf1d4a88f2539",
     "backend/src/provision.ts": "5b5228f58a44ec08b4e647f8636af08380ccc836ba462e9164ec809bc388740a",
     "backend/src/scan.ts": "d7d611f0886b04f1b3c7e3aab1d46288d58deb3b3055168e00c3c4724edc8455",
