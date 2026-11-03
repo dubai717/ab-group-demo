@@ -32,12 +32,14 @@ const { objects } = supabase(
   process.env.SUPABASE_BUCKET || "ab-private-test",
 );
 try {
-  for (const row of (await pool.query("select * from ab.pending_documents()"))
-    .rows) {
+  const jobs=(await pool.query("select * from ab.pending_documents()")).rows.map(r=>({...r,customer:false}));
+  if((await pool.query("select to_regprocedure('ab.pending_customer_files()') ok")).rows[0].ok)
+    jobs.push(...(await pool.query("select * from ab.pending_customer_files()")).rows.map(r=>({...r,customer:true})));
+  for (const row of jobs) {
     const encrypted = await objects.get(row.storage_key),
       bytes = Buffer.from(cipher.open(encrypted.toString()).bytes, "base64");
     if (sha(bytes) !== row.sha256) {
-      await pool.query("select ab.record_scan($1,$2)", [row.id, "rejected"]);
+      await pool.query(row.customer?"select ab.record_customer_scan($1,$2)":"select ab.record_scan($1,$2)", [row.id, "rejected"]);
       continue;
     }
     const r = await fetch(endpoint, {
@@ -53,7 +55,7 @@ try {
     const result = (await r.json()) as any;
     if (!["clean", "rejected"].includes(result.status))
       throw Error("Scanner returned invalid result");
-    await pool.query("select ab.record_scan($1,$2)", [row.id, result.status]);
+    await pool.query(row.customer?"select ab.record_customer_scan($1,$2)":"select ab.record_scan($1,$2)", [row.id, result.status]);
   }
 } finally {
   await pool.end();

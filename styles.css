@@ -856,3 +856,27 @@ th {
  #um-notice:not(:empty), #area-message:not(:empty) { color: var(--text); }
  .account-menu > summary { color: #241918; }
 }
+/* Customer workspace reuses the corporate tokens and adaptive field grid. */
+.cu-page { min-width: 0; display: grid; gap: 18px; }
+.cu-page fieldset { min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin: 12px 0; }
+.cu-page legend { padding-inline: 8px; font-weight: 700; }
+.cu-page label { display: grid; gap: 6px; }
+.cu-page input[type='file'] { max-width: 100%; }
+.cu-page pre { max-width: 100%; max-height: 420px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.cu-profile-head,.cu-actions,.cu-filterbar { display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between; }
+.cu-summary {display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px;}
+.cu-summary article,.cu-repeat { padding:16px;background:var(--panel-alt);border:1px solid var(--line);border-radius:12px;min-width:0; }
+.cu-tabs {display:flex;gap:8px;overflow-x:auto;max-width:100%;padding-block:10px;}
+.cu-tabs button {white-space:nowrap;flex-shrink:0;}
+.cu-page .table-wrap { max-width:100%;overflow:auto; }
+.cu-page td,.cu-page th { min-width:100px; }
+.cu-filterbar details[open] {padding:12px;border:1px solid var(--line);border-radius:12px;max-height:340px;overflow:auto;}
+.cu-filterbar label {display:flex;align-items:center;gap:8px;padding:6px;}
+#cu-notice:not(:empty),#cu-autosave:not(:empty) {padding:14px;background:var(--gold-soft);border-radius:12px;}
+@media(max-width:900px){.cu-summary{grid-template-columns:1fr}.cu-profile-head{align-items:start}.cu-page .cu-actions{justify-content:start}}
+@media print{.cu-tabs,.cu-actions,.cu-page form,.cu-page details,#cu-notice{display:none!important}.cu-page{display:block}.cu-page pre{max-height:none}.cu-page .table-wrap{overflow:visible}}
+.cu-page > *, .cu-profile-head > *, .cu-actions > * { min-width: 0; max-width: 100%; }
+.cu-page {grid-template-columns:minmax(0,1fr);}
+.cu-page #cu-jump {display:flex;gap:8px;align-items:end;flex-wrap:wrap;}
+.cu-page #cu-jump input {width:150px;max-width:100%;}
+.cu-tabs {min-width:0;width:100%;}
