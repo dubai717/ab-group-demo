@@ -1,0 +1,12 @@
+name: AB Group customer review checks (no deployment)
+on:
+  pull_request:
+    branches: [feature/banking-finance-workbench]
+permissions:
+  contents: read
+concurrency:
+  group: customers-ci-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  customer-checks:
+    uses: ./.github/workflows/staging-checks.yml
