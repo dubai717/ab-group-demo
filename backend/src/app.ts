@@ -29,6 +29,7 @@ import {
   assertRevision,
   bounded,
 } from "./data.js";
+import {registerVehicles} from './vehicles.js';
 import {registerCustomers} from './customers.js';
 import {registerFinance,bankNotice} from "./finance.js";
 export interface Options {
@@ -203,6 +204,7 @@ export async function build(options: Options) {
     };
   registerFinance(app,call,cipher);
   registerCustomers(app,call,cipher,options);
+  registerVehicles(app,call,cipher,options);
   app.get("/api/health", async () => {
     await pool.query("select 1");
     return {
