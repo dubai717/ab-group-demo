@@ -22,7 +22,7 @@ const MIME_TYPES = {
 // migration SQL, test fixtures, source-control metadata or installed packages.
 const PUBLIC_FILES = new Set(['index.html','app.js','styles.css','runtime-config.js','central-client.js',
   'area-reference.js','company-documents.js','bank-accounts.js','demo-credentials.js',
-  'user-management.js','finance-policy.js','finance-workbench.js','workspace-ui.js','auth-flows.js','data/uae-areas.js','assets/Untitled.png','assets/logo.svg']);
+  'user-management.js','finance-policy.js','finance-workbench.js','ledger-policy.js','ledger-ui.js','workspace-ui.js','auth-flows.js','data/uae-areas.js','assets/Untitled.png','assets/logo.svg']);
 const server = http.createServer((req, res) => {
   if (!['GET','HEAD'].includes(req.method)) { res.writeHead(405);res.end();return; }
   let requested;

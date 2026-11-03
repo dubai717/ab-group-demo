@@ -495,6 +495,7 @@ function render() {
 
   const sidebarItems = getSidebarItems(currentUser).filter(i=>!['roles','departments'].includes(i.id));
   if(CustomerUI.canEnter())sidebarItems.push({id:'customers',label:getLocale()==='ar'?'العملاء':'Customers'});
+  if(LedgerUI.canEnter())sidebarItems.push({id:'financialManagement',label:getLocale()==='ar'?'الإدارة المالية والخزينة':'Finance & treasury'});
   if(VehicleUI.canEnter())sidebarItems.push({id:'vehicles',label:getLocale()==='ar'?'المركبات':'Vehicles'});
   appEl.innerHTML = `
     <div class="app-shell">
@@ -547,7 +548,7 @@ function render() {
 }
 
 function pageTitle(page) {
-  const titles = {customers:getLocale()==='ar'?'العملاء':'Customers',vehicles:getLocale()==='ar'?'المركبات':'Vehicles',
+  const titles = {financialManagement:getLocale()==='ar'?'الإدارة المالية والخزينة':'Finance & treasury',customers:getLocale()==='ar'?'العملاء':'Customers',vehicles:getLocale()==='ar'?'المركبات':'Vehicles',
     dashboard: localeText('dashboard'),
     users: localeText('userManagement'),
     roles: localeText('roles'),
@@ -573,6 +574,7 @@ function renderCurrentPage() {
   if (page === 'bankAccounts') return FinanceWorkbench.isAccounts()?BankAccounts.render():FinanceWorkbench.render();
   if(page==='customers')return CustomerUI.render();
   if(page==='vehicles')return VehicleUI.render();
+  if(page==='financialManagement')return LedgerUI.render();
   if (page === 'tasks') return renderTasks(user);
   if (page === 'reports') return renderReports(user);
   if (page === 'notifications') return renderNotifications(user)+CustomerUI.notificationHTML();
@@ -1112,6 +1114,7 @@ function bindGlobalEvents() {
   CustomerUI.bind();
   VehicleUI.bind();
   FinanceWorkbench.bind();
+  LedgerUI.bind();
   globalThis.ABCentral?.enabled&&globalThis.ABCentral.bind();
   AuthFlows.bindApp();
   BankAccounts.bind();
@@ -1133,6 +1136,7 @@ function bindGlobalEvents() {
   document.querySelectorAll('[data-action="logout"]').forEach(button => {
     button.addEventListener('click', () => {
       FinanceWorkbench.reset();
+      LedgerUI.reset();
       CustomerUI.reset();
       VehicleUI.reset();
       BankAccounts.logout();

@@ -29,6 +29,7 @@ import {
   assertRevision,
   bounded,
 } from "./data.js";
+import {registerLedger} from './ledger.js';
 import {registerVehicles} from './vehicles.js';
 import {registerCustomers} from './customers.js';
 import {registerFinance,bankNotice} from "./finance.js";
@@ -205,6 +206,7 @@ export async function build(options: Options) {
   registerFinance(app,call,cipher);
   registerCustomers(app,call,cipher,options);
   registerVehicles(app,call,cipher,options);
+  registerLedger(app,call,cipher);
   app.get("/api/health", async () => {
     await pool.query("select 1");
     return {
@@ -1124,6 +1126,8 @@ export async function build(options: Options) {
       "customers.js",
       "finance-policy.js",
       "finance-workbench.js",
+      "ledger-policy.js",
+      "ledger-ui.js",
       "workspace-ui.js",
       "data/uae-areas.js",
       "assets/Untitled.png",

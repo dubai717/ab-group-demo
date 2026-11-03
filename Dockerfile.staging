@@ -21,7 +21,7 @@ COPY --from=build /app/backend-build ./backend-build
 COPY package.json ./
 COPY backend/certificates ./backend/certificates
 COPY backend/fonts ./backend/fonts
-COPY index.html app.js styles.css area-reference.js company-documents.js bank-accounts.js user-management.js demo-credentials.js auth-flows.js central-client.js finance-policy.js finance-workbench.js workspace-ui.js customer-policy.js customers.js vehicle-policy.js vehicles.js ./
+COPY index.html app.js styles.css area-reference.js company-documents.js bank-accounts.js user-management.js demo-credentials.js auth-flows.js central-client.js finance-policy.js finance-workbench.js ledger-policy.js ledger-ui.js workspace-ui.js customer-policy.js customers.js vehicle-policy.js vehicles.js ./
 COPY assets ./assets
 COPY data ./data
 USER node
