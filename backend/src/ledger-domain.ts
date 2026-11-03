@@ -13,6 +13,7 @@ export const L: {
     distribute: (v: any, i: any) => any;
     nextWorkingDay: (...v: any[]) => string;
     cardPhase: (...v: any[]) => string;
+    taxPortion: (g: bigint, t: bigint, cg: bigint, ct: bigint, a: bigint) => bigint;
     csvCell: (v: any) => string;
 } = createRequire(import.meta.url)('../../ledger-policy.js');
 export const P = createRequire(import.meta.url)('../../finance-policy.js');
@@ -23,10 +24,13 @@ export async function ready(c: any) {
         throw new ApiError(503, 'ledgerSchemaPending');
 }
 export async function open(c: any, co: string, date: string) { requireOk(!(await c.query("select 1 from ab.finance_periods where company_id=$1 and month=date_trunc('month',$2::date)::date", [co, date])).rowCount, 409, 'periodClosed'); }
-export async function event(c: any, cipher: any, s: any, co: string, entity: string, action: string, before: any, after: any) { await c.query('insert into ab.finance_events(id,tenant_id,company_id,actor_id,entity_type,entity_id,action,payload_cipher,actor_type)values($1,$2,$3,$4,$5,$6,$7,$8,$9)', [randomUUID(), s.tenant_id, co, s.user_id, 'ledger', entity, action, cipher.seal({ before, after }), s.actor_type || 'user']); if (s.actor_type === 'service')
-    await c.query("insert into ab.audit_events(id,tenant_id,actor_id,actor_type,action,entity_type,entity_id,fields,request_id)values(gen_random_uuid(),$1,$2,'service',$3,'ledger',$4,$5,gen_random_uuid())", [s.tenant_id, s.user_id, action, entity, Object.keys(after || {})]);
-else
-    await audit(c, s.tenant_id, s.user_id, action, 'ledger', entity, Object.keys(after || {})); }
+export async function event(c: any, cipher: any, s: any, co: string, entity: string, action: string, before: any, after: any) {
+    await c.query('insert into ab.finance_events(id,tenant_id,company_id,actor_id,entity_type,entity_id,action,payload_cipher,actor_type)values($1,$2,$3,$4,$5,$6,$7,$8,$9)', [randomUUID(), s.tenant_id, co, s.user_id, 'ledger', entity, action, cipher.seal({ before, after }), s.actor_type || 'user']);
+    if (s.actor_type === 'service')
+        await c.query("insert into ab.audit_events(id,tenant_id,actor_id,actor_type,action,entity_type,entity_id,fields,request_id)values(gen_random_uuid(),$1,$2,'service',$3,'ledger',$4,$5,gen_random_uuid())", [s.tenant_id, s.user_id, action, entity, Object.keys(after || {})]);
+    else
+        await audit(c, s.tenant_id, s.user_id, action, 'ledger', entity, Object.keys(after || {}));
+}
 export async function notify(c: any, s: any, co: string, entity: string, action: string, key: string) { await c.query(`insert into ab.finance_notifications(id,tenant_id,company_id,user_id,action,event_key,entity_id)select gen_random_uuid(),u.tenant_id,$1,u.id,$2,$3,$4 from ab.users u where u.tenant_id=$5 and u.status='Active' and (u.role_id='owner' or exists(select 1 from ab.finance_notification_rules r where r.user_id=u.id and r.company_id=$1 and r.action=$2))on conflict(tenant_id,user_id,event_key)do nothing`, [co, action, 'ledger:' + co + ':' + key, entity, s.tenant_id]); }
 export async function fact(c: any, cipher: any, s: any, co: string, employee: string, kind: string, key: string, amount: string | null, payload: any) { const result = await c.query('insert into ab.finance_kpi_facts(id,tenant_id,company_id,employee_id,kind,source_key,amount,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9)on conflict(tenant_id,source_key)do nothing returning id', [randomUUID(), s.tenant_id, co, employee, kind, key, amount, cipher.seal({ actorType: s.actor_type || 'user', ...payload }), s.user_id]); return result.rows[0]?.id; }
 export async function config(c: any, cipher: any, co: string) { const r = (await c.query('select value from ab.settings where key=$1', ['ledger:' + co])).rows[0]; return r ? cipher.open(r.value.cipher) : {}; }
@@ -114,6 +118,7 @@ export async function moveAmount(c: any, s: any, co: string, holder: string, cur
 export async function bankPosting(c: any, cipher: any, m: any, s: any, d: any) {
     const b = m.bank.list().find((b: any) => b.id === d.bankAccountId);
     requireOk(b && b.companyId === d.companyId && b.status === 'Active' && b.currency === d.currency, 422, 'inactiveBank');
+    requireOk(d.effectiveOn >= b.openedAt, 422, 'invalidDate');
     await open(c, d.companyId, d.effectiveOn);
     const counter = await chart(c, d.companyId, d.currency, d.counterpartId);
     requireOk(counter.kind !== 'bank', 422, 'accountMappingRequired');

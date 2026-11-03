@@ -1,6 +1,6 @@
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
 (async()=>{const f=JSON.parse(fs.readFileSync('work/finance-browser-fixture.json')),browser=await chromium.launch({executablePath:process.env.AB_BROWSER_EXECUTABLE||(fs.existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined),headless:true,args:['--no-sandbox']}),p=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
-p.on('pageerror',e=>errors.push(e.message));
+p.on('pageerror',e=>errors.push(e.message));p.on('response',async r=>{if(r.url().includes('/api/finance/')&&r.status()>=400){const body=await r.json().catch(()=>({}));console.error('FINANCE_API_FAILURE:',r.status(),body.error||'unknown');}});
 try{
  await p.addInitScript(()=>{const w=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(!['ab_group_demo_locale'].includes(k)&&/state|finance|bank|password|session|token/i.test(k))throw Error('Sensitive browser write: '+k);return w.call(this,k,v);};});
  await p.goto('http://127.0.0.1:3200');await p.locator('#login-form').waitFor();await p.fill('#username',f.username);await p.fill('#password',f.password);await p.locator('#login-form [type=submit]').click();await p.locator('.stats-grid').waitFor();
@@ -18,9 +18,9 @@ try{
   await p.locator('#fw-company').selectOption(company);
   const bank=await p.evaluate(company=>app.state.bankAccounts.find(b=>b.companyId===company).id,company);
   await p.evaluate(async({company,bank})=>{const request=(path,data)=>ABCentral.api('finance/'+path,'POST',data,crypto.randomUUID());await request('chart',{companyId:company,code:'BANK',nameAr:'بنك تجريبي',nameEn:'Fictional bank ledger',kind:'bank',bankAccountId:bank,currency:'AED'});await request('chart',{companyId:company,code:'CONTROL',nameAr:'مقابل تجريبي',nameEn:'Fictional counterpart',kind:'asset',currency:'AED'});},{company,bank});
-  await p.locator('[data-fw="reload"]').click();await p.locator('#fw-form').waitFor();
+  await p.locator('[data-fw="reload"]').click();await p.locator('#fw-form').waitFor();await p.locator('#fw-form [name="counterpartId"] option').filter({hasText:'CONTROL'}).waitFor({state:'attached'});
   await p.locator('#fw-form [name="amount"]').fill('0.125');await p.locator('#fw-form [name="effectiveOn"]').fill('2026-02-01');await p.locator('#fw-form [name="reference"]').fill('UI-EXACT');await p.locator('#fw-form [name="reason"]').fill('Test preserves draft until validation passes');
-  await p.locator('#fw-form [type=submit]').click();await p.locator('#fw-notice').filter({hasText:/الحفظ|Saved/}).waitFor(); // draft need not have a configured counterpart until approval
+  assert(await p.locator('#fw-form').evaluate(form=>form.checkValidity()),'Financial draft form must remain valid after reload');await p.locator('#fw-form [type=submit]').click();await p.locator('#fw-notice').filter({hasText:/الحفظ|Saved/}).waitFor(); // draft need not have a configured counterpart until approval
   await p.locator('[data-fw="approve"]').click();await p.locator('#fw-approval [type=submit]').click();await p.locator('#fw-notice').filter({hasText:/دليل|ledger accounts/}).waitFor();
   // No false posting after missing chart mapping; source row and opening balance remain intact.
   const b=await p.evaluate(()=>ABCentral.api('finance/workbench'));assert.equal(b.operations.find(o=>o.company_id===company).status,'Draft');assert.equal(b.balances.find(b=>b.companyId===company).bookBalance,'1000.125');
@@ -34,4 +34,4 @@ try{
  await p.setViewportSize({width:390,height:900});await p.locator('[data-ws-menu]').click();await p.locator('[data-page="users"]').click();assert(await p.locator('.workspace-toolbar').innerText().then(s=>!s.includes('Cheques')&&!s.includes('الشيكات')));
  await p.emulateMedia({colorScheme:'dark'});await p.evaluate(()=>scrollTo(0,0));assert(await p.locator('.main').evaluate(e=>getComputedStyle(e).backgroundColor==='rgb(33, 28, 26)'));await p.screenshot({path:'work/finance-mobile-dark.png',fullPage:false});await p.emulateMedia({colorScheme:'light'});await p.setViewportSize({width:1440,height:1000});await p.screenshot({path:'work/finance-desktop.png',fullPage:true});
  assert.deepEqual(errors,[]);console.log('PASS finance browser: existing company/bank/manager flow, paginated operational reports/group totals, contextual navigation, explicit schema gate, financial draft safety, Arabic/English desktop/tablet/phone, dark/light, no JS errors or sensitive browser writes.');
-}catch(e){await p.screenshot({path:'work/finance-browser-failure.png',fullPage:true});console.error(e);process.exitCode=1;}finally{await browser.close();}})();
+}catch(e){console.error('FINANCE_FORM_DIAGNOSTIC:',await p.evaluate(()=>({notice:document.querySelector('#fw-notice')?.textContent,invalid:[...document.querySelectorAll('#fw-form input,#fw-form select')].filter(n=>!n.checkValidity()).map(n=>n.name)})));await p.screenshot({path:'work/finance-browser-failure.png',fullPage:true});console.error(e);process.exitCode=1;}finally{await browser.close();}})();

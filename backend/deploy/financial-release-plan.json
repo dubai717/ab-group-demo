@@ -25,7 +25,7 @@
     {
       "name": "012_financial_management.sql",
       "path": "supabase/proposed/012_financial_management.sql",
-      "sha256": "264500ea73e98d93cf10b34862fc75b45ea78315acdfec2a6f076ec25a7d91ab",
+      "sha256": "717d6279420c1e79b7752ec2f0571ebfb559e24613828b5319a62f92808bbd24",
       "guardTable": "ab.finance_journals"
     }
   ],

@@ -125,7 +125,7 @@
         if (tab === 'reports')
             return form('report', t('تقارير من القيود والمستندات الفعلية', 'Reports from actual entries and documents'), [f('groupBy', 'تجميع التحصيل', 'Collections grouping', 'select', 'day', choice(['day', 'month', 'year', 'employee', 'item'])), f('kind', 'التقرير', 'Report', 'select', 'trial', choice(['trial', 'balance', 'profit', 'cashflow', 'ledger', 'journal', 'receivables', 'custody', 'vouchers', 'cards', 'kpi', 'vat', 'collections', 'deposits', 'cheques', 'funds', 'intercompany', 'installments', 'adjustments', 'profitability'])), f('from', 'من', 'From', 'date', now().slice(0, 4) + '-01-01'), f('to', 'إلى', 'To', 'date', now()), f('currency', 'العملة (اختياري)', 'Currency (optional)', 'text', '', null, false)], t('عرض التقرير', 'Show report'), 'report', `<details class="full"><summary>${t('الشركات المصرح بها', 'Authorized companies')}</summary>${cap.companies.map(c => `<label><input type="checkbox" name="reportCompany" value="${c.id}" ${c.id === co ? 'checked' : ''}/>${e(c.englishName || c.arabicName)}</label>`).join('')}</details>`) + (report ? `<p>${e(report.scope)} — ${t('فواتير غير مصنفة', 'Unclassified invoices')}: ${report.unclassifiedInvoices}</p>${btn('export-csv', 'CSV')}${btn('export-excel', 'Excel')}${btn('print', t('طباعة / PDF', 'Print / PDF'))}${table(report.rows, report.rows[0] ? Object.keys(report.rows[0]).filter(k => !['payload_cipher'].includes(k)).slice(0, 12) : [])}${btn('report-prev', t('السابق', 'Previous'))}${btn('report-next', t('التالي', 'Next'))}` : '');
         if (tab === 'setup')
-            return setup() + table(book.finance_accounts, ['code', 'name_ar', 'name_en', 'kind']) + table(items, ['code', 'name_ar', 'name_en', 'priority']);
+            return setup() + table(book.finance_accounts, ['code', 'name_ar', 'name_en', 'kind', 'active'], r => btn('account-edit', t('تعديل / تفعيل', 'Edit / activate'), r.id)) + table(items, ['code', 'name_ar', 'name_en', 'priority', 'active'], r => btn('item-edit', t('تعديل / تفعيل', 'Edit / activate'), r.id));
         if (tab === 'import')
             return form('import-preview', t('معاينة CSV / Excel — المطابقة قبل الاعتماد', 'Preview CSV / Excel — match before commit'), [f('file', 'ملف الفواتير الأصلي', 'Original invoice file', 'file'), ...['sourceKey', 'customerNumber', 'vehicleNumber', 'plate', 'itemCode', 'amount', 'currency', 'dueOn'].map(k => f(k, label(k), k, 'text', k, null, !['vehicleNumber', 'plate'].includes(k)))], t('معاينة', 'Preview'), 'invoice_import') + (importJob ? table(importJob.rows.map(r => ({ line: r.line, status: r.error || 'Ready', amount: r.data?.amount })), ['line', 'status', 'amount']) + btn('import-commit', t('اعتماد السجلات الصحيحة', 'Commit valid rows')) : '');
         if (tab === 'closing')
@@ -169,7 +169,7 @@
     async function submit(form) {
         const key = form.dataset.ldForm, d = serialize(form), fd = new FormData(form);
         drafts[key] = { ...d };
-        let endpoint = '', payload = d, refreshAfter = true;
+        let endpoint = '', payload = d, refreshAfter = true, httpMethod = 'POST';
         const date = d.effectiveOn || now();
         if (key === 'work') {
             endpoint = 'work-amount';
@@ -200,6 +200,15 @@
         if (key === 'credit-apply') {
             endpoint = 'credits/apply';
             payload = { ...d, companyId: co };
+        }
+        if (key === 'account-edit') {
+            endpoint = 'accounts/' + selected;
+            httpMethod = 'PATCH';
+        }
+        if (key === 'item-edit') {
+            endpoint = 'items/' + selected;
+            httpMethod = 'PATCH';
+            payload = { ...book.finance_items.find(i => i.id === selected).details, ...d, priority: Number(d.priority) };
         }
         if (key === 'invoice') {
             endpoint = 'invoices';
@@ -380,7 +389,7 @@
         }
         if (!endpoint)
             throw Error('unsupportedAction');
-        const result = await api(endpoint, 'POST', payload, form._key ??= crypto.randomUUID());
+        const result = await api(endpoint, httpMethod, payload, form._key ??= crypto.randomUUID());
         notice = t('تم الحفظ في قاعدة البيانات المركزية.', 'Saved in the central database.');
         if (result.receipts)
             notice += ' ' + t('عدد السندات: ', 'Receipts: ') + result.receipts.length;
@@ -522,6 +531,14 @@
                 }
                 if (action === 'credit-apply')
                     dialog(t('تطبيق أمانة سابقة دون قبض جديد', 'Apply existing customer credit without new money'), action, [...refFields(), f('sourceReceiptId', 'سند القبض الأصلي ذو الفائض', 'Original receipt containing excess credit'), ...itemFields(), ...amounts(), f('reason', 'السبب', 'Reason')]);
+                if (action === 'account-edit') {
+                    const a = book.finance_accounts.find(r => r.id === key);
+                    dialog(t('تعديل حساب دون تغيير طبيعته', 'Edit account without changing its nature'), action, [f('nameAr', 'الاسم العربي', 'Arabic name', 'text', a.name_ar), f('nameEn', 'الاسم الإنجليزي', 'English name', 'text', a.name_en), f('active', 'نشط', 'Active', 'checkbox', a.active)]);
+                }
+                if (action === 'item-edit') {
+                    const a = book.finance_items.find(r => r.id === key);
+                    dialog(t('تعديل بند مع حماية التصنيف المستخدم', 'Edit item with protected used mappings'), action, [f('code', 'الرمز', 'Code', 'text', a.code), f('nameAr', 'الاسم العربي', 'Arabic name', 'text', a.name_ar), f('nameEn', 'الاسم الإنجليزي', 'English name', 'text', a.name_en), f('priority', 'الأولوية', 'Priority', 'number', a.priority), f('active', 'نشط', 'Active', 'checkbox', a.active), f('recurringAmount', 'المبلغ الدوري المستقبلي', 'Future recurring amount', 'text', a.details.recurringAmount), f('taxRate', 'نسبة الضريبة', 'Tax rate', 'text', a.details.taxRate), f('taxAccountId', 'حساب الضريبة', 'Tax account', 'select', a.details.taxAccountId || '', defs(), false)]);
+                }
                 if (action === 'invoice-correct')
                     dialog(t('تصحيح الفاتورة دون حذف', 'Correct invoice without deletion'), action, [f('amount', 'مبلغ التصحيح', 'Correction amount'), f('effectiveOn', 'تاريخ القيد', 'Accounting date', 'date', now()), f('reason', 'السبب', 'Reason')]);
                 if (action === 'receive')

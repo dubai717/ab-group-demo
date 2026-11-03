@@ -168,7 +168,10 @@ export function registerLedger(app: any, call: any, cipher: any) {
         await open(c, i.company_id, d.effectiveOn);
         const it = await item(c, cipher, m, i.item_id, i.company_id, true), ar = await resolve(c, i.company_id, i.currency, it.data.receivableId), income = await resolve(c, i.company_id, i.currency, it.data.revenueId), key = randomUUID();
         await c.query("insert into ab.vehicle_invoice_adjustments(id,tenant_id,company_id,invoice_id,kind,amount,payload_cipher,created_by)values($1,$2,$3,$4,'waiver',$5,$6,$7)", [key, s.tenant_id, i.company_id, i.id, d.amount, cipher.seal(d), s.user_id]);
-        const rate = L.units(it.data.taxRate || '0'), tax = rate ? (L.units(d.amount) * rate + (100000n + rate) / 2n) / (100000n + rate) : 0n, lines = [line(income, L.units(d.amount) - tax), line(ar, -L.units(d.amount))];
+        const rate = L.units(it.data.taxRate || '0'), originalTax = rate ? (L.units(i.amount) * rate + (100000n + rate) / 2n) / (100000n + rate) : 0n;
+        const previous = (await c.query("select a.amount,j.payload_cipher from ab.vehicle_invoice_adjustments a left join ab.finance_journals j on j.source_key='credit:'||a.id::text and j.company_id=a.company_id and j.status='Posted'where a.invoice_id=$1 and a.id<>$2 and a.kind<>'writeoff'", [i.id, key])).rows;
+        requireOk(previous.every((r: any) => !!r.payload_cipher), 409, 'priorAdjustmentAccountingReviewRequired');
+        const creditedGross = previous.reduce((n: bigint, r: any) => n + L.units(r.amount), 0n), creditedTax = previous.reduce((n: bigint, r: any) => n + L.units(cipher.open(r.payload_cipher).taxAmount || '0'), 0n), tax = L.taxPortion(L.units(i.amount), originalTax, creditedGross, creditedTax, L.units(d.amount)), lines = [line(ar, -L.units(d.amount)), ...(L.units(d.amount) > tax ? [line(income, L.units(d.amount) - tax)] : [])];
         if (tax)
             lines.push(line(await resolve(c, i.company_id, i.currency, it.data.taxAccountId), tax));
         await journal(c, cipher, s, i.company_id, d.effectiveOn, i.currency, 'credit:' + key, lines, { invoiceId: i.id, taxAmount: L.money(tax), ...d });
@@ -501,7 +504,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
     app.post('/api/ledger/funds/:id/refill', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ sourceFundId: id, amount: positive, effectiveOn: day, reason: text }).strict().parse(req.body), f = (await c.query('select * from ab.finance_funds where id=$1', [id.parse(req.params.id)])).rows[0], source = (await c.query('select * from ab.finance_funds where id=$1', [d.sourceFundId])).rows[0]; requireOk(f && source && source.id !== f.id && source.company_id === f.company_id && source.currency === f.currency, 422, 'invalidReference'); need(m, 'fund_manage', f.company_id); const remaining = await balance(c, f.chart_id), available = await balance(c, source.chart_id); requireOk(L.units(d.amount) === L.units(f.ceiling) - remaining && available >= L.units(d.amount), 422, 'amountMismatch'); return { id: await journal(c, cipher, s, f.company_id, d.effectiveOn, f.currency, 'refill:' + req.headers['idempotency-key'], [line(await chart(c, f.company_id, f.currency, f.chart_id), L.units(d.amount)), line(await chart(c, f.company_id, f.currency, source.chart_id), -L.units(d.amount))], { ...d, fundId: f.id, expense: false }) }; }));
     app.post('/api/ledger/journals', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id, currency, effectiveOn: day, reason: text, lines: z.array(z.object({ chartId: id, debit: money, credit: money }).strict()).min(2).max(100) }).strict().parse(req.body); need(m, 'journal_create', d.companyId); return { id: await journal(c, cipher, s, d.companyId, d.effectiveOn, d.currency, 'manual:' + req.headers['idempotency-key'], d.lines.map(l => ({ ...l, companyId: d.companyId, currency: d.currency })), { reason: d.reason, manual: true }, false) }; }));
     app.post('/api/ledger/journals/:id/post', route(async (c: any, m: any, s: any, req: any) => { const r = (await c.query('select * from ab.finance_journals where id=$1', [id.parse(req.params.id)])).rows[0]; requireOk(r, 404, 'notFound'); need(m, 'journal_approve', r.company_id); await post(c, s, r.id); await event(c, cipher, s, r.company_id, r.id, 'manual_journal_approved', { status: r.status }, { status: 'Posted' }); return { id: r.id }; }));
-    app.post('/api/ledger/journals/:id/reverse', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ effectiveOn: day, reason: text }).strict().parse(req.body), r = (await c.query('select * from ab.finance_journals where id=$1', [id.parse(req.params.id)])).rows[0]; requireOk(r, 404, 'notFound'); need(m, 'journal_approve', r.company_id); return { id: await reverse(c, cipher, s, r.id, d.effectiveOn, d.reason) }; }));
+    app.post('/api/ledger/journals/:id/reverse', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ effectiveOn: day, reason: text }).strict().parse(req.body), r = (await c.query('select * from ab.finance_journals where id=$1', [id.parse(req.params.id)])).rows[0]; requireOk(r, 404, 'notFound'); need(m, 'journal_approve', r.company_id); requireOk(cipher.open(r.payload_cipher).manual === true, 409, 'correctOriginalDocument'); return { id: await reverse(c, cipher, s, r.id, d.effectiveOn, d.reason) }; }));
     app.post('/api/ledger/cards', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id, holderId: id, bankName: text, lastFour: z.string().regex(/^\d{4}$/), name: text, currency, dueDay: z.number().int().min(1).max(28), liabilityId: id }).strict().parse(req.body); need(m, 'cards', d.companyId); requireOk(m.state.users.some((u: any) => u.id === d.holderId && u.status === 'Active'), 422, 'invalidReference'); await chart(c, d.companyId, d.currency, d.liabilityId, 'liability'); const key = randomUUID(); await c.query('insert into ab.finance_cards(id,tenant_id,company_id,holder_id,bank_name,last_four,name,currency,due_day,liability_id,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)', [key, s.tenant_id, d.companyId, d.holderId, d.bankName, d.lastFour, d.name, d.currency, d.dueDay, d.liabilityId, s.user_id]); await event(c, cipher, s, d.companyId, key, 'card_created', null, d); return { id: key }; }));
     app.post('/api/ledger/cards/:id/charges', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ amount: positive, paidOn: day, reference: text, beneficiary: text, documentVersionId: opt, notes: z.string().max(2000).default(''), splits: z.array(z.object({ companyId: id, itemId: id, customerId: opt, vehicleId: opt, amount: positive, invoiceId: opt, dueToAccountId: opt, issuerDueFromAccountId: opt }).strict()).min(1).max(100) }).strict().parse(req.body), card = (await c.query('select * from ab.finance_cards where id=$1', [id.parse(req.params.id)])).rows[0];
@@ -567,28 +570,35 @@ export function registerLedger(app: any, call: any, cipher: any) {
         await event(c, cipher, s, card.company_id, key, 'card_statement_uploaded', null, { ...d, lines: d.lines.length });
         return { id: key, ocr: false, status: 'Review' };
     }));
-    app.post('/api/ledger/card-statements/:id/match', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ pairs: z.array(z.object({ lineId: id, chargeId: opt, voucherId: opt }).strict().refine(x => !!x.chargeId !== !!x.voucherId)).min(1).max(1000) }).strict().parse(req.body), st = (await c.query('select * from ab.finance_statements where id=$1', [id.parse(req.params.id)])).rows[0]; requireOk(st?.card_id && st.status === 'Review', 409, 'invalidTransition'); need(m, 'reconcile', st.company_id); for (const pair of d.pairs) {
-        const l = (await c.query('select * from ab.finance_statement_lines where id=$1 and statement_id=$2', [pair.lineId, st.id])).rows[0];
-        requireOk(l, 422, 'invalidReference');
-        let amount: bigint, date: string;
-        if (pair.chargeId) {
-            const ch = (await c.query('select * from ab.finance_card_charges where id=$1 and card_id=$2', [pair.chargeId, st.card_id])).rows[0];
-            requireOk(ch, 422, 'invalidReference');
-            amount = L.units(ch.amount);
-            date = ch.paid_on.toISOString().slice(0, 10);
+    app.post('/api/ledger/card-statements/:id/match', route(async (c: any, m: any, s: any, req: any) => {
+        const d = z.object({ pairs: z.array(z.object({ lineId: id, chargeId: opt, voucherId: opt }).strict().refine(x => !!x.chargeId !== !!x.voucherId)).min(1).max(1000) }).strict().parse(req.body), st = (await c.query('select * from ab.finance_statements where id=$1', [id.parse(req.params.id)])).rows[0];
+        requireOk(st?.card_id && st.status === 'Review', 409, 'invalidTransition');
+        need(m, 'reconcile', st.company_id);
+        for (const pair of d.pairs) {
+            const l = (await c.query('select * from ab.finance_statement_lines where id=$1 and statement_id=$2', [pair.lineId, st.id])).rows[0];
+            requireOk(l, 422, 'invalidReference');
+            let amount: bigint, date: string;
+            if (pair.chargeId) {
+                const ch = (await c.query('select * from ab.finance_card_charges where id=$1 and card_id=$2', [pair.chargeId, st.card_id])).rows[0];
+                requireOk(ch, 422, 'invalidReference');
+                amount = L.units(ch.amount);
+                date = ch.paid_on.toISOString().slice(0, 10);
+            }
+            else {
+                const v = (await c.query("select v.*,o.effective_on from ab.finance_vouchers v join ab.finance_card_settlements x on x.voucher_id=v.id join ab.finance_operations o on o.id=v.operation_id where v.id=$1 and x.card_id=$2 and v.status='Paid'", [pair.voucherId, st.card_id])).rows[0];
+                requireOk(v, 422, 'invalidReference');
+                need(m, 'reconcile', v.company_id);
+                amount = -L.units(v.amount);
+                date = v.effective_on.toISOString().slice(0, 10);
+            }
+            requireOk((amount > 0n) === (L.units(l.amount) > 0n) && date === l.effective_on.toISOString().slice(0, 10), 422, 'amountMismatch');
+            await c.query('insert into ab.finance_card_matches(id,tenant_id,statement_id,line_id,charge_id,voucher_id,created_by)values($1,$2,$3,$4,$5,$6,$7)', [randomUUID(), s.tenant_id, st.id, l.id, pair.chargeId || null, pair.voucherId || null, s.user_id]);
+            const matched = L.units((await c.query('select coalesce(sum(coalesce(ch.amount,-v.amount)),0)::text amount from ab.finance_card_matches x left join ab.finance_card_charges ch on ch.id=x.charge_id left join ab.finance_vouchers v on v.id=x.voucher_id where x.line_id=$1', [l.id])).rows[0].amount);
+            requireOk((matched < 0n ? -matched : matched) <= (L.units(l.amount) < 0n ? -L.units(l.amount) : L.units(l.amount)), 422, 'amountMismatch');
         }
-        else {
-            const v = (await c.query("select v.*,o.effective_on from ab.finance_vouchers v join ab.finance_card_settlements x on x.voucher_id=v.id join ab.finance_operations o on o.id=v.operation_id where v.id=$1 and x.card_id=$2 and v.status='Paid'", [pair.voucherId, st.card_id])).rows[0];
-            requireOk(v, 422, 'invalidReference');
-            need(m, 'reconcile', v.company_id);
-            amount = -L.units(v.amount);
-            date = v.effective_on.toISOString().slice(0, 10);
-        }
-        requireOk((amount > 0n) === (L.units(l.amount) > 0n) && date === l.effective_on.toISOString().slice(0, 10), 422, 'amountMismatch');
-        await c.query('insert into ab.finance_card_matches(id,tenant_id,statement_id,line_id,charge_id,voucher_id,created_by)values($1,$2,$3,$4,$5,$6,$7)', [randomUUID(), s.tenant_id, st.id, l.id, pair.chargeId || null, pair.voucherId || null, s.user_id]);
-        const matched = L.units((await c.query('select coalesce(sum(coalesce(ch.amount,-v.amount)),0)::text amount from ab.finance_card_matches x left join ab.finance_card_charges ch on ch.id=x.charge_id left join ab.finance_vouchers v on v.id=x.voucher_id where x.line_id=$1', [l.id])).rows[0].amount);
-        requireOk((matched < 0n ? -matched : matched) <= (L.units(l.amount) < 0n ? -L.units(l.amount) : L.units(l.amount)), 422, 'amountMismatch');
-    } await event(c, cipher, s, st.company_id, st.id, 'card_statement_matched', null, d); return { matched: d.pairs.length }; }));
+        await event(c, cipher, s, st.company_id, st.id, 'card_statement_matched', null, d);
+        return { matched: d.pairs.length };
+    }));
     app.post('/api/ledger/card-statements/:id/approve', route(async (c: any, m: any, s: any, req: any) => { const st = (await c.query('select * from ab.finance_statements where id=$1 for update', [id.parse(req.params.id)])).rows[0]; requireOk(st?.card_id && st.status === 'Review', 409, 'invalidTransition'); need(m, 'reconcile', st.company_id); requireOk(!(await c.query('select 1 from ab.finance_statement_lines l where statement_id=$1 and not exists(select 1 from ab.finance_card_matches x where x.line_id=l.id)', [st.id])).rowCount, 409, 'unresolvedDifference'); requireOk(!(await c.query("select 1 from ab.finance_vouchers v join ab.finance_card_settlements x on x.voucher_id=v.id join ab.finance_operations o on o.id=v.operation_id where x.card_id=$1 and v.status='Paid'and o.effective_on between $2 and $3 and not exists(select 1 from ab.finance_card_matches mt where mt.voucher_id=v.id and mt.statement_id=$4)", [st.card_id, st.period_from, st.period_to, st.id])).rowCount, 409, 'unresolvedDifference'); requireOk(!(await c.query('select 1 from ab.finance_card_splits sp join ab.finance_card_charges ch on ch.id=sp.charge_id where ch.card_id=$1 and ch.paid_on between $2 and $3 and sp.customer_id is not null and sp.invoice_id is null', [st.card_id, st.period_from, st.period_to])).rowCount, 409, 'missingInvoices'); await c.query("update ab.finance_statements set status='Approved',approved_by=$2 where id=$1", [st.id, s.user_id]); await event(c, cipher, s, st.company_id, st.id, 'card_reconciliation_approved', null, { approved: true }); return { id: st.id }; }));
     app.post('/api/ledger/card-statements/:id/vouchers', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ itemId: id }).strict().parse(req.body), st = (await c.query('select * from ab.finance_statements where id=$1', [id.parse(req.params.id)])).rows[0];
