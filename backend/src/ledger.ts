@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { createRequire } from 'node:module';
+import { financialReminders, recurringFinancial } from './financial-jobs.js';
 import { customerSpreadsheet } from './customer-spreadsheet.js';
 const Csv = createRequire(import.meta.url)('../../customer-policy.js');
 const normalize = (x: string) => x.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
@@ -100,7 +101,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
             await event(c, cipher, s, co.company_id, r.id, 'account_updated', { nameAr: r.name_ar, nameEn: r.name_en, active: r.active }, d);
         return { id: r.id };
     }));
-    const itemSchema = z.object({ code: z.string().trim().min(1).max(40), nameAr: text, nameEn: text, category: z.string().min(1).max(100), priority: z.number().int().min(0).max(10000), active: z.boolean().default(true), companyIds: z.array(id).min(1).max(100), invoice: z.boolean(), receipt: z.boolean(), payment: z.boolean(), methods: z.array(z.enum(['manual', 'automatic', 'bulk'])).min(1), receivableId: opt, revenueId: opt, expenseId: opt, payableId: opt, permission: z.enum(L.rights).optional(), recurrence: z.enum(['none', 'monthly', 'annual']).default('none'), recurringAmount: money.default('0'), taxAccountId: opt, taxRate: z.string().regex(/^\d{1,2}(\.\d{1,3})?$/).default('0') }).strict();
+    const itemSchema = z.object({ code: z.string().trim().min(1).max(40), nameAr: text, nameEn: text, category: z.string().min(1).max(100), priority: z.number().int().min(0).max(10000), active: z.boolean().default(true), companyIds: z.array(id).min(1).max(100), invoice: z.boolean(), receipt: z.boolean(), payment: z.boolean(), methods: z.array(z.enum(['manual', 'automatic', 'bulk'])).min(1), receivableId: opt, revenueId: opt, expenseId: opt, payableId: opt, permission: z.enum(L.rights).optional(), recurrence: z.enum(['none', 'monthly', 'annual']).default('none'), annualMonth: z.number().int().min(0).max(12).default(0), recurrenceStart: day.optional(), recurringAmount: money.default('0'), taxAccountId: opt, taxRate: z.string().regex(/^\d{1,2}(\.\d{1,3})?$/).default('0') }).strict();
     async function validateItem(c: any, m: any, d: any) {
         for (const co of d.companyIds)
             need(m, 'item_manage', co);
@@ -136,12 +137,15 @@ export function registerLedger(app: any, call: any, cipher: any) {
         return { id: old.id };
     }));
     app.post('/api/ledger/configuration', route(async (c: any, m: any, s: any, req: any) => {
-        const d = z.object({ companyId: id, currency, custodyAccountId: id, chequeTransitAccountId: id, customerCreditAccountId: id, workdays: z.array(z.number().int().min(0).max(6)).min(1).max(7).default([1, 2, 3, 4, 5]), holidays: z.array(day).max(400).default([]), depositDays: z.number().int().min(1).max(30).default(1) }).strict().parse(req.body);
+        const d = z.object({ companyId: id, currency, custodyAccountId: id, chequeTransitAccountId: id, customerCreditAccountId: id, workdays: z.array(z.number().int().min(0).max(6)).min(1).max(7).default([1, 2, 3, 4, 5]), holidays: z.array(day).max(400).default([]), depositDays: z.number().int().min(1).max(30).default(1), automaticFinanceJobs: z.boolean().default(false) }).strict().parse(req.body);
         need(m, 'configure', d.companyId);
         for (const key of ['custodyAccountId', 'chequeTransitAccountId', 'customerCreditAccountId'])
             await chart(c, d.companyId, d.currency, (d as any)[key], key === 'customerCreditAccountId' ? 'liability' : 'asset');
+        if (d.automaticFinanceJobs)
+            need(m, 'invoice_create', d.companyId);
         const before = await config(c, cipher, d.companyId);
         await c.query('insert into ab.settings values($1,$2,$3)on conflict(tenant_id,key)do update set value=excluded.value', [s.tenant_id, 'ledger:' + d.companyId, { cipher: cipher.seal(d) }]);
+        await c.query('insert into ab.vehicle_billing_jobs(tenant_id,company_id,enabled,financial_enabled,financial_actor_id)values($1,$2,false,$3,$4)on conflict(tenant_id,company_id)do update set financial_enabled=excluded.financial_enabled,financial_actor_id=excluded.financial_actor_id', [s.tenant_id, d.companyId, d.automaticFinanceJobs, s.user_id]);
         await event(c, cipher, s, d.companyId, d.companyId, 'ledger_configured', before, d);
         return { saved: true };
     }));
@@ -177,7 +181,8 @@ export function registerLedger(app: any, call: any, cipher: any) {
         await customer(c, m, d.customerId, d.companyId, d.vehicleId);
         await open(c, d.companyId, d.receivedOn);
         let selected = d.items;
-        const due = await invoices(c, d);requireOk(!due.some((i:any)=>L.units(i.written_off)>0n&&L.units(i.outstanding)>0n),409,'writeoffRecoveryAccountingReviewRequired');
+        const due = (await invoices(c, d)).filter((i: any) => i.vehicle_id === (d.vehicleId || null));
+        requireOk(!due.some((i: any) => L.units(i.written_off) > 0n && L.units(i.outstanding) > 0n), 409, 'writeoffRecoveryAccountingReviewRequired');
         if (d.mode === 'automatic') {
             const auto = L.distribute(d.amount, due.filter((r: any) => r.vehicle_id === (d.vehicleId || null)).map((r: any) => ({ id: r.id, itemId: r.item_id, priority: r.priority, dueOn: r.dueOn, outstanding: r.outstanding }))), by: any = {};
             for (const a of auto.allocations)
@@ -264,6 +269,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
         requireOk(ch.status !== 'Returned' && ch.status !== 'Cancelled' && (d.outcome === 'Returned' || ch.status !== 'Collected'), 409, 'invalidTransition');
         if (d.outcome === 'Collected') {
             for (const r of rows) {
+                await fact(c, cipher, s, ch.company_id, r.created_by, 'collection_confirmed', 'receipt-cleared:' + r.id, r.amount, { method: 'cheque', confirmedOn: d.effectiveOn });
                 await c.query("update ab.finance_receipts set payment_state='Cleared'where id=$1", [r.id]);
                 await postReceipt(c, cipher, m, s, { ...r, payment_state: 'Cleared' }, 'cheque', d.effectiveOn);
             }
@@ -273,6 +279,15 @@ export function registerLedger(app: any, call: any, cipher: any) {
         else {
             for (const r of rows) {
                 if (r.payment_state === 'Cleared') {
+                    await fact(c, cipher, s, ch.company_id, r.created_by, 'collection_reversed', 'receipt-returned:' + r.id, L.money(-L.units(r.amount)), { method: 'cheque', returnedOn: d.effectiveOn });
+                    const applications = (await c.query("select cr.* from ab.finance_credit_applications x join ab.finance_receipts cr on cr.id=x.application_receipt_id where x.source_receipt_id=$1 and cr.payment_state='Cleared'", [r.id])).rows;
+                    for (const app of applications) {
+                        const j = (await c.query('select id from ab.finance_journals where source_key=$1', ['credit-application:' + app.id])).rows[0];
+                        await reverse(c, cipher, s, j.id, d.effectiveOn, d.reason);
+                        for (const a of (await c.query('select id from ab.vehicle_allocations where receipt_id=$1', [app.id])).rows)
+                            await c.query('insert into ab.finance_allocation_reversals(id,tenant_id,company_id,allocation_id,reason,created_by)values($1,$2,$3,$4,$5,$6)', [randomUUID(), s.tenant_id, ch.company_id, a.id, d.reason, s.user_id]);
+                        await c.query("update ab.finance_receipts set payment_state='Returned'where id=$1", [app.id]);
+                    }
                     const j = (await c.query('select id from ab.finance_journals where source_key=$1', ['receipt:' + r.id])).rows[0];
                     await reverse(c, cipher, s, j.id, d.effectiveOn, d.reason);
                     const allocations = (await c.query('select id from ab.vehicle_allocations where receipt_id=$1', [r.id])).rows;
@@ -359,7 +374,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
         return { id: key, number: String(n), status: 'Pending' };
     }
     app.post('/api/ledger/vouchers', route(async (c: any, m: any, s: any, req: any) => voucher(c, m, s, voucherSchema.parse(req.body))));
-    app.post('/api/ledger/vouchers/:id/prepare', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ bankAccountId: id, chequeNumber: text, issuedOn: day, dueOn: day, documentVersionId: id }).strict().parse(req.body), r = (await c.query('select * from ab.finance_vouchers where id=$1 for update', [id.parse(req.params.id)])).rows[0]; requireOk(r, 404, 'notFound'); need(m, 'voucher_create', r.company_id); need(m, 'cheques', r.company_id); requireOk(r.status === 'Pending' && !r.cheque_id, 409, 'invalidTransition'); requireOk(d.dueOn >= d.issuedOn, 422, 'invalidDate'); const b = m.bank.list().find((b: any) => b.id === d.bankAccountId && b.companyId === r.company_id && b.currency === r.currency && b.status === 'Active'); requireOk(b, 422, 'inactiveBank'); await evidence(c, m, r.company_id, d.documentVersionId, false); const ch = randomUUID(), details = cipher.open(r.payload_cipher); await c.query("insert into ab.finance_cheques(id,tenant_id,company_id,bank_account_id,direction,number,beneficiary,amount,currency,issued_on,due_on,status,integration_refs,document_version_id,created_by)values($1,$2,$3,$4,'outgoing',$5,$6,$7,$8,$9,$10,'Issued',$11,$12,$13)", [ch, s.tenant_id, r.company_id, b.id, d.chequeNumber, details.beneficiary, r.amount, r.currency, d.issuedOn, d.dueOn, { voucherId: r.id }, d.documentVersionId, s.user_id]); await c.query('update ab.finance_vouchers set bank_account_id=$2,cheque_id=$3,revision=revision+1 where id=$1', [r.id, b.id, ch]); await event(c, cipher, s, r.company_id, r.id, 'voucher_cheque_prepared', null, { ...d, chequeId: ch }); return { id: r.id, chequeId: ch }; }));
+    app.post('/api/ledger/vouchers/:id/prepare', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ bankAccountId: id, chequeNumber: text, issuedOn: day, dueOn: day, documentVersionId: id }).strict().parse(req.body), r = (await c.query('select * from ab.finance_vouchers where id=$1 for update', [id.parse(req.params.id)])).rows[0]; requireOk(r, 404, 'notFound'); need(m, 'voucher_create', r.company_id); need(m, 'cheques', r.company_id); requireOk(r.status === 'Pending' && !r.cheque_id, 409, 'invalidTransition'); requireOk(d.dueOn >= d.issuedOn && d.issuedOn >= r.issued_on.toISOString().slice(0, 10), 422, 'invalidDate'); const b = m.bank.list().find((b: any) => b.id === d.bankAccountId && b.companyId === r.company_id && b.currency === r.currency && b.status === 'Active'); requireOk(b, 422, 'inactiveBank'); await evidence(c, m, r.company_id, d.documentVersionId, false); const ch = randomUUID(), details = cipher.open(r.payload_cipher); await c.query("insert into ab.finance_cheques(id,tenant_id,company_id,bank_account_id,direction,number,beneficiary,amount,currency,issued_on,due_on,status,integration_refs,document_version_id,created_by)values($1,$2,$3,$4,'outgoing',$5,$6,$7,$8,$9,$10,'Issued',$11,$12,$13)", [ch, s.tenant_id, r.company_id, b.id, d.chequeNumber, details.beneficiary, r.amount, r.currency, d.issuedOn, d.dueOn, { voucherId: r.id }, d.documentVersionId, s.user_id]); await c.query('update ab.finance_vouchers set bank_account_id=$2,cheque_id=$3,revision=revision+1 where id=$1', [r.id, b.id, ch]); await event(c, cipher, s, r.company_id, r.id, 'voucher_cheque_prepared', null, { ...d, chequeId: ch }); return { id: r.id, chequeId: ch }; }));
     app.post('/api/ledger/vouchers/approval-preview', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ ids: z.array(id).min(1).max(100), signedEvidence: z.literal(true) }).strict().parse(req.body), unique = [...new Set(d.ids)], rows = (await c.query('select * from ab.finance_vouchers where id=any($1::uuid[])order by id', [unique])).rows;
         requireOk(rows.length === unique.length, 422, 'invalidReference');
@@ -406,6 +421,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
         requireOk(r, 404, 'notFound');
         need(m, 'settle', r.company_id);
         requireOk(r.status === 'Approved' && r.cheque_id && !r.operation_id, 409, 'invalidTransition');
+        requireOk(d.effectiveOn >= r.issued_on.toISOString().slice(0, 10), 422, 'invalidDate');
         const ch = (await c.query('select * from ab.finance_cheques where id=$1', [r.cheque_id])).rows[0];
         requireOk(!['Returned', 'Cancelled', 'Collected'].includes(ch.status), 409, 'invalidTransition');
         const it = await item(c, cipher, m, r.item_id, r.company_id, true), details = cipher.open(r.payload_cipher), payable = details.payableOverrideId ? await chart(c, r.company_id, r.currency, details.payableOverrideId) : await resolve(c, r.company_id, r.currency, it.data.payableId), operation = await bankPosting(c, cipher, m, s, { companyId: r.company_id, bankAccountId: r.bank_account_id, kind: 'payment', amount: r.amount, currency: r.currency, effectiveOn: d.effectiveOn, counterpartId: payable.id, chequeId: r.cheque_id, reference: 'voucher:' + r.id, reason: d.bankConfirmation, integrationRefs: { voucherId: r.id } });
@@ -551,20 +567,29 @@ export function registerLedger(app: any, call: any, cipher: any) {
         await event(c, cipher, s, card.company_id, key, 'card_statement_uploaded', null, { ...d, lines: d.lines.length });
         return { id: key, ocr: false, status: 'Review' };
     }));
-    app.post('/api/ledger/card-statements/:id/match', route(async (c: any, m: any, s: any, req: any) => {
-        const d = z.object({ pairs: z.array(z.object({ lineId: id, chargeId: id }).strict()).min(1).max(1000) }).strict().parse(req.body), st = (await c.query('select * from ab.finance_statements where id=$1', [id.parse(req.params.id)])).rows[0];
-        requireOk(st?.card_id && st.status === 'Review', 409, 'invalidTransition');
-        need(m, 'reconcile', st.company_id);
-        for (const pair of d.pairs) {
-            const l = (await c.query('select * from ab.finance_statement_lines where id=$1 and statement_id=$2', [pair.lineId, st.id])).rows[0], ch = (await c.query('select * from ab.finance_card_charges where id=$1', [pair.chargeId])).rows[0];
-            requireOk(l && ch && ch.card_id === st.card_id && L.units(l.amount) === L.units(ch.amount) && l.effective_on.toISOString().slice(0, 10) === ch.paid_on.toISOString().slice(0, 10), 422, 'amountMismatch');
-            await c.query('insert into ab.finance_card_matches(id,tenant_id,statement_id,line_id,charge_id,created_by)values($1,$2,$3,$4,$5,$6)', [randomUUID(), s.tenant_id, st.id, l.id, ch.id, s.user_id]);
+    app.post('/api/ledger/card-statements/:id/match', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ pairs: z.array(z.object({ lineId: id, chargeId: opt, voucherId: opt }).strict().refine(x => !!x.chargeId !== !!x.voucherId)).min(1).max(1000) }).strict().parse(req.body), st = (await c.query('select * from ab.finance_statements where id=$1', [id.parse(req.params.id)])).rows[0]; requireOk(st?.card_id && st.status === 'Review', 409, 'invalidTransition'); need(m, 'reconcile', st.company_id); for (const pair of d.pairs) {
+        const l = (await c.query('select * from ab.finance_statement_lines where id=$1 and statement_id=$2', [pair.lineId, st.id])).rows[0];
+        requireOk(l, 422, 'invalidReference');
+        let amount: bigint, date: string;
+        if (pair.chargeId) {
+            const ch = (await c.query('select * from ab.finance_card_charges where id=$1 and card_id=$2', [pair.chargeId, st.card_id])).rows[0];
+            requireOk(ch, 422, 'invalidReference');
+            amount = L.units(ch.amount);
+            date = ch.paid_on.toISOString().slice(0, 10);
         }
-        const unmatched = (await c.query('select count(*) n from ab.finance_statement_lines l where statement_id=$1 and not exists(select 1 from ab.finance_card_matches x where x.line_id=l.id)', [st.id])).rows[0].n;
-        await event(c, cipher, s, st.company_id, st.id, 'card_statement_matched', null, { pairs: d.pairs, unmatched: Number(unmatched) });
-        return { unmatched: Number(unmatched) };
-    }));
-    app.post('/api/ledger/card-statements/:id/approve', route(async (c: any, m: any, s: any, req: any) => { const st = (await c.query('select * from ab.finance_statements where id=$1 for update', [id.parse(req.params.id)])).rows[0]; requireOk(st?.card_id && st.status === 'Review', 409, 'invalidTransition'); need(m, 'reconcile', st.company_id); requireOk(!(await c.query('select 1 from ab.finance_statement_lines l where statement_id=$1 and not exists(select 1 from ab.finance_card_matches x where x.line_id=l.id)', [st.id])).rowCount, 409, 'unresolvedDifference'); requireOk(!(await c.query('select 1 from ab.finance_card_splits sp join ab.finance_card_charges ch on ch.id=sp.charge_id where ch.card_id=$1 and ch.paid_on between $2 and $3 and sp.customer_id is not null and sp.invoice_id is null', [st.card_id, st.period_from, st.period_to])).rowCount, 409, 'missingInvoices'); await c.query("update ab.finance_statements set status='Approved',approved_by=$2 where id=$1", [st.id, s.user_id]); await event(c, cipher, s, st.company_id, st.id, 'card_reconciliation_approved', null, { approved: true }); return { id: st.id }; }));
+        else {
+            const v = (await c.query("select v.*,o.effective_on from ab.finance_vouchers v join ab.finance_card_settlements x on x.voucher_id=v.id join ab.finance_operations o on o.id=v.operation_id where v.id=$1 and x.card_id=$2 and v.status='Paid'", [pair.voucherId, st.card_id])).rows[0];
+            requireOk(v, 422, 'invalidReference');
+            need(m, 'reconcile', v.company_id);
+            amount = -L.units(v.amount);
+            date = v.effective_on.toISOString().slice(0, 10);
+        }
+        requireOk((amount > 0n) === (L.units(l.amount) > 0n) && date === l.effective_on.toISOString().slice(0, 10), 422, 'amountMismatch');
+        await c.query('insert into ab.finance_card_matches(id,tenant_id,statement_id,line_id,charge_id,voucher_id,created_by)values($1,$2,$3,$4,$5,$6,$7)', [randomUUID(), s.tenant_id, st.id, l.id, pair.chargeId || null, pair.voucherId || null, s.user_id]);
+        const matched = L.units((await c.query('select coalesce(sum(coalesce(ch.amount,-v.amount)),0)::text amount from ab.finance_card_matches x left join ab.finance_card_charges ch on ch.id=x.charge_id left join ab.finance_vouchers v on v.id=x.voucher_id where x.line_id=$1', [l.id])).rows[0].amount);
+        requireOk((matched < 0n ? -matched : matched) <= (L.units(l.amount) < 0n ? -L.units(l.amount) : L.units(l.amount)), 422, 'amountMismatch');
+    } await event(c, cipher, s, st.company_id, st.id, 'card_statement_matched', null, d); return { matched: d.pairs.length }; }));
+    app.post('/api/ledger/card-statements/:id/approve', route(async (c: any, m: any, s: any, req: any) => { const st = (await c.query('select * from ab.finance_statements where id=$1 for update', [id.parse(req.params.id)])).rows[0]; requireOk(st?.card_id && st.status === 'Review', 409, 'invalidTransition'); need(m, 'reconcile', st.company_id); requireOk(!(await c.query('select 1 from ab.finance_statement_lines l where statement_id=$1 and not exists(select 1 from ab.finance_card_matches x where x.line_id=l.id)', [st.id])).rowCount, 409, 'unresolvedDifference'); requireOk(!(await c.query("select 1 from ab.finance_vouchers v join ab.finance_card_settlements x on x.voucher_id=v.id join ab.finance_operations o on o.id=v.operation_id where x.card_id=$1 and v.status='Paid'and o.effective_on between $2 and $3 and not exists(select 1 from ab.finance_card_matches mt where mt.voucher_id=v.id and mt.statement_id=$4)", [st.card_id, st.period_from, st.period_to, st.id])).rowCount, 409, 'unresolvedDifference'); requireOk(!(await c.query('select 1 from ab.finance_card_splits sp join ab.finance_card_charges ch on ch.id=sp.charge_id where ch.card_id=$1 and ch.paid_on between $2 and $3 and sp.customer_id is not null and sp.invoice_id is null', [st.card_id, st.period_from, st.period_to])).rowCount, 409, 'missingInvoices'); await c.query("update ab.finance_statements set status='Approved',approved_by=$2 where id=$1", [st.id, s.user_id]); await event(c, cipher, s, st.company_id, st.id, 'card_reconciliation_approved', null, { approved: true }); return { id: st.id }; }));
     app.post('/api/ledger/card-statements/:id/vouchers', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ itemId: id }).strict().parse(req.body), st = (await c.query('select * from ab.finance_statements where id=$1', [id.parse(req.params.id)])).rows[0];
         requireOk(st?.card_id && st.status === 'Approved' && st.period_from.toISOString().slice(8, 10) === '01', 409, 'invalidTransition');
@@ -685,7 +710,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
         return result;
     }));
     app.get('/api/ledger/invoice-imports/:id/source', route(async (c: any, m: any, s: any, req: any) => { const r = (await c.query('select * from ab.finance_invoice_imports where id=$1', [id.parse(req.params.id)])).rows[0]; requireOk(r, 404, 'notFound'); need(m, 'invoice_import', r.company_id); const d = cipher.open(r.payload_cipher); await event(c, cipher, s, r.company_id, r.id, 'invoice_import_source_read', null, { sourceHash: r.source_hash }); return { name: d.name, base64: d.originalBase64 }; }));
-    app.get('/api/ledger/statements/:id', route(async (c: any, m: any, s: any, req: any) => { const st = (await c.query('select * from ab.finance_statements where id=$1', [id.parse(req.params.id)])).rows[0]; requireOk(st, 404, 'notFound'); need(m, 'reconcile', st.company_id); const lines = (await c.query('select * from ab.finance_statement_lines where statement_id=$1 order by line_no', [st.id])).rows; const charges = st.card_id ? (await c.query('select ch.* from ab.finance_card_charges ch where ch.card_id=$1 and ch.paid_on between $2 and $3', [st.card_id, st.period_from, st.period_to])).rows : []; const matches = st.card_id ? (await c.query('select line_id,charge_id from ab.finance_card_matches where statement_id=$1', [st.id])).rows : []; const entries = st.bank_account_id ? (await c.query("select e.*,coalesce(o.effective_on,j.effective_on)effective_on from ab.finance_entries e left join ab.finance_operations o on o.id=e.operation_id left join ab.finance_journals j on j.id=e.journal_id where e.bank_account_id=$1 and(o.status='Approved'or j.status='Posted')and coalesce(o.effective_on,j.effective_on)between $2 and $3", [st.bank_account_id, st.period_from, st.period_to])).rows : []; return { statement: st, lines, entries, charges: charges.map((x: any) => ({ ...x, payload_cipher: undefined })), matches, ocr: false, manualReviewAvailable: true }; }));
+    app.get('/api/ledger/statements/:id', route(async (c: any, m: any, s: any, req: any) => { const st = (await c.query('select * from ab.finance_statements where id=$1', [id.parse(req.params.id)])).rows[0]; requireOk(st, 404, 'notFound'); need(m, 'reconcile', st.company_id); const lines = (await c.query('select * from ab.finance_statement_lines where statement_id=$1 order by line_no', [st.id])).rows; const charges = st.card_id ? (await c.query('select ch.* from ab.finance_card_charges ch where ch.card_id=$1 and ch.paid_on between $2 and $3', [st.card_id, st.period_from, st.period_to])).rows : []; const matches = st.card_id ? (await c.query('select line_id,charge_id,voucher_id from ab.finance_card_matches where statement_id=$1', [st.id])).rows : []; const entries = st.bank_account_id ? (await c.query("select e.*,coalesce(o.effective_on,j.effective_on)effective_on from ab.finance_entries e left join ab.finance_operations o on o.id=e.operation_id left join ab.finance_journals j on j.id=e.journal_id where e.bank_account_id=$1 and(o.status='Approved'or j.status='Posted')and coalesce(o.effective_on,j.effective_on)between $2 and $3", [st.bank_account_id, st.period_from, st.period_to])).rows : []; const paymentVouchers = st.card_id ? (await c.query("select v.id,v.company_id,v.amount,o.effective_on from ab.finance_vouchers v join ab.finance_card_settlements x on x.voucher_id=v.id join ab.finance_operations o on o.id=v.operation_id where x.card_id=$1 and v.status='Paid'and o.effective_on between $2 and $3", [st.card_id, st.period_from, st.period_to])).rows.filter((x: any) => financeRight(m, 'ledger_view', x.company_id)) : []; return { statement: st, lines, entries, paymentVouchers, charges: charges.map((x: any) => ({ ...x, payload_cipher: undefined })), matches, ocr: false, manualReviewAvailable: true }; }));
     async function closeReview(c: any, co: string, month: string) {
         const end = new Date(month + 'T00:00:00Z');
         end.setUTCMonth(end.getUTCMonth() + 1);
@@ -705,7 +730,8 @@ export function registerLedger(app: any, call: any, cipher: any) {
         await count('missingCustomerInvoices', 'select count(*)n from ab.finance_card_splits s join ab.finance_card_charges ch on ch.id=s.charge_id where s.company_id=$1 and ch.paid_on<$2 and s.customer_id is not null and s.invoice_id is null', [co, until]);
         await count('unsettledIntercompany', "select count(*)n from ab.finance_intercompany x join ab.finance_vouchers v on v.id=x.voucher_id where(x.company_id=$1 or x.to_company_id=$1)and v.issued_on<$2 and x.state<>'Deposited'", [co, until]);
         await count('unreconciledCards', "select count(*)n from ab.finance_cards ca where ca.company_id=$1 and ca.active and exists(select 1 from ab.finance_card_charges ch where ch.card_id=ca.id and ch.paid_on>=$2 and ch.paid_on<$3)and not exists(select 1 from ab.finance_statements st where st.card_id=ca.id and st.status='Approved'and st.period_from<=$2 and st.period_to>=($3::date-1))", [co, month, until]);
-        await count('unpostedInvoiceAdjustments',"select count(*)n from ab.vehicle_invoice_adjustments a join ab.finance_invoice_links l on l.invoice_id=a.invoice_id where a.company_id=$1 and a.created_at::date<$2 and not exists(select 1 from ab.finance_journals j where j.company_id=a.company_id and j.status='Posted'and j.source_key='credit:'||a.id::text)",[co,until]);await count('unclassifiedInvoices', "select count(*)n from ab.vehicle_invoices i where i.company_id=$1 and i.created_at::date<$2 and not exists(select 1 from ab.finance_invoice_links l where l.invoice_id=i.id)", [co, until]);
+        await count('unpostedInvoiceAdjustments', "select count(*)n from ab.vehicle_invoice_adjustments a join ab.finance_invoice_links l on l.invoice_id=a.invoice_id where a.company_id=$1 and a.created_at::date<$2 and not exists(select 1 from ab.finance_journals j where j.company_id=a.company_id and j.status='Posted'and j.source_key='credit:'||a.id::text)", [co, until]);
+        await count('unclassifiedInvoices', "select count(*)n from ab.vehicle_invoices i where i.company_id=$1 and i.created_at::date<$2 and not exists(select 1 from ab.finance_invoice_links l where l.invoice_id=i.id)", [co, until]);
         return { companyId: co, month, problems, canClose: Object.keys(problems).length === 0 };
     }
     app.get('/api/ledger/closing-review', route(async (c: any, m: any, s: any, req: any) => { const q = z.object({ companyId: id, month: day.refine(x => x.endsWith('-01')) }).strict().parse(req.query); need(m, 'close', q.companyId); return closeReview(c, q.companyId, q.month); }));
@@ -723,33 +749,15 @@ export function registerLedger(app: any, call: any, cipher: any) {
         await c.query('insert into ab.finance_group_closings(id,tenant_id,month,companies,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6)', [key, s.tenant_id, d.month, cos, cipher.seal({ companyIds: cos, month: d.month }), s.user_id]);
         return { id: key };
     }));
+    app.post('/api/ledger/recurring/run', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id }).strict().parse(req.body); need(m, 'invoice_create', d.companyId); return recurringFinancial(c, cipher, m, s, d.companyId); }));
     app.post('/api/ledger/reminders/run', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ companyId: id }).strict().parse(req.body);
         need(m, 'configure', d.companyId);
-        const now = today(), cfg = await config(c, cipher, d.companyId), rows = (await c.query('select holder_id,currency,min(created_at)::date start,sum(amount)::text amount from ab.finance_custody_moves where company_id=$1 group by holder_id,currency having sum(amount)>0', [d.companyId])).rows;
-        let emitted = 0;
-        for (const r of rows) {
-            const due = L.nextWorkingDay(r.start.toISOString().slice(0, 10), cfg.workdays || [1, 2, 3, 4, 5], cfg.holidays || [], cfg.depositDays || 1);
-            if (now >= due) {
-                await notify(c, s, d.companyId, r.holder_id, now === due ? 'ledger:deposit_due' : 'ledger:deposit_overdue', 'deposit-due:' + r.holder_id + ':' + r.currency + ':' + now);
-                await fact(c, cipher, s, d.companyId, r.holder_id, 'deposit_due_fact', 'deposit-due:' + r.holder_id + ':' + r.currency + ':' + now, r.amount, { dueOn: due, asOf: now, confirmedShortage: false });
-                emitted++;
-            }
-        }
-        const date = new Date(now + 'T00:00:00Z'), prev = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - 1, 1)).toISOString().slice(0, 10), end = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 0)).toISOString().slice(0, 10);
-        const cards = (await c.query('select * from ab.finance_cards where company_id=$1 and active', [d.companyId])).rows;
-        for (const card of cards) {
-            const st = (await c.query('select * from ab.finance_statements where card_id=$1 and period_from=$2 and period_to=$3 order by created_at desc limit 1', [card.id, prev, end])).rows[0], missing = Number((await c.query('select count(*)n from ab.finance_card_splits sp join ab.finance_card_charges ch on ch.id=sp.charge_id where ch.card_id=$1 and ch.paid_on between $2 and $3 and sp.customer_id is not null and sp.invoice_id is null', [card.id, prev, end])).rows[0].n), vouchers = (await c.query('select v.status from ab.finance_card_settlements x join ab.finance_vouchers v on v.id=x.voucher_id where x.card_id=$1 and x.month=$2', [card.id, prev])).rows, phase = L.cardPhase(date.getUTCDate(), { statement: !!st, reconciled: st?.status === 'Approved', missingInvoices: missing, vouchers: vouchers.length > 0, approved: vouchers.length > 0 && vouchers.every((x: any) => ['Approved', 'Paid'].includes(x.status)), settled: vouchers.length > 0 && vouchers.every((x: any) => x.status === 'Paid') });
-            if (phase !== 'Settled' && phase !== 'Approved') {
-                await notify(c, s, d.companyId, card.id, 'ledger:card_' + phase, 'card-reminder:' + card.id + ':' + prev + ':' + phase + ':' + now);
-                emitted++;
-            }
-        }
-        return { emitted, asOf: now, schedulerEnabled: false, ocr: false };
+        return financialReminders(c, cipher, s, d.companyId);
     }));
     app.get('/api/ledger/events', route(async (c: any, m: any, s: any, req: any) => { const co = id.parse(req.query.companyId); need(m, 'audit', co); return { rows: (await c.query("select * from ab.finance_events where company_id=$1 and entity_type='ledger' order by created_at desc limit 200", [co])).rows.map((r: any) => ({ ...r, payload: cipher.open(r.payload_cipher), payload_cipher: undefined })) }; }));
     app.get('/api/ledger/reports', route(async (c: any, m: any, s: any, req: any) => {
-        const q = z.object({ companies: z.string().min(1), from: day, to: day, kind: z.enum(['trial', 'balance', 'profit', 'cashflow', 'ledger', 'journal', 'receivables', 'custody', 'vouchers', 'cards', 'kpi', 'vat']), currency: currency.optional(), employeeId: id.optional(), itemId: id.optional(), emirate: z.string().max(100).optional(), areaId: z.string().max(100).optional(), page: z.coerce.number().int().min(0).default(0), format: z.enum(['json', 'csv', 'excel', 'print']).default('json'), consolidated: z.enum(['true', 'false']).default('false') }).strict().parse(req.query);
+        const q = z.object({ companies: z.string().min(1), from: day, to: day, kind: z.enum(['trial', 'balance', 'profit', 'cashflow', 'ledger', 'journal', 'receivables', 'custody', 'vouchers', 'cards', 'kpi', 'vat', 'collections', 'deposits', 'cheques', 'funds', 'intercompany', 'installments', 'adjustments', 'profitability']), currency: currency.optional(), employeeId: id.optional(), itemId: id.optional(), emirate: z.string().max(100).optional(), areaId: z.string().max(100).optional(), page: z.coerce.number().int().min(0).default(0), format: z.enum(['json', 'csv', 'excel', 'print']).default('json'), consolidated: z.enum(['true', 'false']).default('false'), groupBy: z.enum(['day', 'month', 'year', 'employee', 'item']).default('day') }).strict().parse(req.query);
         const cos = [...new Set(q.companies.split(',').map((x: string) => id.parse(x)))];
         requireOk(q.to >= q.from, 422, 'invalidDate');
         for (const co of cos) {
@@ -762,13 +770,39 @@ export function registerLedger(app: any, call: any, cipher: any) {
         const selected = cos.filter((co: any) => { const row = m.state.companies.find((x: any) => x.id === co); return row && (!q.emirate || [row.emirate, row.emirateId].includes(q.emirate)) && (!q.areaId || row.areaId === q.areaId); });
         let eliminationStatus = 'not_requested';
         let rows: any[] = [], scope = 'posted entries only; no inferred historical balances';
-        if (['trial', 'balance', 'profit', 'cashflow', 'ledger', 'journal', 'vat'].includes(q.kind)) {
-            const source = (await c.query(`select e.id,e.company_id,e.chart_id,a.code,a.name_ar,a.name_en,a.kind,ca.eliminate,ca.cash_flow,e.debit::text,e.credit::text,e.currency,coalesce(o.effective_on,j.effective_on)date,e.operation_id,e.journal_id,coalesce(o.created_by,j.created_by)actor_id from ab.finance_entries e join ab.finance_chart a on a.id=e.chart_id left join ab.finance_accounts ca on ca.id=a.definition_id left join ab.finance_operations o on o.id=e.operation_id left join ab.finance_journals j on j.id=e.journal_id where e.company_id=any($1::uuid[])and(o.status='Approved'or j.status='Posted')and coalesce(o.effective_on,j.effective_on)<=$2 and($3::text is null or e.currency=$3)and($4::uuid is null or coalesce(o.created_by,j.created_by)=$4)order by coalesce(o.effective_on,j.effective_on),e.id`, [selected, q.to, q.currency || null, q.employeeId || null])).rows;
+        if (['trial', 'balance', 'profit', 'cashflow', 'ledger', 'journal', 'vat', 'profitability'].includes(q.kind)) {
+            const source = (await c.query(`select e.id,e.company_id,e.chart_id,a.code,a.name_ar,a.name_en,a.kind,ca.eliminate,ca.cash_flow,e.debit::text,e.credit::text,e.currency,coalesce(o.effective_on,j.effective_on)date,e.operation_id,e.journal_id,coalesce(o.created_by,j.created_by)actor_id,j.payload_cipher journal_payload,j.source_key journal_source from ab.finance_entries e join ab.finance_chart a on a.id=e.chart_id left join ab.finance_accounts ca on ca.id=a.definition_id left join ab.finance_operations o on o.id=e.operation_id left join ab.finance_journals j on j.id=e.journal_id where e.company_id=any($1::uuid[])and(o.status='Approved'or j.status='Posted')and coalesce(o.effective_on,j.effective_on)<=$2 and($3::text is null or e.currency=$3)and($4::uuid is null or coalesce(o.created_by,j.created_by)=$4)order by coalesce(o.effective_on,j.effective_on),e.id`, [selected, q.to, q.currency || null, q.employeeId || null])).rows;
+            const voucherItems = new Map((await c.query('select id,item_id from ab.finance_vouchers where company_id=any($1::uuid[])', [selected])).rows.map((r: any) => [r.id, r.item_id]));
+            const splitItems = new Map((await c.query('select id,item_id from ab.finance_card_splits where company_id=any($1::uuid[])', [selected])).rows.map((r: any) => [r.id, r.item_id]));
+            for (const r of source) {
+                const meta = r.journal_payload ? cipher.open(r.journal_payload) : {};
+                r.item_id = meta.itemId || voucherItems.get(meta.voucherId) || splitItems.get(meta.splitId) || null;
+                delete r.journal_payload;
+            }
+            if (q.itemId)
+                for (let i = source.length - 1; i >= 0; i--)
+                    if (source[i].item_id !== q.itemId)
+                        source.splice(i, 1);
             if (q.kind === 'vat') {
                 const taxIds = (await c.query('select payload_cipher from ab.finance_items')).rows.map((r: any) => cipher.open(r.payload_cipher).taxAccountId).filter(Boolean);
                 const chartIds = (await c.query('select id from ab.finance_chart where definition_id=any($1::uuid[])', [taxIds])).rows.map((r: any) => r.id);
                 rows = source.filter((r: any) => chartIds.includes(r.chart_id) && r.date.toISOString().slice(0, 10) >= q.from).map((r: any) => ({ ...r, tax: L.money(L.units(r.credit) - L.units(r.debit)), date: r.date.toISOString().slice(0, 10) }));
                 scope = 'posted configured tax-account entries; management report, not a certified VAT return';
+            }
+            else if (q.kind === 'profitability') {
+                const groups = new Map<string, any>();
+                for (const r of source.filter((r: any) => ['income', 'expense'].includes(r.kind) && r.date.toISOString().slice(0, 10) >= q.from)) {
+                    const k = r.company_id + ':' + r.currency + ':' + (r.item_id || 'unclassified');
+                    if (!groups.has(k))
+                        groups.set(k, { company_id: r.company_id, currency: r.currency, item_id: r.item_id || 'unclassified', income: 0n, expense: 0n });
+                    const g = groups.get(k);
+                    if (r.kind === 'income')
+                        g.income += L.units(r.credit) - L.units(r.debit);
+                    else
+                        g.expense += L.units(r.debit) - L.units(r.credit);
+                }
+                rows = [...groups.values()].map(r => ({ ...r, income: L.money(r.income), expense: L.money(r.expense), net: L.money(BigInt(r.income) - BigInt(r.expense)) }));
+                scope = 'item profitability from posted income/expense entries; unclassified sources remain explicit';
             }
             else if (['ledger', 'journal', 'cashflow'].includes(q.kind)) {
                 rows = source.filter((r: any) => r.date.toISOString().slice(0, 10) >= q.from && (q.kind !== 'cashflow' || r.kind === 'bank' || r.cash_flow)).map((r: any) => ({ ...r, date: r.date.toISOString().slice(0, 10), net: L.money(L.units(r.debit) - L.units(r.credit)) }));
@@ -805,6 +839,39 @@ export function registerLedger(app: any, call: any, cipher: any) {
                 rows.push(...(await invoices(c, { companyId: co, currency: q.currency })).filter((r: any) => (!q.itemId || r.item_id === q.itemId) && r.dueOn <= q.to).map((r: any) => ({ ...r, overdue: r.dueOn < today() ? r.outstanding : '0.000', ageDays: Math.max(0, Math.floor((Date.now() - new Date(r.dueOn).getTime()) / 86400000)) })));
             scope = 'classified invoice balances; pending cheques are not payments';
         }
+        else if (q.kind === 'collections') {
+            const rs = (await c.query("select r.*,j.effective_on cleared_on,jr.effective_on returned_on from ab.finance_receipts r left join ab.finance_journals j on j.source_key='receipt:'||r.id::text and j.company_id=r.company_id and j.status='Posted'left join ab.finance_journals jr on jr.reversal_of=j.id and jr.status='Posted'where r.company_id=any($1::uuid[])and r.item_id is not null and r.kind<>'credit'and($2::uuid is null or r.created_by=$2)and($3::uuid is null or r.item_id=$3)", [selected, q.employeeId || null, q.itemId || null])).rows;
+            const groups = new Map<string, any>();
+            for (const r of rs) {
+                if (r.kind === 'cheque' && !r.cleared_on)
+                    continue;
+                const moves = [{ date: (r.kind === 'cheque' ? r.cleared_on : r.received_on).toISOString().slice(0, 10), delta: L.units(r.amount) }];
+                if (r.returned_on)
+                    moves.push({ date: r.returned_on.toISOString().slice(0, 10), delta: -L.units(r.amount) });
+                for (const x of moves) {
+                    if (x.date < q.from || x.date > q.to || q.currency && q.currency !== r.currency)
+                        continue;
+                    const period = q.groupBy === 'month' ? x.date.slice(0, 7) : q.groupBy === 'year' ? x.date.slice(0, 4) : q.groupBy === 'employee' ? r.created_by : q.groupBy === 'item' ? r.item_id : x.date, k = r.company_id + ':' + r.currency + ':' + period;
+                    if (!groups.has(k))
+                        groups.set(k, { company_id: r.company_id, currency: r.currency, period, amount: 0n });
+                    groups.get(k).amount += x.delta;
+                }
+            }
+            rows = [...groups.values()].map(r => ({ ...r, net: L.money(r.amount), amount: L.money(r.amount) }));
+            scope = 'actual receipt confirmations minus dated cheque reversals; credit applications are not new money';
+        }
+        else if (q.kind === 'funds') {
+            const fs = (await c.query('select id,company_id,name,kind,holder_id,chart_id,currency,ceiling,threshold from ab.finance_funds where company_id=any($1::uuid[])', [selected])).rows;
+            for (const f of fs) {
+                const b = L.units((await c.query("select coalesce(sum(e.debit-e.credit),0)::text amount from ab.finance_entries e left join ab.finance_operations o on o.id=e.operation_id left join ab.finance_journals j on j.id=e.journal_id where e.chart_id=$1 and(o.status='Approved'or j.status='Posted')and coalesce(o.effective_on,j.effective_on)<=$2", [f.chart_id, q.to])).rows[0].amount);
+                rows.push({ ...f, balance: L.money(b), refill: L.money(L.units(f.ceiling) - b) });
+            }
+        }
+        else if (['deposits', 'cheques', 'intercompany', 'installments', 'adjustments'].includes(q.kind)) {
+            const defs: any = { deposits: ['finance_deposits', 'effective_on'], cheques: ['finance_cheques', 'due_on'], intercompany: ['finance_intercompany', 'created_at'], installments: ['vehicle_invoices', 'due_on'], adjustments: ['vehicle_invoice_adjustments', 'created_at'] };
+            const [table, date] = defs[q.kind];
+            rows = (await c.query('select * from ab.' + table + ' where company_id=any($1::uuid[])and ' + date + '::date between $2 and $3' + (q.kind === 'installments' ? " and kind='finance'" : '') + ' order by ' + date + ',id', [selected, q.from, q.to])).rows.map((r: any) => ({ ...r, payload_cipher: undefined }));
+        }
         else if (q.kind === 'custody') {
             rows = (await c.query('select company_id,holder_id,currency,sum(amount)::text amount from ab.finance_custody_moves where company_id=any($1::uuid[])and effective_on<=$2 and($3::uuid is null or holder_id=$3)group by company_id,holder_id,currency having sum(amount)<>0', [selected, q.to, q.employeeId || null])).rows;
         }
@@ -834,7 +901,12 @@ export function registerLedger(app: any, call: any, cipher: any) {
             }
         rows = rows.slice(q.page * 200, (q.page + 1) * 200);
         const coverage = (await c.query('select count(*)n from ab.vehicle_invoices i where company_id=any($1::uuid[])and not exists(select 1 from ab.finance_invoice_links l where l.invoice_id=i.id)', [selected])).rows[0].n;
-        const unpostedAdjustments=Number((await c.query("select count(*)n from ab.vehicle_invoice_adjustments a join ab.finance_invoice_links l on l.invoice_id=a.invoice_id where a.company_id=any($1::uuid[])and not exists(select 1 from ab.finance_journals j where j.company_id=a.company_id and j.status='Posted'and j.source_key='credit:'||a.id::text)",[selected])).rows[0].n);const result = { unpostedInvoiceAdjustments:unpostedAdjustments, rows, total, page: q.page, pageSize: 200, totals, scope, unclassifiedInvoices: Number(coverage), groupEliminations: eliminationStatus, groupClosingRequired: true, vatReturnCertified: false };
+        const unpostedAdjustments = Number((await c.query("select count(*)n from ab.vehicle_invoice_adjustments a join ab.finance_invoice_links l on l.invoice_id=a.invoice_id where a.company_id=any($1::uuid[])and not exists(select 1 from ab.finance_journals j where j.company_id=a.company_id and j.status='Posted'and j.source_key='credit:'||a.id::text)", [selected])).rows[0].n);
+        const profitByCurrency: Record<string, string> = {};
+        if (q.kind === 'profit')
+            for (const [cur, net] of Object.entries(totals))
+                profitByCurrency[cur] = L.money(-L.units(net));
+        const result = { profitByCurrency, unpostedInvoiceAdjustments: unpostedAdjustments, rows, total, page: q.page, pageSize: 200, totals, scope, unclassifiedInvoices: Number(coverage), groupEliminations: eliminationStatus, groupClosingRequired: true, vatReturnCertified: false };
         if (q.format === 'json' || q.format === 'print')
             return result;
         const columns = [...new Set(rows.flatMap(r => Object.keys(r)))], values = [columns, ...rows.map(r => columns.map(k => r[k] instanceof Date ? r[k].toISOString() : typeof r[k] === 'object' ? JSON.stringify(r[k]) : r[k] ?? ''))];
@@ -876,6 +948,9 @@ export function registerLedger(app: any, call: any, cipher: any) {
         await event(c, cipher, s, st.company_id, st.id, 'bank_reconciliation_approved', null, { status: 'Approved' });
         return { id: st.id };
     }));
-    app.get('/api/ledger/customer-credit', route(async (c: any, m: any, s: any, req: any) => { const q = z.object({ companyId: id, customerId: id, currency }).strict().parse(req.query); need(m, 'view', q.companyId); await customer(c, m, q.customerId, q.companyId); const receipts = (await c.query("select r.id,r.amount::text,coalesce((select sum(a.amount)from ab.vehicle_allocations a where a.receipt_id=r.id and not exists(select 1 from ab.finance_allocation_reversals x where x.allocation_id=a.id)),0)::text allocated from ab.finance_receipts r where company_id=$1 and customer_id=$2 and currency=$3 and payment_state='Cleared'", [q.companyId, q.customerId, q.currency])).rows; return { currency: q.currency, amount: L.money(receipts.reduce((n: bigint, r: any) => n + L.units(r.amount) - L.units(r.allocated), 0n)), receipts }; }));
+    app.get('/api/ledger/customer-credit', route(async (c: any, m: any, s: any, req: any) => { const q = z.object({ companyId: id, customerId: id, currency }).strict().parse(req.query); need(m, 'view', q.companyId); await customer(c, m, q.customerId, q.companyId); const receipts = (await c.query("select r.id,r.amount::text,(coalesce((select sum(a.amount)from ab.vehicle_allocations a where a.receipt_id=r.id and not exists(select 1 from ab.finance_allocation_reversals x where x.allocation_id=a.id)),0)+coalesce((select sum(x.amount)from ab.finance_credit_applications x join ab.finance_receipts y on y.id=x.application_receipt_id where x.source_receipt_id=r.id and y.payment_state='Cleared'),0))::text allocated from ab.finance_receipts r where company_id=$1 and customer_id=$2 and currency=$3 and payment_state='Cleared'and kind<>'credit'", [q.companyId, q.customerId, q.currency])).rows; return { currency: q.currency, amount: L.money(receipts.reduce((n: bigint, r: any) => n + L.units(r.amount) - L.units(r.allocated), 0n)), receipts }; }));
     app.post('/api/ledger/notification-rules', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id, userId: id, action: z.enum(['ledger:short_collection', 'ledger:partial_deposit', 'ledger:deposit_due', 'ledger:deposit_overdue', 'ledger:cheque_returned', 'ledger:missing_invoice', 'ledger:refill', 'ledger:card_AwaitingStatement', 'ledger:card_UrgentApproval']) }).strict().parse(req.body); need(m, 'configure', d.companyId); const u = m.state.users.find((x: any) => x.id === d.userId); requireOk(u?.status === 'Active' && financeRight({ ...m, actor: u }, 'ledger_view', d.companyId), 422, 'invalidReference'); const key = randomUUID(); await c.query('insert into ab.finance_notification_rules(id,tenant_id,company_id,user_id,action,created_by)values($1,$2,$3,$4,$5,$6)', [key, s.tenant_id, d.companyId, d.userId, d.action, s.user_id]); await event(c, cipher, s, d.companyId, key, 'ledger_notification_rule', null, d); return { id: key }; }));
+    app.post('/api/ledger/credits/apply', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id, customerId: id, vehicleId: opt, sourceReceiptId: id, itemId: id, currency, amount: positive, effectiveOn: day, reason: text }).strict().parse(req.body); need(m, 'collect', d.companyId); await customer(c, m, d.customerId, d.companyId, d.vehicleId || undefined); const r = (await c.query('select * from ab.finance_receipts where id=$1 for update', [d.sourceReceiptId])).rows[0]; requireOk(r && r.payment_state === 'Cleared' && r.kind !== 'credit' && r.company_id === d.companyId && r.customer_id === d.customerId && r.currency === d.currency, 422, 'invalidReference'); const allocated = L.units((await c.query('select coalesce(sum(a.amount),0)::text amount from ab.vehicle_allocations a where receipt_id=$1 and not exists(select 1 from ab.finance_allocation_reversals x where x.allocation_id=a.id)', [r.id])).rows[0].amount), applied = L.units((await c.query("select coalesce(sum(x.amount),0)::text amount from ab.finance_credit_applications x join ab.finance_receipts a on a.id=x.application_receipt_id where source_receipt_id=$1 and a.payment_state='Cleared'", [r.id])).rows[0].amount); requireOk(L.units(r.amount) - allocated - applied >= L.units(d.amount), 422, 'insufficientCustomerCredit'); const it = await item(c, cipher, m, d.itemId, d.companyId); requireOk(it.data.receipt, 403, 'denied'); const cfg = await config(c, cipher, d.companyId), credit = await chart(c, d.companyId, d.currency, cfg.customerCreditAccountId, 'liability'), ar = await resolve(c, d.companyId, d.currency, it.data.receivableId), key = randomUUID(), n = await number(c, s.tenant_id, 'receipt'); const due = await invoices(c, d); requireOk(!due.some((i: any) => i.item_id === it.id && L.units(i.written_off) > 0n), 409, 'writeoffRecoveryAccountingReviewRequired'); await c.query("insert into ab.finance_receipts(id,tenant_id,company_id,holder_id,amount,currency,kind,reference,created_by,item_id,customer_id,vehicle_id,receipt_number,received_on,payment_state,payload_cipher)values($1,$2,$3,$4,$5,$6,'credit',$7,$4,$8,$9,$10,$11,$12,'Cleared',$13)", [key, s.tenant_id, d.companyId, s.user_id, d.amount, d.currency, 'CR-' + n, it.id, d.customerId, d.vehicleId || null, n, d.effectiveOn, cipher.seal(d)]); const receipt = (await c.query('select * from ab.finance_receipts where id=$1', [key])).rows[0]; requireOk(await allocateReceipt(c, s, receipt) === 0n, 422, 'amountExceedsDues'); await c.query('insert into ab.finance_credit_applications(id,tenant_id,company_id,source_receipt_id,application_receipt_id,amount,created_by)values($1,$2,$3,$4,$5,$6,$7)', [randomUUID(), s.tenant_id, d.companyId, r.id, key, d.amount, s.user_id]); await journal(c, cipher, s, d.companyId, d.effectiveOn, d.currency, 'credit-application:' + key, [line(credit, L.units(d.amount)), line(ar, -L.units(d.amount))], { ...d, applicationReceiptId: key, newMoneyReceived: false }); return { id: key, newMoneyReceived: false }; }));
+    app.post('/api/ledger/funds/:id/count', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ actual: money, effectiveOn: day, reason: text }).strict().parse(req.body), f = (await c.query('select * from ab.finance_funds where id=$1', [id.parse(req.params.id)])).rows[0]; requireOk(f, 404, 'notFound'); need(m, 'petty_spend', f.company_id); requireOk(f.holder_id === s.user_id || financeRight(m, 'ledger_fund_manage', f.company_id)); const book = await balance(c, f.chart_id), countId = await fact(c, cipher, s, f.company_id, f.holder_id, 'fund_count_reported', 'fund-count:' + req.headers['idempotency-key'], L.money(L.units(d.actual) - book), { ...d, fundId: f.id, bookBalance: L.money(book), verified: false, salaryDeduction: false }); await event(c, cipher, s, f.company_id, f.id, 'fund_count_reported', null, { ...d, countId, bookBalance: L.money(book) }); return { id: countId, bookBalance: L.money(book), actual: d.actual, salaryDeduction: false }; }));
+    app.post('/api/ledger/funds/:id/counts/:countId/settle', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ counterpartId: id, effectiveOn: day, reason: text, confirm: z.literal(true) }).strict().parse(req.body), f = (await c.query('select * from ab.finance_funds where id=$1', [id.parse(req.params.id)])).rows[0]; requireOk(f, 404, 'notFound'); need(m, 'fund_manage', f.company_id); need(m, 'settle', f.company_id); const count = (await c.query("select * from ab.finance_kpi_facts where id=$1 and kind='fund_count_reported'", [id.parse(req.params.countId)])).rows[0]; requireOk(count?.company_id === f.company_id, 422, 'invalidReference'); const data = cipher.open(count.payload_cipher); requireOk(data.fundId === f.id && d.effectiveOn >= data.effectiveOn, 422, 'invalidReference'); const current = await balance(c, f.chart_id), delta = L.units(data.actual) - L.units(data.bookBalance); requireOk(current === L.units(data.bookBalance) && delta !== 0n, 409, 'recountRequired'); const cash = await chart(c, f.company_id, f.currency, f.chart_id, 'asset'), counter = await chart(c, f.company_id, f.currency, d.counterpartId); requireOk((delta < 0n ? ['expense', 'asset'] : ['income', 'liability']).includes(counter.kind), 422, 'accountMappingRequired'); const key = await journal(c, cipher, s, f.company_id, d.effectiveOn, f.currency, 'fund-count:' + count.id, [line(cash, delta), line(counter, -delta)], { fundId: f.id, countId: count.id, reason: d.reason, verified: true, salaryDeduction: false }); await fact(c, cipher, s, f.company_id, f.holder_id, 'fund_count_verified', 'fund-count-verified:' + count.id, L.money(delta), { ...d, countId: count.id, verified: true, salaryDeduction: false }); return { id: key, balance: data.actual, salaryDeduction: false }; }));
 }

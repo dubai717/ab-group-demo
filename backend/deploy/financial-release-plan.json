@@ -25,7 +25,7 @@
     {
       "name": "012_financial_management.sql",
       "path": "supabase/proposed/012_financial_management.sql",
-      "sha256": "54bfe5a17903b47b32b71d5de260ab92cfa139d85af6950ad69383188595d85c",
+      "sha256": "264500ea73e98d93cf10b34862fc75b45ea78315acdfec2a6f076ec25a7d91ab",
       "guardTable": "ab.finance_journals"
     }
   ],
@@ -98,7 +98,8 @@
     "finance_intercompany",
     "finance_invoice_imports",
     "finance_kpi_facts",
-    "finance_group_closings"
+    "finance_group_closings",
+    "finance_credit_applications"
   ],
   "currentStagingCommit": "40cde0b6809f138e9118776f13a9d6740400f37b",
   "stagingPublicAppSha256": "ccf7a3bbfc1640dda5729f45b1cb349396b658a0ccbab643c9d94f7981c87f1c"

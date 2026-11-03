@@ -1,3 +1,4 @@
+import {startFinancialJobs} from './financial-jobs.js';
 import {startVehicleBilling} from './vehicle-jobs.js';
 import { Pool } from "pg";
 import { databaseOptions } from "./database.js";
@@ -62,7 +63,9 @@ await app.listen({
   port: Number(process.env.PORT || 3100),
 });
 const stopBilling=startVehicleBilling(pool,process.env.DATA_ENCRYPTION_KEY!,process.env.VEHICLE_BILLING_ENABLED==='true');
+const stopFinancial=startFinancialJobs(pool,process.env.DATA_ENCRYPTION_KEY!,process.env.FINANCIAL_JOBS_ENABLED==='true');
 const stop = async () => {
+  await stopFinancial();
   await stopBilling();
   await app.close();
   await pool.end();
