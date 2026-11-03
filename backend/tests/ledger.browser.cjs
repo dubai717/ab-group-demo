@@ -1,5 +1,5 @@
 const { chromium } = require('playwright'), assert = require('node:assert/strict'), fs = require('node:fs');
-(async () => { const f = JSON.parse(fs.readFileSync('work/ledger-browser-fixture.json')), browser = await chromium.launch({ executablePath: process.env.AB_BROWSER_EXECUTABLE || (fs.existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined), headless: true, args: ['--no-sandbox'] }), p = await browser.newPage({ viewport: { width: 1440, height: 1000 } }), errors = []; p.on('pageerror', x => errors.push(x.message)); try {
+(async () => { const f = JSON.parse(fs.readFileSync('work/ledger-browser-fixture.json')), browser = await chromium.launch({ executablePath: process.env.AB_BROWSER_EXECUTABLE || (fs.existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined), headless: true, args: ['--no-sandbox'] }), p = await browser.newPage({ viewport: { width: 1440, height: 1000 } }), errors = []; p.on('pageerror', x => errors.push(x.message));p.on('response',async r=>{if(r.url().includes('/api/ledger/')&&r.status()>=400){const body=await r.json().catch(()=>({}));console.error('LEDGER_API_FAILURE:',r.status(),body.error||'unknown');}}); try {
     await p.addInitScript(() => { const original = Storage.prototype.setItem; Storage.prototype.setItem = function (k, v) { if (/ledger|finance|receipt|invoice|draft|password|token|session|customer/i.test(k))
         throw Error('Sensitive browser persistence'); return original.call(this, k, v); }; });
     await p.goto('http://127.0.0.1:3500');
@@ -29,13 +29,13 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         await p.locator('[data-ld="tab"][data-id="collect"]').click();
         const filter = p.locator('[data-ld-form="collection-filter"]');
         await filter.locator('[name="customerId"]').selectOption(f.customerId);
-        await filter.locator('[type="submit"]').click();
+        await filter.locator('[type="submit"]').click();await p.locator('#ld-notice').filter({hasText:/تم تحميل المستحقات|Dues loaded/}).waitFor();
         const collect = p.locator('[data-ld-form="collect"]');
         await collect.locator('[name="customerId"]').selectOption(f.customerId);
         await collect.locator('[name="amount"]').fill('600');
         await collect.locator('[name="selectedItem"]').check();
         await collect.locator('[name="take-' + f.itemId + '"]').fill('600');
-        await collect.locator('[type="submit"]').click();
+        assert(await collect.evaluate(form=>form.checkValidity()),'Collection form must be valid after dues load');const saved=p.waitForResponse(r=>r.url().endsWith('/api/ledger/collections')&&r.request().method()==='POST');await collect.locator('[type="submit"]').click();const savedResponse=await saved;assert.equal(savedResponse.status(),200,(await savedResponse.json()).error||'Collection must commit successfully');
         await p.getByRole('cell', { name: '600', exact: false }).first().waitFor();
         await p.reload();
         await p.locator('[data-page="financialManagement"]').click();
@@ -65,6 +65,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
     console.log(f.schema ? 'PASS financial browser: central invoice, partial cash collection, save/reload exact outstanding, operational tabs, bilingual desktop/tablet/phone; no JS errors or sensitive localStorage.' : 'PASS financial schema gate: previous login/dashboard retained, explicit 012 notice, no false financial save.');
 }
 catch (err) {
+    console.error('LEDGER_FORM_DIAGNOSTIC:',await p.evaluate(()=>({notice:document.querySelector('#ld-notice')?.textContent,invalid:[...document.querySelectorAll('[data-ld-form="collect"] input,[data-ld-form="collect"] select')].filter(n=>!n.checkValidity()).map(n=>n.name)})));
     await p.screenshot({ path: 'work/ledger-browser-failure.png', fullPage: false });
     console.error(err);
     process.exitCode = 1;

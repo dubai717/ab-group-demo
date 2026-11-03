@@ -218,8 +218,11 @@
             endpoint = 'invoices/adopt';
         }
         if (key === 'collection-filter') {
-            context = { companyId: co, customerId: d.customerId, vehicleId: d.vehicleId };
-            bills = (await api('invoices?' + new URLSearchParams({ companyId: co, customerId: d.customerId, ...(d.vehicleId ? { vehicleId: d.vehicleId } : {}), currency: d.currency }))).rows.filter(r => r.vehicle_id === (d.vehicleId || null));
+            const requested={companyId:co,customerId:d.customerId,vehicleId:d.vehicleId};
+            const nextBills=(await api('invoices?' + new URLSearchParams({ companyId: co, customerId: d.customerId, ...(d.vehicleId ? { vehicleId: d.vehicleId } : {}), currency: d.currency }))).rows.filter(r => r.vehicle_id === (d.vehicleId || null));
+            if(tab!=='collect'||app.state.currentPage!=='financialManagement')return;
+            if(form.isConnected&&(form.elements.customerId.value!==d.customerId||(form.elements.vehicleId.value||null)!==(d.vehicleId||null)))throw Error('loadDuesForSelectedCustomer');
+            context=requested;bills=nextBills;notice=t('تم تحميل المستحقات للعميل والمركبة المحددين.','Dues loaded for the selected customer and vehicle.');
             render();
             return;
         }
