@@ -1118,6 +1118,8 @@ export async function build(options: Options) {
       "demo-credentials.js",
       "auth-flows.js",
       "central-client.js",
+      "vehicle-policy.js",
+      "vehicles.js",
       "customer-policy.js",
       "customers.js",
       "finance-policy.js",
