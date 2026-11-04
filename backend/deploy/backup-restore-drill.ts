@@ -12,7 +12,7 @@ const container='ab-backup-drill-postgres';
 const schemas=['ab','public','auth','storage'];
 const qi=(s:string)=>'"'+s.replaceAll('"','""')+'"';
 function check(ok:unknown,label:string):asserts ok {if(!ok)throw Error(label);}
-function docker(args:string[],env:NodeJS.ProcessEnv={},input?:Buffer):Promise<Buffer>{
+export function docker(args:string[],env:NodeJS.ProcessEnv={},input?:Buffer):Promise<Buffer>{
  return new Promise((resolve,reject)=>{
   const p=spawn('docker',args,{env:{PATH:process.env.PATH,...env},stdio:['pipe','pipe','pipe']});
   const out:Buffer[]=[];let size=0,failed=false,diagnostic="";
@@ -32,7 +32,7 @@ export function drillGuard(e:NodeJS.ProcessEnv){
  check(e.GITHUB_ACTIONS==='true'&&e.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&e.GITHUB_EVENT_NAME==='push'&&e.GITHUB_REF==='refs/heads/verify/backup-restore-20261104'&&e.AB_BACKUP_DRILL_APPROVED==='read-only-source-isolated-restore','RUNNER_GUARD');
  return backupConnection(e);
 }
-async function manifest(c:PoolClient){
+export async function manifest(c:PoolClient){
  const tables=(await c.query("select n.nspname s,c.relname t,c.relrowsecurity r,c.relforcerowsecurity f from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname=any($1::text[]) and c.relkind in('r','p') order by 1,2",[schemas])).rows;
  const rows=[];
  for(const t of tables){

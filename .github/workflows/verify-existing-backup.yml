@@ -1,0 +1,53 @@
+name: Verify existing retained backup before merge (cloud GET only)
+on:
+  push:
+    branches: [verify/retained-backup-before-merge-20261104]
+permissions:
+  contents: read
+concurrency:
+  group: verify-existing-retained-backup
+  cancel-in-progress: false
+jobs:
+  drill:
+    environment: supabase-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - name: Install locked dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify code without cloud credentials
+        run: |
+          node node_modules/typescript-portable/bin/tsc -p backend/tsconfig.json
+          node --import tsx --test backend/tests/backup-drill.test.ts backend/tests/private-backup-store.test.ts
+      - name: Create isolated ephemeral PostgreSQL 17 on runner only
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --detach --name ab-backup-drill-postgres --publish 127.0.0.1:5547:5432 --tmpfs /var/lib/postgresql/data:rw,nosuid,nodev,size=1g -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_DB=ab_drill postgres:17 > /dev/null
+          docker cp backend/certificates/supabase-prod-ca-2021.crt ab-backup-drill-postgres:/tmp/ab-ca.crt
+          for i in $(seq 1 60); do
+            if docker exec ab-backup-drill-postgres pg_isready -U postgres -d ab_drill > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Download existing backup and restore locally; no hosted writes
+        env:
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: node --import tsx backend/deploy/verify-retained-backup.ts
+      - name: Destroy only isolated runner database and ephemeral archives
+        if: always()
+        shell: bash
+        run: |
+          docker rm --force --volumes ab-backup-drill-postgres > /dev/null 2>&1 || true
+          rm -rf -- work/backups
+      # No cloud mutation APIs or database URLs used in this workflow.
