@@ -3,7 +3,7 @@ import {execFileSync} from 'node:child_process';
 import {readFileSync,appendFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 const hash=s=>createHash('sha256').update(s).digest('hex');
-export function sensitivePath(p){return /(^|\/)[^/]*policy\.(js|ts)$/.test(p)|| /^(supabase\/(migrations|proposed)\/|backend\/actions\/|backend\/deploy\/|\.github\/workflows\/)/.test(p)||/\.sql$/.test(p)||/^(package(-lock)?\.json|backend\/src\/(app|core|data|database|provision|bootstrap|server|domain-access|.*(finance|financial|ledger|personnel|auth|permission|provider)).*|.*(finance-policy|ledger-policy|personnel-policy|user-management-policy|bank-account-policy)\.js)$/.test(p);}
+export function sensitivePath(p){return /^(finance|ledger|personnel|user-management|bank-account)[^/]*\.js$/.test(p)||/(^|\/)[^/]*policy\.(js|ts)$/.test(p)|| /^(supabase\/(migrations|proposed)\/|backend\/actions\/|backend\/deploy\/|\.github\/workflows\/)/.test(p)||/\.sql$/.test(p)||/^(package(-lock)?\.json|backend\/src\/(app|core|data|database|provision|bootstrap|server|domain-access|.*(finance|financial|ledger|personnel|auth|permission|provider)).*|.*(finance-policy|ledger-policy|personnel-policy|user-management-policy|bank-account-policy)\.js)$/.test(p);}
 const need=(ok,label)=>{if(!ok)throw Error(label);};
 async function run(){let stage='CONTEXT';try{
  const e=process.env;need(e.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&e.GITHUB_REF==='refs/heads/staging/ab-group-test'&&e.GITHUB_EVENT_NAME==='push','TRUSTED_STAGING_PUSH');
@@ -30,7 +30,7 @@ async function run(){let stage='CONTEXT';try{
  // All new SQL files remain manual even when program-code changes were approved.
  const raw=git('ls-files','supabase').trim().split('\n').filter(p=>p.endsWith('.sql'));need(raw.length===13&&raw.every(p=>[...catalog,...plan].some(m=>(m.path||'supabase/migrations/'+m.name)===p)),'NEW_RAW_SQL_REQUIRES_REVIEW');
  const runtime=await fetch(cfg.origin+'/api/release',{redirect:'error',signal:AbortSignal.timeout(20000)});
- if(previous){need(runtime.ok,'LIVE_VERSION_UNAVAILABLE');const live=await runtime.json();need(live.environment==='staging'&&live.projectOriginSha256===cfg.projectOriginSha256&&live.commit===previous.sha,'LIVE_VERSION_DIFFERS_FROM_LAST_SUCCESS');}else{need(runtime.status===404||runtime.ok,'INITIAL_SERVICE_UNAVAILABLE');if(runtime.ok){const live=await runtime.json();need(live.environment==='staging'&&live.projectOriginSha256===cfg.projectOriginSha256,'INITIAL_TARGET_MISMATCH');}}
+ if(previous){need(runtime.ok,'LIVE_VERSION_UNAVAILABLE');const live=await runtime.json();need(live.environment==='staging'&&live.projectOriginSha256===cfg.projectOriginSha256&&live.commit===previous.sha,'LIVE_VERSION_DIFFERS_FROM_LAST_SUCCESS');}else{need(runtime.status===404||runtime.ok,'INITIAL_SERVICE_UNAVAILABLE');if(runtime.ok){const live=await runtime.json();need(live.environment==='staging'&&live.projectOriginSha256===cfg.projectOriginSha256&&live.commit===sha,'INITIAL_TARGET_OR_UNVERIFIED_RELEASE_MISMATCH');}}
  const appSha=hash(readFileSync('app.js'));need(/^[a-f0-9]{64}$/.test(cfg.deployHookPathSha256||''),'DEPLOY_TARGET_BINDING_REQUIRED');
  for(const [k,v]of Object.entries({app_sha:appSha,hook_hash:cfg.deployHookPathSha256,origin:cfg.origin,previous_sha:previous?.sha||'40cde0b6809f138e9118776f13a9d6740400f37b'}))appendFileSync(e.GITHUB_OUTPUT,k+'='+v+'\n');
  console.log('RESULT: STAGING_POLICY_PASS; TESTED_COMMIT_PINNED; SENSITIVE_CHANGES_CHECKED; PRODUCTION_NOT_ALLOWED');
