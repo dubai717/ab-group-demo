@@ -167,7 +167,8 @@ export async function build(options: Options) {
     async (req: any) => {
       const s = await session(req);
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
-        const key = req.method === "GET" ? undefined : req.headers["idempotency-key"];
+        // Personnel export contains personal contact data; never cache the file in request_dedup.
+        const key = req.method === "GET" || req.url === "/api/personnel/export" ? undefined : req.headers["idempotency-key"];
         const fingerprint = cipher.digest(
           req.method + req.url + JSON.stringify(req.body || null),
         );

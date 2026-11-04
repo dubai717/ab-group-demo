@@ -894,3 +894,4 @@ th {
 #personnel-workspace .table-wrap {overflow-x:auto;max-width:100%;}
 #personnel-workspace #hr-result {white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;}
 @media(max-width:600px){#personnel-workspace .hr-toolbar>button{flex:1 1 auto;}#personnel-workspace .form-grid{grid-template-columns:1fr;}}
+.hr-photo{object-fit:contain;border-radius:8px;max-width:100%;}

@@ -1,5 +1,6 @@
 // Read-only source capture. Not scheduled/enabled; no restore or cleanup operations.
 import {Pool} from 'pg';
+import {personnelReleasePlan,personnelReleaseGuard} from './personnel-release.js';
 import {financialReleasePlan,financialReleaseGuard} from './financial-release.js';
 import {releasePlan,vehicleReleaseGuard} from './vehicle-release.js';
 import {spawn} from 'node:child_process';
@@ -37,7 +38,7 @@ async function run(){
  let pool:Pool|undefined;
  try{
   if(process.env.AB_BACKUP_APPROVED!=='yes'||process.env.GITHUB_ACTIONS!=='true'||process.env.GITHUB_REPOSITORY!=='dubai717/ab-group-demo')throw Error('approved staging runner required');
-  const financialRelease=process.env.AB_FINANCIAL_RELEASE_BACKUP_APPROVED==='yes',vehicleRelease=process.env.AB_VEHICLE_RELEASE_BACKUP_APPROVED==='yes';if(process.env.GITHUB_REF!=='refs/heads/staging/ab-group-test'){if(financialRelease)financialReleaseGuard(process.env);else{if(!vehicleRelease)throw Error('approved staging runner required');vehicleReleaseGuard(process.env);}}
+  const personnelRelease=process.env.AB_PERSONNEL_RELEASE_BACKUP_APPROVED==='yes',financialRelease=process.env.AB_FINANCIAL_RELEASE_BACKUP_APPROVED==='yes',vehicleRelease=process.env.AB_VEHICLE_RELEASE_BACKUP_APPROVED==='yes';if(process.env.GITHUB_REF!=='refs/heads/staging/ab-group-test'){if(personnelRelease)personnelReleaseGuard(process.env);else if(financialRelease)financialReleaseGuard(process.env);else{if(!vehicleRelease)throw Error('approved staging runner required');vehicleReleaseGuard(process.env);}}
   const cfg=backupConnection(process.env),keys=supabaseKeys();if(!keys.secret)throw Error('private store key required');
   pool=new Pool({...databaseOptions(cfg.uri),max:1});pool.on('error',()=>{process.exitCode=1;});
   const c=await pool.connect();
@@ -45,7 +46,7 @@ async function run(){
    assertVerifiedDatabaseTls(c);await c.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
    const approved=JSON.parse(await readFile('backend/actions/approved-migrations.json','utf8'));
    const ledger=(await c.query('select name,sha256 from public.ab_schema_migrations')).rows;
-   const release=financialRelease?await financialReleasePlan():vehicleRelease?await releasePlan():null;if(approved.migrations.some((m:any)=>!ledger.some(r=>r.name===m.name&&r.sha256===m.sha256))||(!release&&ledger.length!==8)||ledger.some(r=>![...approved.migrations,...(release?.migrations||[])].some(m=>m.name===r.name&&m.sha256===r.sha256)))throw Error('approved schema mismatch');
+   const release=personnelRelease?await personnelReleasePlan():financialRelease?await financialReleasePlan():vehicleRelease?await releasePlan():null;if(approved.migrations.some((m:any)=>!ledger.some(r=>r.name===m.name&&r.sha256===m.sha256))||(!release&&ledger.length!==8)||ledger.some(r=>![...approved.migrations,...(release?.migrations||[])].some(m=>m.name===r.name&&m.sha256===r.sha256)))throw Error('approved schema mismatch');
    const snapshot=(await c.query('select pg_export_snapshot() id')).rows[0].id;
    if(!/^[A-Fa-f0-9-]+$/.test(snapshot))throw Error('snapshot invalid');
    const database=await dump(cfg.pg,snapshot),objects=new Map<string,Buffer>();let size=database.length;
