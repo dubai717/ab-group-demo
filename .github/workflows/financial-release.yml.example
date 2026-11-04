@@ -1,0 +1,37 @@
+# INERT TEMPLATE. Rename/activate only after the owner's explicit approval of this release.
+# No live trigger until approved. Uses the EXISTING Supabase test environment and Render service.
+name: Approved financial staging additive migrations only
+on:
+  push:
+    branches: [activate/financial-staging-approved]
+permissions:
+  contents: read
+jobs:
+  migrate:
+    if: github.repository == 'dubai717/ab-group-demo' && github.ref == 'refs/heads/activate/financial-staging-approved'
+    environment: supabase-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      # BEFORE activating: capture an encrypted source backup using backup-staging.ts,
+      # restore the actual snapshot + encrypted objects to an isolated LOCAL runner database,
+      # verify row identities/FKs/RLS and write fresh work/financial-release-restore-proof.json.
+      # Never copy a synthetic test proof, and never upload plaintext dumps, keys or logs.
+      # This runner deliberately stops if the independently produced proof is missing.
+      - name: Apply only the four pinned, additive test migrations after verified backup restore
+        env:
+          AB_FINANCIAL_RELEASE_APPROVED: owner-approved-staging-only
+          AB_SYNTHETIC_PROJECT: 'yes'
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        run: node --import tsx backend/deploy/financial-release.ts
+      # No GitHub merge, Render deploy, new service, scanner activation or secret mutation here.

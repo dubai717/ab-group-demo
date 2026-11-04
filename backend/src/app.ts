@@ -29,6 +29,11 @@ import {
   assertRevision,
   bounded,
 } from "./data.js";
+import {registerLedger} from './ledger.js';
+import {registerPersonnel} from './personnel.js';
+import {registerVehicles} from './vehicles.js';
+import {registerCustomers} from './customers.js';
+import {registerFinance,bankNotice} from "./finance.js";
 export interface Options {
   pool: Pool;
   key: string;
@@ -127,6 +132,7 @@ export async function build(options: Options) {
       401,
       "loginRequired",
     );
+    if((await pool.query("select to_regprocedure('ab.hr_enforce_session(text)') ok")).rows[0].ok)await pool.query("select ab.hr_enforce_session($1)",[sha(sid)]);
     const r = await pool.query("select * from ab.read_session($1)", [sha(sid)]);
     requireOk(r.rowCount === 1, 401, "loginRequired");
     const s = r.rows[0];
@@ -161,7 +167,8 @@ export async function build(options: Options) {
     async (req: any) => {
       const s = await session(req);
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
-        const key = req.headers["idempotency-key"];
+        // Personnel export contains personal contact data; never cache the file in request_dedup.
+        const key = req.method === "GET" || req.url === "/api/personnel/export" ? undefined : req.headers["idempotency-key"];
         const fingerprint = cipher.digest(
           req.method + req.url + JSON.stringify(req.body || null),
         );
@@ -199,6 +206,11 @@ export async function build(options: Options) {
         return result;
       });
     };
+  registerFinance(app,call,cipher);
+  registerCustomers(app,call,cipher,options);
+  registerVehicles(app,call,cipher,options);
+  registerLedger(app,call,cipher);
+  registerPersonnel(app,call,cipher,options);
   app.get("/api/health", async () => {
     await pool.query("select 1");
     return {
@@ -229,6 +241,7 @@ export async function build(options: Options) {
         requireOk(email, 401, "loginFailed");
         const actual = await auth.verify(user.token);
         requireOk(actual === user.id, 401, "loginFailed");
+        if((await pool.query("select to_regprocedure('ab.hr_enforce_auth(uuid)') ok")).rows[0].ok)await pool.query("select ab.hr_enforce_auth($1)",[uuid(user.id)]);
         const p = (
           await pool.query("select * from ab.principal($1)", [uuid(user.id)])
         ).rows[0];
@@ -416,25 +429,16 @@ export async function build(options: Options) {
     "/api/companies/:id",
     call(async (c, m, s, req) => m.company.get(uuid(req.params.id))),
   );
-  app.post(
-    "/api/bank-accounts",
-    call(async (c, m, s, req) => ({
-      id: await persistBank(c, m, cipher, s.tenant_id, req.body),
-    })),
-  );
-  app.patch(
-    "/api/bank-accounts/:id",
-    call(async (c, m, s, req) => ({
-      id: await persistBank(
-        c,
-        m,
-        cipher,
-        s.tenant_id,
-        req.body,
-        uuid(req.params.id),
-      ),
-    })),
-  );
+  const saveBank=async(c:any,m:any,s:any,req:any,bankId?:string)=>{
+    const prior=bankId?m.bank.get(bankId):null;
+    const saved=await persistBank(c,m,cipher,s.tenant_id,req.body,bankId);
+    const row=(await c.query('select company_id,status,revision from ab.bank_accounts where id=$1',[saved])).rows[0];
+    const action=!prior?'created':prior.status!==row.status?(row.status==='Closed'?'closed':'status'):'updated';
+    if(!prior||prior.revision!==row.revision)await bankNotice(c,m,s,saved,row.company_id,action,row.revision,prior,cipher.open((await c.query('select payload_cipher from ab.bank_accounts where id=$1',[saved])).rows[0].payload_cipher),cipher);
+    return {id:saved};
+  };
+  app.post('/api/bank-accounts',call((c,m,s,req)=>saveBank(c,m,s,req)));
+  app.patch('/api/bank-accounts/:id',call((c,m,s,req)=>saveBank(c,m,s,req,uuid(req.params.id))));
   app.get(
     "/api/bank-accounts/:id",
     call(async (c, m, s, req) => m.bank.get(uuid(req.params.id))),
@@ -728,6 +732,7 @@ export async function build(options: Options) {
     write: boolean,
     initialEnrollment = false,
   ) => {
+    requireOk(!owner.employee_id && !owner.personnel_library_id,403,"personnelDocumentRouteRequired");
     if (owner.bank_account_id) {
       const row = m.state.bankAccounts.find(
         (b: any) => b.id === owner.bank_account_id,
@@ -1121,6 +1126,17 @@ export async function build(options: Options) {
       "demo-credentials.js",
       "auth-flows.js",
       "central-client.js",
+      "vehicle-policy.js",
+      "vehicles.js",
+      "customer-policy.js",
+      "customers.js",
+      "finance-policy.js",
+      "finance-workbench.js",
+      "ledger-policy.js",
+      "ledger-ui.js",
+      "personnel-policy.js",
+      "personnel-ui.js",
+      "workspace-ui.js",
       "data/uae-areas.js",
       "assets/Untitled.png",
       "assets/logo.svg",

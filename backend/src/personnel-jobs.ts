@@ -1,0 +1,25 @@
+import { transaction, security } from './core.js';
+import { model } from './data.js';
+import { personnelFollowup } from './personnel-workflows.js';
+export async function personnelTick(pool: any, key: string) { const ready = (await pool.query("select to_regprocedure('ab.hr_job_scopes()') ok")).rows[0].ok; if (!ready)
+    return { processed: 0, failed: 0 }; const cipher = security(key), scopes = (await pool.query('select * from ab.hr_job_scopes()')).rows; let processed = 0, failed = 0; for (const r of scopes) {
+    try {
+        await transaction(pool, r.tenant_id, r.actor_id, async (c: any) => { const m = await model(c, r.actor_id, cipher); await personnelFollowup(c, cipher, m, { tenant_id: r.tenant_id, user_id: r.actor_id, actor_type: 'service' }, r.company_id); });
+        processed++;
+    }
+    catch {
+        failed++;
+    }
+} return { processed, failed }; }
+export function startPersonnelJobs(pool: any, key: string) { if (process.env.PERSONNEL_JOBS_ENABLED !== 'true')
+    return () => { }; let running = false; const timer = setInterval(async () => { if (running)
+    return; running = true; try {
+    const r = await personnelTick(pool, key);
+    console.log('PERSONNEL_JOB processed=' + r.processed + ' failed=' + r.failed);
+}
+catch {
+    console.log('PERSONNEL_JOB failed; details withheld');
+}
+finally {
+    running = false;
+} }, 60000); timer.unref(); return () => clearInterval(timer); }

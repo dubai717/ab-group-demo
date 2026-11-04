@@ -68,6 +68,7 @@
     }
     return r.json();
   }
+  C.api=api;
   async function load(draw = true) {
     const b = await api("bootstrap");
     C.actor = b.actor;
@@ -671,6 +672,7 @@
       try {
         if (action === "logout") {
           await api("logout", "POST", {});
+          FinanceWorkbench.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();
           C.actor = null;
           C.csrf = "";
           C.documents.clear();

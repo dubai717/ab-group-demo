@@ -1,0 +1,10 @@
+import {readFile} from 'node:fs/promises';
+import {createRequire} from 'node:module';
+import {PDFDocument,rgb} from 'pdf-lib';
+const fontkit=createRequire(import.meta.url)('@pdf-lib/fontkit');
+export async function vehicleLetterPdf(title:string,body:string,footer:string,signature:Buffer,stamp:Buffer){const doc=await PDFDocument.create();doc.registerFontkit(fontkit);const font=await doc.embedFont(await readFile(new URL('../../backend/fonts/Cairo.ttf',import.meta.url)),{subset:true});let page=doc.addPage([595.28,841.89]),y=790;const margin=48,size=12,width=499;const runs=(text:string)=>text.match(/[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff]+(?:[\s،؛؟]+[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff]+)*|[^\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff]+/g)||[];
+function measure(text:string,n:number){return runs(text).reduce((sum,run)=>sum+font.widthOfTextAtSize(run,n),0);}
+function line(text:string,bold=false){if(y<155){page=doc.addPage([595.28,841.89]);y=790;}const n=bold?16:size,first=text.match(/[A-Za-z\u0600-\u06ff]/)?.[0]||'',rtl=/[\u0600-\u06ff]/.test(first);let pen=rtl?547:margin;for(const run of runs(text)){const w=font.widthOfTextAtSize(run,n);if(rtl)pen-=w;page.drawText(run,{x:pen,y,size:n,font,color:bold?rgb(90/255,17/255,13/255):rgb(.12,.1,.1)});if(!rtl)pen+=w;}y-=bold?32:23;}
+function paragraph(text:string,bold=false){let current='';for(const word of text.split(/\s+/)){const next=current?current+' '+word:word;if(measure(next,bold?16:size)>width&&current){line(current,bold);current=word;}else current=next;}line(current,bold);}
+paragraph(title,true);for(const p of body.split('\n'))paragraph(p);
+const embed=async(bytes:Buffer)=>bytes.subarray(0,8).toString('hex')==='89504e470d0a1a0a'?doc.embedPng(bytes):doc.embedJpg(bytes);const sig=await embed(signature),seal=await embed(stamp);const sigSize=sig.scaleToFit(150,65),stampSize=seal.scaleToFit(100,100);page.drawImage(sig,{x:48,y:65,...sigSize});page.drawImage(seal,{x:390,y:55,...stampSize});page.drawText(footer,{x:48,y:35,size:8,font});doc.setTitle(title);doc.setSubject('Approved AB Group staging letter');return Buffer.from(await doc.save());}

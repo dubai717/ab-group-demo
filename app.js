@@ -493,7 +493,11 @@ function render() {
     return;
   }
 
-  const sidebarItems = getSidebarItems(currentUser);
+  const sidebarItems = getSidebarItems(currentUser).filter(i=>!['roles','departments'].includes(i.id));
+  if(CustomerUI.canEnter())sidebarItems.push({id:'customers',label:getLocale()==='ar'?'العملاء':'Customers'});
+  if(PersonnelUI.canEnter())sidebarItems.push({id:'personnel',label:getLocale()==='ar'?'شؤون الموظفين':'Personnel'});
+  if(LedgerUI.canEnter())sidebarItems.push({id:'financialManagement',label:getLocale()==='ar'?'الإدارة المالية والخزينة':'Finance & treasury'});
+  if(VehicleUI.canEnter())sidebarItems.push({id:'vehicles',label:getLocale()==='ar'?'المركبات':'Vehicles'});
   appEl.innerHTML = `
     <div class="app-shell">
       <aside class="sidebar">
@@ -506,9 +510,9 @@ function render() {
           </div>
         </div>
 
-        <nav class="sidebar-nav">
+        <button type="button" class="ws-menu-toggle" data-ws-menu aria-expanded="false">${getLocale()==='ar'?'القائمة الرئيسية':'Main menu'}</button><nav class="sidebar-nav">
           ${sidebarItems.map(item => `
-            <button class="nav-item ${app.state.currentPage === item.id ? 'active' : ''}" data-page="${item.id}">
+            <button class="nav-item ${WorkspaceUI.group(app.state.currentPage) === item.id ? 'active' : ''}" data-page="${item.id}">
               ${item.label}
             </button>
           `).join('')}
@@ -536,7 +540,7 @@ function render() {
           </div>
         </header>
 
-        ${AuthFlows.isSettings() ? AuthFlows.renderSettings() : renderCurrentPage()}
+        ${AuthFlows.isSettings() ? AuthFlows.renderSettings() : WorkspaceUI.toolbar(app.state.currentPage)+renderCurrentPage()}
       </main>
     </div>
   `;
@@ -545,7 +549,7 @@ function render() {
 }
 
 function pageTitle(page) {
-  const titles = {
+  const titles = {personnel:getLocale()==='ar'?'شؤون الموظفين':'Personnel',financialManagement:getLocale()==='ar'?'الإدارة المالية والخزينة':'Finance & treasury',customers:getLocale()==='ar'?'العملاء':'Customers',vehicles:getLocale()==='ar'?'المركبات':'Vehicles',
     dashboard: localeText('dashboard'),
     users: localeText('userManagement'),
     roles: localeText('roles'),
@@ -568,10 +572,14 @@ function renderCurrentPage() {
   if (page === 'roles') return renderRoles(user);
   if (page === 'departments') return renderDepartments(user);
   if (page === 'companies') return renderCompanies(user);
-  if (page === 'bankAccounts') return BankAccounts.render();
-  if (page === 'tasks') return renderTasks(user);
+  if (page === 'bankAccounts') return FinanceWorkbench.isAccounts()?BankAccounts.render():FinanceWorkbench.render();
+  if(page==='customers')return CustomerUI.render();
+  if(page==='vehicles')return VehicleUI.render();
+  if(page==='personnel')return PersonnelUI.render();
+  if(page==='financialManagement')return LedgerUI.render();
+  if (page === 'tasks') return globalThis.ABCentral?.enabled?PersonnelUI.renderTasks():renderTasks(user);
   if (page === 'reports') return renderReports(user);
-  if (page === 'notifications') return renderNotifications(user);
+  if (page === 'notifications') return renderNotifications(user)+CustomerUI.notificationHTML();
   return renderDashboard(user);
 }
 
@@ -1104,12 +1112,19 @@ async function handleLogin(event) {
 }
 
 function bindGlobalEvents() {
+  WorkspaceUI.bind();
+  CustomerUI.bind();
+  VehicleUI.bind();
+  FinanceWorkbench.bind();
+  LedgerUI.bind();
+  PersonnelUI.bind();
   globalThis.ABCentral?.enabled&&globalThis.ABCentral.bind();
   AuthFlows.bindApp();
   BankAccounts.bind();
   CompanyDocuments.bind();
   document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', () => {
+      if(!CustomerUI.leave())return;
       AuthFlows.leave();
       UserManagement.cleanup();
       BankAccounts.cleanup();
@@ -1123,6 +1138,11 @@ function bindGlobalEvents() {
 
   document.querySelectorAll('[data-action="logout"]').forEach(button => {
     button.addEventListener('click', () => {
+      FinanceWorkbench.reset();
+      LedgerUI.reset();
+      PersonnelUI.reset();
+      CustomerUI.reset();
+      VehicleUI.reset();
       BankAccounts.logout();
       CompanyDocuments.logout();
       UserManagement.logout();

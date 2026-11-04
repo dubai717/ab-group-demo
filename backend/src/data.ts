@@ -315,6 +315,16 @@ export async function persistBank(
     requireOk(old, 404, "notFound");
     assertRevision(old.revision, data.revision);
   }
+  if(prior&&(data.openingBalance!==undefined||data.currency!==undefined||data.companyId!==undefined||data.openedAt!==undefined)){
+    const exists=(await c.query("select to_regclass('ab.finance_operations') ok")).rows[0].ok;
+    if(exists&&(await c.query('select 1 from ab.finance_operations where bank_account_id=$1 or to_bank_account_id=$1 limit 1',[id])).rowCount){
+      requireOk((data.openingBalance===undefined||String(data.openingBalance)===String(prior.openingBalance))&&(data.currency===undefined||data.currency===prior.currency)&&(data.companyId===undefined||data.companyId===prior.companyId)&&(data.openedAt===undefined||data.openedAt===prior.openedAt),409,'ledgerLocked');
+    }
+  }
+  if(prior&&(data.companyId&&data.companyId!==prior.companyId||data.currency&&data.currency!==prior.currency)){
+    if((await c.query("select to_regclass('ab.finance_chart') ok")).rows[0].ok)
+      requireOk(!(await c.query('select 1 from ab.finance_chart where bank_account_id=$1',[id])).rowCount,409,'ledgerLocked');
+  }
   const row = m.bank.save(id || null, data);
   const license = Object.hasOwn(data, "licenseId")
     ? data.licenseId || null

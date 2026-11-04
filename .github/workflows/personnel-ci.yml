@@ -1,0 +1,12 @@
+name: AB Group phase 6 personnel checks (no deployment)
+on:
+  pull_request:
+    branches: [feature/financial-management]
+permissions:
+  contents: read
+concurrency:
+  group: personnel-ci-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  checks:
+    uses: ./.github/workflows/staging-checks.yml
