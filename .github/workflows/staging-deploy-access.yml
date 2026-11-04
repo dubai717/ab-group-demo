@@ -19,7 +19,9 @@ jobs:
             if(!value){console.log('RESULT: RENDER_DEPLOY_HOOK_MISSING; NO_RENDER_REQUEST');process.exit(0);}
             const u=new URL(value);
             if(u.protocol!=='https:'||u.hostname!=='api.render.com'||!/^\/deploy\/srv-[a-z0-9]+$/.test(u.pathname)||!u.searchParams.get('key')||u.username||u.password||u.hash)throw Error();
+            if(/^srv-[a-z0-9]{20}$/.test(u.pathname.slice('/deploy/'.length)))console.log('CHECK: DEPLOY_SERVICE_ID='+u.pathname.slice('/deploy/'.length));
             console.log('CHECK: DEPLOY_TARGET_PATH_SHA256='+require('node:crypto').createHash('sha256').update(u.pathname).digest('hex'));
             console.log('RESULT: RENDER_DEPLOY_HOOK_PRESENT_VALID_SHAPE; TARGET_NEEDS_OWNER_BINDING; NO_RENDER_REQUEST');
           }catch{console.log('RESULT: RENDER_DEPLOY_HOOK_INVALID; VALUES_WITHHELD; NO_RENDER_REQUEST');process.exitCode=1;}
           NODE
+
