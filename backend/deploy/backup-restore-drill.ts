@@ -134,7 +134,8 @@ export async function main(){
    console.log('CHECK: RESTORED_TABLES_ROWS_CONSTRAINTS_RLS_TRIGGERS=PASS');
    const docTables=['document_versions','customer_files','vehicle_files'];let encryptedObjects=0;
    for(const table of docTables){const exists=(await t2.query('select to_regclass($1) t',['ab.'+table])).rows[0].t;if(!exists)continue;
-    for(const row of (await t2.query(`select storage_key,sha256 from ab.${qi(table)}`)).rows){const bytes=restored.objects.get('storage/'+row.storage_key);check(bytes,'REFERENCED_OBJECT_MISSING');const payload=security(process.env.DATA_ENCRYPTION_KEY!).open(bytes.toString());check(typeof payload.bytes==='string','DOCUMENT_CIPHER');check(sha(Buffer.from(payload.bytes,'base64'))===row.sha256,'DOCUMENT_HASH');encryptedObjects++;}}
+    const digestColumn=table==='document_versions'?'sha256':'digest';
+    for(const row of (await t2.query(`select storage_key,${qi(digestColumn)} as sha256 from ab.${qi(table)}`)).rows){const bytes=restored.objects.get('storage/'+row.storage_key);check(bytes,'REFERENCED_OBJECT_MISSING');const payload=security(process.env.DATA_ENCRYPTION_KEY!).open(bytes.toString());check(typeof payload.bytes==='string','DOCUMENT_CIPHER');check(sha(Buffer.from(payload.bytes,'base64'))===row.sha256,'DOCUMENT_HASH');encryptedObjects++;}}
    console.log('CHECK: PRIVATE_OBJECT_BYTES_AND_REFERENCES=PASS; ENCRYPTED_DOCUMENTS_CHECKED='+encryptedObjects);
    // Real role, on the isolated clone, with no tenant/user context must not see tenant companies.
    await t2.query('BEGIN READ ONLY');await t2.query('SET LOCAL ROLE ab_runtime');check(Number((await t2.query('select count(*) n from ab.companies')).rows[0].n)===0,'RUNTIME_ISOLATION');await t2.query('ROLLBACK');
