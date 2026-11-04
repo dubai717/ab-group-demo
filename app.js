@@ -494,7 +494,8 @@ function render() {
   }
 
   const sidebarItems = getSidebarItems(currentUser).filter(i=>!['roles','departments'].includes(i.id));
-  if(currentUser.roleId==='owner')sidebarItems.push({id:'customers',label:getLocale()==='ar'?'العملاء':'Customers'},{id:'vehicles',label:getLocale()==='ar'?'المركبات':'Vehicles'});
+  if(CustomerUI.canEnter())sidebarItems.push({id:'customers',label:getLocale()==='ar'?'العملاء':'Customers'});
+  if(currentUser.roleId==='owner')sidebarItems.push({id:'vehicles',label:getLocale()==='ar'?'المركبات':'Vehicles'});
   appEl.innerHTML = `
     <div class="app-shell">
       <aside class="sidebar">
@@ -546,7 +547,7 @@ function render() {
 }
 
 function pageTitle(page) {
-  const titles = {
+  const titles = {customers:getLocale()==='ar'?'العملاء':'Customers',vehicles:getLocale()==='ar'?'المركبات':'Vehicles',
     dashboard: localeText('dashboard'),
     users: localeText('userManagement'),
     roles: localeText('roles'),
@@ -570,10 +571,11 @@ function renderCurrentPage() {
   if (page === 'departments') return renderDepartments(user);
   if (page === 'companies') return renderCompanies(user);
   if (page === 'bankAccounts') return FinanceWorkbench.isAccounts()?BankAccounts.render():FinanceWorkbench.render();
-  if(['customers','vehicles'].includes(page))return WorkspaceUI.placeholder(page);
+  if(page==='customers')return CustomerUI.render();
+  if(['vehicles'].includes(page))return WorkspaceUI.placeholder(page);
   if (page === 'tasks') return renderTasks(user);
   if (page === 'reports') return renderReports(user);
-  if (page === 'notifications') return renderNotifications(user);
+  if (page === 'notifications') return renderNotifications(user)+CustomerUI.notificationHTML();
   return renderDashboard(user);
 }
 
@@ -1107,6 +1109,7 @@ async function handleLogin(event) {
 
 function bindGlobalEvents() {
   WorkspaceUI.bind();
+  CustomerUI.bind();
   FinanceWorkbench.bind();
   globalThis.ABCentral?.enabled&&globalThis.ABCentral.bind();
   AuthFlows.bindApp();
@@ -1114,6 +1117,7 @@ function bindGlobalEvents() {
   CompanyDocuments.bind();
   document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', () => {
+      if(!CustomerUI.leave())return;
       AuthFlows.leave();
       UserManagement.cleanup();
       BankAccounts.cleanup();
@@ -1128,6 +1132,7 @@ function bindGlobalEvents() {
   document.querySelectorAll('[data-action="logout"]').forEach(button => {
     button.addEventListener('click', () => {
       FinanceWorkbench.reset();
+      CustomerUI.reset();
       BankAccounts.logout();
       CompanyDocuments.logout();
       UserManagement.logout();

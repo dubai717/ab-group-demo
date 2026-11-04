@@ -29,6 +29,7 @@ import {
   assertRevision,
   bounded,
 } from "./data.js";
+import {registerCustomers} from './customers.js';
 import {registerFinance,bankNotice} from "./finance.js";
 export interface Options {
   pool: Pool;
@@ -162,7 +163,7 @@ export async function build(options: Options) {
     async (req: any) => {
       const s = await session(req);
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
-        const key = req.headers["idempotency-key"];
+        const key = req.method === "GET" ? undefined : req.headers["idempotency-key"];
         const fingerprint = cipher.digest(
           req.method + req.url + JSON.stringify(req.body || null),
         );
@@ -201,6 +202,7 @@ export async function build(options: Options) {
       });
     };
   registerFinance(app,call,cipher);
+  registerCustomers(app,call,cipher,options);
   app.get("/api/health", async () => {
     await pool.query("select 1");
     return {
@@ -1114,6 +1116,8 @@ export async function build(options: Options) {
       "demo-credentials.js",
       "auth-flows.js",
       "central-client.js",
+      "customer-policy.js",
+      "customers.js",
       "finance-policy.js",
       "finance-workbench.js",
       "workspace-ui.js",
