@@ -1,0 +1,12 @@
+name: AB Group vehicle integrated review (no deployment)
+on:
+  pull_request:
+    branches: [feature/customer-management]
+permissions:
+  contents: read
+concurrency:
+  group: vehicle-ci-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  checks:
+    uses: ./.github/workflows/staging-checks.yml

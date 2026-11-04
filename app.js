@@ -495,7 +495,7 @@ function render() {
 
   const sidebarItems = getSidebarItems(currentUser).filter(i=>!['roles','departments'].includes(i.id));
   if(CustomerUI.canEnter())sidebarItems.push({id:'customers',label:getLocale()==='ar'?'العملاء':'Customers'});
-  if(currentUser.roleId==='owner')sidebarItems.push({id:'vehicles',label:getLocale()==='ar'?'المركبات':'Vehicles'});
+  if(VehicleUI.canEnter())sidebarItems.push({id:'vehicles',label:getLocale()==='ar'?'المركبات':'Vehicles'});
   appEl.innerHTML = `
     <div class="app-shell">
       <aside class="sidebar">
@@ -572,7 +572,7 @@ function renderCurrentPage() {
   if (page === 'companies') return renderCompanies(user);
   if (page === 'bankAccounts') return FinanceWorkbench.isAccounts()?BankAccounts.render():FinanceWorkbench.render();
   if(page==='customers')return CustomerUI.render();
-  if(['vehicles'].includes(page))return WorkspaceUI.placeholder(page);
+  if(page==='vehicles')return VehicleUI.render();
   if (page === 'tasks') return renderTasks(user);
   if (page === 'reports') return renderReports(user);
   if (page === 'notifications') return renderNotifications(user)+CustomerUI.notificationHTML();
@@ -1110,6 +1110,7 @@ async function handleLogin(event) {
 function bindGlobalEvents() {
   WorkspaceUI.bind();
   CustomerUI.bind();
+  VehicleUI.bind();
   FinanceWorkbench.bind();
   globalThis.ABCentral?.enabled&&globalThis.ABCentral.bind();
   AuthFlows.bindApp();
@@ -1133,6 +1134,7 @@ function bindGlobalEvents() {
     button.addEventListener('click', () => {
       FinanceWorkbench.reset();
       CustomerUI.reset();
+      VehicleUI.reset();
       BankAccounts.logout();
       CompanyDocuments.logout();
       UserManagement.logout();
