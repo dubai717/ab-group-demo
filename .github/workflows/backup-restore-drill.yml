@@ -1,4 +1,4 @@
-name: One-shot hosted backup and isolated restore (no deployment)
+name: Private retained hosted backup and isolated restore (no deployment)
 on:
   push:
     branches: [verify/backup-restore-20261104]
@@ -24,7 +24,7 @@ jobs:
       - name: Verify code without cloud credentials
         run: |
           node node_modules/typescript-portable/bin/tsc -p backend/tsconfig.json
-          node --import tsx --test backend/tests/backup-drill.test.ts
+          node --import tsx --test backend/tests/backup-drill.test.ts backend/tests/private-backup-store.test.ts
       - name: Create isolated ephemeral PostgreSQL 17 on runner only
         shell: bash
         run: |
@@ -36,9 +36,10 @@ jobs:
             sleep 1
           done
           exit 1
-      - name: Read-only hosted capture and isolated restore; fixed status output only
+      - name: Read-only SQL capture, approved private backup retention and isolated restore
         env:
           AB_BACKUP_DRILL_APPROVED: read-only-source-isolated-restore
+          AB_BACKUP_RETAIN_APPROVED: private-bucket-no-overwrite
           NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
@@ -53,4 +54,4 @@ jobs:
         run: |
           docker rm --force --volumes ab-backup-drill-postgres > /dev/null 2>&1 || true
           rm -rf -- work/backups
-      # No upload-artifact/cache/deployment/migration steps. Private archive custody needs owner approval.
+      # Owner approved private bucket retention only. No public artifacts, deployment or migrations.

@@ -6,6 +6,7 @@ import {archive,restoreArchive} from '../src/backup.js';
 import {sha,security,supabaseKeys} from '../src/core.js';
 import {databaseOptions,assertVerifiedDatabaseTls} from '../src/database.js';
 import {backupConnection,backupLimit} from './backup-staging.js';
+import {privateBackupStore,newBackupPaths,isRetainedBackupPath} from './private-backup-store.js';
 
 const container='ab-backup-drill-postgres';
 const schemas=['ab','public','auth','storage'];
@@ -44,11 +45,15 @@ async function manifest(c:PoolClient){
  return {rows,constraints,policies,triggers};
 }
 export async function main(){
- let source:Pool|undefined,target:Pool|undefined,stage='GUARD';
+ let source:Pool|undefined,target:Pool|undefined,stage='GUARD';let retainedPath:string|undefined;
  try{
   const cfg=drillGuard(process.env),keys=supabaseKeys();check(keys.secret,'STORE_SECRET_MISSING');
   check(process.env.DATA_ENCRYPTION_KEY&&Buffer.from(process.env.DATA_ENCRYPTION_KEY,'base64').length===32,'DATA_KEY');
   console.log('CHECK: BACKUP_KEY=CANONICAL_32_BYTES_INDEPENDENT');
+  const retain=process.env.AB_BACKUP_RETAIN_APPROVED==='private-bucket-no-overwrite';
+  check(!process.env.AB_BACKUP_RETAIN_APPROVED||retain,'RETENTION_APPROVAL');
+  const store=privateBackupStore(cfg.endpoint,keys.secret),paths=newBackupPaths();
+  if(retain){stage='PRIVATE_BUCKET_PREFLIGHT';await store.verifyBucket(1);console.log('CHECK: RETENTION_BUCKET=PRIVATE_AND_EXISTING_LIMITS_ACCEPTED');}
   stage='SOURCE_READ_ONLY';
   source=new Pool({...databaseOptions(cfg.uri),max:1,statement_timeout:60000,options:'-c default_transaction_read_only=on -c timezone=UTC -c search_path=pg_catalog'});source.on('error',()=>{});
   const c=await source.connect();let before:any,dump:Buffer,objects=new Map<string,Buffer>(),snapshot='';let context:any;
@@ -63,7 +68,7 @@ export async function main(){
    before=await manifest(c);
    const roles=(await c.query("select rolname from pg_roles where rolname not like 'pg\\_%' escape '\\' order by rolname")).rows;
    const extensions=(await c.query('select e.extname,n.nspname from pg_extension e join pg_namespace n on n.oid=e.extnamespace order by e.extname')).rows;
-   context={format:'AB-DRILL-CONTEXT-1',createdAt:new Date().toISOString(),snapshotId:snapshot,manifest:before,roles,extensions,ledger};
+   context={excludedBackupArchiveBytes:true,format:'AB-DRILL-CONTEXT-1',createdAt:new Date().toISOString(),snapshotId:snapshot,manifest:before,roles,extensions,ledger};
    stage='CAPTURE_DUMP';
    const pg={...cfg.pg,PGSSLROOTCERT:'/tmp/ab-ca.crt'};
    dump=await docker(['exec','-i',...Object.keys(pg).filter(k=>k!=='PATH').flatMap(k=>['--env',k]),container,'pg_dump','--format=custom','--no-owner','--lock-wait-timeout=15000',...schemas.map(s=>'--schema='+s),'--snapshot='+snapshot],pg);
@@ -72,6 +77,7 @@ export async function main(){
    const names=(await c.query("select name from storage.objects where bucket_id='ab-private-test' order by name")).rows;
    stage='PRIVATE_OBJECT_CAPTURE';
    for(const row of names){
+    if(isRetainedBackupPath(row.name))continue; // Existing backups remain in place; avoid recursive archive growth.
     check(typeof row.name==='string'&&!row.name.split('/').some((s:string)=>!s||s==='.'||s==='..'),'OBJECT_NAME');
     const r=await fetch(cfg.endpoint+'/storage/v1/object/ab-private-test/'+row.name.split('/').map(encodeURIComponent).join('/'),{headers:{apikey:keys.secret},redirect:'error',signal:AbortSignal.timeout(30000)});check(r.ok&&r.body,'OBJECT_READ');
     const chunks:Buffer[]=[];for await(const b of r.body as any){size+=b.length;check(size<=backupLimit,'OBJECT_LIMIT');chunks.push(Buffer.from(b));}objects.set('storage/'+row.name,Buffer.concat(chunks));
@@ -84,7 +90,14 @@ export async function main(){
   objects.set('metadata/restore-context.json',Buffer.from(JSON.stringify(context)));
   stage='ENCRYPT_ARCHIVE';const sealed=archive(dump!,objects,cfg.key);
   await mkdir('work/backups',{recursive:true,mode:0o700});await writeFile('work/backups/staging.abbackup',sealed,{mode:0o600,flag:'wx'});
-  const restored=restoreArchive(await readFile('work/backups/staging.abbackup'),cfg.key);
+  let archiveBytes=await readFile('work/backups/staging.abbackup');
+  if(retain){
+   stage='PRIVATE_ARCHIVE_UPLOAD';await store.upload(paths.archive,archiveBytes);retainedPath=paths.archive;
+   console.log('CHECK: NEW_ENCRYPTED_ARCHIVE_CREATED='+paths.archive);
+   stage='PRIVATE_ARCHIVE_DOWNLOAD';archiveBytes=await store.downloadVerified(paths.archive,archiveBytes);await store.verifyNotPublic(paths.archive);
+   console.log('CHECK: UPLOADED_ARCHIVE_DOWNLOAD_HASH_AND_PUBLIC_DENIAL=PASS');
+  }
+  const restored=restoreArchive(archiveBytes,cfg.key);
   check(restored.database.equals(dump!)&&restored.objects.size===objects.size,'ARCHIVE_INTEGRITY');
   for(const [name,bytes] of objects)check(restored.objects.get(name)?.equals(bytes),'OBJECT_ARCHIVE_INTEGRITY');
   console.log('CHECK: ENCRYPTED_CAPTURE_AND_INTEGRITY=PASS');
@@ -120,11 +133,21 @@ export async function main(){
   }finally{await t2.query('ROLLBACK').catch(()=>{});t2.release();}
   // This is read-only; source data changes by other actors cannot be categorically ruled out.
   const final=await source.connect();try{await final.query('BEGIN READ ONLY');const ledger=(await final.query('select name,sha256 from public.ab_schema_migrations order by name')).rows;check(JSON.stringify(ledger)===JSON.stringify(context.ledger),'SOURCE_LEDGER_CHANGED');await final.query('ROLLBACK');}finally{await final.query('ROLLBACK').catch(()=>{});final.release();}
-  await writeFile('work/backups/restore-proof.json',JSON.stringify({format:'AB-BACKUP-RESTORE-DRILL-1',createdAt:new Date().toISOString(),sourceCommit:process.env.GITHUB_SHA,archiveSha256:sha(sealed),restoreVerified:true,sourceReadOnly:true,baseMigrations:8,tables:before.rows.length,archiveRetention:'ephemeral runner only; no durable archive uploaded'},null,2),{mode:0o600,flag:'wx'});
-  console.log('RESULT: HOSTED_BACKUP_ISOLATED_RESTORE_PASS; SOURCE_READ_ONLY; MIGRATIONS_UNCHANGED; ARCHIVE_EPHEMERAL_NOT_UPLOADED');
+  await writeFile('work/backups/restore-proof.json',JSON.stringify({format:'AB-BACKUP-RESTORE-DRILL-1',createdAt:new Date().toISOString(),sourceCommit:process.env.GITHUB_SHA,archiveSha256:sha(sealed),restoreVerified:true,sourceReadOnly:true,baseMigrations:8,tables:before.rows.length,archiveRetention:retain?'existing private bucket; create-only':'ephemeral runner only; no durable archive uploaded'},null,2),{mode:0o600,flag:'wx'});
+  if(retain){
+   stage='PRIVATE_METADATA_UPLOAD';
+   const proof={format:'AB-RETAINED-BACKUP-1',createdAt:new Date().toISOString(),archivePath:paths.archive,archiveSha256:sha(sealed),sourceCommit:process.env.GITHUB_SHA,snapshotId:snapshot,restoreVerified:true,encryptedObjectsVerified:true,baseMigrations:8,backupArchiveBytesExcluded:true};
+   const metadata=Buffer.from('AB-BACKUP-META-1\n'+security(cfg.key).seal(proof));
+   await store.upload(paths.metadata,metadata);
+   const downloaded=await store.downloadVerified(paths.metadata,metadata);await store.verifyNotPublic(paths.metadata);await store.verifyBucket(sealed.length);
+   check(JSON.stringify(security(cfg.key).open(downloaded.toString().slice('AB-BACKUP-META-1\n'.length)))===JSON.stringify(proof),'BACKUP_METADATA_INTEGRITY');
+   console.log('CHECK: ENCRYPTED_METADATA_DOWNLOAD_DECRYPT_AND_PUBLIC_DENIAL=PASS');
+   console.log('LOCATION: BUCKET=ab-private-test; ARCHIVE='+paths.archive+'; METADATA='+paths.metadata);
+   console.log('RESULT: PRIVATE_RETAINED_BACKUP_DOWNLOADED_AND_RESTORED_PASS; SOURCE_SQL_READ_ONLY; ONLY_NEW_BACKUP_OBJECTS_CREATED; NO_MIGRATIONS_OR_DEPLOYMENT');
+  }else console.log('RESULT: HOSTED_BACKUP_ISOLATED_RESTORE_PASS; SOURCE_READ_ONLY; MIGRATIONS_UNCHANGED; ARCHIVE_EPHEMERAL_NOT_UPLOADED');
  }catch(error){
   const code=error instanceof Error&&/^[A-Z_]+$/.test(error.message)?error.message:'DETAILS_WITHHELD';
-  console.log('RESULT: BACKUP_RESTORE_STOP; STAGE='+stage+'; CODE='+code+'; NO_SOURCE_WRITES_OR_MIGRATIONS');process.exitCode=1;
+  console.log('RESULT: BACKUP_RESTORE_STOP; STAGE='+stage+'; CODE='+code+'; SOURCE_SQL_READ_ONLY; NO_MIGRATIONS_OR_DEPLOYMENT');if(retainedPath)console.log('LOCATION: RETAINED_ARCHIVE='+retainedPath+'; NOT_DELETED_OR_OVERWRITTEN; VERIFICATION_INCOMPLETE');process.exitCode=1;
  }finally{await target?.end().catch(()=>{});await source?.end().catch(()=>{});}
 }
 if(/[/\\]backup-restore-drill\.(ts|js)$/.test(process.argv[1]||''))await main();
