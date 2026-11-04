@@ -1,0 +1,20 @@
+name: Read current staging approval only
+on:
+  push:
+    branches: [verify/current-staging-approval-20261104]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    environment: supabase-test
+    steps:
+      - name: Check current approval format without printing its value
+        env:
+          APPROVAL: ${{ vars.STAGING_SENSITIVE_APPROVAL_SHA }}
+        run: |
+          node <<'NODE'
+          const v=process.env.APPROVAL||'',expected='0ddae48ddfd034b728640d522726598c0f33617d';
+          console.log('CHECK: APPROVAL_PRESENT='+!!v+'; LENGTH='+v.length+'; CANONICAL='+/^[a-f0-9]{40}$/.test(v)+'; EXACT_MATCH='+(v===expected)+'; TRIM_MATCH='+(v.trim()===expected));
+          console.log('RESULT: READ_ONLY_CURRENT_ENVIRONMENT_APPROVAL_CHECK; NO_TEST_RERUN_NO_SECRETS_NO_DEPLOYMENT');
+          NODE
