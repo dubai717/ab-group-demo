@@ -672,7 +672,7 @@
       try {
         if (action === "logout") {
           await api("logout", "POST", {});
-          FinanceWorkbench.reset();
+          FinanceWorkbench.reset();globalThis.CustomerUI?.reset();
           C.actor = null;
           C.csrf = "";
           C.documents.clear();
