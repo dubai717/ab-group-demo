@@ -886,3 +886,12 @@ th {
 .ve-choice{border:1px solid var(--line);border-radius:10px;padding:10px;max-height:320px;overflow:auto}.ve-choice label{display:flex;align-items:center;gap:8px;padding:5px}.ve-choice [hidden]{display:none!important}
 /* Phase 5: reuse current palette, responsive financial workbench. */
 .ld-section{min-width:0}.ld-section .workspace-toolbar{flex-wrap:wrap;gap:.4rem}.ld-form-section{margin-block:1rem;padding:.8rem;border:1px solid var(--border-color,#d6dbe4);border-radius:10px}.ld-form-section summary{cursor:pointer;font-weight:600;margin-block-end:.6rem}.ld-form label{display:flex;flex-direction:column;gap:.3rem;min-width:0}.ld-form .full{grid-column:1/-1}.ld-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.7rem;margin-block:.6rem}.ld-item{display:grid!important;grid-template-columns:auto 1fr minmax(90px,160px);align-items:center}.ld-confirm{border:2px solid currentColor;padding:1rem;margin-block:1rem}.ld-section .table-wrap{max-width:100%;overflow:auto}.ld-section td{max-width:330px;overflow-wrap:anywhere}@media(max-width:600px){.ld-row{grid-template-columns:1fr}.ld-section .form-grid{grid-template-columns:1fr}.ld-section .workspace-toolbar{max-height:180px;overflow:auto}}@media print{body.ld-print .sidebar,body.ld-print .topbar,body.ld-print .workspace-toolbar,body.ld-print .ld-form-section,body.ld-print .fw-actions,body.ld-print button{display:none!important}body.ld-print .table-wrap{overflow:visible}}
+
+/* Personnel workspace uses the existing palette and responsive form components. */
+.hr-toolbar {display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-block:12px;}
+.hr-details {display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+.hr-details dt {font-weight:600;}.hr-details dd {margin-inline:0;overflow-wrap:anywhere;}
+#personnel-workspace .table-wrap {overflow-x:auto;max-width:100%;}
+#personnel-workspace #hr-result {white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;}
+@media(max-width:600px){#personnel-workspace .hr-toolbar>button{flex:1 1 auto;}#personnel-workspace .form-grid{grid-template-columns:1fr;}}
+.hr-photo{object-fit:contain;border-radius:8px;max-width:100%;}

@@ -153,3 +153,16 @@ export async function postReceipt(c: any, cipher: any, m: any, s: any, r: any, m
     await journal(c, cipher, s, r.company_id, date, r.currency, 'receipt:' + r.id, lines, { receiptId: r.id, excess: L.money(extra), method });
     return extra;
 }
+
+export async function createFinancialVoucher(c: any, cipher:any, m: any, s: any, d: any, details: any = {}) {
+        need(m, 'voucher_create', d.companyId);
+        company(m, d.companyId);
+        const it = await item(c, cipher, m, d.itemId, d.companyId);
+        requireOk(it.data.payment, 403, 'denied');
+        if (d.customerId)
+            await customer(c, m, d.customerId, d.companyId);
+        const key = randomUUID(), n = await number(c, s.tenant_id, 'voucher');
+        await c.query('insert into ab.finance_vouchers(id,tenant_id,company_id,item_id,customer_id,number,source_key,amount,currency,issued_on,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)', [key, s.tenant_id, d.companyId, it.id, d.customerId || null, n, d.sourceKey, d.amount, d.currency, d.issuedOn, cipher.seal({ ...d, ...details }), s.user_id]);
+        await event(c, cipher, s, d.companyId, key, 'voucher_created', null, { ...d, ...details });
+        return { id: key, number: String(n), status: 'Pending' };
+    }

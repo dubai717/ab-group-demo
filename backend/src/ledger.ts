@@ -9,6 +9,7 @@ import { ApiError, requireOk, sha } from './core.js';
 import { financeRight } from './finance.js';
 import { customerCan } from './customers.js';
 import { number, today } from './vehicle-domain.js';
+import {createFinancialVoucher} from './ledger-domain.js';
 import { L, P, need, ready, company, open, event, notify, fact, config, chart, resolve, item, line, journal, post, reverse, evidence, balance, invoices, customer, invoice, linkInvoice, custody, move, moveAmount, bankPosting, allocateReceipt, postReceipt } from './ledger-domain.js';
 const id = z.uuid(), day = z.iso.date(), money = z.string().regex(/^\d{1,15}(\.\d{1,3})?$/), positive = money.refine(x => L.units(x) > 0n), currency = z.string().regex(/^[A-Z]{3}$/), text = z.string().trim().min(1).max(2000), opt = id.nullish();
 const invoiceSchema = z.object({ companyId: id, customerId: id, vehicleId: opt, itemId: id, amount: positive, currency, issuedOn: day, dueOn: day, sourceKey: z.string().trim().min(1).max(160), description: z.string().max(2000).default('') }).strict();
@@ -364,18 +365,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
         return { id: r.id, operationId: operation, remaining: L.money(L.units(r.amount) - L.units(d.confirmedAmount)), finalBankReconciled: false };
     }));
     const voucherSchema = z.object({ companyId: id, itemId: id, customerId: opt, amount: positive, currency, issuedOn: day, beneficiary: text, reason: text, sourceKey: z.string().min(1).max(160) }).strict();
-    async function voucher(c: any, m: any, s: any, d: any, details: any = {}) {
-        need(m, 'voucher_create', d.companyId);
-        company(m, d.companyId);
-        const it = await item(c, cipher, m, d.itemId, d.companyId);
-        requireOk(it.data.payment, 403, 'denied');
-        if (d.customerId)
-            await customer(c, m, d.customerId, d.companyId);
-        const key = randomUUID(), n = await number(c, s.tenant_id, 'voucher');
-        await c.query('insert into ab.finance_vouchers(id,tenant_id,company_id,item_id,customer_id,number,source_key,amount,currency,issued_on,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)', [key, s.tenant_id, d.companyId, it.id, d.customerId || null, n, d.sourceKey, d.amount, d.currency, d.issuedOn, cipher.seal({ ...d, ...details }), s.user_id]);
-        await event(c, cipher, s, d.companyId, key, 'voucher_created', null, { ...d, ...details });
-        return { id: key, number: String(n), status: 'Pending' };
-    }
+    const voucher=(c:any,m:any,s:any,d:any,details:any={})=>createFinancialVoucher(c,cipher,m,s,d,details);
     app.post('/api/ledger/vouchers', route(async (c: any, m: any, s: any, req: any) => voucher(c, m, s, voucherSchema.parse(req.body))));
     app.post('/api/ledger/vouchers/:id/prepare', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ bankAccountId: id, chequeNumber: text, issuedOn: day, dueOn: day, documentVersionId: id }).strict().parse(req.body), r = (await c.query('select * from ab.finance_vouchers where id=$1 for update', [id.parse(req.params.id)])).rows[0]; requireOk(r, 404, 'notFound'); need(m, 'voucher_create', r.company_id); need(m, 'cheques', r.company_id); requireOk(r.status === 'Pending' && !r.cheque_id, 409, 'invalidTransition'); requireOk(d.dueOn >= d.issuedOn && d.issuedOn >= r.issued_on.toISOString().slice(0, 10), 422, 'invalidDate'); const b = m.bank.list().find((b: any) => b.id === d.bankAccountId && b.companyId === r.company_id && b.currency === r.currency && b.status === 'Active'); requireOk(b, 422, 'inactiveBank'); await evidence(c, m, r.company_id, d.documentVersionId, false); const ch = randomUUID(), details = cipher.open(r.payload_cipher); await c.query("insert into ab.finance_cheques(id,tenant_id,company_id,bank_account_id,direction,number,beneficiary,amount,currency,issued_on,due_on,status,integration_refs,document_version_id,created_by)values($1,$2,$3,$4,'outgoing',$5,$6,$7,$8,$9,$10,'Issued',$11,$12,$13)", [ch, s.tenant_id, r.company_id, b.id, d.chequeNumber, details.beneficiary, r.amount, r.currency, d.issuedOn, d.dueOn, { voucherId: r.id }, d.documentVersionId, s.user_id]); await c.query('update ab.finance_vouchers set bank_account_id=$2,cheque_id=$3,revision=revision+1 where id=$1', [r.id, b.id, ch]); await event(c, cipher, s, r.company_id, r.id, 'voucher_cheque_prepared', null, { ...d, chequeId: ch }); return { id: r.id, chequeId: ch }; }));
     app.post('/api/ledger/vouchers/approval-preview', route(async (c: any, m: any, s: any, req: any) => {

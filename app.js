@@ -495,6 +495,7 @@ function render() {
 
   const sidebarItems = getSidebarItems(currentUser).filter(i=>!['roles','departments'].includes(i.id));
   if(CustomerUI.canEnter())sidebarItems.push({id:'customers',label:getLocale()==='ar'?'العملاء':'Customers'});
+  if(PersonnelUI.canEnter())sidebarItems.push({id:'personnel',label:getLocale()==='ar'?'شؤون الموظفين':'Personnel'});
   if(LedgerUI.canEnter())sidebarItems.push({id:'financialManagement',label:getLocale()==='ar'?'الإدارة المالية والخزينة':'Finance & treasury'});
   if(VehicleUI.canEnter())sidebarItems.push({id:'vehicles',label:getLocale()==='ar'?'المركبات':'Vehicles'});
   appEl.innerHTML = `
@@ -548,7 +549,7 @@ function render() {
 }
 
 function pageTitle(page) {
-  const titles = {financialManagement:getLocale()==='ar'?'الإدارة المالية والخزينة':'Finance & treasury',customers:getLocale()==='ar'?'العملاء':'Customers',vehicles:getLocale()==='ar'?'المركبات':'Vehicles',
+  const titles = {personnel:getLocale()==='ar'?'شؤون الموظفين':'Personnel',financialManagement:getLocale()==='ar'?'الإدارة المالية والخزينة':'Finance & treasury',customers:getLocale()==='ar'?'العملاء':'Customers',vehicles:getLocale()==='ar'?'المركبات':'Vehicles',
     dashboard: localeText('dashboard'),
     users: localeText('userManagement'),
     roles: localeText('roles'),
@@ -574,8 +575,9 @@ function renderCurrentPage() {
   if (page === 'bankAccounts') return FinanceWorkbench.isAccounts()?BankAccounts.render():FinanceWorkbench.render();
   if(page==='customers')return CustomerUI.render();
   if(page==='vehicles')return VehicleUI.render();
+  if(page==='personnel')return PersonnelUI.render();
   if(page==='financialManagement')return LedgerUI.render();
-  if (page === 'tasks') return renderTasks(user);
+  if (page === 'tasks') return globalThis.ABCentral?.enabled?PersonnelUI.renderTasks():renderTasks(user);
   if (page === 'reports') return renderReports(user);
   if (page === 'notifications') return renderNotifications(user)+CustomerUI.notificationHTML();
   return renderDashboard(user);
@@ -1115,6 +1117,7 @@ function bindGlobalEvents() {
   VehicleUI.bind();
   FinanceWorkbench.bind();
   LedgerUI.bind();
+  PersonnelUI.bind();
   globalThis.ABCentral?.enabled&&globalThis.ABCentral.bind();
   AuthFlows.bindApp();
   BankAccounts.bind();
@@ -1137,6 +1140,7 @@ function bindGlobalEvents() {
     button.addEventListener('click', () => {
       FinanceWorkbench.reset();
       LedgerUI.reset();
+      PersonnelUI.reset();
       CustomerUI.reset();
       VehicleUI.reset();
       BankAccounts.logout();
