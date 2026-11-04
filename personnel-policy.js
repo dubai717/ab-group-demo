@@ -1,0 +1,29 @@
+(function (root, factory) { const api = factory(); if (typeof module !== 'undefined' && module.exports)
+    module.exports = api;
+else
+    root.PersonnelPolicy = api; })(globalThis, function () {
+    'use strict';
+    const rights = ['view', 'create', 'edit', 'private', 'documents', 'document_update', 'document_review', 'leave_approve', 'account_status', 'task_manage', 'task_delegate', 'evaluation_models', 'evaluation_weights', 'evaluation_view', 'evaluation_approve', 'evaluation_visibility', 'salary_view', 'salary_edit', 'payroll_prepare', 'payroll_approve', 'awards', 'deductions', 'coaching', 'termination', 'clearance', 'eos_view', 'reserve', 'library_view', 'library_download', 'library_manage', 'configure', 'audit', 'export'].map(k => 'hr_' + k);
+    const units = v => { if (!/^-?\d{1,15}(\.\d{1,3})?$/.test(String(v)))
+        throw Error('invalidAmount'); const neg = String(v).startsWith('-'), [a, b = ''] = String(v).replace('-', '').split('.'); return (BigInt(a) * 1000n + BigInt(b.padEnd(3, '0'))) * (neg ? -1n : 1n); }, money = v => (v < 0n ? '-' : '') + (v < 0n ? -v : v) / 1000n + '.' + ((v < 0n ? -v : v) % 1000n).toString().padStart(3, '0');
+    function allocate(value, shares) { if (!Array.isArray(shares) || !shares.length || shares.some(r => !r.companyId || !Number.isInteger(r.bps) || r.bps <= 0 || r.bps > 10000) || units(value) < 0n)
+        throw Error('invalidAllocation'); if (shares.reduce((n, r) => n + r.bps, 0) !== 10000 || new Set(shares.map(r => r.companyId)).size !== shares.length)
+        throw Error('invalidAllocation'); let assigned = 0n; const result = shares.map((r, i) => { const amount = units(value) * BigInt(r.bps) / 10000n; assigned += amount; return { ...r, amount }; }); result[0].amount += units(value) - assigned; return result.map(r => ({ ...r, amount: money(r.amount) })); }
+    function days(a, b) { const x = new Date(a + 'T00:00:00Z'), y = new Date(b + 'T00:00:00Z'); if (x.toISOString().slice(0, 10) !== a || y.toISOString().slice(0, 10) !== b || y < x)
+        throw Error('invalidDate'); return Math.round((y - x) / 86400000) + 1; }
+    function eos({ regime, start, end, basic, unpaidDays = 0, settled = '0' }) { if (regime !== 'uae_private_general')
+        return { available: false, reason: 'regimeRequiresSpecificRule' }; if (!Number.isInteger(unpaidDays) || unpaidDays < 0)
+        throw Error('invalidDate'); days(start, end); let stop = new Date(end + 'T00:00:00Z'); stop.setUTCDate(stop.getUTCDate() - unpaidDays); if (stop < new Date(start + 'T00:00:00Z'))
+        throw Error('invalidDate'); const s = new Date(start + 'T00:00:00Z'); let years = stop.getUTCFullYear() - s.getUTCFullYear(), anniv = new Date(Date.UTC(s.getUTCFullYear() + years, s.getUTCMonth(), s.getUTCDate())); if (anniv > stop) {
+        years--;
+        anniv = new Date(Date.UTC(s.getUTCFullYear() + years, s.getUTCMonth(), s.getUTCDate()));
+    } if (years < 1)
+        return { available: true, gross: '0.000', settled, remaining: '0.000', years: Math.max(0, years), estimate: true }; const next = new Date(Date.UTC(s.getUTCFullYear() + years + 1, s.getUTCMonth(), s.getUTCDate())), fractionDays = BigInt(Math.round((stop - anniv) / 86400000)), yearDays = BigInt(Math.round((next - anniv) / 86400000)), scaledDays = (BigInt(Math.min(years, 5) * 21 + Math.max(years - 5, 0) * 30) * yearDays + fractionDays * BigInt(years < 5 ? 21 : 30)); let amount = (units(basic) * scaledDays + 15n * yearDays) / (30n * yearDays), cap = units(basic) * 24n; if (amount > cap)
+        amount = cap; const remaining = amount - units(settled); return { available: true, gross: money(amount), settled, remaining: money(remaining > 0n ? remaining : 0n), years, unpaidDays, estimate: true, rule: '21/30 basic-wage days; 24-month cap; no pension/alternative assumptions' }; }
+    function evaluation(criteria, facts) { if (!criteria.length || criteria.some(c => !Number.isInteger(c.weight) || c.weight <= 0 || c.weight > 10000 || !Number.isInteger(c.minimumSamples) || c.minimumSamples < 1 || !/^\d+$/.test(String(c.target)) || BigInt(c.target) <= 0n || !['higher', 'lower'].includes(c.direction)) || new Set(criteria.map(c => c.metric)).size !== criteria.length)
+        throw Error('invalidCriteria'); if (criteria.reduce((n, c) => n + c.weight, 0) !== 10000)
+        throw Error('weightsMustTotal100'); const rows = criteria.map(c => { const f = facts[c.metric]; if (!f || !Number.isInteger(f.samples) || f.samples < c.minimumSamples)
+        return { ...c, available: false }; const actual = BigInt(f.actual), target = BigInt(c.target), ratio = c.direction === 'lower' ? (actual === 0n ? 10000n : target * 10000n / actual) : actual * 10000n / target; const bounded = ratio < 0n ? 0n : ratio > 10000n ? 10000n : ratio; return { ...c, available: true, actual: f.actual, samples: f.samples, sourceIds: f.sourceIds,sources:f.sources||[], points: Number((bounded * BigInt(c.weight) + 5000n) / 10000n) }; }); return { available: rows.every(r => r.available), score: rows.every(r => r.available) ? Math.min(10000, rows.reduce((n, r) => n + r.points, 0)) : null, criteria: rows }; }
+    function level(due, asOf, orange = 1, red = 7) { const late = Math.floor((new Date(asOf) - new Date(due)) / 86400000); return late >= red ? 'red' : late >= orange ? 'orange' : 'yellow'; }
+    return { rights, units, money, allocate, days, eos, evaluation, level };
+});
