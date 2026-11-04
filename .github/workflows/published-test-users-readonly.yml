@@ -1,0 +1,27 @@
+name: Published Test Users read-only verification
+on:
+  push:
+    branches: [verify/published-test-users-20261104]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - name: Verify published screen assets and unauthenticated access denial
+        run: |
+          node <<'NODE'
+          (async()=>{let stage='VERSION';try{
+            const fs=require('node:fs'),crypto=require('node:crypto'),origin='https://ab-group-demo.onrender.com',need=(v)=>{if(!v)throw Error();};
+            const get=path=>fetch(origin+path,{redirect:'error',headers:{'cache-control':'no-cache'},signal:AbortSignal.timeout(20000)});
+            const r=await get('/api/release');need(r.ok);const v=await r.json();need(v.environment==='staging'&&v.commit==='0ddae48ddfd034b728640d522726598c0f33617d'&&v.projectOriginSha256==='9ea1a5dcb06a135b7c29d99699651b34d11f795d525b7861865c0c842fff954f');
+            console.log('CHECK: EXACT_APPROVED_STAGING_RELEASE=PASS');
+            stage='ASSETS';for(const file of ['test-users-ui.js','app.js']){const a=await get('/'+file);need(a.ok);const bytes=Buffer.from(await a.arrayBuffer());need(crypto.createHash('sha256').update(bytes).digest('hex')===crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex'));}
+            const html=await get('/');need(html.ok&&(await html.text()).includes('src="test-users-ui.js"'));console.log('CHECK: TEST_USERS_UI_AND_APP_ASSETS_MATCH_APPROVED_SOURCE=PASS');
+            stage='ACCESS_GUARD';const denied=await get('/api/test-users');need(denied.status===401&&denied.headers.get('cache-control')?.includes('no-store'));const body=await denied.json();need(body.error==='loginRequired'&&Object.keys(body).length===1);console.log('CHECK: STAGING_TEST_USERS_ENABLED_AUTH_REQUIRED_AND_NO_DATA_EXPOSED=PASS');
+            console.log('RESULT: PUBLISHED_TEST_USERS_READ_ONLY_VERIFIED; NO_LOGIN_PASSWORD_RESET_ACCOUNT_OR_DATA_CHANGE');
+          }catch{console.log('RESULT: PUBLISHED_TEST_USERS_CHECK_STOP; STAGE='+stage+'; NO_ACCOUNT_OR_DATA_CHANGE');process.exitCode=1;}})();
+          NODE
