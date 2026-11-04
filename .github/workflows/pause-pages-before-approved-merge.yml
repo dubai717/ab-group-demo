@@ -1,0 +1,47 @@
+name: Owner approved pause of automatic Pages only
+on:
+  push:
+    branches: [verify/pause-pages-before-approved-merge-20261104]
+permissions:
+  contents: read
+  actions: write
+  pages: read
+jobs:
+  pause:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Pause only Pages workflow and verify existing site remains unchanged
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          node <<'NODE'
+          (async()=>{
+            let stage='GUARD';
+            const need=(ok,label)=>{if(!ok)throw Error(label);};
+            try{
+              need(process.env.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&process.env.GITHUB_REF==='refs/heads/verify/pause-pages-before-approved-merge-20261104'&&process.env.GITHUB_EVENT_NAME==='push','GUARD');
+              const root='https://api.github.com/repos/dubai717/ab-group-demo';
+              async function api(path,method='GET'){
+                const r=await fetch(root+path,{method,headers:{authorization:'Bearer '+process.env.GH_TOKEN,accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},redirect:'error',signal:AbortSignal.timeout(15000)});
+                if(!r.ok){console.log('CHECK: API_STATUS='+r.status);throw Error('API_DENIED');}
+                return r.status===204?null:r.json();
+              }
+              stage='READ_PAGES_CONFIGURATION';const pages=await api('/pages');
+              need(pages.html_url==='https://dubai717.github.io/ab-group-demo/','SITE_URL_REVIEW_REQUIRED');
+              stage='READ_WORKFLOW';const workflow=await api('/actions/workflows/403026791');
+              need(workflow.name==='pages build and deployment'&&workflow.path==='dynamic/pages/pages-build-deployment','WORKFLOW_IDENTITY');
+              const runs=await api('/actions/workflows/403026791/runs?per_page=10');need(runs.workflow_runs.every(r=>r.status==='completed'),'PAGES_ALREADY_RUNNING');
+              const before=await fetch(pages.html_url,{redirect:'error',signal:AbortSignal.timeout(15000)});need(before.ok,'CURRENT_SITE_UNAVAILABLE');const original=await before.text();
+              stage='PAUSE_ONLY_PAGES_WORKFLOW';
+              if(workflow.state!=='disabled_manually')await api('/actions/workflows/403026791/disable','PUT');
+              const check=await api('/actions/workflows/403026791');need(check.state==='disabled_manually','PAUSE_NOT_CONFIRMED');
+              stage='VERIFY_EXISTING_SITE';const after=await fetch(pages.html_url,{redirect:'error',signal:AbortSignal.timeout(15000)});need(after.ok&&(await after.text())===original,'SITE_CHANGED_OR_UNAVAILABLE');
+              console.log('CHECK: PAGES_WORKFLOW=DISABLED_MANUALLY; ID=403026791');
+              console.log('CHECK: EXISTING_PAGES_SITE=HTTP_200_AND_UNCHANGED');
+              console.log('CHECK: PAGES_SOURCE_BRANCH='+(pages.source?.branch||'not-branch-based'));
+              console.log('RESULT: PAGES_AUTOMATIC_WORKFLOW_PAUSED; NO_UNPUBLISH_MAIN_CHANGE_RENDER_OR_DATABASE_ACTION');
+            }catch{console.log('RESULT: PAGES_PAUSE_STOP; STAGE='+stage+'; NO_MAIN_MERGE');process.exitCode=1;}
+          })();
+          NODE
