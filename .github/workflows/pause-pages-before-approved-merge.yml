@@ -31,7 +31,8 @@ jobs:
               stage='READ_PAGES_CONFIGURATION';const pages=await api('/pages');
               need(pages.html_url==='https://dubai717.github.io/ab-group-demo/','SITE_URL_REVIEW_REQUIRED');
               stage='READ_WORKFLOW';const workflow=await api('/actions/workflows/403026791');
-              need(workflow.name==='pages build and deployment'&&workflow.path==='dynamic/pages/pages-build-deployment','WORKFLOW_IDENTITY');
+              console.log('CHECK: TARGET_WORKFLOW_ID='+workflow.id+'; PATH='+workflow.path+'; STATE='+workflow.state);
+              need(workflow.id===403026791&&workflow.path==='dynamic/pages/pages-build-deployment','WORKFLOW_IDENTITY');
               const runs=await api('/actions/workflows/403026791/runs?per_page=10');need(runs.workflow_runs.every(r=>r.status==='completed'),'PAGES_ALREADY_RUNNING');
               const before=await fetch(pages.html_url,{redirect:'error',signal:AbortSignal.timeout(15000)});need(before.ok,'CURRENT_SITE_UNAVAILABLE');const original=await before.text();
               stage='PAUSE_ONLY_PAGES_WORKFLOW';
