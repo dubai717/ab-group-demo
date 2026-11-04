@@ -1,0 +1,34 @@
+name: Windows direct Node terminal checks (no secrets)
+on:
+  push:
+    branches:
+      - verify/windows-terminal-trial-20261102
+permissions:
+  contents: read
+jobs:
+  direct-node:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - name: Verify source and compile without CMD PS1 tsx or esbuild
+        shell: powershell
+        run: |
+          $node = Get-Command node.exe -CommandType Application | Select-Object -First 1 -ExpandProperty Source
+          if ((Get-AuthenticodeSignature $node).Status -ne 'Valid') { throw 'Node signature invalid' }
+          & $node .\backend\windows\verify-source.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Integrity failed' }
+          $npm = Join-Path (Split-Path $node) 'node_modules\npm\bin\npm-cli.js'
+          & $node $npm ci --ignore-scripts --omit=optional --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { throw 'Install failed' }
+          & $node .\node_modules\typescript-portable\bin\tsc -p .\backend\tsconfig.json --noEmit false --outDir backend-build
+          if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
+          Copy-Item .\backend\package.json .\backend-build\package.json
+          & $node --test .\backend-build\tests\windows-terminal.test.js
+          if ($LASTEXITCODE -ne 0) { throw 'Isolation checks failed' }
+          Write-Host 'PASS: signed Node, package integrity, locked dependencies and emitted JavaScript without native esbuild'

@@ -152,3 +152,6 @@ vite.config.ts.timestamp-*
 # Local UI test artifacts and scratch files
 # Local interface test artifacts
 work/
+
+# Local emitted backend; never contains credential values
+backend-build/

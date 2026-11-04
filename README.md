@@ -1,6 +1,16 @@
 # AB Group Demo Prototype
 
+Windows 11 local browser trial without CMD or protection overrides: [Terminal instructions](docs/WINDOWS-TERMINAL-TRIAL.md). Requires official signed Node.js 24 LTS; no deployment.
+
 This repository contains a working interactive prototype of the AB Group administrative system.
+
+## Central database foundation (review only)
+
+An opt-in Node.js/TypeScript + PostgreSQL/Supabase foundation is prepared on top of the integration branch. No cloud resources or deployment were created. `npm start` still runs the original browser-storage demo; use synthetic data only. Central mode is served exclusively by the backend and does not import browser data.
+
+See [phase 1 architecture, setup, verification and limitations](docs/CENTRAL-DATABASE-PHASE1.md) and [server configuration template](backend/.env.example). Recovery services, live Supabase verification and operational cloud backup remain pending.
+
+Current safe trial setup: [GitHub Actions protected environment and Supabase check](docs/GITHUB-ACTIONS-SUPABASE.md). No secrets are entered into the current workspace or public page, and no merge/deployment is required.
 
 ## What is included
 

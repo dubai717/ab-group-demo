@@ -13,7 +13,9 @@
   function createService(source, now = () => new Date().toISOString(), persistence = {}) {
     const records = new Map(source.users.map(user => [user.id, clean(user)]));
     const roles = copy(source.roles), companies = copy(source.companies), departments = copy(source.departments);
-    const grants = new Map(), files = new Map(), audit = [];
+    const grants = new Map(), files = new Map(), audit = [...(persistence.initialAudit||[])];
+    for(const row of persistence.initialGrants||[]) { const list=grants.get(row.userId)||[];list.push(copy(row.entry));grants.set(row.userId,list); }
+    const grantSnapshot=()=>[...grants].flatMap(([userId,entries])=>entries.map(entry=>({userId,entry:copy(entry)})));
     let sequence = 0;
     const user = id => records.get(id);
     const isOwner = id => user(id)?.roleId === 'owner';
@@ -156,7 +158,7 @@
       const list = grants.get(targetId) || [];
       if (list.some(g => g.action === entry.action && JSON.stringify(g.scope) === JSON.stringify(entry.scope))) throw new Error('duplicate');
       const saved = { id: `grant-${++sequence}`, action:entry.action, scope:copy(entry.scope), delegable:entry.delegable === true, issuer:actorId };
-      list.push(saved); grants.set(targetId, list); log(actorId, 'granted', targetId, [saved.action, saved.scope.type, saved.scope.id, saved.delegable ? 'redelegate' : 'nonDelegable']);
+      list.push(saved); grants.set(targetId, list); persistence.grantsChanged?.(grantSnapshot()); log(actorId, 'granted', targetId, [saved.action, saved.scope.type, saved.scope.id, saved.delegable ? 'redelegate' : 'nonDelegable']);
       return copy(saved);
     }
     function revoke(actorId, targetId, grantId) {
@@ -172,7 +174,7 @@
           if (removed.length) { grants.set(id, entries.filter(g => g.issuer !== issuer)); log(actorId, 'revoked', id, removed.map(g => g.action)); cascade(id); }
         }
       }
-      grants.set(targetId, list.filter(g => g.id !== grantId)); log(actorId, 'revoked', targetId, [entry.action]); cascade(targetId);
+      grants.set(targetId, list.filter(g => g.id !== grantId)); log(actorId, 'revoked', targetId, [entry.action]); cascade(targetId); persistence.grantsChanged?.(grantSnapshot());
     }
     return {
       actions, companies, departments,
@@ -239,7 +241,7 @@
   let service, selected = null, notice = '', query = '', filterStatus = '', filterCompany = '', filterDept = '', previewUrl;
   function t(key) { return messages[getLocale() === 'ar' ? 'ar' : 'en'][key] || key; }
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  function getService() { if (!service) service = createService({...app.state, users:[...app.state.users, ...DemoCredentials.directory()]}, undefined, {save:(candidate, verifier)=>DemoCredentials.saveProfile(candidate, verifier)}); else service.syncDirectories(app.state); return service; }
+  function getService() { if (!service) service = createService({...app.state, users:[...app.state.users, ...DemoCredentials.directory()]}, undefined, {initialGrants:globalThis.ABCentral?.enabled?globalThis.ABCentral.grants:[],initialAudit:globalThis.ABCentral?.enabled?globalThis.ABCentral.audit:[],save:(candidate, verifier)=>DemoCredentials.saveProfile(candidate, verifier)}); else service.syncDirectories(app.state); return service; }
   function actorId() { return app.state.currentUser?.id; }
   function name(user) { return (getLocale() === 'ar' ? user.nameAr : user.nameEn) || user.fullName || user.username; }
   function hydrated(u) {
@@ -334,10 +336,10 @@
     document.getElementById('um-action')?.addEventListener('change',grantScopeChoices);document.getElementById('um-scope')?.addEventListener('change',scopeOptions);grantScopeChoices();
     document.getElementById('um-grant')?.addEventListener('submit',event=>{event.preventDefault();run(()=>{const fd=new FormData(event.target);s.grant(actorId(),selected,{action:String(fd.get('action')),scope:{type:String(fd.get('scope')),id:String(fd.get('scopeId')||'')},delegable:fd.get('delegable')==='on'});refresh('granted');});});
   }
-  return { createService, render:renderPage, bind, escape:esc,
+  return { centralSelect(id) {selected=id;service=undefined;}, createService, render:renderPage, bind, escape:esc,
     effectiveUser(user) { return user ? getService().actor(user.id) : null; },
     visibleUsers() { return getService().list(actorId()); },
-    summary() { return getService().summary(); },
+    summary() { return globalThis.ABCentral?.enabled?globalThis.ABCentral.summary:getService().summary(); },
     actorForModules(user) { const s=getService(),u=user&&s.actor(user.id);return u?{...u,permissions:app.state.roles.find(r=>r.id===u.roleId)?.permissions||[],companyBankPermissions:s.companies.map(c=>({companyId:c.id,permissions:s.bankPermissions(u.id,c.id)}))}:null; },
     cleanup() { if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=null; },
     logout() { selected=null;notice='';if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=null; }

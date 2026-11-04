@@ -35,7 +35,7 @@
   let mode = 'login', notice = '', selectedChannel = 'email';
   const events = [];
   const eventTypes = new Set(['login_failed','login_succeeded','recovery_blocked','recovery_invalid','admin_recovery_blocked','change_invalid','change_blocked']);
-  function text(key) { return messages[typeof getLocale === 'function' && getLocale() === 'ar' ? 'ar' : 'en'][key] || key; }
+  function text(key) { if(globalThis.ABCentral?.enabled&&['boundary','changeBoundary','changeUnavailable','unavailable','expiry'].includes(key))return typeof getLocale==='function'&&getLocale()==='ar'?'خدمة استعادة أو تغيير كلمة المرور غير مفعلة في هذه المرحلة. لم يُرسل رمز ولم تُتحقق كلمة المرور الحالية ولم تُحفظ كلمة مرور جديدة.':'Recovery and password changes are not enabled in this phase. No code was sent, the current password was not verified and no new password was saved.';return messages[typeof getLocale === 'function' && getLocale() === 'ar' ? 'ar' : 'en'][key] || key; }
   function record(type, actorId = null, channel = null) {
     if (!eventTypes.has(type)) return;
     // Only public event names, canonical authenticated IDs and allowlisted channel names.

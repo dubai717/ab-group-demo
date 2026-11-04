@@ -1,0 +1,37 @@
+{
+  "approvedSource": "2d3d24d2c1355d877bf38f1d4af69b276a942b1b",
+  "migrations": [
+    {
+      "name": "202611010001_foundation.sql",
+      "sha256": "569f9fb73b7390174601cdded01df636d019eaaa79a8a803c7bd971c9aaf1b8b"
+    },
+    {
+      "name": "202611010002_role_catalog.sql",
+      "sha256": "eb38ca7214e0a5cdfc2b4fc719bdf3770cc234cf84210add541c465ab159d351"
+    },
+    {
+      "name": "202611010003_membership_history.sql",
+      "sha256": "2938e060d9ca5d62e1d1fae6c4b49bc4b2a42b93d8fd9796778f3261529522fb"
+    },
+    {
+      "name": "202611010004_request_dedup.sql",
+      "sha256": "b123f3a5a6511cd0f11f9b6c47f5e095a9d5f0ebe3efaa584607ef71883646bf"
+    },
+    {
+      "name": "202611010005_version_metadata.sql",
+      "sha256": "305c73eea53eac621c22d88af3fad45435a382ae597983ac98d5943a0bca4f23"
+    },
+    {
+      "name": "202611010006_scanning_contacts.sql",
+      "sha256": "551aaf2bfb80acc91f75e0253d89fb1a4c944caffa66838fd6bf6b5a443b6aca"
+    },
+    {
+      "name": "202611010007_user_invariants.sql",
+      "sha256": "c3558cf7678699581862ff57c45d0fc60a0eb60d939ef28bce58b8fe49054b8b"
+    },
+    {
+      "name": "202611020008_schema_integrity.sql",
+      "sha256": "62218181cd7dd42e8d76331beb5e9e0fccc37641b1bfedcbdccde5fe40eb5ab4"
+    }
+  ]
+}

@@ -18,32 +18,22 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon'
 };
 
+// Only application assets are public. In particular, never expose backend/.env,
+// migration SQL, test fixtures, source-control metadata or installed packages.
+const PUBLIC_FILES = new Set(['index.html','app.js','styles.css','runtime-config.js','central-client.js',
+  'area-reference.js','company-documents.js','bank-accounts.js','demo-credentials.js',
+  'user-management.js','auth-flows.js','data/uae-areas.js','assets/Untitled.png','assets/logo.svg']);
 const server = http.createServer((req, res) => {
-  const safeUrl = req.url === '/' ? '/index.html' : req.url;
-  const filePath = path.normalize(path.join(rootDir, safeUrl));
-
-  if (!filePath.startsWith(rootDir)) {
-    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
-    res.end('Forbidden');
-    return;
-  }
-
-  fs.readFile(filePath, (err, content) => {
-    if (err) {
-      if (err.code === 'ENOENT') {
-        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-        res.end('Not found');
-      } else {
-        res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
-        res.end('Server error');
-      }
-      return;
-    }
-
-    const ext = path.extname(filePath).toLowerCase();
-    const mime = MIME_TYPES[ext] || 'application/octet-stream';
-    res.writeHead(200, { 'Content-Type': mime });
-    res.end(content);
+  if (!['GET','HEAD'].includes(req.method)) { res.writeHead(405);res.end();return; }
+  let requested;
+  try { requested=decodeURIComponent(new URL(req.url,'http://localhost').pathname); }
+  catch { res.writeHead(400);res.end();return; }
+  const relative=requested==='/'?'index.html':requested.slice(1);
+  if (!PUBLIC_FILES.has(relative)) { res.writeHead(404);res.end('Not found');return; }
+  fs.readFile(path.join(rootDir,relative),(err,content)=>{
+    if(err){res.writeHead(404);res.end('Not found');return;}
+    res.writeHead(200,{'Content-Type':MIME_TYPES[path.extname(relative).toLowerCase()]||'application/octet-stream','X-Content-Type-Options':'nosniff'});
+    res.end(req.method==='HEAD'?undefined:content);
   });
 });
 

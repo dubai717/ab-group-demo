@@ -1,0 +1,184 @@
+{
+  "date": "2026-11-02",
+  "timezone": "Asia/Dubai",
+  "baseline": "d68283a",
+  "scope": "local isolated synthetic PostgreSQL; SQL probes roll back; no cloud",
+  "results": [
+    {
+      "id": "M01",
+      "status": "PASS",
+      "expected": "7 unchanged migration checksums",
+      "observed": "count=7"
+    },
+    {
+      "id": "M02",
+      "status": "PASS",
+      "expected": "RLS on every tenant table",
+      "observed": "all enabled"
+    },
+    {
+      "id": "M06",
+      "status": "PASS",
+      "expected": "existing role catalogs and relational permission rows agree",
+      "observed": "roles=10; values match=true; permissions match=true"
+    },
+    {
+      "id": "M03",
+      "status": "PASS",
+      "expected": "no PUBLIC execute on ab functions",
+      "observed": "none"
+    },
+    {
+      "id": "M04",
+      "status": "PASS",
+      "expected": "restricted SQL role",
+      "observed": "{\"rolsuper\":false,\"rolbypassrls\":false,\"rolcreaterole\":false,\"rolcreatedb\":false}"
+    },
+    {
+      "id": "R01",
+      "status": "PASS",
+      "expected": "23503",
+      "observed": "23503"
+    },
+    {
+      "id": "R02",
+      "status": "PASS",
+      "expected": "23503",
+      "observed": "23503"
+    },
+    {
+      "id": "R03",
+      "status": "PASS",
+      "expected": "23503",
+      "observed": "23503"
+    },
+    {
+      "id": "F01",
+      "status": "FAIL",
+      "expected": "23514",
+      "observed": "accepted"
+    },
+    {
+      "id": "F02",
+      "status": "FAIL",
+      "expected": "23503",
+      "observed": "accepted"
+    },
+    {
+      "id": "R04",
+      "status": "PASS",
+      "expected": "23503",
+      "observed": "23503"
+    },
+    {
+      "id": "R05",
+      "status": "PASS",
+      "expected": "23514",
+      "observed": "23514"
+    },
+    {
+      "id": "F03",
+      "status": "FAIL",
+      "expected": "23514",
+      "observed": "accepted"
+    },
+    {
+      "id": "F04",
+      "status": "FAIL",
+      "expected": "23514",
+      "observed": "accepted"
+    },
+    {
+      "id": "F05",
+      "status": "FAIL",
+      "expected": "23514",
+      "observed": "accepted"
+    },
+    {
+      "id": "R06",
+      "status": "PASS",
+      "expected": "23514",
+      "observed": "23514"
+    },
+    {
+      "id": "R07",
+      "status": "PASS",
+      "expected": "23514",
+      "observed": "23514"
+    },
+    {
+      "id": "F06",
+      "status": "FAIL",
+      "expected": "23514",
+      "observed": "accepted"
+    },
+    {
+      "id": "A01",
+      "status": "PASS",
+      "expected": "42501",
+      "observed": "42501"
+    },
+    {
+      "id": "A02",
+      "status": "PASS",
+      "expected": "42501",
+      "observed": "42501"
+    },
+    {
+      "id": "A03",
+      "status": "PASS",
+      "expected": "42501",
+      "observed": "42501"
+    },
+    {
+      "id": "D01",
+      "status": "PASS",
+      "expected": "42501",
+      "observed": "42501"
+    },
+    {
+      "id": "D02",
+      "status": "PASS",
+      "expected": "42501",
+      "observed": "42501"
+    },
+    {
+      "id": "A04",
+      "status": "PASS",
+      "expected": "creation and login audit",
+      "observed": "events=6"
+    },
+    {
+      "id": "A05",
+      "status": "PASS",
+      "expected": "no password/file bytes in audit",
+      "observed": "no payloads observed"
+    },
+    {
+      "id": "API01",
+      "status": "PASS",
+      "expected": "API rejects cross-owner parent with 422",
+      "observed": "422"
+    },
+    {
+      "id": "API02",
+      "status": "PASS",
+      "expected": "API rejects missing close date with 422",
+      "observed": "422"
+    },
+    {
+      "id": "A06",
+      "status": "PASS",
+      "expected": "data rolls back if audit insertion fails",
+      "observed": "42501; company count=0"
+    },
+    {
+      "id": "M05",
+      "status": "PASS",
+      "expected": "checksum drift refuses migration and preserves records",
+      "observed": "refused, counts preserved"
+    }
+  ],
+  "passed": 23,
+  "failed": 6
+}
