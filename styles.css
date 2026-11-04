@@ -822,3 +822,37 @@ th {
 .um-login-setup { min-width: 0; border: 1px solid var(--line); border-radius: 12px; margin: 20px 0; padding: 16px; }
 .um-login-setup .form-grid > * { min-width: 0; }
 @media (max-width: 640px) { .topbar { flex-wrap: wrap; } .account-menu { max-width: 100%; } }
+
+/* Adaptive workbench: existing brand tokens, light/dark theme and logical directions. */
+.app-shell { display:grid;grid-template-columns:minmax(210px,250px) minmax(0,1fr);align-items:start; }
+.sidebar {width:auto;position:sticky;top:0;height:100svh;box-sizing:border-box;overflow-y:auto;}
+.main {min-width:0;overflow-wrap:anywhere;}
+.workspace-toolbar {display:flex;gap:.6rem;align-items:center;overflow-x:auto;max-width:100%;padding:.8rem 0;margin-bottom:1rem;border-bottom:1px solid var(--line);scrollbar-width:thin;}
+.workspace-toolbar>* {flex:0 0 auto;white-space:nowrap;}
+.workspace-pending {font-size:.85rem;padding:.45rem .7rem;border:1px dashed var(--line);border-radius:.6rem;opacity:.8;}
+.workspace-pending small {display:block;font-size:.7rem;}
+.ws-menu-toggle {display:none;}
+.form-grid.ws-grid {display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:1rem;align-items:start;}
+.ws-grid>.ws-short {grid-column:span 3;}.ws-grid>.ws-medium {grid-column:span 4;}.ws-grid>.ws-wide {grid-column:span 6;}.ws-grid>.ws-full,.ws-grid>.full,.ws-grid>fieldset {grid-column:1/-1;}
+.ws-grid>* {min-width:0;}.ws-grid input:not([type='checkbox']):not([type='radio']),.ws-grid select,.ws-grid textarea {box-sizing:border-box;width:100%;max-width:100%;}
+.ws-grid textarea {min-height:7rem;resize:vertical;}.ws-required>label::after,.ws-required:has(>input[required])::after {content:' *';color:var(--danger);}
+.fw-section {display:grid;gap:1rem;}.fw-section fieldset {border:1px solid var(--line);border-radius:.7rem;padding:1rem;min-width:0;}.fw-section legend {font-weight:700;padding:0 .5rem;}
+.fw-message {padding:.8rem;border-inline-start:4px solid var(--warning);background:var(--panel);}.fw-section .table-wrap {max-width:100%;overflow:auto;}.fw-section td {overflow-wrap:anywhere;max-width:24rem;}
+.fw-actions {display:flex;flex-wrap:wrap;gap:.5rem;}.fw-section input,.fw-section select,.fw-section textarea {font:inherit;}.fw-section label {display:grid;gap:.4rem;}
+.fw-states {display:flex;flex-wrap:wrap;gap:.7rem;}.fw-states span {padding:.6rem;border:1px solid var(--line);border-radius:.5rem;}
+@media(max-width:1000px){.app-shell{grid-template-columns:210px minmax(0,1fr)}.ws-grid>.ws-short,.ws-grid>.ws-medium{grid-column:span 6}.ws-grid>.ws-wide{grid-column:span 12}.topbar{flex-wrap:wrap;gap:1rem}}
+@media(max-width:720px){.app-shell{display:block}.sidebar{position:relative;height:auto;padding:12px;}.sidebar-logo{padding-bottom:6px}.sidebar-logo-badge img{max-height:64px;object-fit:contain}.ws-menu-toggle{display:block;background:transparent;border:1px solid currentColor;border-radius:.5rem;padding:.6rem;color:inherit}.sidebar-nav{display:none}.ws-menu-open .sidebar-nav{display:flex;max-height:50svh;overflow-y:auto}.sidebar-footer{margin-top:0}.workspace-toolbar{position:sticky;top:0;background:var(--bg);z-index:5}.ws-grid>.ws-short,.ws-grid>.ws-medium,.ws-grid>.ws-wide{grid-column:1/-1}.user-controls{flex-wrap:wrap}.fw-section{min-width:0}}
+@media print{.sidebar,.topbar,.workspace-toolbar,.fw-section form,.fw-actions,.fw-message{display:none!important}.app-shell{display:block}.main{padding:0}.table-wrap{overflow:visible!important}table{width:100%;font-size:9pt}body{background:white!important;color:black!important}}
+.ws-grid[hidden],.ws-grid>[hidden] {display:none!important;}
+@media(prefers-color-scheme:dark){:root{--bg:#211c1a;--panel:#2c2521;--panel-alt:#352b25;--text:#f6eee7;--muted:#c6b4a8;--line:#574237;--primary-soft:#4a2d27;--gold-soft:#493d25;}body{background:linear-gradient(180deg,#211c1a,#2b211c)}.input,input,select,textarea{color:var(--text);background-color:var(--panel)}.workspace-toolbar{background:var(--bg)}}
+/* Logical form groups keep the original controls and form ownership. */
+.form-grid > .ws-fieldgroup { grid-column: 1 / -1; min-width: 0; margin: 0; padding: 14px; border: 1px solid var(--line); border-radius: 12px; }
+.ws-fieldgroup > legend { padding-inline: 8px; font-weight: 700; }
+.ws-fieldgroup > .form-grid { margin: 0; }
+@media (prefers-color-scheme: dark) {
+ html, body, .main { background: var(--bg); }
+ .company-desc, .empty-state, .empty-state-table, .stat-card { background: var(--panel-alt); }
+ .topbar h1, .content-panel h2, .content-panel h3, .um-editor h3, .fw-section legend, .auth-link, .auth-preview summary, .auth-audit summary { color: var(--text); }
+ #um-notice:not(:empty), #area-message:not(:empty) { color: var(--text); }
+ .account-menu > summary { color: #241918; }
+}
