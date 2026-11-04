@@ -1,0 +1,25 @@
+name: Read protected test-project identity only
+on:
+  push:
+    branches: [verify/render-test-binding-20261104]
+permissions:
+  contents: read
+jobs:
+  identity:
+    environment: supabase-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fingerprint project origin without exposing protected configuration
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        run: |
+          node <<'NODE'
+          try {
+            if(process.env.GITHUB_REPOSITORY!=='dubai717/ab-group-demo'||process.env.GITHUB_REF!=='refs/heads/verify/render-test-binding-20261104')throw Error();
+            const u=new URL(process.env.SUPABASE_URL||'');
+            if(u.protocol!=='https:'||!(/^[a-z0-9]{20}\.supabase\.co$/.test(u.hostname))||u.pathname!=='/'||u.username||u.password||u.search||u.hash)throw Error();
+            console.log('CHECK: TEST_PROJECT_ORIGIN_SHA256='+require('node:crypto').createHash('sha256').update(u.origin).digest('hex'));
+            console.log('RESULT: REFERENCE_READY; NO_CLOUD_REQUESTS_OR_CHANGES; NO_CREDENTIAL_VALUES');
+          } catch {console.log('RESULT: REFERENCE_UNAVAILABLE; VALUES_WITHHELD');process.exitCode=1;}
+          NODE
