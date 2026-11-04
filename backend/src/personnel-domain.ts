@@ -4,7 +4,7 @@ import { requireOk, ApiError } from './core.js';
 import { has, audit } from './data.js';
 import { number, today } from './vehicle-domain.js';
 import { financeRight } from './finance.js';
-import { L, event, journal, resolve, chart, line, balance, createFinancialVoucher } from './ledger-domain.js';
+import { L, event, journal, resolve, chart, line, balance, createFinancialVoucher,config as financialConfig } from './ledger-domain.js';
 const CustomerPolicy = createRequire(import.meta.url)('../../customer-policy.js');
 export const H = createRequire(import.meta.url)('../../personnel-policy.js') as {
     rights: string[];
@@ -124,14 +124,15 @@ export async function legalEOS(c: any, cipher: any, e: any, asOf = today()) { le
 catch {
     return { available: false, reason: 'compensationRequired' };
 } const privateData = cipher.open(e.private_cipher), settled = (await c.query("select t.payload_cipher,v.status from ab.hr_terminations t left join ab.finance_vouchers v on v.id=t.voucher_id where t.employee_id=$1 and t.state='Settled'", [e.id])).rows.filter((r: any) => r.status === 'Paid').reduce((n: bigint, r: any) => n + H.units(cipher.open(r.payload_cipher).settlement?.eosAmount || '0'), 0n); return { ...H.eos({ regime: privateData.legalRegime || 'unconfigured', start: e.hired_on.toISOString().slice(0, 10), end: asOf, basic: comp.data.basic, unpaidDays: privateData.excludedServiceDays || 0, settled: H.money(settled) }), currency: comp.currency, companyId: comp.company_id }; }
-export async function payrollPreview(c: any, cipher: any, e: any, month: string) {const end=new Date(month+'T00:00:00Z');end.setUTCMonth(end.getUTCMonth()+1);requireOk(e.hired_on<end,422,'payrollBeforeHire');requireOk(!(await c.query("select 1 from ab.hr_terminations where employee_id=$1 and state in('Approved','Settled')and last_on<$2",[e.id,month])).rowCount,409,'payrollAfterEmployment'); const comp = await compensation(c, e.id, month, cipher), decisions = (await c.query("select * from ab.hr_decisions where employee_id=$1 and company_id=$2 and month=$3 and state='Approved'and not exists(select 1 from ab.hr_payroll_decisions x where x.decision_id=hr_decisions.id) order by hr_decisions.id", [e.id, comp.company_id, month])).rows; requireOk(decisions.every((r:any)=>cipher.open(r.payload_cipher).currency===comp.currency),409,'decisionCurrencyChangedReviewRequired');const gross: bigint = H.units(comp.data.basic) + H.units(comp.data.allowances) + decisions.filter((d: any) => d.kind !== 'deduction').reduce((n: bigint, d: any) => n + H.units(d.amount), 0n), deductions: bigint = decisions.filter((d: any) => d.kind === 'deduction').reduce((n: bigint, d: any) => n + H.units(d.amount), 0n); requireOk(gross >= deductions, 422, 'deductionsExceedSalary'); const cfg = await settings(c, cipher, comp.company_id); if (deductions)
+export async function deductionAccount(c:any,cipher:any,co:string,currency:string,definitionId:string){const counter=await resolve(c,co,currency,definitionId),financial=await financialConfig(c,cipher,co);requireOk(!counter.bank_account_id&&!(await c.query('select 1 from ab.finance_funds where chart_id=$1',[counter.id])).rowCount&&counter.id!==financial?.custodyAccountId,422,'payrollLiquidityAccountForbidden');return counter;}
+export async function payrollPreview(c: any, cipher: any, e: any, month: string) {const end=new Date(month+'T00:00:00Z');end.setUTCMonth(end.getUTCMonth()+1);requireOk(e.hired_on<end,422,'payrollBeforeHire');requireOk(!(await c.query("select 1 from ab.hr_terminations where employee_id=$1 and state in('Approved','Settled')and last_on<$2",[e.id,month])).rowCount,409,'payrollAfterEmployment'); const comp = await compensation(c, e.id, month, cipher), decisions = (await c.query("select * from ab.hr_decisions where employee_id=$1 and company_id=$2 and month=$3 and state='Approved'and kind<>'void'and not exists(select 1 from ab.hr_decisions v where v.reverses_id=hr_decisions.id and v.state='Approved')and not exists(select 1 from ab.hr_payroll_decisions x where x.decision_id=hr_decisions.id) order by hr_decisions.id", [e.id, comp.company_id, month])).rows; requireOk(decisions.every((r:any)=>cipher.open(r.payload_cipher).currency===comp.currency),409,'decisionCurrencyChangedReviewRequired');const gross: bigint = H.units(comp.data.basic) + H.units(comp.data.allowances) + decisions.filter((d: any) => d.kind !== 'deduction').reduce((n: bigint, d: any) => n + H.units(d.amount), 0n), deductions: bigint = decisions.filter((d: any) => d.kind === 'deduction').reduce((n: bigint, d: any) => n + H.units(d.amount), 0n); requireOk(gross >= deductions, 422, 'deductionsExceedSalary'); const cfg = await settings(c, cipher, comp.company_id); if (deductions)
     requireOk(Number.isInteger(cfg.legalDeductionMaxBps) && deductions * 10000n <= gross * BigInt(cfg.legalDeductionMaxBps), 422, 'deductionPolicyRequired'); return { compensationId: comp.id, payingCompanyId: comp.company_id, currency: comp.currency, basic: comp.data.basic, allowances: comp.data.allowances, gross: H.money(gross), deductions: H.money(deductions), net: H.money(gross - deductions), allocations: H.allocate(H.money(gross), comp.data.allocations), decisions: decisions.map((r: any) => ({ ...r, details: cipher.open(r.payload_cipher), payload_cipher: undefined })), month }; }
 export async function accruePayroll(c: any, cipher: any, m: any, s: any, e: any, slip: any, data: any) {
     const cfg = await settings(c, cipher, slip.company_id);
     requireOk(cfg.payrollItemId, 409, 'payrollFinancialMappingRequired');
     const it = (await c.query('select * from ab.finance_items where id=$1', [cfg.payrollItemId])).rows[0];
     requireOk(it?.active, 422, 'invalidItem');
-    const mapping = cipher.open(it.payload_cipher), payable = await resolve(c, slip.company_id, slip.currency, mapping.payableId), lines: any[] = [];
+    const mapping = cipher.open(it.payload_cipher), payable = await resolve(c, slip.company_id, slip.currency, mapping.payableId), lines: any[] = [];requireOk(payable.kind==='liability'&&!payable.bank_account_id,422,'payrollLiabilityRequired');
     for (const a of data.allocations) {
         need(m, 'payroll_approve', a.companyId);
         const expense = await resolve(c, a.companyId, slip.currency, mapping.expenseId);
@@ -148,7 +149,7 @@ export async function accruePayroll(c: any, cipher: any, m: any, s: any, e: any,
     if (H.units(data.net))
         lines.push(line(payable, -H.units(data.net)));
     for (const d of data.decisions.filter((d: any) => d.kind === 'deduction')) {
-        const counter = await resolve(c, slip.company_id, slip.currency, d.details.counterpartDefinitionId);
+        const counter=await deductionAccount(c,cipher,slip.company_id,slip.currency,d.details.counterpartDefinitionId);
         lines.push(line(counter, -H.units(d.amount)));
     }
     if (H.units(data.gross))

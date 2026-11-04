@@ -31,7 +31,7 @@
     {
       "name": "013_personnel_tasks_performance.sql",
       "path": "supabase/proposed/013_personnel_tasks_performance.sql",
-      "sha256": "ebe9a4894ddfa15d7b92a71d8a00e255c289567922a5c1cf15b1f69d18c0d90f",
+      "sha256": "9cdf974b9a57cb5d9cde44458b3ecce6773803dbe975f354ecb93b673de8a45f",
       "guardTable": "ab.hr_employees"
     }
   ],
