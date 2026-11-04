@@ -6,7 +6,8 @@
 })(typeof window !== 'undefined' ? window : globalThis, function () {
   'use strict';
   const bankActions = ['view', 'create', 'edit', 'close', 'view_documents', 'manage_documents'];
-  const actions = ['create', 'edit', 'status', 'assign', 'grant', 'reset', 'attachments', 'redelegate', ...bankActions.map(a => 'bank_' + a)];
+  const financeActions=['view','create','approve','cheques','custody','receive_custody','reconcile','chart','notifications','print','export','sensitive'].map(a=>'finance_'+a);
+  const actions = ['create', 'edit', 'status', 'assign', 'grant', 'reset', 'attachments', 'redelegate', ...bankActions.map(a => 'bank_' + a), ...financeActions];
   const legacy = { create: 'create_user', edit: 'edit_user', status: 'deactivate_user' };
   const copy = value => JSON.parse(JSON.stringify(value));
   const clean = user => { const value = copy(user); delete value.password; return value; };
@@ -78,7 +79,7 @@
       if (!target?.id) return false;
       const actor = user(id);
       const legacyViewer = actor?.status === 'Active' && (actor.roleId === 'general_manager' || roles.find(r => r.id === actor.roleId)?.permissions.includes('view_users'));
-      return actor?.status === 'Active' && (id === target.id || legacyViewer || actions.filter(action => !action.startsWith('bank_')).some(action => can(id, action, target)));
+      return actor?.status === 'Active' && (id === target.id || legacyViewer || actions.filter(action => !action.startsWith('bank_')&&!action.startsWith('finance_')).some(action => can(id, action, target)));
     }
     function validate(data, targetId) {
       if (((!records.has(targetId) || user(targetId)?.nameAr) && !data.nameAr?.trim()) || !data.nameEn?.trim() || !/^[A-Za-z0-9_.-]{3,64}$/.test(data.username || '') || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email || '')) throw new Error('invalid');
@@ -146,7 +147,7 @@
     }
     function grant(actorId, targetId, entry) {
       const target = user(targetId); requireAction(actorId, 'grant', target);
-      if (String(entry.action).startsWith('bank_') && !['group', 'company'].includes(entry.scope?.type)) throw new Error('denied');
+      if ((String(entry.action).startsWith('bank_')||String(entry.action).startsWith('finance_')) && !['group', 'company'].includes(entry.scope?.type)) throw new Error('denied');
       if (targetId === actorId || target.roleId === 'owner' || !actions.includes(entry.action) || !validScope(entry.scope)) throw new Error('denied');
       if (!effective(actorId, 'grant').some(g => scopeContains(g.scope, entry.scope))) throw new Error('denied');
       if (!isOwner(actorId) && !effective(actorId, 'redelegate').some(g => scopeContains(g.scope, entry.scope))) throw new Error('denied');
@@ -239,6 +240,8 @@
     bank_view:'Bank accounts: view', bank_create:'Bank accounts: create', bank_edit:'Bank accounts: edit', bank_close:'Bank accounts: close', bank_view_documents:'Bank documents: view', bank_manage_documents:'Bank documents: add'
   });
   let service, selected = null, notice = '', query = '', filterStatus = '', filterCompany = '', filterDept = '', previewUrl;
+  const financeLabels={view:['عرض العمليات المالية','View finance'],create:['إنشاء عملية مالية','Create finance operation'],approve:['اعتماد مالي','Approve finance'],cheques:['إدارة الشيكات','Manage cheques'],custody:['تسجيل العهد والتسليم','Record custody/handover'],receive_custody:['تأكيد استلام العهدة','Confirm custody receipt'],reconcile:['المطابقة البنكية','Reconcile banks'],chart:['تهيئة دليل الحسابات','Configure chart'],notifications:['تحديد مستلمي الإشعار','Configure notification recipients'],print:['طباعة تقارير مالية','Print finance reports'],export:['تصدير تقارير مالية','Export finance reports'],sensitive:['البيانات المالية الحساسة','Sensitive finance data']};
+  for(const [k,v] of Object.entries(financeLabels)){messages.ar['finance_'+k]=v[0];messages.en['finance_'+k]=v[1];}
   function t(key) { return messages[getLocale() === 'ar' ? 'ar' : 'en'][key] || key; }
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function getService() { if (!service) service = createService({...app.state, users:[...app.state.users, ...DemoCredentials.directory()]}, undefined, {initialGrants:globalThis.ABCentral?.enabled?globalThis.ABCentral.grants:[],initialAudit:globalThis.ABCentral?.enabled?globalThis.ABCentral.audit:[],save:(candidate, verifier)=>DemoCredentials.saveProfile(candidate, verifier)}); else service.syncDirectories(app.state); return service; }
@@ -332,7 +335,7 @@
       if(actorId()!==submittedActor||selected!==submittedTarget||!form.isConnected)throw new Error('denied');
       const saved=s.update(submittedActor,submittedTarget||null,data,attachments,{roleId:previous?undefined:String(fd.get('baseRole')||'employee'),verifier});selected=saved.id;refresh(localLogin||DemoCredentials.directory().some(u=>u.id===saved.id)?'savedLocalLogin':'saved');
     } catch(error) { const node=document.getElementById('um-notice');if(node)node.textContent=t(error.message); } finally { if(button.isConnected)button.disabled=false; } });
-    function grantScopeChoices(){const action=document.getElementById('um-action')?.value,scope=document.getElementById('um-scope');if(!scope)return;for(const option of scope.options)option.disabled=action?.startsWith('bank_')&&!['group','company'].includes(option.value);if(scope.selectedOptions[0]?.disabled)scope.value='company';scopeOptions();}
+    function grantScopeChoices(){const action=document.getElementById('um-action')?.value,scope=document.getElementById('um-scope');if(!scope)return;for(const option of scope.options)option.disabled=(action?.startsWith('bank_')||action?.startsWith('finance_'))&&!['group','company'].includes(option.value);if(scope.selectedOptions[0]?.disabled)scope.value='company';scopeOptions();}
     document.getElementById('um-action')?.addEventListener('change',grantScopeChoices);document.getElementById('um-scope')?.addEventListener('change',scopeOptions);grantScopeChoices();
     document.getElementById('um-grant')?.addEventListener('submit',event=>{event.preventDefault();run(()=>{const fd=new FormData(event.target);s.grant(actorId(),selected,{action:String(fd.get('action')),scope:{type:String(fd.get('scope')),id:String(fd.get('scopeId')||'')},delegable:fd.get('delegable')==='on'});refresh('granted');});});
   }
