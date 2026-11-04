@@ -13,6 +13,8 @@ export class TestAuth implements AuthProvider {
     this.accounts.set(email, { id, password });
     return id;
   }
+  async inspect(id:string){for(const [email,a]of this.accounts)if(a.id===id)return {id,email,confirmed:true};throw new ApiError(404,'notFound');}
+  async setPassword(id:string,password:string){for(const a of this.accounts.values())if(a.id===id){a.password=password;return;}throw new ApiError(404,'notFound');}
   async login(email: string, password: string) {
     const a = this.accounts.get(email);
     if (!a || a.password !== password) throw new ApiError(401, "loginFailed");

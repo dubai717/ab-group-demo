@@ -1,3 +1,4 @@
+import {registerTestUsers,assertTestAccess,registryKey} from './test-users.js';
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import rateLimit from "@fastify/rate-limit";
@@ -46,6 +47,7 @@ export interface Options {
     mime: string,
   ) => Promise<"clean" | "pending" | "rejected">;
   serveFrontend?: boolean;
+  testUsersEnabled?: boolean;
 }
 export async function build(options: Options) {
   const { pool, auth, objects } = options,
@@ -150,6 +152,7 @@ export async function build(options: Options) {
       401,
       "loginRequired",
     );
+    await transaction(pool,s.tenant_id,s.user_id,c=>assertTestAccess(c,s.user_id,options.testUsersEnabled===true));
     if (!["GET", "HEAD"].includes(req.method)) {
       const expected = cipher.digest("csrf:" + sid),
         actual = String(req.headers["x-csrf-token"] || "");
@@ -162,6 +165,7 @@ export async function build(options: Options) {
     }
     return { ...s, sid };
   };
+  registerTestUsers(app,{pool,key:options.key,auth,enabled:options.testUsersEnabled===true,session});
   const call =
     (handler: (c: PoolClient, m: any, s: any, req: any) => Promise<any>) =>
     async (req: any) => {
@@ -248,6 +252,7 @@ export async function build(options: Options) {
         requireOk(p, 401, "loginFailed");
         const sid = randomBytes(32).toString("base64url");
         await transaction(pool, p.tenant_id, p.id, async (c) => {
+          await assertTestAccess(c,p.id,options.testUsersEnabled===true);
           await c.query("insert into ab.sessions values($1,$2,$3,$4,$5)", [
             sha(sid),
             p.tenant_id,
@@ -349,6 +354,7 @@ export async function build(options: Options) {
         .rows;
       return {
         actor: m.actor,
+        testUsersAvailable: options.testUsersEnabled===true&&m.actor.roleId==='owner'&&settings.some(row=>row.key===registryKey),
         audit: ownAudit,
         summary: m.policy.summary(),
         bankAccountAudit,
@@ -1126,6 +1132,7 @@ export async function build(options: Options) {
       "demo-credentials.js",
       "auth-flows.js",
       "central-client.js",
+      "test-users-ui.js",
       "vehicle-policy.js",
       "vehicles.js",
       "customer-policy.js",

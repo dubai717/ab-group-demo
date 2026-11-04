@@ -78,6 +78,8 @@ export interface AuthProvider {
   verify(token: string): Promise<string>;
   create(email: string, password: string): Promise<string>;
   logout(token: string): Promise<void>;
+  inspect?(id:string):Promise<{id:string;email:string;confirmed:boolean}>;
+  setPassword?(id:string,password:string):Promise<void>;
 }
 export interface ObjectStore {
   put(key: string, bytes: Buffer): Promise<void>;
@@ -183,6 +185,17 @@ export function supabase(
       );
       const d = (await r.json()) as any;
       return d.id;
+    },
+    async inspect(id) {
+      requireOk(adminKey&&/^[a-f0-9-]{36}$/.test(id),503,'providerUnavailable');
+      const r=await call('/auth/v1/admin/users/'+id,adminKey,{},adminKey);const d=await r.json() as any;
+      requireOk(d.id===id&&typeof d.email==='string',502,'providerUnavailable');
+      return {id:d.id,email:d.email,confirmed:!!d.email_confirmed_at};
+    },
+    async setPassword(id,password) {
+      requireOk(adminKey&&/^[a-f0-9-]{36}$/.test(id),503,'providerUnavailable');
+      const r=await call('/auth/v1/admin/users/'+id,adminKey,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({password})},adminKey);
+      requireOk((await r.json() as any).id===id,502,'providerUnavailable');
     },
     async logout(token) {
       requireOk(token && !token.startsWith("sb_"), 401, "loginRequired");

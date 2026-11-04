@@ -1,3 +1,4 @@
+import {testUsersEnvironment} from './test-users.js';
 import {releaseInfo} from '../deploy/release-info.js';
 import {startPersonnelJobs} from './personnel-jobs.js';
 import {startFinancialJobs} from './financial-jobs.js';
@@ -59,6 +60,7 @@ const app = await build({
   secureCookies: !local,
   auth,
   objects,
+  testUsersEnabled:testUsersEnvironment(process.env),
 });
 app.get('/api/release',async()=>releaseInfo(process.env));
 await app.listen({

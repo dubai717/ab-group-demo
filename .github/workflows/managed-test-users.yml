@@ -1,0 +1,46 @@
+name: Approved managed test users only
+on:
+  push:
+    branches: [verify/managed-test-users-20261104]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: ab-managed-test-users
+  cancel-in-progress: false
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    environment: supabase-test
+    timeout-minutes: 15
+    steps:
+      - name: Require successful full PR checks for this exact candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node <<'NODE'
+          (async()=>{try{
+            const e=process.env;if(e.GITHUB_REPOSITORY!=='dubai717/ab-group-demo'||e.GITHUB_REF!=='refs/heads/verify/managed-test-users-20261104'||e.GITHUB_EVENT_NAME!=='push')throw Error();
+            const r=await fetch('https://api.github.com/repos/dubai717/ab-group-demo/actions/runs?head_sha='+e.GITHUB_SHA+'&event=pull_request&per_page=100',{headers:{authorization:'Bearer '+e.GH_TOKEN,accept:'application/vnd.github+json'},redirect:'error',signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error();
+            const d=await r.json();if(!d.workflow_runs.some(x=>x.head_sha===e.GITHUB_SHA&&x.path==='.github/workflows/staging-ci.yml'&&x.head_branch==='feature/test-users'&&x.status==='completed'&&x.conclusion==='success'))throw Error();
+            console.log('RESULT: EXACT_CANDIDATE_FULL_CI_VERIFIED');
+          }catch{console.log('RESULT: STOP_FULL_CI_NOT_VERIFIED; NO_ACCOUNT_CHANGES');process.exitCode=1;}})();
+          NODE
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Create only registered fictional accounts and verify real Auth, runtime RLS and role scopes
+        env:
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
+        run: node --import tsx backend/deploy/provision-managed-test-users.ts
+      # No deploy hook, migrations, artifacts, screenshots, credential files or cleanup deletes.
