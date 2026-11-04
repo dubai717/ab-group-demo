@@ -1,0 +1,47 @@
+# INERT TEMPLATE. Do not rename/enable until owner approves first paid staging deploy.
+# Keep Render auto-deploy Off: only this explicit success-gated job may trigger it.
+name: AB Group approved staging deployment
+# After approval, replace staging-ci.yml with this wrapper; no main merge needed.
+on:
+  push:
+    branches: [staging/ab-group-test]
+  pull_request:
+    branches: [staging/ab-group-test]
+permissions:
+  contents: read
+concurrency:
+  group: staging-ci-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  staging-checks:
+    uses: ./.github/workflows/staging-checks.yml
+  deploy:
+    needs: staging-checks
+    if: >-
+      vars.RENDER_STAGING_DEPLOY_ENABLED == 'true' &&
+      needs.staging-checks.result == 'success' &&
+      github.event_name == 'push' &&
+      github.repository == 'dubai717/ab-group-demo' &&
+      github.ref == 'refs/heads/staging/ab-group-test'
+    environment: render-staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # No checkout/build/artifact execution in the privileged deployment job.
+      - name: Deploy only the exact successfully tested commit
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+          TESTED_SHA: ${{ github.sha }}
+        run: |
+          node --input-type=module <<'JS'
+          try {
+            const sha=process.env.TESTED_SHA;
+            if(!/^[a-f0-9]{40}$/.test(sha||''))throw Error();
+            const u=new URL(process.env.RENDER_DEPLOY_HOOK);
+            if(u.protocol!=='https:'||u.hostname!=='api.render.com'||!u.pathname.startsWith('/deploy/'))throw Error();
+            u.searchParams.set('ref',sha);
+            const r=await fetch(u,{method:'POST',redirect:'error',signal:AbortSignal.timeout(30000)});
+            if(!r.ok)throw Error();
+            console.log('PASS: tested staging commit submitted; platform health/browser verification still required');
+          } catch {console.log('STOP: deploy submission failed; URL/token/provider details withheld');process.exitCode=1;}
+          JS

@@ -24,6 +24,11 @@ const pool = new Pool({
   ...databaseOptions(process.env.DATABASE_URL!, local),
   max: 10,
 });
+// Suppress raw pool connection objects in unattended staging logs.
+pool.on("error", () => {
+  console.log("STOP: database connection lost; details withheld");
+  process.exitCode = 1;
+});
 const role = (
   await pool.query(
     "select current_user name,rolsuper,rolbypassrls,rolcreaterole,exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='ab' and c.relowner=r.oid) owns_tables from pg_roles r where rolname=current_user",

@@ -1,0 +1,46 @@
+name: AB Group reusable staging checks
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  staging-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - name: Install locked dependencies without installation scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build staging application without cloud access
+        run: node backend/deploy/build.mjs
+      - name: Existing demo data and behavior regressions
+        run: node --test tests/*.test.cjs
+      - name: Prepare isolated synthetic PostgreSQL only
+        run: npm run backend:test:db
+      - name: Server authorization RLS and isolated backup restoration
+        run: npm run backend:test
+      - name: Install pinned browser for desktop and phone checks
+        run: node node_modules/playwright/cli.js install --with-deps chromium
+      - name: Exercise existing central UI against synthetic local providers
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --import tsx backend/tests/serve-fixture.ts > work/browser-fixture.log 2>&1 &
+          fixture_pid=$!
+          trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null; then break; fi
+            if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null
+          node backend/tests/central.browser.cjs
+      - name: Validate portable image builds without credentials
+        run: docker build -f Dockerfile.staging -t ab-group-staging-ci:${{ github.sha }} .
+      - name: Required checks completed
+        run: echo 'PASS - build, preservation, authorization, RLS, backup restore, browser and portable image; no cloud deployment'
