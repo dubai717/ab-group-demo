@@ -1,0 +1,9 @@
+name: Approved six-phase post-merge checks (no deployment)
+on:
+  push:
+    branches: [verify/six-phase-post-merge-20261104]
+permissions:
+  contents: read
+jobs:
+  checks:
+    uses: ./.github/workflows/staging-checks.yml
