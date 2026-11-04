@@ -1,0 +1,70 @@
+name: Controlled staging delivery verification ONLY
+on:
+  push:
+    branches: [verify/staging-delivery-preflight-20261104]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node node_modules/typescript-portable/bin/tsc -p backend/tsconfig.json
+      - run: node --import tsx --test backend/tests/preserved-staging-release.test.ts backend/tests/private-backup-store.test.ts backend/tests/release-info.test.ts backend/tests/safe-staging-additives.test.ts backend/tests/staging-delivery-policy.test.ts backend/tests/staging-workflow.test.ts
+  restored-schema13:
+    needs: checks
+    environment: supabase-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Isolated PostgreSQL 17
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --detach --name ab-backup-drill-postgres --publish 127.0.0.1:5547:5432 --tmpfs /var/lib/postgresql/data:rw,nosuid,nodev,size=1g -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_DB=ab_drill postgres:17 > /dev/null
+          docker cp backend/certificates/supabase-prod-ca-2021.crt ab-backup-drill-postgres:/tmp/ab-ca.crt
+          for i in $(seq 1 60); do
+            if docker exec ab-backup-drill-postgres pg_isready -U postgres -d ab_drill > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Fresh schema-13 private backup and local rehearsal only
+        env:
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
+          AB_STAGING_AUTOMATION: controlled-test-only
+          AB_BACKUP_DRILL_APPROVED: read-only-source-isolated-restore
+          AB_BACKUP_RETAIN_APPROVED: private-bucket-no-overwrite
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          node --import tsx backend/deploy/backup-restore-drill.ts
+          node -e 'require("node:fs").writeFileSync("supabase/additive/014_rehearsal_probe.json",JSON.stringify({format:"AB-SAFE-ADDITIVE-1",operations:[{kind:"addNullableColumn",table:"companies",column:"custom_ci_probe",type:"text"},{kind:"createIndex",table:"companies",columns:["created_at"]}]}),{flag:"wx"})'
+          node --import tsx backend/deploy/apply-safe-staging-additives.ts --rehearse-only
+          node --import tsx --input-type=module <<'NODE'
+          import {Pool} from 'pg';
+          import {databaseOptions,assertVerifiedDatabaseTls} from './backend/src/database.ts';
+          const pool=new Pool({...databaseOptions(process.env.MIGRATION_DATABASE_URL),max:1,options:'-c default_transaction_read_only=on'});pool.on('error',()=>{});
+          try{const c=await pool.connect();try{assertVerifiedDatabaseTls(c);await c.query('BEGIN READ ONLY');const r=await c.query("select count(*)n from public.ab_schema_migrations");const a=await c.query("select count(*)n from pg_attribute where attrelid='ab.companies'::regclass and attname='custom_ci_probe' and not attisdropped");if(Number(r.rows[0].n)!==13||Number(a.rows[0].n)!==0)throw Error();await c.query('ROLLBACK');console.log('RESULT: HOSTED_SCHEMA_STILL_13_AND_PROBE_ABSENT; ONLY_ISOLATED_CLONE_CHANGED');}finally{await c.query('ROLLBACK').catch(()=>{});c.release();}}catch{console.log('RESULT: SOURCE_UNCHANGED_CHECK_FAILED; NO_MUTATION_REQUESTED');process.exitCode=1;}finally{await pool.end();}
+          NODE
+      - if: always()
+        run: |
+          docker rm --force --volumes ab-backup-drill-postgres > /dev/null 2>&1 || true
+          rm -rf -- work/backups
+      # No deploy secret, no hook calls, and no source schema changes.
