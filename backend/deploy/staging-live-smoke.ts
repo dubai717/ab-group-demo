@@ -2,6 +2,7 @@
 import {Pool} from 'pg';
 import {randomBytes,randomUUID} from 'node:crypto';
 import {sha,security,supabase,supabaseKeys} from '../src/core.js';
+import {deniedCompanyResponse} from './staging-smoke-response.js';
 import {initializeOrganization} from '../src/bootstrap.js';
 import {databaseOptions,assertVerifiedDatabaseTls} from '../src/database.js';
 let admin:Pool|undefined,stage='GUARD';
@@ -20,7 +21,7 @@ try{
  stage='BANK_PERSISTENCE';const bank=await(await req('POST','/api/bank-accounts',{companyId:created.id,licenseId:co.licenseId,bankId:'demo-bank',branch:'Fictional branch',accountName:'Fictional CI account',accountNumber:'000123',iban:'AE070331234567890123456',swift:'BOMLAEAD',openedAt:'2026-01-01',closedAt:'',status:'Active',purposeId:'operations',openingBalance:'1000.125',currency:'AED',relationshipManagerName:'Fictional manager',relationshipManagerPhone:'+971500000001',relationshipManagerEmail:'fictional-manager@example.test'})).json()as any;const saved=await(await req('GET','/api/bank-accounts/'+bank.id)).json()as any;need(saved.relationshipManagerEmail==='fictional-manager@example.test'&&saved.openingBalance==='1000.125','BANK_SAVE');
  stage='RENDER_DATA_KEY_COMPATIBILITY';const stored=(await admin.query('select payload_cipher from ab.bank_accounts where id=$1 and tenant_id=$2',[bank.id,fixture.tenant])).rows[0];need(stored&&security(process.env.DATA_ENCRYPTION_KEY||'').open(stored.payload_cipher).accountName==='Fictional CI account','ENCRYPTION_KEY_MISMATCH');
  stage='MODULE_AVAILABILITY';for(const module of ['customers','vehicles','ledger','personnel']){const r=await(await req('GET','/api/'+module+'/capabilities')).json()as any;need(r.available===true,'MODULE_SCHEMA_UNAVAILABLE');}
- stage='CROSS_TENANT_DENIAL';const foreign=(await admin.query('select id from ab.companies where tenant_id<>$1 limit 1',[fixture.tenant])).rows[0];if(foreign){const denied=await fetch(origin+'/api/companies/'+foreign.id,{headers:{origin,'x-ab-request':'1',cookie},redirect:'error',signal:AbortSignal.timeout(20000)});need([403,404].includes(denied.status),'CROSS_TENANT_LEAK');await denied.body?.cancel();}
+ stage='CROSS_TENANT_DENIAL';const foreign=(await admin.query('select id from ab.companies where tenant_id<>$1 limit 1',[fixture.tenant])).rows[0];if(foreign){const denied=await fetch(origin+'/api/companies/'+foreign.id,{headers:{origin,'x-ab-request':'1',cookie},redirect:'error',signal:AbortSignal.timeout(20000)});const body=await denied.json().catch(()=>null);need(deniedCompanyResponse(denied.status,body),'CROSS_TENANT_REJECTION_CONTRACT');console.log('CHECK: CROSS_TENANT_COMPANY_DENIED_HTTP='+denied.status+'; GENERIC_ERROR_ONLY');}
  await req('POST','/api/logout',{});
  stage='LIVE_BROWSER';const {chromium}=await import('playwright'),browser=await chromium.launch({headless:true,args:['--no-sandbox']});try{
   for(const width of [1440,390]){const context=await browser.newContext({viewport:{width,height:900}}),page=await context.newPage();let errors=0;page.on('pageerror',()=>errors++);

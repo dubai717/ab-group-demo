@@ -3,5 +3,6 @@
   "origin": "https://ab-group-demo.onrender.com",
   "projectOriginSha256": "9ea1a5dcb06a135b7c29d99699651b34d11f795d525b7861865c0c842fff954f",
   "approvedInitialCommit": "e6f4819c30252e113e5f414c7eeebab25aae01b8",
-  "deployHookPathSha256": "1c793fece40e7349912840f750ab887e5907c17a3b49c71531d7fe6b8ceba9b5"
+  "deployHookPathSha256": "1c793fece40e7349912840f750ab887e5907c17a3b49c71531d7fe6b8ceba9b5",
+  "initialInspectorRetryCommit": "9de9e7c67c56013dda6d10ccbeb69ac20c5eb7da"
 }
