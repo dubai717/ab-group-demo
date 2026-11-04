@@ -1,0 +1,36 @@
+name: Supabase owner-approved eight migrations (no deployment)
+on:
+  push:
+    branches:
+      - 'verify/supabase-test-migrate-approved-20261102'
+permissions:
+  contents: read
+concurrency:
+  group: ab-group-supabase-test
+  cancel-in-progress: false
+jobs:
+  apply-approved-schema:
+    if: github.repository == 'dubai717/ab-group-demo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: supabase-test
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Apply only owner-approved SQL and stop on any impactful error
+        env:
+          AB_SYNTHETIC_PROJECT: 'yes'
+          APP_ENV: staging
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
+          SUPABASE_BUCKET: ab-private-test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        run: node --import tsx backend/actions/approved-schema.ts
