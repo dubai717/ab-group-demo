@@ -1,0 +1,14 @@
+name: AB Group staging checks (no deployment or cloud secrets)
+on:
+  push:
+    branches: [staging/ab-group-test]
+  pull_request:
+    branches: [staging/ab-group-test]
+permissions:
+  contents: read
+concurrency:
+  group: staging-ci-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  staging-checks:
+    uses: ./.github/workflows/staging-checks.yml

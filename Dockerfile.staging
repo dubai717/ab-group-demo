@@ -1,0 +1,29 @@
+# Portable alternative only; Render uses its native Node runtime initially.
+FROM node:24-bookworm-slim AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN --mount=type=secret,id=proxy_ca,required=false \
+    if [ -f /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
+    npm ci --ignore-scripts --omit=optional --no-audit --no-fund
+COPY backend ./backend
+RUN node backend/deploy/build.mjs
+FROM node:24-bookworm-slim AS dependencies
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN --mount=type=secret,id=proxy_ca,required=false \
+    if [ -f /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
+    npm ci --omit=dev --omit=optional --ignore-scripts --no-audit --no-fund
+FROM node:24-bookworm-slim
+WORKDIR /app
+ENV NODE_ENV=production APP_ENV=staging PORT=10000 NODE_EXTRA_CA_CERTS=/app/backend/certificates/supabase-prod-ca-2021.crt
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=build /app/backend-build ./backend-build
+COPY package.json ./
+COPY backend/certificates ./backend/certificates
+COPY index.html app.js styles.css area-reference.js company-documents.js bank-accounts.js user-management.js demo-credentials.js auth-flows.js central-client.js ./
+COPY assets ./assets
+COPY data ./data
+USER node
+EXPOSE 10000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s CMD node -e "fetch('http://127.0.0.1:'+process.env.PORT+'/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+CMD ["node","backend-build/deploy/server.js"]
