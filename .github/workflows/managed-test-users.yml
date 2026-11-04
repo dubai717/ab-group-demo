@@ -35,6 +35,7 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Create only registered fictional accounts and verify real Auth, runtime RLS and role scopes
         env:
+          AB_MANAGED_TEST_RESUME: verify-unfinished-current-suite
           NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
