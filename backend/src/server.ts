@@ -1,3 +1,4 @@
+import {releaseInfo} from '../deploy/release-info.js';
 import {startPersonnelJobs} from './personnel-jobs.js';
 import {startFinancialJobs} from './financial-jobs.js';
 import {startVehicleBilling} from './vehicle-jobs.js';
@@ -59,6 +60,7 @@ const app = await build({
   auth,
   objects,
 });
+app.get('/api/release',async()=>releaseInfo(process.env));
 await app.listen({
   host: local ? "127.0.0.1" : "0.0.0.0",
   port: Number(process.env.PORT || 3100),
