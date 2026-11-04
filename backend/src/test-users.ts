@@ -32,14 +32,14 @@ export function registerTestUsers(app:any,options:{pool:Pool;key:string;auth:Aut
   // RLS remains on. Only a sealed registry can select this entirely fictional tenant.
   const state=(await c.query('select value from ab.settings where key=$1 for update',[stateKey])).rows[0]?.value;
   requireOk(state?.suite===r.suite&&typeof state.disabled==='boolean',409,'invalidReference');
-  const rows=(await c.query('select id,auth_id,auth_email,username,role_id,status,data from ab.users where id=any($1::uuid[])',[r.users.map(u=>u.id)])).rows;
+  const rows=(await c.query('select id,auth_id,auth_email,username,role_id,status,data from ab.users where id=any($1::uuid[]) for update',[r.users.map(u=>u.id)])).rows;
   requireOk(rows.length===r.users.length,409,'invalidReference');
   for(const u of r.users){const row=rows.find(x=>x.id===u.id);requireOk(row?.auth_id===u.authId&&row.auth_email===u.email&&row.username===u.username&&row.role_id===u.role&&row.data.managedTestSuite===r.suite&&row.data.testProject===testProjectHash,409,'invalidReference');}
   return fn(c,rows,state.disabled);
  });}
  app.get('/api/test-users',async(req:any)=>{const {registry:r}=await context(req);return target(r,async(c,rows,disabled)=>{
   const roles=(await c.query('select id,data from ab.roles order by id')).rows;
-  return {disabled,users:r.users.map(u=>({id:u.id,username:u.username,name:u.name,roleId:u.role,role:roles.find(x=>x.id===u.role)?.data.name||u.role,company:'Test Users — fictional company',scope:u.role==='owner'?'test-group':'test-company',status:disabled?'Disabled':rows.find(x=>x.id===u.id).status,passwordAvailable:false}))};
+  return {disabled,users:r.users.map(u=>({id:u.id,username:u.username,name:u.name,roleId:u.role,role:roles.find(x=>x.id===u.role)?.data.name||u.role,company:'Test Users — fictional company',scope:'isolated-test-group; fictional-company-membership',status:disabled?'Disabled':rows.find(x=>x.id===u.id).status,passwordAvailable:false}))};
  });});
  app.post('/api/test-users/:id/password',{config:{rateLimit:{max:12,timeWindow:'1 minute'}}},async(req:any)=>{
   const {s,registry:r}=await context(req),id=z.uuid().parse(req.params.id);z.object({}).strict().parse(req.body||{});

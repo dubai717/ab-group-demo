@@ -34,7 +34,7 @@ try{
    if(user.role!=='owner'){requireOk((await req('POST','/api/test-users/'+user.id+'/password',{},cookie,data.csrfToken)).statusCode===403,403,'resetEscalation');requireOk(data.bankAccounts.length===0,403,'bankDataExposed');}
    const foreign=(await admin!.query('select id from ab.companies where tenant_id<>$1 limit 1',[registry.tenant])).rows[0];if(foreign){const denied=await req('GET','/api/companies/'+foreign.id,undefined,cookie);const body=denied.json();requireOk([403,404,422].includes(denied.statusCode)&&Object.keys(body).length===1&&typeof body.error==='string',403,'crossTenantLeak');}
    if(user.role==='owner')ownerSession={req,cookie,csrf:data.csrfToken};
-   console.log('TEST_USER: '+JSON.stringify({username:user.username,name:user.name,role:user.role,scope:user.role==='owner'?'fictional-test-group':'fictional-test-company',status:'Active',login:'PASS',serverPermissions:'PASS'}));
+   console.log('TEST_USER: '+JSON.stringify({username:user.username,name:user.name,role:user.role,scope:'fictional-test-group; fictional-company-membership',status:'Active',login:'PASS',serverPermissions:'PASS'}));
   }
   const employee=registry.users.find(u=>u.role==='employee')!;
   const realDenied=await ownerSession.req('POST','/api/test-users/'+owner[0].id+'/password',{},ownerSession.cookie,ownerSession.csrf);requireOk(realDenied.statusCode===404,403,'realOwnerNotProtected');

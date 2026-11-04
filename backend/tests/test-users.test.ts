@@ -25,6 +25,9 @@ test('managed registry, owner-only reset, RLS scope, one-time secret handling, e
   assert.equal((await request('POST','/api/test-users/'+employee.id+'/password',{},actor.cookie,actor.csrf)).statusCode,403);
   assert.equal((await request('POST','/api/test-users/'+f.org.user+'/password',{},root.cookie,root.csrf)).statusCode,404);
   assert.equal((await request('POST','/api/test-users/'+employee.id+'/password',{},root.cookie)).statusCode,403);
+  const inspect=f.auth.inspect.bind(f.auth);f.auth.inspect=async id=>({...await inspect(id),id:f.org.user});
+  assert.equal((await request('POST','/api/test-users/'+employee.id+'/password',{},root.cookie,root.csrf)).statusCode,409);
+  assert.equal(f.auth.accounts.get(employee.email)?.password===ep,true);f.auth.inspect=inspect;
   const reset=await request('POST','/api/test-users/'+employee.id+'/password',{},root.cookie,root.csrf);assert.equal(reset.statusCode,200);const password=reset.json().password;assert(password.length>=32);assert.equal(reset.json().oneTime,true);assert.match(String(reset.headers['cache-control']),/no-store/);
   assert.equal((await request('GET','/api/bootstrap',undefined,actor.cookie)).statusCode,401);
   assert.equal((await f.app.inject({method:'POST',url:'/api/login',payload:{username:employee.username,password},headers:{origin:'http://127.0.0.1:3100','x-ab-request':'1'}})).statusCode,401); // Feature off rejects the managed tenant.
