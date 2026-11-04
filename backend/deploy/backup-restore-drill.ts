@@ -14,12 +14,16 @@ function check(ok:unknown,label:string):asserts ok {if(!ok)throw Error(label);}
 function docker(args:string[],env:NodeJS.ProcessEnv={},input?:Buffer):Promise<Buffer>{
  return new Promise((resolve,reject)=>{
   const p=spawn('docker',args,{env:{PATH:process.env.PATH,...env},stdio:['pipe','pipe','pipe']});
-  const out:Buffer[]=[];let size=0,failed=false;
+  const out:Buffer[]=[];let size=0,failed=false,diagnostic="";
   p.stdout.on('data',(b:Buffer)=>{size+=b.length;if(size>backupLimit){failed=true;p.kill();}else out.push(b);});
   // Provider messages can contain SQL/data. Never forward or include them in errors.
-  p.stderr.on('data',()=>{});p.stdin.on('error',()=>{});
+  p.stderr.on('data',(b:Buffer)=>{if(diagnostic.length<32768)diagnostic+=b.toString().slice(0,32768-diagnostic.length);});p.stdin.on('error',()=>{});
   p.on('error',()=>reject(Error('LOCAL_TOOL_UNAVAILABLE')));
-  p.on('close',code=>code===0&&!failed?resolve(Buffer.concat(out)):reject(Error('DUMP_OR_RESTORE_FAILED')));
+  p.on('close',code=>{
+   if(code===0&&!failed)return resolve(Buffer.concat(out));
+   const labels:[RegExp,string][]=[[/schema "public" already exists/i,'LOCAL_PUBLIC_SCHEMA_COLLISION'],[/role .* does not exist/i,'LOCAL_ROLE_DEPENDENCY'],[/extension .* (?:not available|does not exist|could not)/i,'LOCAL_EXTENSION_DEPENDENCY'],[/schema .* does not exist/i,'LOCAL_SCHEMA_DEPENDENCY'],[/function .* does not exist/i,'LOCAL_FUNCTION_DEPENDENCY'],[/type .* does not exist/i,'LOCAL_TYPE_DEPENDENCY'],[/permission denied/i,'DATABASE_PERMISSION'],[/unrecognized configuration parameter/i,'SERVER_VERSION_PARAMETER'],[/already exists/i,'LOCAL_OBJECT_COLLISION'],[/could not connect|connection .*failed|timeout expired/i,'DUMP_CONNECTION']];
+   reject(Error(failed?'SIZE_LIMIT':labels.find(([pattern])=>pattern.test(diagnostic))?.[1]||'DUMP_OR_RESTORE_FAILED'));
+  });
   p.stdin.end(input);
  });
 }
@@ -62,7 +66,7 @@ export async function main(){
    context={format:'AB-DRILL-CONTEXT-1',createdAt:new Date().toISOString(),snapshotId:snapshot,manifest:before,roles,extensions,ledger};
    stage='CAPTURE_DUMP';
    const pg={...cfg.pg,PGSSLROOTCERT:'/tmp/ab-ca.crt'};
-   dump=await docker(['exec','-i',...Object.keys(pg).filter(k=>k!=='PATH').flatMap(k=>['--env',k]),container,'pg_dump','--format=custom','--no-owner',...schemas.map(s=>'--schema='+s),'--snapshot='+snapshot],pg);
+   dump=await docker(['exec','-i',...Object.keys(pg).filter(k=>k!=='PATH').flatMap(k=>['--env',k]),container,'pg_dump','--format=custom','--no-owner','--lock-wait-timeout=15000',...schemas.map(s=>'--schema='+s),'--snapshot='+snapshot],pg);
    check(dump.subarray(0,5).toString()==='PGDMP','DUMP_HEADER');let size=dump.length;
    const bucket=(await fetch(cfg.endpoint+'/storage/v1/bucket/ab-private-test',{headers:{apikey:keys.secret},redirect:'error',signal:AbortSignal.timeout(30000)}));check(bucket.ok,'BUCKET_READ');check((await bucket.json() as any).public===false,'BUCKET_NOT_PRIVATE');
    const names=(await c.query("select name from storage.objects where bucket_id='ab-private-test' order by name")).rows;
@@ -92,8 +96,13 @@ export async function main(){
    check((await t.query('select current_database() d,inet_server_port() p')).rows[0].d==='ab_drill','TARGET_GUARD');
    check(Number((await t.query("select count(*) n from pg_namespace where nspname in('ab','auth','storage')")).rows[0].n)===0,'TARGET_NOT_EMPTY');
    for(const r of context.roles){if(r.rolname!=='postgres')await t.query(`CREATE ROLE ${qi(r.rolname)} NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS`);}
-   // Install available provider dependencies; unsupported dependencies must make pg_restore fail, never be silently stripped.
-   for(const e of context.extensions){if(e.extname==='plpgsql')continue;const available=(await t.query('select 1 from pg_available_extensions where name=$1',[e.extname])).rowCount;if(available){if(e.nspname!=='public')await t.query(`CREATE SCHEMA IF NOT EXISTS ${qi(e.nspname)}`);await t.query(`CREATE EXTENSION ${qi(e.extname)} WITH SCHEMA ${qi(e.nspname)}`);}}
+   // A schema-filtered dump contains CREATE SCHEMA public. Preserve the empty template schema
+   // under a different name rather than deleting it or allowing a false partial restore.
+   check(Number((await t.query("select count(*) n from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public'")).rows[0].n)===0,'LOCAL_PUBLIC_NOT_EMPTY');
+   await t.query('ALTER SCHEMA public RENAME TO ab_drill_initial_public');
+   // Public extensions are represented in the schema-filtered dump itself.
+   // Other available provider dependencies must precede restoration. Unsupported dependencies fail closed.
+   for(const e of context.extensions){if(e.extname==='plpgsql'||e.nspname==='public')continue;const available=(await t.query('select 1 from pg_available_extensions where name=$1',[e.extname])).rowCount;if(available){if(e.nspname!=='public')await t.query(`CREATE SCHEMA IF NOT EXISTS ${qi(e.nspname)}`);await t.query(`CREATE EXTENSION ${qi(e.extname)} WITH SCHEMA ${qi(e.nspname)}`);}}
   }finally{t.release();}
   stage='ISOLATED_RESTORE';
   await docker(['exec','-i',container,'pg_restore','--host=127.0.0.1','--port=5432','--username=postgres','--dbname=ab_drill','--no-owner','--exit-on-error','--single-transaction'],{},restored.database);
@@ -113,8 +122,9 @@ export async function main(){
   const final=await source.connect();try{await final.query('BEGIN READ ONLY');const ledger=(await final.query('select name,sha256 from public.ab_schema_migrations order by name')).rows;check(JSON.stringify(ledger)===JSON.stringify(context.ledger),'SOURCE_LEDGER_CHANGED');await final.query('ROLLBACK');}finally{await final.query('ROLLBACK').catch(()=>{});final.release();}
   await writeFile('work/backups/restore-proof.json',JSON.stringify({format:'AB-BACKUP-RESTORE-DRILL-1',createdAt:new Date().toISOString(),sourceCommit:process.env.GITHUB_SHA,archiveSha256:sha(sealed),restoreVerified:true,sourceReadOnly:true,baseMigrations:8,tables:before.rows.length,archiveRetention:'ephemeral runner only; no durable archive uploaded'},null,2),{mode:0o600,flag:'wx'});
   console.log('RESULT: HOSTED_BACKUP_ISOLATED_RESTORE_PASS; SOURCE_READ_ONLY; MIGRATIONS_UNCHANGED; ARCHIVE_EPHEMERAL_NOT_UPLOADED');
- }catch{
-  console.log('RESULT: BACKUP_RESTORE_STOP; STAGE='+stage+'; DETAILS_WITHHELD; NO_SOURCE_WRITES_OR_MIGRATIONS');process.exitCode=1;
+ }catch(error){
+  const code=error instanceof Error&&/^[A-Z_]+$/.test(error.message)?error.message:'DETAILS_WITHHELD';
+  console.log('RESULT: BACKUP_RESTORE_STOP; STAGE='+stage+'; CODE='+code+'; NO_SOURCE_WRITES_OR_MIGRATIONS');process.exitCode=1;
  }finally{await target?.end().catch(()=>{});await source?.end().catch(()=>{});}
 }
 if(/[/\\]backup-restore-drill\.(ts|js)$/.test(process.argv[1]||''))await main();
