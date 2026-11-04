@@ -7,3 +7,45 @@ permissions:
 jobs:
   checks:
     uses: ./.github/workflows/staging-checks.yml
+  no-unintended-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - name: Read-only main, staging, Pages and public Render checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          node <<'NODE'
+          (async()=>{
+            const {createHash}=require('node:crypto'),{readFileSync}=require('node:fs');
+            const hash=b=>createHash('sha256').update(b).digest('hex');
+            const need=(ok,label)=>{if(!ok)throw Error(label);};let stage='GUARD';
+            try{
+              need(process.env.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&process.env.GITHUB_REF==='refs/heads/verify/six-phase-post-merge-20261104','GUARD');
+              const api=async path=>{const r=await fetch('https://api.github.com/repos/dubai717/ab-group-demo'+path,{headers:{authorization:'Bearer '+process.env.GH_TOKEN,accept:'application/vnd.github+json'},redirect:'error',signal:AbortSignal.timeout(15000)});need(r.ok,'API_READ');return r.json();};
+              stage='CHECK_MAIN_AND_STAGING';
+              need((await api('/git/ref/heads/main')).object.sha==='e6f4819c30252e113e5f414c7eeebab25aae01b8','MAIN_CHANGED');
+              need((await api('/git/ref/heads/staging/ab-group-test')).object.sha==='40cde0b6809f138e9118776f13a9d6740400f37b','STAGING_CHANGED');
+              console.log('CHECK: FINAL_MAIN_AND_UNCHANGED_RENDER_BRANCH=PASS');
+              stage='CHECK_PAGES';const pages=await api('/pages');need(pages.build_type==='workflow'&&pages.html_url==='https://dubai717.github.io/ab-group-demo/','PAGES_AUTOMATION');
+              const site=await fetch(pages.html_url,{redirect:'error',signal:AbortSignal.timeout(20000)});need(site.ok,'PAGES_HEALTH');await site.body?.cancel();
+              const app=await fetch(pages.html_url+'app.js',{redirect:'error',signal:AbortSignal.timeout(20000)});need(app.ok&&hash(await app.text())==='9e5e1f5b52f4d78412dbe7d5d9c61532542aaba31ebd38779f3af98eff92bf5e','PAGES_CONTENT_CHANGED');
+              const runs=await api('/actions/workflows/403026791/runs?branch=main&per_page=10');
+              const commits=['20cd813f9b605bdd775469babed442a54b59557c','b59b1f00272410ea07dda10de11f1902d37ff344','ae29f3e5b176bf5c292078556ec5c97f534b320a','6b06df66f28089576ad705f05282f3dfdcc1e293','aaad1ae30736b4a049a939254f663866c47fdf66','9dea2ee7e18059342110418ed43ef7606bdda91d','81273990a20dfc1a888a98525c86279ac259c4e7','e6f4819c30252e113e5f414c7eeebab25aae01b8'];
+              need(!runs.workflow_runs.some(r=>commits.includes(r.head_sha)),'UNEXPECTED_PAGES_RUN');
+              console.log('CHECK: PAGES_PAUSED_EXISTING_SITE_UNCHANGED_NO_NEW_DEPLOY_RUN=PASS');
+              stage='CHECK_PUBLIC_RENDER';const plan=JSON.parse(readFileSync('backend/deploy/vehicle-release-plan.json','utf8'));
+              const health=await fetch('https://ab-group-demo.onrender.com/api/health',{redirect:'error',signal:AbortSignal.timeout(20000)});need(health.ok,'RENDER_HEALTH');await health.body?.cancel();
+              const front=await fetch('https://ab-group-demo.onrender.com/app.js',{redirect:'error',signal:AbortSignal.timeout(20000)});need(front.ok&&hash(await front.text())===plan.stagingPublicAppSha256,'RENDER_PUBLIC_APP_CHANGED');
+              console.log('CHECK: RENDER_HTTP_200_AND_PUBLIC_APP_UNCHANGED=PASS');
+              console.log('RESULT: POST_MERGE_READ_ONLY_PUBLISH_GUARDS_PASS; NO_SETTINGS_SECRETS_DATABASE_OR_DEPLOYMENT_CHANGES');
+            }catch{console.log('RESULT: POST_MERGE_GUARD_STOP; STAGE='+stage+'; NO_CHANGES');process.exitCode=1;}
+          })();
+          NODE
