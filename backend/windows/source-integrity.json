@@ -133,7 +133,7 @@
     "supabase/proposed/011_vehicles.sql": "870b3c699a964cd0cbeed9f3ca5696c1cfeb4fc6e576991e3df43f0b3937d00b",
     "supabase/proposed/012_financial_management.sql": "717d6279420c1e79b7752ec2f0571ebfb559e24613828b5319a62f92808bbd24",
     "supabase/proposed/013_personnel_tasks_performance.sql": "9cdf974b9a57cb5d9cde44458b3ecce6773803dbe975f354ecb93b673de8a45f",
-    "test-users-ui.js": "2edf733645f30e0ddbdee559f50f177e89b26e578ffe4c6771258537d0351df0",
+    "test-users-ui.js": "12fcea8515b1d594f428ebae91db320677a8b1b5fea613e72a5f8c3cd807e38e",
     "user-management.js": "92e218828a63a318544c644cb0d66ad91ec49e86d9ff795bd30c409331608f9a",
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
     "vehicles.js": "a06a54f8fc92c03caa373040ba8e5770851539b56de60bc12f59a2c88d14c775",
