@@ -4,6 +4,8 @@ export const protectedObject=(k:string)=>k.startsWith('ab-group-backups/')||k.st
 export async function collectPlan(c:PoolClient,release:string){
  const b=await baseline(c,false),auth=(await c.query('select id,email,encrypted_password,raw_app_meta_data,raw_user_meta_data,email_confirmed_at,role from auth.users order by id')).rows;
  for(const a of auth.filter(a=>a.id!==b.owner.auth_id))requireOk(a.role==='authenticated'&&/^\$2[aby]\$/.test(a.encrypted_password||'')&&(a.raw_app_meta_data?.providers||['email']).every((x:string)=>x==='email'),409,'identityRecoveryUnsupported');
+ requireOk(Number((await c.query('select count(*)n from auth.mfa_factors where user_id<>$1',[b.owner.auth_id])).rows[0].n)===0,409,'mfaRecoveryUnsupported');
+ requireOk(Number((await c.query("select count(*)n from auth.users where id<>$1 and coalesce(phone,'')<>''",[b.owner.auth_id])).rows[0].n)===0,409,'phoneRecoveryUnsupported');
  const users=(await c.query('select id,auth_id,username,auth_email,data from ab.users')).rows;
  requireOk(auth.length===users.length&&users.every(u=>auth.some(a=>a.id===u.auth_id&&a.email===u.auth_email)),409,'unmappedAuthIdentity');
  // A confirmed full reset includes every mapped test-environment identity, including manually created users; names never authorize or restrict deletion.
