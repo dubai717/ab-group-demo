@@ -1,3 +1,4 @@
+import {resetEnvironment} from './reset-control.js';
 import {testUsersEnvironment} from './test-users.js';
 import {releaseInfo} from '../deploy/release-info.js';
 import {startPersonnelJobs} from './personnel-jobs.js';
@@ -61,6 +62,7 @@ const app = await build({
   auth,
   objects,
   testUsersEnabled:testUsersEnvironment(process.env),
+  resetEnabled:resetEnvironment(process.env),
 });
 app.get('/api/release',async()=>releaseInfo(process.env));
 await app.listen({

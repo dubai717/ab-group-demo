@@ -73,6 +73,7 @@
     const b = await api("bootstrap");
     C.actor = b.actor;
     C.testUsersAvailable=b.testUsersAvailable===true;
+    C.resetTestDatabaseAvailable=b.resetTestDatabaseAvailable===true;
     C.csrf = b.csrfToken;
     C.areas = b.areas;
     C.grants = b.grants;

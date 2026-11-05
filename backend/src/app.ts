@@ -1,3 +1,4 @@
+import {registerResetControl,ResetWorker} from './reset-control.js';
 import {registerTestUsers,assertTestAccess,registryKey} from './test-users.js';
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
@@ -48,6 +49,8 @@ export interface Options {
   ) => Promise<"clean" | "pending" | "rejected">;
   serveFrontend?: boolean;
   testUsersEnabled?: boolean;
+  resetEnabled?: boolean;
+  resetWorker?: ResetWorker;
 }
 export async function build(options: Options) {
   const { pool, auth, objects } = options,
@@ -166,6 +169,7 @@ export async function build(options: Options) {
     return { ...s, sid };
   };
   registerTestUsers(app,{pool,key:options.key,auth,enabled:options.testUsersEnabled===true,session});
+  registerResetControl(app,{pool,key:options.key,auth,enabled:options.resetEnabled===true,worker:options.resetWorker,session});
   const call =
     (handler: (c: PoolClient, m: any, s: any, req: any) => Promise<any>) =>
     async (req: any) => {
@@ -354,6 +358,7 @@ export async function build(options: Options) {
         .rows;
       return {
         actor: m.actor,
+        resetTestDatabaseAvailable: options.resetEnabled===true&&m.actor.roleId==='owner',
         testUsersAvailable: options.testUsersEnabled===true&&m.actor.roleId==='owner'&&settings.some(row=>row.key===registryKey),
         audit: ownAudit,
         summary: m.policy.summary(),
@@ -1133,6 +1138,7 @@ export async function build(options: Options) {
       "auth-flows.js",
       "central-client.js",
       "test-users-ui.js",
+      "reset-test-database-ui.js",
       "vehicle-policy.js",
       "vehicles.js",
       "customer-policy.js",

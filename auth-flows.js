@@ -97,9 +97,10 @@
   function renderSettings() {
     const user=getCurrentUser();if(!user)return `<section class="content-panel">${text('denied')}</section>`;
     return `<section class="content-panel auth-settings"><div class="section-head"><h2>${text('changePassword')}</h2><button class="ghost-btn" data-auth="return">${text('returnApp')}</button></div><p>${text('settingsNote')}</p><p class="company-desc" role="note">${text('changeBoundary')}</p><p class="muted" id="auth-policy">${text('policy')}</p><form id="auth-change" aria-describedby="auth-policy">
-      ${passwordField('auth-current','current','current-password')}${passwordField('auth-new','newPassword','new-password')}${passwordField('auth-confirm','confirm','new-password')}<button class="primary-btn" type="submit">${text('save')}</button></form><p id="auth-message" tabindex="-1" role="status" aria-live="polite">${notice?text(notice):''}</p>${auditHTML(user.id)}</section>`;
+      ${passwordField('auth-current','current','current-password')}${passwordField('auth-new','newPassword','new-password')}${passwordField('auth-confirm','confirm','new-password')}<button class="primary-btn" type="submit">${text('save')}</button></form><p id="auth-message" tabindex="-1" role="status" aria-live="polite">${notice?text(notice):''}</p>${auditHTML(user.id)}${globalThis.ResetTestDatabaseUI?.render()||''}</section>`;
   }
   function bindApp() {
+    globalThis.ResetTestDatabaseUI?.bind();
     document.querySelector('[data-auth="settings"]')?.addEventListener('click',()=>{if(!getCurrentUser())return;BankAccounts.cleanup();CompanyDocuments.cleanupPreview();UserManagement.cleanup();mode='settings';notice='';render();});
     document.querySelector('[data-auth="return"]')?.addEventListener('click',()=>{leave();render();});
     document.getElementById('auth-change')?.addEventListener('submit',event=>{
