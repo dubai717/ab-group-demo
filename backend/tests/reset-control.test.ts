@@ -4,7 +4,7 @@ test('reset is disabled for production, another origin and missing activation',(
 test('Owner-only fresh password approval, CSRF, backup gate, fingerprint binding, expiry and replay protection; no destructive worker',async()=>{
  const f=await fixture();const origin='http://127.0.0.1:3100';let submissions=0;
  const p:ResetPreview={ownerId:f.org.user,fingerprint:'a'.repeat(64),createdAt:new Date().toISOString(),expiresAt:new Date(Date.now()+600000).toISOString(),target:'original-staging',counts:{companies:5},retained:['owner'],backupVerified:true,restoreVerified:true,canExecute:true,blockers:[]};
- const app=await build({pool:f.runtime,key:f.secret.key,origin,secureCookies:false,auth:f.auth,objects:f.objects,resetEnabled:true,resetWorker:{preview:async()=>p,submit:async()=>{submissions++;}}});
+ const app=await build({pool:f.runtime,key:f.secret.key,origin,secureCookies:false,auth:f.auth,objects:f.objects,resetEnabled:true,resetStatus:async()=>({status:'running',active:true}),resetWorker:{preview:async()=>p,submit:async()=>{submissions++;}}});
  const req=(method:any,url:string,payload?:any,cookie='',csrf='')=>app.inject({method,url,payload,headers:{origin,'x-ab-request':'1',cookie,'x-csrf-token':csrf}});
  const login=async(username:string,password:string)=>{const r=await req('POST','/api/login',{username,password});assert.equal(r.statusCode,200);const cookie=String(r.headers['set-cookie']).split(';')[0];const b=await req('GET','/api/bootstrap',undefined,cookie);return {cookie,csrf:b.json().csrfToken};};
  try{
@@ -20,6 +20,7 @@ test('Owner-only fresh password approval, CSRF, backup gate, fingerprint binding
   const cipher=security(f.secret.key),expired=cipher.open(confirmation);expired.expires=Date.now()-1;
   assert.equal((await req('POST','/api/reset-test-database/confirm',{confirmation:cipher.seal(expired),phrase:'RESET TEST DATABASE'},root.cookie,root.csrf)).statusCode,403);
   const ok=await req('POST','/api/reset-test-database/confirm',{confirmation,phrase:'RESET TEST DATABASE'},root.cookie,root.csrf);assert.equal(ok.statusCode,200);assert.equal(ok.json().resetCompleted,false);assert.equal(submissions,1);
+  const poll=await req('POST','/api/reset-test-database/status',{token:ok.json().pollToken});assert.equal(poll.statusCode,200);assert.equal(poll.json().status,'running');assert.equal((await req('POST','/api/reset-test-database/status',{token:confirmation})).statusCode,403);
   assert.equal((await req('POST','/api/reset-test-database/confirm',{confirmation,phrase:'RESET TEST DATABASE'},root.cookie,root.csrf)).statusCode,409);assert.equal(submissions,1);
   const second={...cipher.open(confirmation),id:randomUUID()};assert.equal((await req('POST','/api/reset-test-database/confirm',{confirmation:cipher.seal(second),phrase:'RESET TEST DATABASE'},root.cookie,root.csrf)).statusCode,409);assert.equal(submissions,1);
   const stored=JSON.stringify((await f.admin.query("select value from ab.settings where key like 'reset-request:%'")).rows)+JSON.stringify((await f.admin.query('select * from ab.audit_events')).rows);assert.equal(stored.includes(f.password),false);assert.equal(stored.includes(confirmation),false);

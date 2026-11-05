@@ -70,7 +70,7 @@ const app = await build({
   testUsersEnabled:testUsersEnvironment(process.env),
   resetEnabled,
   resetWorker,
-  resetStatus:resetStore?async(id:string)=>{const m=await resetStore.get(markerPath);return m?.id===id?{status:m.status,active:m.active}:{status:'queued',active:false};}:undefined,
+  resetStatus:resetStore?async(id:string)=>{const m=await resetStore.get(markerPath);if(m?.id===id)return {status:m.status,active:m.active};const result=await resetStore.get('ab-group-reset-control/requests/'+id+'/result.enc');return result||{status:'queued',active:false};}:undefined,
 });
 if(resetStore)configureMaintenance(installMaintenance(app,resetStore));
 app.get('/api/reset-capability',async()=>({enabled:resetEnabled,workerConfigured:!!resetWorker,maintenanceFencing:!!resetStore}));
