@@ -5,7 +5,7 @@ const require=createRequire(import.meta.url),seed=require('../../data/uae-areas.
 const q=x=>"'"+JSON.stringify(x).replaceAll("'","''")+"'::jsonb";
 const aliases=seed.areas.flatMap(a=>[...new Set([a.ar,a.en,...(a.aliases||[])].map(area.normalize).filter(Boolean))].map(normalized_name=>({area_id:a.id,emirate_id:a.emirateId,normalized_name})));
 const purposes=['operations','payroll','savings','investment','other'].map(id=>({id,kind:'purpose',data:{ar:{operations:'تشغيلي',payroll:'رواتب',savings:'ادخار',investment:'استثمار',other:'أخرى'}[id],en:id}}));
-const sql=`-- NEW PROJECT ONLY: rdsqerenobigacmetrvv. Run AFTER schema verification.
+const sql=`-- NEW PROJECT ONLY: rdsqerenobigacmetryv. Run AFTER schema verification.
 -- In that project's Auth dashboard first create ONE confirmed email/password Owner account.
 -- Keep password in a password manager; never paste it into SQL. No old identity is imported.
 -- Username for the one account below: owner. No other accounts or business records are created.

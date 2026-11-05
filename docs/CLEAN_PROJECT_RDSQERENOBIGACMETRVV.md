@@ -1,10 +1,10 @@
-# Clean project handoff: rdsqerenobigacmetrvv
+# Clean project handoff: rdsqerenobigacmetryv
 
 Owner reports project `ab-group-erp-clean-test`, Healthy, Free, Singapore. The executor has no new-project credentials or Supabase management access. Its existence, account plan and cloud state are owner-attested, not independently API-verified. No cloud SQL has been executed by this preparation.
 
 ## One manual action, without new secrets
 
-Open https://supabase.com/dashboard/project/rdsqerenobigacmetrvv/sql/new and confirm the displayed project is `ab-group-erp-clean-test`. Download the schema-only artifact from the linked verification run. Open `ab-group-clean-rdsqerenobigacmetrvv.sql` in a text editor, paste the complete contents into SQL Editor and run as the project's postgres administrator. Do not use the old project's SQL Editor. A SQL session does not reliably expose a Supabase Project Ref; the artifact's named target is an operator instruction, not a cryptographic destination binding.
+Open https://supabase.com/dashboard/project/rdsqerenobigacmetryv/sql/new and confirm the displayed project is `ab-group-erp-clean-test`. Download the schema-only artifact from the linked verification run. Open `ab-group-clean-rdsqerenobigacmetryv.sql` in a text editor, paste the complete contents into SQL Editor and run as the project's postgres administrator. Do not use the old project's SQL Editor. A SQL session does not reliably expose a Supabase Project Ref; the artifact's named target is an operator instruction, not a cryptographic destination binding.
 
 The file applies the exact 001–013 source migrations and ledger in one transaction, verifies all expected tables, enabled RLS/policies, validated constraints, restrictive runtime flags, and empty non-reference tables BEFORE commit. It imports no accounts, credentials, documents or business rows. It refuses a nonempty AB/public/Auth/storage destination before schema changes. If any error occurs, report the error only; do not weaken guards, rerun individual migrations or change permissions. Expected result: `CLEAN_SCHEMA_13_APPLIED_AND_VERIFIED`, migrations `13`. Send that non-sensitive result back; no passwords, SQL connection URLs or keys are needed.
 

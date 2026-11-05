@@ -2,7 +2,7 @@
 
 ## Current approved target and scope
 
-Supabase project `ab-group-erp-clean-test`, ref `rdsqerenobigacmetrvv`, Singapore, Free as reported by the owner. Preserve old `ab-group-erp-test`, all its accounts/data/backups and current Render connection. No new paid resources, production deployment or connection changes are authorized. This plan supersedes earlier proposals to transfer the ten managed test users or old Owner credentials: **no old account, password, auth_id, business row, encrypted registry or document is imported**.
+Supabase project `ab-group-erp-clean-test`, ref `rdsqerenobigacmetryv`, Singapore, Free as reported by the owner. Preserve old `ab-group-erp-test`, all its accounts/data/backups and current Render connection. No new paid resources, production deployment or connection changes are authorized. This plan supersedes earlier proposals to transfer the ten managed test users or old Owner credentials: **no old account, password, auth_id, business row, encrypted registry or document is imported**.
 
 Approved schema 001–013 is packaged by `release.py`, with exact source checksum validation, an empty-project preflight, one transaction and precommit schema/RLS/constraint/empty-data checks. If already applied, do not rerun or bypass its nonempty guard; first read the ledger and validate existing hashes. Source migrations remain unchanged.
 
@@ -18,7 +18,7 @@ Real Supabase Auth login and server authorization remain acceptance gates: a loc
 
 ## Manual boundary now
 
-No secure new-target connection exists in the current execution environment. Do not reuse the old GitHub secrets. Use the new project's SQL Editor (https://supabase.com/dashboard/project/rdsqerenobigacmetrvv/sql/new) for the tested schema-only file and return its non-sensitive result. No secrets or Render changes are required for that step. The SQL session does not reliably expose a Supabase project ref; the operator must verify the dashboard target. Account creation and the owner-only SQL are a subsequent controlled step, after schema result confirmation.
+No secure new-target connection exists in the current execution environment. Do not reuse the old GitHub secrets. Use the new project's SQL Editor (https://supabase.com/dashboard/project/rdsqerenobigacmetryv/sql/new) for the tested schema-only file and return its non-sensitive result. No secrets or Render changes are required for that step. The SQL session does not reliably expose a Supabase project ref; the operator must verify the dashboard target. Account creation and the owner-only SQL are a subsequent controlled step, after schema result confirmation.
 
 ## Render cutover gates — not executed
 

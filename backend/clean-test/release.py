@@ -2,7 +2,7 @@
 from pathlib import Path
 import json, hashlib, sys, re
 from build import build, ROOT
-TARGET='rdsqerenobigacmetrvv'
+TARGET='rdsqerenobigacmetryv'
 def release(destination):
     build(destination)
     out=Path(destination)

@@ -32,9 +32,9 @@ jobs:
       - name: Downloadable schema-only handoff after successful checks
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: ab-group-clean-rdsqerenobigacmetrvv
+          name: ab-group-clean-rdsqerenobigacmetryv
           path: |
-            /tmp/ab-clean-kit/ab-group-clean-rdsqerenobigacmetrvv.sql
+            /tmp/ab-clean-kit/ab-group-clean-rdsqerenobigacmetryv.sql
             /tmp/ab-clean-kit/manifest.json
             /tmp/ab-clean-kit/owner-only.sql
           if-no-files-found: error

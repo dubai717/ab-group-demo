@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {databaseOptions,assertVerifiedDatabaseTls} from '../src/database.js';
 import {connectionDiagnostic} from '../src/connection-diagnostics.js';
-const ref='rdsqerenobigacmetrvv';
+const ref='rdsqerenobigacmetryv';
 function need(ok:unknown,code:string):asserts ok {if(!ok)throw Error(code);}
 let pool:Pool|undefined,stage='CONTEXT';
 const codes=new Set(['RUNNER_CONTEXT','MISSING_PROTECTED_URL','TARGET_MISMATCH','CONNECTION_OVERRIDES','SCHEMA_LEDGER','SOURCE_HASH','TABLES_MISSING','RELATIONSHIPS_INVALID','RLS_POLICIES_INVALID','RUNTIME_FLAGS','RUNTIME_PRIVILEGES','OWNER_IDENTITY','OWNER_ROLE','BUCKET_PRIVATE','STORAGE_POLICY_REVIEW','BUSINESS_ROWS_PRESENT']);
