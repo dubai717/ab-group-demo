@@ -12,6 +12,7 @@ export async function collectPlan(c:PoolClient,release:string){
  requireOk(Number((await c.query("select count(*)n from pg_tables where schemaname='public' and tablename<>'ab_schema_migrations'")).rows[0].n)===0,409,'unrelatedPublicTables');
  const production=Number((await c.query("select count(*)n from ab.settings where key~*'(production|live.payments|bank.feed|whatsapp|sms|smtp|gps.live)'and(value->>'enabled'='true'or value->>'environment'='production'or value->>'mode'='live')")).rows[0].n);requireOk(production===0,409,'productionIntegration');
  const bucket=(await c.query('select public from storage.buckets where id=$1',['ab-private-test'])).rows[0];requireOk(bucket&&bucket.public===false,409,'privateBucketRequired');
+ requireOk(Number((await c.query("select count(*)n from storage.objects where bucket_id<>'ab-private-test'")).rows[0].n)===0,409,'unreviewedStorageBucket');
  const files=(await c.query("select name from storage.objects where bucket_id='ab-private-test' order by name")).rows.map(x=>x.name).filter(k=>!protectedObject(k));
  requireOk(files.every(k=>typeof k==='string'&&k.length<1024&&!k.split('/').some((s:string)=>!s||s==='.'||s==='..')),409,'invalidObjectKey');
  const m=await manifest(c),counts=Object.fromEntries(m.rows.filter((x:any)=>x.s==='ab').map((x:any)=>[x.t,Number(x.n)]));
