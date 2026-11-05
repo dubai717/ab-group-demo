@@ -1,3 +1,4 @@
+import {testDataSummary} from './test-data-summary.js';
 // Managed fictional identities only. No role, grant, schema or real-user mutation.
 import {randomBytes} from 'node:crypto';
 import {Pool,PoolClient} from 'pg';
@@ -37,6 +38,7 @@ export function registerTestUsers(app:any,options:{pool:Pool;key:string;auth:Aut
   for(const u of r.users){const row=rows.find(x=>x.id===u.id);requireOk(row?.auth_id===u.authId&&row.auth_email===u.email&&row.username===u.username&&row.role_id===u.role&&row.data.managedTestSuite===r.suite&&row.data.testProject===testProjectHash,409,'invalidReference');}
   return fn(c,rows,state.disabled);
  });}
+ app.get('/api/test-data',async(req:any)=>{const {s,registry:r}=await context(req);return target(r,async c=>({...await testDataSummary(c,cipher,r.tenant,r.owner),sameWorkspace:s.tenant_id===r.tenant,workspaceUser:r.users.find(u=>u.id===r.owner)?.username}));});
  app.get('/api/test-users',async(req:any)=>{const {registry:r}=await context(req);return target(r,async(c,rows,disabled)=>{
   const roles=(await c.query('select id,data from ab.roles order by id')).rows;
   return {disabled,users:r.users.map(u=>({id:u.id,username:u.username,name:u.name,roleId:u.role,role:roles.find(x=>x.id===u.role)?.data.name||u.role,company:'Test Users — fictional company',scope:'isolated-test-group; fictional-company-membership',status:disabled?'Disabled':rows.find(x=>x.id===u.id).status,passwordAvailable:false}))};

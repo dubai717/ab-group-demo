@@ -1,0 +1,2 @@
+export const TEST_DATA_KEY='TEST_DATA:integrated:v1';
+export type DataManifest={marker:'TEST_DATA';version:1;tenant:string;owner:string;anchor:string;state:'files_pending'|'ready';createdAt:string;companies:any[];banks:any[];customers:any[];vehicles:any[];financings:string[];tasks:string[];receipts:string[];objects:Record<string,string>;tags:Record<string,string[]>;checks:Record<string,boolean>;limitations:string[]};
