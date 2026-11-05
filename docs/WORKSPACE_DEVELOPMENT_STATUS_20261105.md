@@ -1,4 +1,4 @@
-# Operational registers and test workspace — work in progress
+# Operational registers and test workspace — review candidate
 
 Base: PR #23 (`db6d05076b4fcad9b0c44a587f51c88bb7055384`), original staging project/service. Development branch: `feature/operational-registers-test-center`. PR #23 is not merged or altered. No live reset, deployment, migrations, connection/Secret changes or cloud provisioning occur in this task.
 
@@ -8,7 +8,7 @@ Base: PR #23 (`db6d05076b4fcad9b0c44a587f51c88bb7055384`), original staging proj
 - Automatic upload review initially rejected app.js because of pre-existing cleartext Demo credentials. The Owner explicitly approved PBKDF2 verifiers and disabling local Demo password autofill. The new app.js upload passed review. Demo account identities/roles and password validity are preserved; cloud Supabase login is unchanged. Legacy v2 browser data is not overwritten; existing current Demo state is upgraded on local initialization without copying cleartext into a new v3 record. This remains an untrusted browser demonstration, not secure server authentication. The review patch in `blocked-work/` is historical, not an executable deployment step.
 - **Live Reset activation remains inactive**: PR #23's one-time secure Actions dispatch wiring/workflow activation and sensitive release approval remain separate. No current reset, merge, deployment or connection/Secret change is performed here.
 
-## Implemented candidate (final tests pending)
+## Implemented candidate
 
 - Shared server-scoped register filters/facets, stable sorting, full filtered navigation and file-number seek; Excel XML/CSV/PDF/print exports retain column order. No invented financial balances. Existing company/user grants stay unchanged.
 - Customer/vehicle register controls and persisted preferences reuse current modules and profile/save endpoints. Server rechecks view/export/print company permissions; no browser-only authorization.
@@ -20,7 +20,23 @@ Base: PR #23 (`db6d05076b4fcad9b0c44a587f51c88bb7055384`), original staging proj
 
 ## Verification record
 
-Pending runs will be recorded here with exact outcomes. Component mocks do not prove full app.js integration; the separate loopback suite tests the real application. Do not describe successful local/CI tests as publication or an actual hosted reset.
+- PR: https://github.com/dubai717/ab-group-demo/pull/24, based on the still-open PR #23 branch. No merge or deployment.
+- Backend regression: **199/199 passed**, frontend domain tests: **132/132 passed**, source SHA-256 integrity: **137 reviewed files passed**. These stages are in run https://github.com/dubai717/ab-group-demo/actions/runs/42100107588. Its later browser step counted harmless Reset static-script GETs as Reset API calls; that observer was corrected and the application browser suite was rerun separately. Do not report that entire earlier workflow as successful. All executable application source is identical between this regression and the successful dedicated browser run; only the test observer changed.
+- Reset dialog presentation: **4/4** AR/EN desktop/phone cases passed in that run.
+- Component presentation and private-preview stale-response guard: **6/6** AR/EN desktop/tablet/phone cases passed: https://github.com/dubai717/ab-group-demo/actions/runs/42097898285. Transport is mocked; these cases alone do not prove full application integration.
+- Isolated official-provider reset/recovery: https://github.com/dubai717/ab-group-demo/actions/runs/42096272442 passed. It physically cleared the restored application data, 17 non-primary-Owner Auth identities and 96 business files through official local Supabase APIs, preserved Owner/reference/RLS definitions, and recovered original records/auth hashes/file digests after an injected post-deletion failure. Real local GoTrue login through Backend and effective ab_runtime succeeded after reset and recovery. Hosted access was GET-only encrypted-archive retrieval.
+- The same rehearsal passed the synthetic next migration, child relationships and immutable-trigger case without a Reset implementation change. An unregistered table blocked reconstruction and the transaction rolled back, retaining its row. No real next migration was added.
+- Original application browser suite: **6/6** locale/viewport cases passed, including company creation/save/edit/reopen, licence filters, customer/vehicle register headers, full navigation, export, test-center access and no JavaScript errors. Expanded manual-user login/Owner-only/production-denial assertions also passed: https://github.com/dubai717/ab-group-demo/actions/runs/42100413908 (successful complete workflow, reviewed source commit `12ef190a20bc0348d6e4be96cd13196db6a3c010`). These use disposable loopback fixtures, never hosted account mutations.
+- Early failures were resolved: workspace counts now use table OIDs instead of constructing nonexistent names before namespace filtering; a copied UI load variable was removed; Reset test timestamps now share one clock instant; the attachment test verifies runtime DELETE denial rather than assuming a local superuser is restricted. Browser selectors wait for collapsed controls to be attached, select one direction, wait for completed profile navigation before exporting, and distinguish static script loads from Reset API requests. The integration suite also caught and corrected the actual legacy-suite-only bootstrap flag: Owner staging tools now remain available without the obsolete managed suite; employee bootstrap denies those tools. No protection or role was relaxed.
+- Upload review rejected fixed fixture passwords in the expanded test; they were replaced with runtime-generated random values and the upload passed. No real credential was used.
+
+## Deployment and activation plan
+
+1. Review PR #24 into the PR #23 development branch, then the combined PR #23 into staging only after explicit sensitive-change approval. Neither has been merged here; all prior commits/branches remain.
+2. Use the existing staging tests and release gate for the existing Render service. This candidate needs **no database migration, reseeding, new resource or connection change**. Verify the pinned release, AR/EN register/save/reopen and permission denials with existing authorized accounts; do not claim local tests are a hosted publication.
+3. Reset remains inactive. The pre-existing plan in `RESET_WORKER_READINESS_20261105.md` requires separate approval for installing the manual workflow and least-privilege server-only dispatch token/activation flags. This task does not change Secrets or arm execution.
+4. Every later destructive Reset requires a new current encrypted backup/isolated restore proof, signed preview, fresh Owner authentication and explicit confirmation. A software update never triggers Reset. Keep prior encrypted archives and keys; do not overwrite or remove them.
+5. For a code regression, return to the previous reviewed application commit through the existing release path. This task changes no hosted database data/schema. Any future reset recovery uses its matching encrypted archive under maintenance, not an unapproved blind retry.
 
 ## Practical boundaries
 
@@ -28,3 +44,7 @@ Pending runs will be recorded here with exact outcomes. Component mocks do not p
 - Excel export uses genuine Excel SpreadsheetML (`.xml`), not a CSV renamed to `.xlsx`. PDF/print retain selected column order. Sharing requires an explicit user gesture and browser Web Share support; no external message is sent automatically.
 - Private server documents still require an actual clean scan. The fixture scanner is explicitly a local test double. Office types already allowed by company/bank storage retain their policy; customer/vehicle MIME restrictions remain unchanged. Unsupported native previews fall back to download.
 - Future operational tables belong in the owned `ab` application schema and an approved migration. Unknown namespaces, schema definitions, reference/role changes or unclassified configuration block Reset before hosted destruction; there is no promise to delete unrecognized objects blindly. Every real Reset still requires its own fresh backup/restore proof, Owner authentication and confirmation.
+
+## Preservation check
+
+Every modified/new current-scope path was saved to GitHub; no previous code, commit or branch was deleted or rewritten. Sixteen pre-existing historical cleanup/new-project preparation files in the inherited local Git tree are absent from the remote PR #23 base; they remain untouched locally and are not reactivated or introduced by this PR. The current project/connection remains unchanged.
