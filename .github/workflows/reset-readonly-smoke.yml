@@ -18,5 +18,7 @@ jobs:
           node-version: '24'
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: node --import tsx backend/tests/staging-readonly-smoke.test.ts
-      - run: node node_modules/playwright/cli.js install --with-deps chromium
+      - run: test -x /usr/bin/google-chrome
       - run: node --import tsx backend/deploy/staging-readonly-smoke.ts
+        env:
+          AB_BROWSER_EXECUTABLE: /usr/bin/google-chrome
