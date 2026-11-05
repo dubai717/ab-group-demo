@@ -13,6 +13,8 @@ try {
  need(e.GITHUB_ACTIONS==='true'&&e.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&e.GITHUB_REF==='refs/heads/verify/clean-project-readonly-20261105'&&e.GITHUB_EVENT_NAME==='push','RUNNER_CONTEXT');
  need(e.MIGRATION_DATABASE_URL,'MISSING_PROTECTED_URL');
  const u=new URL(e.MIGRATION_DATABASE_URL);
+ const parsedUser=decodeURIComponent(u.username);
+ console.log('DIAGNOSTIC: ADMIN_USERNAME_CLASS='+(parsedUser==='postgres'?'MISSING_PROJECT_SUFFIX':parsedUser==='ab_runtime.'+ref?'RUNTIME_ROLE_IN_ADMIN_URL':/\s/.test(parsedUser)?'WHITESPACE_IN_USERNAME':parsedUser.startsWith('postgres.')?(parsedUser.slice(9)===ref?'EXPECTED_PROJECT':/^[a-z0-9]{20}$/.test(parsedUser.slice(9))?'DIFFERENT_PROJECT_REF':'MALFORMED_PROJECT_SUFFIX'):'UNEXPECTED_ROLE_PREFIX'));
  const shape={POSTGRES_PROTOCOL:['postgres:','postgresql:'].includes(u.protocol),NEW_PROJECT_ADMIN_USERNAME:decodeURIComponent(u.username)==='postgres.'+ref,SESSION_POOLER_HOST:u.hostname.endsWith('.pooler.supabase.com'),SESSION_POOLER_PORT_5432:(u.port||'5432')==='5432',DATABASE_POSTGRES:u.pathname==='/postgres',PASSWORD_PRESENT:!!u.password,NO_URL_FRAGMENT:!u.hash,NO_CONNECTION_OVERRIDES:[...u.searchParams.keys()].every(k=>k==='sslmode')};
  for(const [name,ok] of Object.entries(shape))console.log('DIAGNOSTIC: '+name+'='+(ok?'PASS':'FAIL'));
 
