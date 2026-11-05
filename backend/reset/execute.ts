@@ -26,7 +26,7 @@ export async function executeReset(c:PoolClient,p:ResetPlan,providers:ManagedPro
    const auth=(await c.query('select id,email,encrypted_password from auth.users order by id')).rows;requireOk(o.backupUsers.every(u=>auth.some(a=>a.id===u.id&&a.email===u.email&&a.encrypted_password===u.encrypted_password))&&auth.length===o.backupUsers.length,409,'recoveryAuthMismatch');
    for(const k of p.files){const restored=await providers.getFile(k);requireOk(restored&&sha(restored)===sha(o.recoveryObjects.get('storage/'+k)!),409,'recoveryFileMismatch');}
    await o.phase('failed-rolled-back');
-  }catch{await o.phase('failed-recovery-required');throw Error('resetRecoveryRequired');}}
+  }catch(recoveryError){await o.phase('failed-recovery-required');throw Error('resetRecoveryRequired',{cause:{original:e,recovery:recoveryError}});}}
   if(!touched)await o.phase('failed-no-changes');
   throw e;
  }
