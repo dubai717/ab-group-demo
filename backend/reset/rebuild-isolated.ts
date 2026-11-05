@@ -5,6 +5,7 @@ import {readFile} from 'node:fs/promises';
 import {requireOk,sha} from '../src/core.js';
 import {build} from '../src/app.js';
 import {TestAuth,TestObjects} from '../tests/fixture.js';
+import {manifest} from '../deploy/backup-restore-drill.js';
 const qi=(s:string)=>'"'+s.replaceAll('"','""')+'"';
 export async function rehearseReset(pool:Pool, dataKey:string){
  const c=await pool.connect();let phase='LOCAL_GUARD';
@@ -18,10 +19,14 @@ export async function rehearseReset(pool:Pool, dataKey:string){
   requireOk(migrations.length===13,409,'migrationPlanMismatch');
   const bodies=[];for(const m of migrations){const sql=await readFile(m.path,'utf8');requireOk(sha(sql)===m.sha256,409,'approvedHashMismatch');bodies.push(sql);}
   const owners=(await c.query("select * from ab.users where username='trial_4db27b82b8bf' and role_id='owner' and status='Active'")).rows;requireOk(owners.length===1,409,'originalOwnerRequired');const owner=owners[0];requireOk(!owner.manager_id,409,'ownerManagerDependency');
+  const outside=(m:any)=>({rows:m.rows.filter((x:any)=>x.s!=='ab'&&!(x.s==='public'&&x.t==='ab_schema_migrations')),constraints:m.constraints.filter((x:any)=>x.s!=='ab'),policies:m.policies.filter((x:any)=>x.schemaname!=='ab'),triggers:m.triggers.filter((x:any)=>x.s!=='ab')});
+  const outsideBefore=JSON.stringify(outside(await manifest(c)));
   const keep:Record<string,any[]>={};
   for(const t of ['organizations','users','emirates','areas','area_aliases','bank_references','settings']){
    if(t==='users')keep[t]=[owner];else if(t==='emirates')keep[t]=(await c.query('select * from ab.emirates')).rows;else if(t==='organizations')keep[t]=(await c.query('select * from ab.organizations where id=$1',[owner.tenant_id])).rows;else if(t==='settings')keep[t]=(await c.query("select * from ab.settings where tenant_id=$1 and key=any($2::text[])",[owner.tenant_id,['companyDocumentAlertDays']])).rows;else keep[t]=(await c.query('select * from ab.'+t+' where tenant_id=$1',[owner.tenant_id])).rows;
   }
+  // This exact ID is the synthetic bootstrap fixture, not an approved real-bank reference.
+  keep.bank_references=keep.bank_references.filter(x=>!(x.kind==='bank'&&x.id==='demo-bank'));
   const catalog:Record<string,string>={};for(const t of ['roles','permissions','role_permissions'])catalog[t]=JSON.stringify((await c.query('select to_jsonb(x) j from ab.'+t+' x order by to_jsonb(x)::text')).rows);
   const authHash=(await c.query('select md5(to_jsonb(x)::text) h from auth.users x where id=$1',[owner.auth_id])).rows[0]?.h;requireOk(authHash,409,'ownerAuthRequired');
   const tables=(await c.query("select tablename from pg_tables where schemaname='ab' order by tablename")).rows;
@@ -47,7 +52,9 @@ export async function rehearseReset(pool:Pool, dataKey:string){
   for(const t of plan.rlsTables)requireOk((await c.query('select relrowsecurity from pg_class where oid=$1::regclass',['ab.'+t])).rows[0]?.relrowsecurity,409,'rlsLost');
   requireOk(Number((await c.query("select count(*)n from pg_constraint where connamespace='ab'::regnamespace and not convalidated")).rows[0].n)===0,409,'invalidConstraints');
   const oldOwner=JSON.stringify(owner),newOwner=JSON.stringify((await c.query('select * from ab.users where id=$1',[owner.id])).rows[0]);requireOk(oldOwner===newOwner,409,'ownerProfileChanged');
+  requireOk(JSON.stringify(outside(await manifest(c)))===outsideBefore,409,'nonApplicationSchemaChanged');
   await c.query('COMMIT');
+  console.log('CHECK: AUTH_STORAGE_PUBLIC_OTHER_TABLES_CONSTRAINTS_POLICIES_AND_TRIGGERS_UNCHANGED=PASS');
   console.log('CHECK: ISOLATED_SCHEMA_REPLAY_13_OWNER_AUTH_PROFILE_REFERENCE_CATALOG_RLS_AND_EMPTY_BUSINESS=PASS; EMPTY_TABLES='+empty.length);
   phase='ISOLATED_OWNER_BACKEND_LOGIN';
   const auth=new TestAuth(),password=randomBytes(40).toString('base64url');auth.accounts.set(owner.auth_email,{id:owner.auth_id,password});
