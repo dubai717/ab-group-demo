@@ -1,0 +1,35 @@
+name: Workspace full application browser review (loopback only)
+on:
+  push:
+    branches: [verify/workspace-browser-20261105]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # No Environment/secrets: cannot touch a cloud project or dispatch/reset/deploy it.
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node backend/deploy/build.mjs
+      - run: node backend/tests/local-db.mjs
+      - name: Real loopback API + original workspace UI contracts
+        env:
+          AB_BROWSER_EXECUTABLE: /usr/bin/google-chrome
+        run: |
+          set -euo pipefail
+          node --import tsx backend/tests/workspace-serve.ts > /tmp/ab-workspace-fixture.log 2>&1 &
+          fixture_pid=$!
+          trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 60); do
+            if test -f work/workspace-browser.json; then break; fi
+            if ! kill -0 "$fixture_pid" 2>/dev/null; then echo 'RESULT: WORKSPACE_FIXTURE_START_FAILED'; exit 1; fi
+            sleep 1
+          done
+          node backend/tests/workspace.browser.cjs
