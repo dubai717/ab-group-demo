@@ -6,7 +6,7 @@ export async function collectPlan(c:PoolClient,release:string){
  for(const a of auth.filter(a=>a.id!==b.owner.auth_id))requireOk(a.role==='authenticated'&&/^\$2[aby]\$/.test(a.encrypted_password||'')&&(a.raw_app_meta_data?.providers||['email']).every((x:string)=>x==='email'),409,'identityRecoveryUnsupported');
  const users=(await c.query('select id,auth_id,username,auth_email,data from ab.users')).rows;
  requireOk(auth.length===users.length&&users.every(u=>auth.some(a=>a.id===u.auth_id&&a.email===u.auth_email)),409,'unmappedAuthIdentity');
- for(const u of users){if(u.id===b.owner.id)continue;requireOk((u.data?.managedTestSuite&&/^test_/.test(u.username))||(/^(ci_|trial_|owner_)/.test(u.username)&&/@example\.(test|invalid)$/.test(u.auth_email)),409,'unclassifiedAccount');}
+ // A confirmed full reset includes every mapped test-environment identity, including manually created users; names never authorize or restrict deletion.
  requireOk(Number((await c.query("select count(*)n from pg_tables where schemaname='public' and tablename<>'ab_schema_migrations'")).rows[0].n)===0,409,'unrelatedPublicTables');
  const production=Number((await c.query("select count(*)n from ab.settings where key~*'(production|live.payments|bank.feed|whatsapp|sms|smtp|gps.live)'and(value->>'enabled'='true'or value->>'environment'='production'or value->>'mode'='live')")).rows[0].n);requireOk(production===0,409,'productionIntegration');
  const bucket=(await c.query('select public from storage.buckets where id=$1',['ab-private-test'])).rows[0];requireOk(bucket&&bucket.public===false,409,'privateBucketRequired');

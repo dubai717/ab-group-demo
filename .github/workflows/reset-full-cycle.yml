@@ -21,13 +21,13 @@ jobs:
       - name: Disposable local restore destination only
         run: |
           set -euo pipefail
-          docker run --detach --name ab-backup-drill-postgres --publish 127.0.0.1:5547:5432 --tmpfs /var/lib/postgresql/data:rw,nosuid,nodev,size=1g -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_DB=ab_drill postgres:17 > /dev/null
+          docker run --detach --name ab-backup-drill-postgres --publish 127.0.0.1:5547:5432 --publish 127.0.0.1:5000:5000 --publish 127.0.0.1:9999:9999 --tmpfs /var/lib/postgresql/data:rw,nosuid,nodev,size=1g -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_DB=ab_drill postgres:17 > /dev/null
           for i in $(seq 1 60); do
             if docker exec ab-backup-drill-postgres pg_isready -U postgres -d ab_drill > /dev/null; then exit 0; fi
             sleep 1
           done
           exit 1
-      - name: Archive GET only; every database/delete/upload operation targets the isolated clone/emulator
+      - name: Archive GET only; every database/delete/upload operation targets the isolated clone/services
         env:
           NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -36,4 +36,4 @@ jobs:
           BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
         run: node --import tsx backend/reset/full-rehearsal.ts
       - if: always()
-        run: docker rm --force --volumes ab-backup-drill-postgres > /dev/null 2>&1 || true
+        run: docker rm --force --volumes ab-reset-local-storage ab-reset-local-auth ab-backup-drill-postgres > /dev/null 2>&1 || true
