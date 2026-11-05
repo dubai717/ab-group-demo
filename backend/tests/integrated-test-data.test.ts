@@ -4,8 +4,10 @@ import {randomUUID} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {fixture} from './fixture.js';
 import {provisionTestUsers} from '../src/test-user-provisioning.js';
-import {seedIntegratedData,uploadTestObjects} from '../fixtures/integrated-test-data.js';
-import {transaction} from '../src/core.js';
+import {seedIntegratedData,uploadTestObjects,repairIntegratedDataTags} from '../fixtures/integrated-test-data.js';
+import {transaction,security} from '../src/core.js';
+import {testDataSummary} from '../src/test-data-summary.js';
+import {TEST_DATA_KEY} from '../src/test-data-manifest.js';
 import {tenantKeys,fictionalIban,type DataManifest} from '../fixtures/test-data-store.js';
 test('TEST_DATA uses reserved fictional bank routing and distinct identifiers',()=>{assert.equal(fictionalIban(1).length,23);assert.equal(fictionalIban(1).slice(4,7),'000');assert.notEqual(fictionalIban(1),fictionalIban(2));});
 test('integrated TEST_DATA creates 5 companies, 30 customers, 50 vehicles with balanced linked finances and no duplication',async()=>{
@@ -19,6 +21,12 @@ test('integrated TEST_DATA creates 5 companies, 30 customers, 50 vehicles with b
    assert.equal(Number((await c.query('select count(*)n from ab.vehicles v join ab.customers c on c.id=v.customer_id where v.id=any($1::uuid[])and v.company_id<>c.company_id',[d.vehicles.map(v=>v.id)])).rows[0].n),0);
    assert.equal(Number((await c.query('select count(*)n from(select journal_id from ab.finance_entries where company_id=any($1::uuid[])and journal_id is not null group by journal_id having sum(debit)<>sum(credit))x',[d.companies.map(x=>x.id)])).rows[0].n),0);
   });
+  assert(d.tags.vehicle_invoices.length>0);assert(d.tags.finance_notifications.length>=35);
+  // Reproduce the old catalog parser's empty provenance without recreating business data.
+  await transaction(f.runtime,registry.tenant,registry.owner,async c=>{const cipher=security(f.secret.key),legacy={...d,tags:{}};await c.query('update ab.settings set value=$2 where key=$1',[TEST_DATA_KEY,{marker:'TEST_DATA',cipher:cipher.seal(legacy)}]);});
+  const repairKeys=await transaction(f.runtime,registry.tenant,registry.owner,c=>tenantKeys(c));
+  await transaction(f.runtime,registry.tenant,registry.owner,async c=>{assert.equal((await repairIntegratedDataTags(c,f.secret.key,registry)).repaired,true);assert.equal((await repairIntegratedDataTags(c,f.secret.key,registry)).repaired,false);const summary=await testDataSummary(c,security(f.secret.key),registry.tenant,registry.owner);assert('invoices'in summary.counts&&summary.counts.invoices>0);assert('alerts'in summary.counts&&summary.counts.alerts>=35);});
+  assert.deepEqual(await transaction(f.runtime,registry.tenant,registry.owner,c=>tenantKeys(c)),repairKeys);
   const before=await transaction(f.runtime,registry.tenant,registry.owner,c=>tenantKeys(c));const reused=await seedIntegratedData(f.runtime,f.secret.key,registry,f.objects);assert.equal(reused.created,false);assert.deepEqual(await transaction(f.runtime,registry.tenant,registry.owner,c=>tenantKeys(c)),before);
   assert.equal(JSON.stringify((await f.admin.query('select * from ab.users order by id')).rows),initialUsers);assert.equal(JSON.stringify((await f.admin.query('select * from ab.role_permissions order by role_id,permission_id')).rows),initialPermissions);
   console.log('CHECK: TEST_DATA_RELATIONS_BALANCED_JOURNALS_PRIVATE_OBJECTS_REPLAY_AND_USERS_PRESERVED=PASS');
