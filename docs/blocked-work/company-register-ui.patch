@@ -1,0 +1,139 @@
+diff --git a/app.js b/app.js
+index 170a337..485650e 100644
+--- a/app.js
++++ b/app.js
+@@ -714,6 +714,8 @@ function renderDepartments() {
+ }
+ 
+ function renderCompanies(user) {
++  if(!app.state.companyRegisterInitialized){app.state.companyFilters={...app.state.companyFilters,status:'Active',licenseStatus:'Active'};app.state.companyRegisterInitialized=true;}
++  const currentProfile=CompanyDocuments.renderProfile();if(currentProfile&&!app.state.companyFormOpen)return currentProfile;
+   const canManage = user.roleId === 'owner' || isUserAllowed(user, 'create_company') || isUserAllowed(user, 'edit_company');
+   const filters = app.state.companyFilters || { query: '', status: 'all', emirate: 'all' };
+   const companyRows = app.state.companies.filter((company) => {
+@@ -721,7 +723,7 @@ function renderCompanies(user) {
+     const matchesQuery = !query || [company.companyCode, company.arabicName, company.englishName, company.shortName, company.emirate, company.trafficCode, company.salikAccountNumber].join(' ').toLowerCase().includes(query) || CompanyDocuments.codeSearch(company, query);
+     const matchesStatus = filters.status === 'all' || company.status === filters.status;
+     const matchesEmirate = filters.emirate === 'all' || company.emirate === filters.emirate;
+-    return matchesQuery && matchesStatus && matchesEmirate && CompanyDocuments.matchesFilters(company, filters);
++    return matchesQuery && matchesStatus && matchesEmirate && (!filters.licenseStatus||filters.licenseStatus==='all'||(company.licenseStatus||'Active')===filters.licenseStatus) && CompanyDocuments.matchesFilters(company, filters);
+   });
+ 
+   const emirates = AreaReference.emirates.map(e => e.legacy);
+@@ -729,14 +731,14 @@ function renderCompanies(user) {
+   return `
+     <section class="content-panel company-panel">
+       <div class="section-head">
+-        <h2>${localeText('companyManagement')}</h2>
++        <h2>${localeText('companyManagement')}</h2><button type="button" class="ghost-btn" data-company-export>${getLocale()==='ar'?'تصدير Excel':'Export Excel'}</button>
+         ${canManage ? `<button class="secondary-btn" data-action="open-company-form">${localeText('addCompany')}</button>` : ''}
+       </div>
+ 
+       <div class="company-desc">${localeText('legalEntitiesDesc')}</div>
+       ${CompanyDocuments.renderSaveNotice()}
+ 
+-      ${canManage ? `
++      ${canManage && app.state.companyFormOpen ? `
+         <form id="company-form" class="company-form">
+           <div class="form-grid">
+             <div>
+@@ -747,10 +749,7 @@ function renderCompanies(user) {
+               <label>${localeText('companyEnglishName')}</label>
+               <input class="input" name="englishName" required />
+             </div>
+-            <div>
+-              <label>${localeText('companyCode')}</label>
+-              <input class="input" name="companyCode" required />
+-            </div>
++            <input type="hidden" name="companyCode" value="CO-${crypto.randomUUID()}" />
+             <div>
+               <label>${localeText('shortName')}</label>
+               <input class="input" name="shortName" />
+@@ -763,10 +762,8 @@ function renderCompanies(user) {
+                 <option value="Suspended">${localeText('suspended')}</option>
+               </select>
+             </div>
+-            <div>
+-              <label>${localeText('companyLogo')}</label>
+-              <input class="input" type="file" name="logo" accept="image/*" />
+-            </div>
++            <div><img class="cd-company-logo" src="assets/Untitled.png" alt="AB Group" /></div>
++            ${CompanyDocuments.licenseFields({},true)}
+ 
+             <div class="full split-title">${localeText('legalLicense')}</div>
+             <div>
+@@ -874,7 +871,7 @@ function renderCompanies(user) {
+         <table>
+           <thead>
+             <tr>
+-              <th>${localeText('companyTableCode')}</th>
++
+               <th>${localeText('companyTableArabic')}</th>
+               <th>${localeText('companyTableEnglish')}</th>
+               <th>${localeText('companyTableLicense')}</th>
+@@ -886,8 +883,8 @@ function renderCompanies(user) {
+           </thead>
+           <tbody>
+             ${companyRows.length ? companyRows.map(company => `
+-              <tr>
+-                <td><strong>${CompanyDocuments.escape(company.companyCode)}</strong></td>
++              <tr data-company-row="${CompanyDocuments.escape(company.id)}">
++
+                 <td>${CompanyDocuments.escape(company.arabicName)}</td>
+                 <td>${CompanyDocuments.escape(company.englishName)}</td>
+                 <td>${CompanyDocuments.escape(company.tradeLicenseNumber)}</td>
+@@ -1129,14 +1126,17 @@ function bindGlobalEvents() {
+   BankAccounts.bind();
+   CompanyDocuments.bind();
+   document.querySelectorAll('[data-page]').forEach(button => {
+-    button.addEventListener('click', () => {
++    button.addEventListener('click', async () => {
+       if(!CustomerUI.leave())return;
+       AuthFlows.leave();
+       UserManagement.cleanup();
+       BankAccounts.cleanup();
+       CompanyDocuments.cleanupPreview();
+       const page = button.dataset.page;
++      if(page==='companies'){CompanyDocuments.centralSelect(null);app.state.companyFormOpen=false;}
+       app.state.currentPage = page;
++      if(page==='customers'){await CustomerUI.select('list');return;}
++      if(page==='vehicles'){await VehicleUI.select('list');return;}
+       saveState();
+       render();
+     });
+@@ -1238,7 +1238,8 @@ function bindGlobalEvents() {
+         arabicName: String(fd.get('arabicName') || '').trim(),
+         englishName: String(fd.get('englishName') || '').trim(),
+         shortName: String(fd.get('shortName') || '').trim(),
+-        logo: logoData || 'assets/logo.svg',
++        logo: 'assets/Untitled.png',
++        ...CompanyDocuments.licenseData(Object.fromEntries(fd)),
+         status: String(fd.get('status') || 'Active'),
+         tradeLicenseNumber: String(fd.get('tradeLicenseNumber') || '').trim(),
+         issuingAuthority: String(fd.get('issuingAuthority') || '').trim(),
+@@ -1271,7 +1272,7 @@ function bindGlobalEvents() {
+         return;
+       }
+       CompanyDocuments.captureNew(newCompany.id, documentData.files);
+-      CompanyDocuments.markCreated();
++      CompanyDocuments.markCreated();app.state.companyFormOpen=false;
+       render();
+       } catch (error) {
+         const message = companyForm.querySelector('#company-doc-message');
+@@ -1309,13 +1310,13 @@ function bindGlobalEvents() {
+     });
+   }
+ 
++  document.querySelectorAll('[data-company-row]').forEach(row=>row.addEventListener('click',ev=>{if(!ev.target.closest('button,a,input,select'))row.querySelector('[data-cd=profile]')?.click();}));
++  document.querySelector('[data-company-export]')?.addEventListener('click',async()=>{try{const filters=app.state.companyFilters||{};const query={q:filters.query||'',statuses:filters.status==='all'?'':filters.status||'',emirate:filters.emirate==='all'?'':filters.emirate||'',licenseStatus:filters.licenseStatus==='all'?'':filters.licenseStatus||'',trafficCode:filters.trafficCode||'',salikAccountNumber:filters.salikAccountNumber||''};const r=await ABCentral.api('registers/companies?'+new URLSearchParams({format:'excel',columns:'arabicName,englishName,status,emirate,trafficCode,salikAccountNumber',query:JSON.stringify(query)}));await RegisterExport.run(r,'excel');}catch{alert(getLocale()==='ar'?'تعذر التصدير وفق الصلاحيات.':'Export unavailable under current permissions.');}});
+   const openCompanyBtn = document.querySelector('[data-action="open-company-form"]');
+   if (openCompanyBtn) {
+     openCompanyBtn.addEventListener('click', () => {
+       const form = document.getElementById('company-form');
+-      if (form) {
+-        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+-      }
++      if(!form){CompanyDocuments.centralSelect(null);app.state.companyFormOpen=true;render();document.querySelector('#company-form input:not([type=hidden])')?.focus();}else form.scrollIntoView({ behavior:'smooth',block:'start' });
+     });
+   }
+ }

@@ -1,0 +1,22 @@
+name: Workspace component presentation review (no cloud credentials)
+on:
+  push:
+    branches: [verify/workspace-core-20261105]
+permissions:
+  contents: read
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Component presentation tests
+        env:
+          AB_BROWSER_EXECUTABLE: /usr/bin/google-chrome
+        run: node backend/tests/workspace-components.browser.cjs

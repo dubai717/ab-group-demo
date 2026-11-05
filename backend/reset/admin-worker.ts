@@ -1,3 +1,4 @@
+import {resetSchemaPreflight} from './schema-preflight.js';
 import {restoreHostedApplication,restoreProviders,verifyRecovery} from './recovery.js';
 import {restoreArchive} from '../src/backup.js';
 import {trustedResetContext} from './context.js';
@@ -26,7 +27,7 @@ async function main(){let pool:Pool|undefined,held=false,started=false,c:any,sto
  const key=cfg.mode==='preview'?'reset-preview:'+cfg.id:'reset-request:'+cfg.id;const saved=(await c.query('select value from ab.settings where tenant_id=$1 and key=$2',[owner.tenant_id,key])).rows[0]?.value;requireOk(saved,403,'ownerRequestRequired');
  if(cfg.mode==='preview'){
   const authorization=cipher.open(saved.sealed);requireOk(authorization.id===cfg.id&&authorization.owner===owner.id&&authorization.tenant===owner.tenant_id&&authorization.expires>Date.now(),403,'invalidPreviewRequest');
-  stage='PREVIEW';const before=await collectPlan(c,e.GITHUB_SHA!);stage='VERIFIED_BACKUP';const proof=await backup();requireOk(proof?.verified&&!process.exitCode,409,'backupFailed');const p=await collectPlan(c,e.GITHUB_SHA!);requireOk(before.fingerprint===p.fingerprint,409,'previewChangedDuringBackup');
+  stage='PREVIEW';const before=await collectPlan(c,e.GITHUB_SHA!);stage='VERIFIED_BACKUP';const proof=await backup();requireOk(proof?.verified&&!process.exitCode,409,'backupFailed');await resetSchemaPreflight();const p=await collectPlan(c,e.GITHUB_SHA!);requireOk(before.fingerprint===p.fingerprint,409,'previewChangedDuringBackup');
   p.backupVerified=true;p.restoreVerified=true;p.canExecute=true;p.blockers=[];await store.put(controlPrefix+'plans/'+p.id+'.enc',{...p,proof:{archivePath:proof.archivePath,verified:true,freshAt:proof.freshAt}});
   await c.query("insert into ab.settings values($1,'reset-latest-plan',$2) on conflict(tenant_id,key)do update set value=excluded.value",[owner.tenant_id,{sealed:cipher.seal(p)}]);await c.query("update ab.settings set value=value||'{\"status\":\"Complete\"}'::jsonb where tenant_id=$1 and key='reset-preview-pending'",[owner.tenant_id]);console.log('RESULT: RESET_PREVIEW_AND_ENCRYPTED_BACKUP_READY; NO_BUSINESS_AUTH_STORAGE_DELETION');return;
  }
@@ -39,7 +40,7 @@ async function main(){let pool:Pool|undefined,held=false,started=false,c:any,sto
 
  await phase('fencing');await c.query('select pg_advisory_lock(91717,1)');held=true;
  requireOk((await collectPlan(c,e.GITHUB_SHA!)).fingerprint===p.fingerprint,409,'approvedPreviewChanged');
- stage='FRESH_VERIFIED_BACKUP';await phase('backup');const proof=await backup();requireOk(proof?.verified&&!process.exitCode,409,'backupFailed');
+ stage='FRESH_VERIFIED_BACKUP';await phase('backup');const proof=await backup();requireOk(proof?.verified&&!process.exitCode,409,'backupFailed');await resetSchemaPreflight();
  const users=(await c.query('select * from auth.users order by id')).rows,ledger=(await c.query('select * from public.ab_schema_migrations')).rows;
  const restoreApplication=()=>restoreHostedApplication(c,cfg.uri,proof.database,ledger);
  await store.put(controlPrefix+'requests/'+cfg.id+'/recovery.enc',{sealed:security(e.BACKUP_ENCRYPTION_KEY!).seal({owner,ownerAuth:users.find(u=>u.id===owner.auth_id),users,ledger,archivePath:proof.archivePath,archiveSha256:proof.archiveSha256})});

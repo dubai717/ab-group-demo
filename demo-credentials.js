@@ -93,11 +93,16 @@
       }
     };
   }
+
+  async function legacyHash(password,salt,cryptoProvider=globalThis.crypto){if(!cryptoProvider?.subtle)throw Error('cryptoUnavailable');const key=await cryptoProvider.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);return hex(new Uint8Array(await cryptoProvider.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:bytes(salt),iterations:ITERATIONS},key,256)));}
+  async function verifyLegacy(user,password,cryptoProvider=globalThis.crypto){const v=user?.passwordVerifier;if(!v||v.algorithm!=='PBKDF2-SHA256'||v.iterations!==ITERATIONS||!/^([a-f0-9]{2}){16}$/.test(v.salt)||!/^[a-f0-9]{64}$/.test(v.hash)||typeof password!=='string'||password.length>128)return false;const hash=await legacyHash(password,v.salt,cryptoProvider);let diff=0;for(let i=0;i<hash.length;i++)diff|=hash.charCodeAt(i)^v.hash.charCodeAt(i);return diff===0;}
+  async function upgradeLegacyState(state,cryptoProvider=globalThis.crypto){let changed=false;for(const user of state.users||[]){if(typeof user.password!=='string')continue;const salt=hex(cryptoProvider.getRandomValues(new Uint8Array(16)));user.passwordVerifier={algorithm:'PBKDF2-SHA256',iterations:ITERATIONS,salt,hash:await legacyHash(user.password,salt,cryptoProvider)};delete user.password;changed=true;}if(state.currentUser?.password){const u=state.users.find(u=>u.id===state.currentUser.id);if(u?.passwordVerifier)state.currentUser.passwordVerifier=u.passwordVerifier;delete state.currentUser.password;changed=true;}return changed;}
+
   let store;
   function getStore() {
     return store ||= createStore({ storage: localStorage, legacyUsers: () => app.state.users, roleIds: () => app.state.roles.map(r => r.id) });
   }
-  return { KEY, ITERATIONS, fields, passwordError, createStore,
+  return { KEY, ITERATIONS, fields, passwordError, createStore,verifyLegacy,upgradeLegacyState,
     directory() { if(globalThis.ABCentral?.enabled)return [];try { return getStore().directory(); } catch { return []; } },
     prepare: (password, confirmation) => getStore().prepare(password, confirmation),
     saveProfile: (candidate, verifier) => getStore().saveProfile(candidate, verifier),

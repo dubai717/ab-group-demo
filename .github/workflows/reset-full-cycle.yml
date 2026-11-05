@@ -1,7 +1,7 @@
 name: Full Reset isolated database and provider-contract recovery
 on:
   push:
-    branches: [verify/reset-full-cycle-20261105]
+    branches: [verify/reset-full-cycle-20261105, verify/workspace-cycle-20261105]
 permissions:
   contents: read
 jobs:

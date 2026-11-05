@@ -1,3 +1,4 @@
+import {approvedChain} from '../reset/schema.js';
 import {trustedResetContext} from '../reset/context.js';
 // One-shot read-only hosted capture; restoration commands target ONLY the named ephemeral local container.
 import {Pool, PoolClient} from 'pg';
@@ -67,11 +68,11 @@ export async function main(){
    const expected=JSON.parse(await readFile('backend/actions/approved-migrations.json','utf8')).migrations;
    const ledger=(await c.query('select name,sha256 from public.ab_schema_migrations order by name')).rows;
    if(process.env.AB_STAGING_AUTOMATION==='controlled-test-only'){
-    await validateStagingLedger(ledger);
+    if(trustedResetContext(process.env)){const chain=await approvedChain();check(ledger.length===chain.length&&chain.every((m:any)=>ledger.some((r:any)=>r.name===m.name&&r.sha256===m.sha256)),'RESET_APPROVED_LEDGER');}else await validateStagingLedger(ledger);
     const plan=JSON.parse(await readFile('backend/deploy/personnel-release-plan.json','utf8')).migrations,knownTables=new Set<string>();
     for(const m of [...expected,...plan]){const sql=await readFile(m.path||'supabase/migrations/'+m.name,'utf8');for(const match of sql.matchAll(/\bCREATE TABLE ab\.([a-z_]+)/g))knownTables.add(match[1]);}
     const actual=(await c.query("select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='ab'and c.relkind in('r','p')")).rows;
-    check(actual.length===knownTables.size&&actual.every(r=>knownTables.has(r.relname)),'UNREGISTERED_APPLICATION_TABLE');
+    if(!trustedResetContext(process.env))check(actual.length===knownTables.size&&actual.every(r=>knownTables.has(r.relname)),'UNREGISTERED_APPLICATION_TABLE'); // Reset additionally replays the complete canonical chain on this isolated restored copy before exposing an executable plan.
     const production=(await c.query("select count(*)n from ab.settings where key~*'(production|live.payments|bank.feed|whatsapp|sms|smtp|gps.live)'and(value->>'enabled'='true'or value->>'environment'='production'or value->>'mode'='live')")).rows[0].n;check(Number(production)===0,'KNOWN_PRODUCTION_INTEGRATION');
    }else check(ledger.length===8&&expected.every((m:any)=>ledger.some((r:any)=>r.name===m.name&&r.sha256===m.sha256)),'BASE_LEDGER');
    snapshot=(await c.query('select pg_export_snapshot() id')).rows[0].id;check(/^[A-Fa-f0-9-]+$/.test(snapshot),'SNAPSHOT');
