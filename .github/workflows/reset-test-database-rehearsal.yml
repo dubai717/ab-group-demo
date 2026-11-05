@@ -43,6 +43,7 @@ jobs:
         run: |
           set -euo pipefail
           docker run --detach --name ab-backup-drill-postgres --publish 127.0.0.1:5547:5432 --tmpfs /var/lib/postgresql/data:rw,nosuid,nodev,size=1g -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_DB=ab_drill postgres:17 > /dev/null
+          docker cp backend/certificates/supabase-prod-ca-2021.crt ab-backup-drill-postgres:/tmp/ab-ca.crt
           for i in $(seq 1 60); do
             if docker exec ab-backup-drill-postgres pg_isready -U postgres -d ab_drill > /dev/null; then exit 0; fi
             sleep 1
@@ -81,6 +82,7 @@ jobs:
         run: |
           set -euo pipefail
           docker run --detach --name ab-backup-drill-postgres --publish 127.0.0.1:5547:5432 --tmpfs /var/lib/postgresql/data:rw,nosuid,nodev,size=1g -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_DB=ab_drill postgres:17 > /dev/null
+          docker cp backend/certificates/supabase-prod-ca-2021.crt ab-backup-drill-postgres:/tmp/ab-ca.crt
           for i in $(seq 1 60); do
             if docker exec ab-backup-drill-postgres pg_isready -U postgres -d ab_drill > /dev/null; then exit 0; fi
             sleep 1
