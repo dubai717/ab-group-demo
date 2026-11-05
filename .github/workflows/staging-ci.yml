@@ -47,6 +47,12 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Refuse delivery during reset or unresolved recovery
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
+        run: node --import tsx backend/reset/ci-preflight.ts
       - name: Isolated PostgreSQL 17 for actual backup restoration
         shell: bash
         run: |

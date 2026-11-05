@@ -1,3 +1,6 @@
+import {remoteControl,markerPath} from '../reset/remote-control.js';
+import {actionsGateway,installMaintenance} from '../reset/gateway.js';
+import {configureMaintenance} from './core.js';
 import {resetEnvironment} from './reset-control.js';
 import {testUsersEnvironment} from './test-users.js';
 import {releaseInfo} from '../deploy/release-info.js';
@@ -54,6 +57,9 @@ const { auth, objects } = supabase(
   keys.secret,
   process.env.SUPABASE_BUCKET || "ab-private-test",
 );
+const resetEnabled=resetEnvironment(process.env);
+const resetStore=resetEnabled?remoteControl(process.env.SUPABASE_URL!,keys.secret,process.env.DATA_ENCRYPTION_KEY!):undefined;
+const resetWorker=resetStore&&process.env.RESET_WORKER_GITHUB_TOKEN?actionsGateway(pool,process.env.DATA_ENCRYPTION_KEY!,process.env.RESET_WORKER_GITHUB_TOKEN,resetStore):undefined;
 const app = await build({
   pool,
   key: process.env.DATA_ENCRYPTION_KEY!,
@@ -62,8 +68,12 @@ const app = await build({
   auth,
   objects,
   testUsersEnabled:testUsersEnvironment(process.env),
-  resetEnabled:resetEnvironment(process.env),
+  resetEnabled,
+  resetWorker,
+  resetStatus:resetStore?async(id:string)=>{const m=await resetStore.get(markerPath);return m?.id===id?{status:m.status,active:m.active}:{status:'queued',active:false};}:undefined,
 });
+if(resetStore)configureMaintenance(installMaintenance(app,resetStore));
+app.get('/api/reset-capability',async()=>({enabled:resetEnabled,workerConfigured:!!resetWorker,maintenanceFencing:!!resetStore}));
 app.get('/api/release',async()=>releaseInfo(process.env));
 await app.listen({
   host: local ? "127.0.0.1" : "0.0.0.0",

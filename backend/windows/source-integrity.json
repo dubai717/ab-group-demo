@@ -39,12 +39,12 @@
     "backend/fixtures/test-data-store.ts": "b4d265fd4fe929a901f5b30dc3eb3a8570f58d7d9b8488e3e6755ae8268d3614",
     "backend/fonts/Cairo.ttf": "667c987182391c91f4e57a2f455b1794fb5e3ee6ca4ef3383e86bb690fa9c964",
     "backend/package.json": "a90fc33418afa2b9cbf4768524b021135b965ecdf993457505bfae3ac44a8428",
-    "backend/src/app.ts": "915fc469036c29f9c79cbae0ba336f3e8f03cd73396bd0be8ae3ea0f96469d54",
+    "backend/src/app.ts": "b8c3b04ccb4218c9ea696952e8afdc1645e723ac799841b866c7631c975136c0",
     "backend/src/backup.ts": "9785cdd47847546cdcf38271f723e07379a433f40c9e033080c250ab2d3e4048",
     "backend/src/bootstrap.ts": "fba87e75a4216dade64fb8c58a1a8a22ad2800ea6e6d518852d26b6babd6fa0f",
     "backend/src/connection-diagnostics.ts": "681c2130fc10b7f36a973d05bd2840f59a3c0b43c6a609de9785238624c93eee",
     "backend/src/connection-format.ts": "c1f4c14cc0672d7bf65a99e128a7e60ff2996e5ca678ad4c62a96f882e793038",
-    "backend/src/core.ts": "0fff98dc526d9d83d9c71d41db41dbf6e55a5c61741efc575e9ff2904743ef1a",
+    "backend/src/core.ts": "ed56a9710f874855633473d02540d183f9cf9caeae2c60ba93fc54fdaeb866a1",
     "backend/src/customer-spreadsheet-worker.ts": "7fe7bd1d6272177391fd6922c55fb6c5f1705045e7916b8d1aa442ad31504643",
     "backend/src/customer-spreadsheet.ts": "03bb3a433307f2e7cd76d7bab28645f7a82b6a2a319c5d7a551c7e7ed78b3197",
     "backend/src/customers.ts": "d6fbde8cb475f962a3c5bf12c95ff59d6cf5cf953021796ad5c65a537745d250",
@@ -64,7 +64,7 @@
     "backend/src/personnel.ts": "04378b085102ecf9029cac7cad5b368ca4ddf943f56bf2c4f45551925c41e705",
     "backend/src/provision.ts": "5b5228f58a44ec08b4e647f8636af08380ccc836ba462e9164ec809bc388740a",
     "backend/src/scan.ts": "d7d611f0886b04f1b3c7e3aab1d46288d58deb3b3055168e00c3c4724edc8455",
-    "backend/src/server.ts": "cb3034c547c07cd8740057bf1a47d7a5525afa7b05d3c452b38664846a6951b2",
+    "backend/src/server.ts": "e652f56259431ddaad1b1e1f7c9564d12cb37b99379ffe60f813977713389d9b",
     "backend/src/test-data-manifest.ts": "0c00833e2b3182304541820631530497e895b0b43fab108c2a383b29fcd0249e",
     "backend/src/test-data-summary.ts": "198373b497ab46211c5582c9a281bda495e0e30780552bc9dface51358150499",
     "backend/src/test-user-provisioning.ts": "9af6558288b9f3570e007819df52c29bb9001726dab8933c8677241afa224557",
@@ -110,7 +110,7 @@
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
     "vehicles.js": "5d1641d5dc6ab4b983b096f2f02aced7dcdb1f3b577b6bb42791b9556dcb40b5",
     "workspace-ui.js": "30f2cdc0b31e925ae4ff7f8577325a6c32c5eb492461763f704959b1e5fb71d5",
-    "backend/src/reset-control.ts": "abfe5095e25d659a6017391cb21db02446ef9d839775ed8da9d5465efa616272",
-    "reset-test-database-ui.js": "aa9d1860693d4ac5ccb04c53c39b6e79c64a56dd74810f7bc4a11590a7c85959"
+    "backend/src/reset-control.ts": "7610e4673418e97f0f0f7e6ab9038188c67825caf831c779d608b91a86176366",
+    "reset-test-database-ui.js": "e60acaab3ecd9a709726fec18f4e4c093a4a854c9d23a3ccf42156ca6289ebc2"
   }
 }

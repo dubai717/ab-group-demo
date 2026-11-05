@@ -1,3 +1,4 @@
+import {trustedResetContext} from '../reset/context.js';
 // One-shot read-only hosted capture; restoration commands target ONLY the named ephemeral local container.
 import {Pool, PoolClient} from 'pg';
 import {spawn} from 'node:child_process';
@@ -30,7 +31,7 @@ export function docker(args:string[],env:NodeJS.ProcessEnv={},input?:Buffer):Pro
  });
 }
 export function drillGuard(e:NodeJS.ProcessEnv){
- check(e.GITHUB_ACTIONS==='true'&&e.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&e.GITHUB_EVENT_NAME==='push'&&(e.GITHUB_REF==='refs/heads/verify/backup-restore-20261104'||['refs/heads/activate/personnel-staging-approved','refs/heads/verify/staging-rehearsal-009-013-20261104','refs/heads/staging/ab-group-test','refs/heads/verify/staging-delivery-preflight-20261104','refs/heads/verify/test-data-cleanup-preview-20261105','refs/heads/verify/reset-test-database-rehearsal-20261105','refs/heads/verify/reset-fresh-backup-20261105'].includes(e.GITHUB_REF||''))&&e.AB_BACKUP_DRILL_APPROVED==='read-only-source-isolated-restore','RUNNER_GUARD');
+ check(e.GITHUB_ACTIONS==='true'&&e.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&(e.GITHUB_EVENT_NAME==='push'||trustedResetContext(e))&&(e.GITHUB_REF==='refs/heads/verify/backup-restore-20261104'||['refs/heads/activate/personnel-staging-approved','refs/heads/verify/staging-rehearsal-009-013-20261104','refs/heads/staging/ab-group-test','refs/heads/verify/staging-delivery-preflight-20261104','refs/heads/verify/test-data-cleanup-preview-20261105','refs/heads/verify/reset-test-database-rehearsal-20261105','refs/heads/verify/reset-fresh-backup-20261105'].includes(e.GITHUB_REF||''))&&e.AB_BACKUP_DRILL_APPROVED==='read-only-source-isolated-restore','RUNNER_GUARD');
  if(['refs/heads/activate/personnel-staging-approved','refs/heads/verify/staging-rehearsal-009-013-20261104','refs/heads/staging/ab-group-test','refs/heads/verify/staging-delivery-preflight-20261104','refs/heads/verify/test-data-cleanup-preview-20261105','refs/heads/verify/reset-test-database-rehearsal-20261105','refs/heads/verify/reset-fresh-backup-20261105'].includes(e.GITHUB_REF||'')){if(sha(new URL(e.SUPABASE_URL||'').origin)!=='9ea1a5dcb06a135b7c29d99699651b34d11f795d525b7861865c0c842fff954f'||!((e.AB_PERSONNEL_RELEASE_APPROVED==='owner-approved-staging-only'&&e.AB_SYNTHETIC_PROJECT==='yes')||(['refs/heads/staging/ab-group-test','refs/heads/verify/staging-delivery-preflight-20261104','refs/heads/verify/test-data-cleanup-preview-20261105','refs/heads/verify/reset-test-database-rehearsal-20261105','refs/heads/verify/reset-fresh-backup-20261105'].includes(e.GITHUB_REF||'')&&e.AB_STAGING_AUTOMATION==='controlled-test-only')))throw Error('PINNED_APPROVED_TEST_RELEASE_REQUIRED');}
  return backupConnection(e);
 }
@@ -154,6 +155,7 @@ export async function main(){
    console.log('CHECK: ENCRYPTED_METADATA_DOWNLOAD_DECRYPT_AND_PUBLIC_DENIAL=PASS');
    console.log('LOCATION: BUCKET=ab-private-test; ARCHIVE='+paths.archive+'; METADATA='+paths.metadata);
    console.log('RESULT: PRIVATE_RETAINED_BACKUP_DOWNLOADED_AND_RESTORED_PASS; SOURCE_SQL_READ_ONLY; ONLY_NEW_BACKUP_OBJECTS_CREATED; NO_MIGRATIONS_OR_DEPLOYMENT');
+   return {archivePath:paths.archive,metadataPath:paths.metadata,archiveSha256:sha(sealed),verified:true,freshAt:Date.now(),objects:restored.objects,database:restored.database};
   }else console.log('RESULT: HOSTED_BACKUP_ISOLATED_RESTORE_PASS; SOURCE_READ_ONLY; MIGRATIONS_UNCHANGED; ARCHIVE_EPHEMERAL_NOT_UPLOADED');
  }catch(error){
   const code=error instanceof Error&&/^[A-Z_]+$/.test(error.message)?error.message:'DETAILS_WITHHELD';

@@ -51,6 +51,7 @@ export interface Options {
   testUsersEnabled?: boolean;
   resetEnabled?: boolean;
   resetWorker?: ResetWorker;
+  resetStatus?: (id:string)=>Promise<any>;
 }
 export async function build(options: Options) {
   const { pool, auth, objects } = options,
@@ -169,7 +170,7 @@ export async function build(options: Options) {
     return { ...s, sid };
   };
   registerTestUsers(app,{pool,key:options.key,auth,enabled:options.testUsersEnabled===true,session});
-  registerResetControl(app,{pool,key:options.key,auth,enabled:options.resetEnabled===true,worker:options.resetWorker,session});
+  registerResetControl(app,{pool,key:options.key,auth,enabled:options.resetEnabled===true,worker:options.resetWorker,session,status:options.resetStatus});
   const call =
     (handler: (c: PoolClient, m: any, s: any, req: any) => Promise<any>) =>
     async (req: any) => {
@@ -358,7 +359,7 @@ export async function build(options: Options) {
         .rows;
       return {
         actor: m.actor,
-        resetTestDatabaseAvailable: options.resetEnabled===true&&m.actor.roleId==='owner',
+        resetTestDatabaseAvailable: options.resetEnabled===true&&m.actor.roleId==='owner'&&m.actor.username==='trial_4db27b82b8bf',
         testUsersAvailable: options.testUsersEnabled===true&&m.actor.roleId==='owner'&&settings.some(row=>row.key===registryKey),
         audit: ownAudit,
         summary: m.policy.summary(),

@@ -46,15 +46,21 @@ export function security(key: string) {
 }
 export const sha = (value: string | Buffer) =>
   createHash("sha256").update(value).digest("hex");
+let maintenanceCheck: (() => Promise<boolean>) | undefined;
+export function configureMaintenance(check?:()=>Promise<boolean>){maintenanceCheck=check;}
+export async function assertNotMaintenance(){requireOk(!maintenanceCheck||!(await maintenanceCheck()),503,'maintenance');}
 export async function transaction<T>(
   pool: Pool,
   tenant: string,
   actor: string,
   fn: (c: PoolClient) => Promise<T>,
 ): Promise<T> {
+  await assertNotMaintenance();
   const c = await pool.connect();
   try {
     await c.query("BEGIN");
+    await c.query("select pg_advisory_xact_lock_shared(91717,1)");
+    await assertNotMaintenance();
     await c.query(
       "select set_config('ab.tenant',$1,true),set_config('ab.actor',$2,true)",
       [tenant, actor],

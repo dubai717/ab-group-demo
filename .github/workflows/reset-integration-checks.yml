@@ -1,0 +1,28 @@
+name: Reset final isolated regression and authorization checks
+on:
+  push:
+    branches: [verify/reset-integration-20261105]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # No Environment/secrets: cannot touch a cloud project or dispatch/reset/deploy it.
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node backend/deploy/build.mjs
+      - run: node backend/tests/local-db.mjs
+      - run: npm run backend:test
+      - run: node --test tests/*.test.cjs
+      - run: node backend/windows/verify-source.mjs
+      - name: Desktop/phone AR/EN dialog contracts including cancellation
+        env:
+          AB_BROWSER_EXECUTABLE: /usr/bin/google-chrome
+        run: node backend/tests/reset-control.browser.cjs
