@@ -1,7 +1,7 @@
 name: Clean test schema kit isolated verification
 on:
   push:
-    branches: [verify/clean-test-database-kit-20261105]
+    branches: [verify/clean-project-rdsqerenobigacmetrvv]
 permissions:
   contents: read
 jobs:
@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - run: python3 backend/clean-test/build.py /tmp/ab-clean-kit
+      - run: python3 backend/clean-test/release.py /tmp/ab-clean-kit
       - name: Disposable isolated database
         run: |
           set -euo pipefail
@@ -28,6 +28,15 @@ jobs:
           done
           exit 1
       - run: node --import tsx backend/clean-test/check.ts
+      - name: Downloadable schema-only handoff after successful checks
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ab-group-clean-rdsqerenobigacmetrvv
+          path: |
+            /tmp/ab-clean-kit/ab-group-clean-rdsqerenobigacmetrvv.sql
+            /tmp/ab-clean-kit/manifest.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Remove only disposable local container
         if: always()
         run: docker rm --force --volumes ab-clean-kit-postgres > /dev/null 2>&1 || true
