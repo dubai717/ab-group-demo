@@ -110,7 +110,7 @@
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
     "vehicles.js": "5d1641d5dc6ab4b983b096f2f02aced7dcdb1f3b577b6bb42791b9556dcb40b5",
     "workspace-ui.js": "30f2cdc0b31e925ae4ff7f8577325a6c32c5eb492461763f704959b1e5fb71d5",
-    "backend/src/reset-control.ts": "2fc9a9d29813cd8852efb3e26484b68ee23d54fabc2c5020044b780540f3df27",
-    "reset-test-database-ui.js": "a50e46d86d06d21f1fc4f31508a25aee87ddbe26b6cfce63b82635d29c8bfb44"
+    "backend/src/reset-control.ts": "ed3fd95f679591be2ece71a99149f66c455babbffe58d3fa22b379b8bf7bfba6",
+    "reset-test-database-ui.js": "aa9d1860693d4ac5ccb04c53c39b6e79c64a56dd74810f7bc4a11590a7c85959"
   }
 }

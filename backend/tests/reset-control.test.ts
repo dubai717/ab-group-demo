@@ -21,6 +21,7 @@ test('Owner-only fresh password approval, CSRF, backup gate, fingerprint binding
   assert.equal((await req('POST','/api/reset-test-database/confirm',{confirmation:cipher.seal(expired),phrase:'RESET TEST DATABASE'},root.cookie,root.csrf)).statusCode,403);
   const ok=await req('POST','/api/reset-test-database/confirm',{confirmation,phrase:'RESET TEST DATABASE'},root.cookie,root.csrf);assert.equal(ok.statusCode,200);assert.equal(ok.json().resetCompleted,false);assert.equal(submissions,1);
   assert.equal((await req('POST','/api/reset-test-database/confirm',{confirmation,phrase:'RESET TEST DATABASE'},root.cookie,root.csrf)).statusCode,409);assert.equal(submissions,1);
+  const second={...cipher.open(confirmation),id:randomUUID()};assert.equal((await req('POST','/api/reset-test-database/confirm',{confirmation:cipher.seal(second),phrase:'RESET TEST DATABASE'},root.cookie,root.csrf)).statusCode,409);assert.equal(submissions,1);
   const stored=JSON.stringify((await f.admin.query("select value from ab.settings where key like 'reset-request:%'")).rows)+JSON.stringify((await f.admin.query('select * from ab.audit_events')).rows);assert.equal(stored.includes(f.password),false);assert.equal(stored.includes(confirmation),false);
   assert.equal((await f.admin.query('select count(*)::int n from ab.users where id=any($1::uuid[])',[[employeeId,f.org.user]])).rows[0].n,2);
  }finally{await app.close();await f.app.close();await f.admin.end();await f.runtime.end();}
