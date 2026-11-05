@@ -44,7 +44,7 @@
     "backend/src/bootstrap.ts": "fba87e75a4216dade64fb8c58a1a8a22ad2800ea6e6d518852d26b6babd6fa0f",
     "backend/src/connection-diagnostics.ts": "681c2130fc10b7f36a973d05bd2840f59a3c0b43c6a609de9785238624c93eee",
     "backend/src/connection-format.ts": "c1f4c14cc0672d7bf65a99e128a7e60ff2996e5ca678ad4c62a96f882e793038",
-    "backend/src/core.ts": "932984ef89d0899099ae206e621f75cb7b8158f3f15e71b4cc7843bc79c11b9a",
+    "backend/src/core.ts": "0fff98dc526d9d83d9c71d41db41dbf6e55a5c61741efc575e9ff2904743ef1a",
     "backend/src/customer-spreadsheet-worker.ts": "7fe7bd1d6272177391fd6922c55fb6c5f1705045e7916b8d1aa442ad31504643",
     "backend/src/customer-spreadsheet.ts": "03bb3a433307f2e7cd76d7bab28645f7a82b6a2a319c5d7a551c7e7ed78b3197",
     "backend/src/customers.ts": "d6fbde8cb475f962a3c5bf12c95ff59d6cf5cf953021796ad5c65a537745d250",
@@ -110,7 +110,7 @@
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
     "vehicles.js": "5d1641d5dc6ab4b983b096f2f02aced7dcdb1f3b577b6bb42791b9556dcb40b5",
     "workspace-ui.js": "30f2cdc0b31e925ae4ff7f8577325a6c32c5eb492461763f704959b1e5fb71d5",
-    "backend/src/reset-control.ts": "ed3fd95f679591be2ece71a99149f66c455babbffe58d3fa22b379b8bf7bfba6",
+    "backend/src/reset-control.ts": "abfe5095e25d659a6017391cb21db02446ef9d839775ed8da9d5465efa616272",
     "reset-test-database-ui.js": "aa9d1860693d4ac5ccb04c53c39b6e79c64a56dd74810f7bc4a11590a7c85959"
   }
 }

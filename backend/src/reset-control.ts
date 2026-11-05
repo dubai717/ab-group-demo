@@ -15,7 +15,7 @@ export function registerResetControl(app:any,o:{pool:Pool;key:string;auth:AuthPr
  app.get('/api/reset-test-database',async(req:any)=>{const {actor}=await context(req);if(!o.worker)return {configured:false,canExecute:false,blockers:['privileged-worker-not-activated']};return {...await preview(actor.id),configured:true};});
  app.post('/api/reset-test-database/reauth',{config:{rateLimit:{max:3,timeWindow:'5 minutes'}}},async(req:any)=>{
   const {s,actor}=await context(req),body=z.object({password:z.string().min(1).max(128)}).strict().parse(req.body);const p=await preview(actor.id);requireOk(p.canExecute&&p.backupVerified&&p.restoreVerified&&!p.blockers.length,409,'resetNotReady');
-  let token:string|undefined;try{const login=await o.auth.login(actor.auth_email,body.password);token=login.token;requireOk(login.id===actor.auth_id&&await o.auth.verify(token)===actor.auth_id,403,'denied');}finally{body.password='';if(req.body)req.body.password='';if(token)await o.auth.logout(token);}
+  let token:string|undefined;try{const login=await o.auth.login(actor.auth_email,body.password);token=login.token;requireOk(login.id===actor.auth_id&&await o.auth.verify(token)===actor.auth_id,403,'denied');}finally{body.password='';if(req.body)req.body.password='';if(token)await o.auth.logout(token,'local');}
   return {confirmation:cipher.seal({id:randomUUID(),owner:actor.id,tenant:s.tenant_id,session:cipher.digest(s.sid),fingerprint:p.fingerprint,expires:Date.now()+5*60000}),expiresIn:300};
  });
  app.post('/api/reset-test-database/confirm',async(req:any)=>{

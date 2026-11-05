@@ -77,7 +77,7 @@ export interface AuthProvider {
   ): Promise<{ id: string; token: string; expiresIn: number }>;
   verify(token: string): Promise<string>;
   create(email: string, password: string): Promise<string>;
-  logout(token: string): Promise<void>;
+  logout(token: string, scope?: "local"): Promise<void>;
   inspect?(id:string):Promise<{id:string;email:string;confirmed:boolean}>;
   setPassword?(id:string,password:string):Promise<void>;
 }
@@ -197,9 +197,9 @@ export function supabase(
       const r=await call('/auth/v1/admin/users/'+id,adminKey,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({password})},adminKey);
       requireOk((await r.json() as any).id===id,502,'providerUnavailable');
     },
-    async logout(token) {
+    async logout(token, scope) {
       requireOk(token && !token.startsWith("sb_"), 401, "loginRequired");
-      await call("/auth/v1/logout", token, { method: "POST" });
+      await call("/auth/v1/logout"+(scope === "local" ? "?scope=local" : ""), token, { method: "POST" });
     },
   };
   const objectPath = (name: string) =>
