@@ -365,7 +365,7 @@ export async function build(options: Options) {
       return {
         actor: m.actor,
         resetTestDatabaseAvailable: options.resetEnabled===true&&m.actor.roleId==='owner'&&m.actor.username==='trial_4db27b82b8bf',
-        testUsersAvailable: options.testUsersEnabled===true&&m.actor.roleId==='owner'&&settings.some(row=>row.key===registryKey),
+        testUsersAvailable: options.testUsersEnabled===true&&m.actor.roleId==='owner',
         audit: ownAudit,
         summary: m.policy.summary(),
         bankAccountAudit,

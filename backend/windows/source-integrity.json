@@ -61,7 +61,7 @@
     "backend/reset/schema-preflight.ts": "4a0c2ce3acad6222c43f7c4e5a0555e2dea5fd3876deada2d39fd8ffe683863a",
     "backend/reset/schema.ts": "6ffe5dddd83cbb103ea7c1ed6971659909cfb9189817f4a9d20af90bf8914729",
     "backend/reset/settings-policy.ts": "f6b4969be0fdc11293f1ec1189f01b365e561ab7c4ef6332827fc6d0714ca9cc",
-    "backend/src/app.ts": "af761bece39370f7b947e25b47289888605ce0618f4cdff0aab20848e6facc9a",
+    "backend/src/app.ts": "70a5c57551f1e07e4168c36e2debe83593d9c1bd2a37be1bf20baed68e84b815",
     "backend/src/attachment-history.ts": "fce3aa6b9903c221243660402397fc6a5c1a5a417fedccdbc02804b6960cbd1a",
     "backend/src/backup.ts": "9785cdd47847546cdcf38271f723e07379a433f40c9e033080c250ab2d3e4048",
     "backend/src/bootstrap.ts": "fba87e75a4216dade64fb8c58a1a8a22ad2800ea6e6d518852d26b6babd6fa0f",
