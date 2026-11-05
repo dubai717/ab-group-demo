@@ -108,7 +108,7 @@
     "test-users-ui.js": "6a5a29c9a08da7d3183ad4a8087e416681cf69d3364d5c0feca3b4eabd5414b2",
     "user-management.js": "92e218828a63a318544c644cb0d66ad91ec49e86d9ff795bd30c409331608f9a",
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
-    "vehicles.js": "8d88a4da26d721ee906e56a44eadfbe23db24b1f4d4bf5ac4780d6be9aaa9065",
+    "vehicles.js": "5d1641d5dc6ab4b983b096f2f02aced7dcdb1f3b577b6bb42791b9556dcb40b5",
     "workspace-ui.js": "30f2cdc0b31e925ae4ff7f8577325a6c32c5eb492461763f704959b1e5fb71d5"
   }
 }
