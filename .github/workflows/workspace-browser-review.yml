@@ -19,6 +19,8 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: node backend/deploy/build.mjs
       - run: node backend/tests/local-db.mjs
+      - name: Owner-only manual test user authentication and production denial
+        run: node --import tsx --test backend/tests/test-workspace.test.ts
       - name: Real loopback API + original workspace UI contracts
         env:
           AB_BROWSER_EXECUTABLE: /usr/bin/google-chrome
