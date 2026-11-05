@@ -3,7 +3,7 @@ import {requireOk,sha} from '../src/core.js';import {projectHash,protectedObject
 export function managedProviders(endpoint:string,secret:string,request:typeof fetch=fetch){
  const u=new URL(endpoint);requireOk(u.protocol==='https:'&&sha(u.origin)===projectHash&&!u.username&&!u.password&&u.pathname==='/'&&!u.search&&!u.hash,403,'providerTarget');
  const headers={apikey:secret,...(!secret.startsWith('sb_')?{authorization:'Bearer '+secret}:{})};
- const call=async(path:string,options:RequestInit={})=>{const r=await request(u.origin+path,{...options,headers:{...headers,...options.headers},redirect:'error',signal:AbortSignal.timeout(30000)});requireOk(r.ok||r.status===404,503,'providerOperationFailed');return r;};
+ const call=async(path:string,options:RequestInit={})=>{const r=await request(u.origin+path,{...options,headers:{...headers,...options.headers},redirect:'error',signal:AbortSignal.timeout(30000)});if(r.status===400&&(options.method||'GET')==='GET'&&path.startsWith('/storage/v1/object/')){const b=await r.clone().json().catch(()=>({})) as any;if(String(b.statusCode)==='404'||b.code==='NoSuchKey')return new Response(null,{status:404});}requireOk(r.ok||r.status===404,503,'providerOperationFailed');return r;};
  const id=(v:string)=>{requireOk(/^[a-f0-9-]{36}$/.test(v),422,'invalidIdentity');return v;};
  const path=(k:string)=>{requireOk(!protectedObject(k)&&!k.split('/').some(s=>!s||s==='.'||s==='..'),403,'protectedObject');return '/storage/v1/object/ab-private-test/'+k.split('/').map(encodeURIComponent).join('/');};
  return {
