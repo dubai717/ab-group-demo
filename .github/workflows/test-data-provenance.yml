@@ -1,0 +1,79 @@
+name: Approved TEST_DATA provenance repair only
+on:
+  push:
+    branches: [verify/test-data-provenance-20261105]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: ab-integrated-test-data
+  cancel-in-progress: false
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    environment: supabase-test
+    timeout-minutes: 30
+    steps:
+      - name: Require successful full PR checks and identical application source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node <<'NODE'
+          (async()=>{try{
+            const e=process.env,candidate='4631bbf304ae15d71439aabe8e402d5936e3ee22';if(e.GITHUB_REPOSITORY!=='dubai717/ab-group-demo'||e.GITHUB_REF!=='refs/heads/verify/test-data-provenance-20261105'||e.GITHUB_EVENT_NAME!=='push')throw Error();
+            const api=async path=>{const r=await fetch('https://api.github.com/repos/dubai717/ab-group-demo'+path,{headers:{authorization:'Bearer '+e.GH_TOKEN,accept:'application/vnd.github+json'},redirect:'error',signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error();return r.json();};
+            const runs=await api('/actions/runs?head_sha='+candidate+'&event=pull_request&per_page=100');if(!runs.workflow_runs.some(x=>x.head_sha===candidate&&x.path==='.github/workflows/staging-ci.yml'&&x.head_branch==='feature/integrated-test-data'&&x.status==='completed'&&x.conclusion==='success'))throw Error();
+            const diff=await api('/compare/'+candidate+'...'+e.GITHUB_SHA),allow=['.github/workflows/test-data-provenance.yml','backend/deploy/backup-restore-drill.ts'];if(diff.status!=='ahead'||!diff.files?.length||diff.files.length!==2||diff.files.some(f=>!allow.includes(f.filename)))throw Error();
+            console.log('RESULT: EXACT_APPLICATION_CANDIDATE_FULL_CI_VERIFIED; OPERATIONAL_BACKUP_AND_SEED_ONLY');
+          }catch{console.log('RESULT: STOP_FULL_CI_OR_SOURCE_NOT_VERIFIED; NO_TEST_DATA_WRITES');process.exitCode=1;}})();
+          NODE
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Isolated PostgreSQL 17 for actual restoration, no cloud target
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --detach --name ab-backup-drill-postgres --publish 127.0.0.1:5547:5432 --tmpfs /var/lib/postgresql/data:rw,nosuid,nodev,size=1g -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_DB=ab_drill postgres:17 > /dev/null
+          docker cp backend/certificates/supabase-prod-ca-2021.crt ab-backup-drill-postgres:/tmp/ab-ca.crt
+          for i in $(seq 1 60); do
+            if docker exec ab-backup-drill-postgres pg_isready -U postgres -d ab_drill > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Fresh encrypted backup and actual isolated restore before create-only fixtures
+        env:
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
+          AB_STAGING_AUTOMATION: controlled-test-only
+          AB_BACKUP_DRILL_APPROVED: read-only-source-isolated-restore
+          AB_BACKUP_RETAIN_APPROVED: private-bucket-no-overwrite
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: node --import tsx backend/deploy/backup-restore-drill.ts
+      - name: Repair only sealed TEST_DATA provenance; never recreate business records
+        env:
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
+          AB_TEST_DATA_APPROVED: create-only-TEST_DATA-existing-suite
+          AB_TEST_DATA_REPAIR: catalog-provenance-only
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: node --import tsx backend/fixtures/test-data-seed.ts
+      - name: Remove only ephemeral runner copies
+        if: always()
+        run: |
+          docker rm --force --volumes ab-backup-drill-postgres > /dev/null 2>&1 || true
+          rm -rf -- work/backups
+      # No account provisioning, password resets, role/grant changes, migrations, Render hook or artifacts.
