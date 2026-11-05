@@ -49,5 +49,21 @@ try {
  await c.query('ROLLBACK');
  assert.equal((await c.query('select count(*)::int n from ab.companies')).rows[0].n,0);
  console.log('CHECK: COMPANY_CREATE_RETRIEVE_CROSS_TENANT_DENIAL_AND_ROLLBACK_OK');
+
+ // Minimal Auth metadata mock ONLY in disposable local PostgreSQL. No real user/provider call.
+ await c.query('create schema auth; create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz,deleted_at timestamptz,banned_until timestamptz)');
+ const ownerSql=await readFile('/tmp/ab-clean-kit/owner-only.sql','utf8');
+ await assert.rejects(c.query(ownerSql),/EXACTLY_ONE_AUTH_OWNER_REQUIRED/);await c.query('ROLLBACK');
+ await c.query("insert into auth.users(id,email) values($1,'owner@example.invalid')",[randomUUID()]);
+ await assert.rejects(c.query(ownerSql),/CONFIRMED_ACTIVE_AUTH_OWNER_REQUIRED/);await c.query('ROLLBACK');
+ await c.query('update auth.users set email_confirmed_at=now()');
+ await c.query(ownerSql);
+ assert.equal((await c.query('select count(*)::int n from ab.users')).rows[0].n,1);
+ assert.equal((await c.query("select count(*)::int n from ab.users where role_id='owner' and username='owner' and status='Active'")).rows[0].n,1);
+ assert.equal((await c.query('select count(*)::int n from ab.companies')).rows[0].n,0);
+ assert.equal((await c.query("select count(*)::int n from ab.bank_references where kind='bank'")).rows[0].n,0);
+ await assert.rejects(c.query(ownerSql),/OWNER_OR_ORGANIZATION_ALREADY_EXISTS/);await c.query('ROLLBACK');
+ assert.equal((await c.query('select count(*)::int n from ab.users')).rows[0].n,1);
+ console.log('CHECK: OWNER_ONLY_CONFIRMED_IDENTITY_NO_DUPLICATE_NO_DEMO_BANK_OK');
  console.log('RESULT: CLEAN_SCHEMA_KIT_ISOLATED_TESTS_OK_NO_CLOUD_CONNECTION');
 } finally {c.release();await pool.end();}
