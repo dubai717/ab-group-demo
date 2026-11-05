@@ -1,5 +1,7 @@
 # Reset Test Database — review and isolated rehearsal, 2026-11-05
 
+Historical prototype report. For the subsequent worker implementation and current readiness, see [the continuation report](RESET_WORKER_READINESS_20261105.md). The observations below remain point-in-time evidence.
+
 ## Status: NOT ready for a live full reset
 
 No hosted application/user/business/file deletion, live schema replacement, role/RLS change, main/staging merge, Render deployment/settings change or secret change was performed. The only new hosted objects are the explicitly authorized encrypted backup and its encrypted metadata. Old backups and both Supabase projects remain intact.
