@@ -3,7 +3,7 @@
 import {localProviders,stopLocalProviders} from './local-providers.js';
 import {Pool,PoolClient} from 'pg';import {randomBytes} from 'node:crypto';
 import {security,sha,requireOk,ApiError} from '../src/core.js';import {restoreArchive} from '../src/backup.js';import {docker,manifest} from '../deploy/backup-restore-drill.js';
-import {collectPlan,protectedObject,projectHash} from './plan.js';import {managedProviders} from './providers.js';import {executeReset} from './execute.js';import {rehearseReset} from './rebuild-isolated.js';
+import {collectPlan,protectedObject,projectHash} from './plan.js';import {managedProviders} from './providers.js';import {executeReset} from './execute.js';
 const archivePath='ab-group-backups/v1/20261105T150819784Z-793d19a6-332c-4d54-9716-b8ab4911faa4/database.abbackup';
 const qi=(s:string)=>'"'+s.replaceAll('"','""')+'"';
 let root:Pool|undefined,pool:Pool|undefined,stage='GUARD';
@@ -23,7 +23,7 @@ try{
  for(const failure of [false,true]){
   stage=failure?'ROLLBACK_CYCLE':'SUCCESS_CYCLE';const name=failure?'ab_reset_rollback':'ab_reset_rehearsal';pool=new Pool({host:'127.0.0.1',port:5547,user:'postgres',database:name,ssl:false,max:2});const db=await pool.connect();try{
    requireOk((db as any).connectionParameters.host==='127.0.0.1'&&(await db.query('select current_database()d')).rows[0].d===name,403,'localOnly');
-   const initial=await manifest(db),authUsers=(await db.query('select * from auth.users order by id')).rows,objectRows=(await db.query("select * from storage.objects where bucket_id='ab-private-test'")).rows;
+   const ledger=(await db.query('select * from public.ab_schema_migrations order by name')).rows;const initial=await manifest(db),authUsers=(await db.query('select * from auth.users order by id')).rows,objectRows=(await db.query("select * from storage.objects where bucket_id='ab-private-test'")).rows;
    const files=new Map<string,Buffer>();for(const [k,b]of restored.objects)if(k.startsWith('storage/')&&!protectedObject(k.slice(8)))files.set(k.slice(8),Buffer.from(b));
    const local=await localProviders(name);stage=failure?'ROLLBACK_SEED':'SUCCESS_SEED';
    for(const [k,bytes]of files){const response=await local.call('/storage/v1/object/ab-private-test/'+k.split('/').map(encodeURIComponent).join('/'),{method:'POST',headers:{'content-type':'application/octet-stream','x-upsert':'true'},body:new Uint8Array(bytes)});if(!response.ok)console.log('LOCAL_SEED_HTTP: '+response.status);requireOk(response.ok,409,'localStorageSeedFailed');await response.body?.cancel();}
@@ -33,13 +33,13 @@ try{
     return local.call(path,options);
    }) as typeof fetch;
    const provider=managedProviders(endpoint.origin,'sb_secret_'+randomBytes(24).toString('hex'),api),phases:string[]=[];
-   const restoreApplication=async()=>{await docker(['exec','-i','ab-backup-drill-postgres','pg_restore','--host=127.0.0.1','--username=postgres','--dbname='+name,'--no-owner','--exit-on-error','--single-transaction','--clean','--if-exists','--schema=ab'],{},restored.database);};
+   const restoreApplication=async()=>{await docker(['exec','-i','ab-backup-drill-postgres','pg_restore','--host=127.0.0.1','--username=postgres','--dbname='+name,'--no-owner','--exit-on-error','--single-transaction','--clean','--if-exists','--schema=ab'],{},restored.database);await db.query('BEGIN');try{await db.query('delete from public.ab_schema_migrations');for(const m of ledger)await db.query('insert into public.ab_schema_migrations(name,sha256,applied_at)values($1,$2,$3)',[m.name,m.sha256,m.applied_at]);await db.query('COMMIT');}catch(e){await db.query('ROLLBACK');throw e;}};
    let failed=false,cycleError:any;try{await executeReset(db,p,provider,{release:p.release,proof:{verified:true,freshAt:Date.now(),archivePath},phase:async s=>{phases.push(s);},backupUsers:authUsers,recoveryObjects:restored.objects,restoreApplication});}catch(err){failed=true;cycleError=err;}
    if(failed!==failure&&cycleError?.cause){for(const [kind,err]of Object.entries(cycleError.cause) as [string,any][])console.log('ISOLATED_FAILURE_'+kind.toUpperCase()+': '+(err instanceof ApiError?err.code:/^[0-9A-Z]{5}$/.test(err?.code||'')?err.code:err?.name==='TypeError'?'TYPE_ERROR':'WITHHELD'));}
    if(failed!==failure)console.log('CYCLE_ERROR_CODE: '+(cycleError instanceof ApiError?cycleError.code:/^[0-9A-Z]{5}$/.test(cycleError?.code||'')?cycleError.code:'WITHHELD')+'; PHASES='+phases.join(','));
    requireOk(failed===failure,409,'cycleUnexpectedResult');
    if(!failure){requireOk(Number((await db.query('select count(*)n from auth.users')).rows[0].n)===1&&Number((await db.query("select count(*)n from storage.objects where bucket_id='ab-private-test' and name not like 'ab-group-backups/%' and name not like 'ab-group-reset-control/%'")).rows[0].n)===0,409,'externalCleanupIncomplete');requireOk(!seen.some(x=>x==='DELETE /auth/v1/admin/users/'+p.ownerAuthId),403,'ownerTargeted');console.log('CHECK: PHYSICAL_APP_REBUILD_AUTH_17_REMOVALS_STORAGE_96_REMOVALS_OWNER_REFERENCE_RLS_PRESERVATION=PASS; PROVIDER=ISOLATED_OFFICIAL_SUPABASE_AUTH_AND_STORAGE');}
-   else{requireOk(phases.includes('failed-rolled-back'),409,'rollbackIncomplete');const after=await manifest(db);requireOk(JSON.stringify(after.rows.filter((x:any)=>x.s==='ab'))===JSON.stringify(initial.rows.filter((x:any)=>x.s==='ab')),409,'applicationRecoveryMismatch');for(const k of p.files)requireOk(sha((await provider.getFile(k))!)===sha(restored.objects.get('storage/'+k)!),409,'fileRecoveryMismatch');console.log('CHECK: INJECTED_POST_DELETION_FAILURE_RESTORES_APP_AUTH_HASHES_FILES_AND_OWNER=PASS; REFRESH_SESSIONS_NOT_REIMPORTED');}
+   else{requireOk(phases.includes('failed-rolled-back'),409,'rollbackIncomplete');requireOk(JSON.stringify((await db.query('select * from public.ab_schema_migrations order by name')).rows)===JSON.stringify(ledger),409,'ledgerRecoveryMismatch');const after=await manifest(db);requireOk(JSON.stringify(after.rows.filter((x:any)=>x.s==='ab'))===JSON.stringify(initial.rows.filter((x:any)=>x.s==='ab')),409,'applicationRecoveryMismatch');for(const k of p.files)requireOk(sha((await provider.getFile(k))!)===sha(restored.objects.get('storage/'+k)!),409,'fileRecoveryMismatch');console.log('CHECK: INJECTED_POST_DELETION_FAILURE_RESTORES_APP_AUTH_HASHES_FILES_AND_OWNER=PASS; REFRESH_SESSIONS_NOT_REIMPORTED');}
   }finally{await stopLocalProviders();db.release();await pool.end();pool=undefined;}
  }
  console.log('RESULT: FULL_RESET_AND_RECOVERY_ISOLATED_CONTRACT_PASS; NO_HOSTED_WRITES_DELETIONS_RESET_OR_DEPLOYMENT');
