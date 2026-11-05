@@ -1,0 +1,33 @@
+name: Clean test schema kit isolated verification
+on:
+  push:
+    branches: [verify/clean-test-database-kit-20261105]
+permissions:
+  contents: read
+jobs:
+  isolated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    # Intentionally no environment and no secrets: cannot contact Supabase or deploy.
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: python3 backend/clean-test/build.py /tmp/ab-clean-kit
+      - name: Disposable isolated database
+        run: |
+          set -euo pipefail
+          docker run --detach --name ab-clean-kit-postgres --publish 127.0.0.1:5548:5432 --tmpfs /var/lib/postgresql/data:rw,nosuid,nodev,size=1g -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_DB=ab_clean_kit postgres:17 > /dev/null
+          for i in $(seq 1 60); do
+            if docker exec ab-clean-kit-postgres pg_isready -U postgres -d ab_clean_kit > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - run: node --import tsx backend/clean-test/check.ts
+      - name: Remove only disposable local container
+        if: always()
+        run: docker rm --force --volumes ab-clean-kit-postgres > /dev/null 2>&1 || true
