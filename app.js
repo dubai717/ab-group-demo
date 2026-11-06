@@ -713,7 +713,7 @@ function renderDepartments() {
 function renderCompanies(user) {
   const currentProfile=CompanyDocuments.renderProfile();if(currentProfile&&!app.state.companyFormOpen)return currentProfile;
   const canManage = user.roleId === 'owner' || isUserAllowed(user, 'create_company') || isUserAllowed(user, 'edit_company');
-  const grid=RegisterStore.get('companies',['arabicName','englishName','tradeLicenseNumber','emirate','expiryDate','licenseStatus','status'],{grid:{version:2,values:{status:['Active']}}});if(!app.state.companyFormOpen)grid.ensure();
+  const grid=RegisterStore.get('companies',['arabicName','englishName','tradeLicenseNumber','emirate','expiryDate','licenseStatus','status'],{grid:{version:2}});if(!app.state.companyFormOpen)grid.ensure();
   const companyRows=grid.rows;
   const columnTitles={arabicName:localeText('companyTableArabic'),englishName:localeText('companyTableEnglish'),tradeLicenseNumber:localeText('companyTableLicense'),emirate:localeText('companyTableEmirate'),expiryDate:localeText('companyTableExpiry'),licenseStatus:getLocale()==='ar'?'حالة الرخصة':'Licence status',status:localeText('companyTableStatus')};grid.labels=columnTitles;
   return `

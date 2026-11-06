@@ -9,7 +9,7 @@
     ".github/workflows/staging-checks.yml": "50d37b203aa5a56c749312a1c1f959413b466bfe07527541829cf9672c18f936",
     ".github/workflows/staging-ci.yml": "b3a028607907d453a3cc72fe2a461b5b8a4f924ce12a94fa81a1759974f06509",
     "Dockerfile.staging": "90343d831cffe1c4cfb5ddb0e2285881dfe79bc8ca433c296afaa522841dba54",
-    "app.js": "14658472fa67dfe125dc8b13b20ed5b047d4a7de7d85ee57e6ab18da296b0b79",
+    "app.js": "3fe9b800eaff259f8a23cedfb46ab22bf40e92f41479b367a0c6ba713d5ec88f",
     "area-reference.js": "de548911272dcd49b6459bce07f47df968806eda4f45e6e6a6bccaa255da009b",
     "assets/Untitled.png": "afcbf7dc6b24c125177cbb41715dae17309225dc58d023939d6c8581dbee8c61",
     "assets/logo.svg": "3f854e3262d4430711a00028533afc8f473deab128abd483a3eee1380843dc14",
@@ -128,7 +128,7 @@
     "render.yaml": "6b5380726ff44ce58208e6b8990b5fdb588e40175a969b11e79b4fdb22417c57",
     "runtime-config.js": "c7620ce7a24aadc0d789008b7b5d0d934201708ec40df2024d44a29ec19e8aca",
     "server.js": "0e718d96ef728191e4a2c9c5522de9ce20d30973cd5d92aab4ac36a421876442",
-    "styles.css": "f31731c59bdf0b8abbcf69d9a8794d636758da152723b69a587e32e78dfd7b71",
+    "styles.css": "d0c9f97d8c797a4e476ea971aedddd9234186aa64f85cd01a6d60c0929838c2d",
     "supabase/proposed/009_financial_workbench.sql": "2af0b3f0a6b6978200b0e60c84c940afeb322803f9d44e8b119e7b56c7d1fc06",
     "supabase/proposed/010_customers.sql": "68b1b531b43d4e28cfce3458c0cd836d9e30d7935f42e39aec14a208262b485e",
     "supabase/proposed/011_vehicles.sql": "870b3c699a964cd0cbeed9f3ca5696c1cfeb4fc6e576991e3df43f0b3937d00b",
@@ -137,6 +137,6 @@
     "user-management.js": "dae5250b608a878171c1b2e2dc208fdad8d4825c6d7688c73d1fc924ddd455e6",
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
     "vehicles.js": "e85418df559ef8ad949f426bd79d5a676970bdb01fbeac3de7c93cfb7c82f77b",
-    "workspace-ui.js": "6c9bf65183c8940699f69c3df109bb0a51ebd577552294bfa3500c29da517182"
+    "workspace-ui.js": "fe90a832d7fb4815c871214fd7b6657b020449200b4eff04db90d8cc79970291"
   }
 }
