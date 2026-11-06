@@ -1,5 +1,5 @@
 {
   "format": "AB-CONTROLLER-TRUST-2",
-  "approvedSourceTree": "bafb73899196cd7f388bac972389dbdd6f5213d8",
-  "note": "Exact owner-approved PR30/31 and staging-policy bootstrap tree, including committed-state browser regression; no wildcard."
+  "approvedSourceTree": "7b848bdd1b82a70a3defe4d0efd082aa4e921e69",
+  "note": "Exact owner-approved initial source tree for PR30/31 and protected staging policy. No wildcard, data or privilege changes."
 }

@@ -144,7 +144,7 @@
     "backend/deploy/backup-restore-drill.ts": "d83e8486e237934a47d0d80808078ff0725cd63c9a6de37fce5c5914f3611aa5",
     "backend/deploy/staging-readonly-smoke.ts": "bb6930984ad72ebd0ef42f0d0596f6b9b16f9fc79296bb3ba96e4b6ab54ad905",
     "backend/deploy/v2/change-risk.mjs": "9953f22d26bfef5b29321b90b36a21b7e73cdae9984bbef6d4d216c944f39817",
-    "backend/deploy/v2/context.mjs": "3b0d6f8efa40ceac84e7dcc4cd593763e8d2085ef0bb68a0bdf1349c2138c211",
+    "backend/deploy/v2/context.mjs": "9bde99ff05bcd1d00f18699b7942e6e608a5077323e505d4929e11b2eb2b9bc6",
     "backend/deploy/v2/context.d.mts": "4f0ef642bf5d34d1ffc39468b784f9c62dde87f38afc7da53cfe0ceccd03e67d",
     "backend/deploy/v2/preflight.mjs": "a7c04bd91f111e1a8807670ba3d7c9baa913f5b2a1df08a899bbc711b3ba680a",
     "backend/deploy/v2/README.md": "37f007c4fd8852d184dd90cecf4245133e597dcdfa421b131645fa99f321e5ae",

@@ -4,7 +4,7 @@ export function controllerContext(e){return e.GITHUB_ACTIONS==='true'&&e.GITHUB_
 export function requireController(e){requireValue(controllerContext(e),'TRUSTED_CONTROLLER_CONTEXT_REQUIRED');}
 export function environmentProtection(value,name){
  requireValue(value?.name===name,'ENVIRONMENT_MISSING');const rules=value.protection_rules||[];
- if(name==='staging-owner-approval'){const rule=rules.find(r=>r.type==='required_reviewers');requireValue(rule?.reviewers?.some(r=>r.type==='User'&&r.reviewer?.login===owner),'OWNER_REVIEWER_REQUIRED');requireValue(value.can_admins_bypass===false,'APPROVAL_BYPASS_MUST_BE_DISABLED');}
+ if(name==='staging-owner-approval'){const rule=rules.find(r=>r.type==='required_reviewers');requireValue(rule?.reviewers?.length===1&&rule.reviewers[0].type==='User'&&rule.reviewers[0].reviewer?.login===owner,'OWNER_REVIEWER_REQUIRED');requireValue(value.can_admins_bypass===false,'APPROVAL_BYPASS_MUST_BE_DISABLED');}
  requireValue(value.deployment_branch_policy?.custom_branch_policies===true&&value.deployment_branch_policy.protected_branches===false,'EXPLICIT_MAIN_ONLY_ENVIRONMENT_REQUIRED');
 }
 export function branchProtection(rules,sets){
