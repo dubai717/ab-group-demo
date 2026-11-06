@@ -144,7 +144,7 @@ jobs:
             wait "$fixture_pid"
             trap - EXIT
           done
-      - name: Owner-only managed test-user screen with fictional local providers
+      - name: Retired test-tool pages absent for all roles with operational navigation preserved
         shell: bash
         run: |
           set -euo pipefail

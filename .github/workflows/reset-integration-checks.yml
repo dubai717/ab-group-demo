@@ -22,11 +22,6 @@ jobs:
       - run: npm run backend:test
       - run: node --test tests/*.test.cjs
       - run: node backend/windows/verify-source.mjs
-      - name: Desktop/phone AR/EN dialog contracts including cancellation
-        env:
-          AB_BROWSER_EXECUTABLE: /usr/bin/google-chrome
-        run: node backend/tests/reset-control.browser.cjs
-
       - name: Real loopback API + original workspace UI contracts
         env:
           AB_BROWSER_EXECUTABLE: /usr/bin/google-chrome

@@ -10,6 +10,7 @@ for(const file of ['009_financial_workbench.sql','010_customers.sql','011_vehicl
 const r=(await provisionTestUsers(f.admin,f.auth,f.secret.key,{tenant:f.org.tenant,id:f.org.user})).registry;
 await seedIntegratedData(f.runtime,f.secret.key,r,f.objects);
 const browserPassword='Aa1!'+randomBytes(30).toString('base64url'),owner=r.users.find(u=>u.role==='owner')!,localOwner=(await f.admin.query('select auth_id from ab.users where id=$1',[f.org.user])).rows[0];await f.auth.setPassword(localOwner.auth_id,browserPassword);await f.auth.setPassword(owner.authId,browserPassword); // Ephemeral TestAuth only; no real provider.
+const employee=r.users.find(u=>u.role!=='owner')!;await f.auth.setPassword(employee.authId,browserPassword); // Disposable provider only.
 const app=await build({pool:f.runtime,key:f.secret.key,origin:'http://127.0.0.1:3700',secureCookies:false,auth:f.auth,objects:f.objects,testUsersEnabled:true});
-app.get('/__fixture',async()=>({username:f.username,testOwner:owner.username,password:browserPassword}));await app.listen({host:'127.0.0.1',port:3700});
+app.get('/__fixture',async()=>({username:f.username,testOwner:owner.username,employee:employee.username,password:browserPassword}));await app.listen({host:'127.0.0.1',port:3700});
 process.on('SIGTERM',async()=>{await app.close();await f.app.close();await f.runtime.end();await f.admin.end();});

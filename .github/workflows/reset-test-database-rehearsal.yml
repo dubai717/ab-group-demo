@@ -21,10 +21,8 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: node backend/tests/local-db.mjs
       - run: npm run backend:test
-      - run: node --check reset-test-database-ui.js
       - run: node --test tests/*.test.cjs
-      - run: node node_modules/playwright/cli.js install --with-deps chromium
-      - run: node backend/tests/reset-control.browser.cjs
+      - run: node --test tests/retired-test-pages.test.cjs
   review:
     needs: controller
     runs-on: ubuntu-latest
