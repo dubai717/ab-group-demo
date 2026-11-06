@@ -6,7 +6,7 @@
     ".github/workflows/personnel-ci.yml": "9ee438ff62790ae68d0bebefb268c5cc7c1828113b660f0c3fb3dbd0572605e7",
     ".github/workflows/personnel-release.yml.example": "28e036e38116a9b966d8c18437c30d89e486a4c4339ec15f16129ca9fbf6907f",
     ".github/workflows/reset-test-database.yml.example": "41c57543de46cd3ec8650554cf6bfcb23f1359572e917904e32b30c3331b5378",
-    ".github/workflows/staging-checks.yml": "18205a5b7a7ce6396fdc1e2521bb0b988cfaf0c5a4e52f5fe457fa4599734d3d",
+    ".github/workflows/staging-checks.yml": "6e234bd1788bc9ba31924a5d323bfce14414fa3f0f67b3537f172a4d0148944d",
     ".github/workflows/staging-ci.yml": "35d860305f445ee892d9cd0f0ee67fcba0a9e290fd4b0e9bf38e25184b987322",
     "Dockerfile.staging": "338c87e6a618bb21936de080eb6bffbd6b94f8258902e0f0ba168c127c44da27",
     "app.js": "32948ea6347f6463bb278c9467ac2d0ad32504ec2fe52e08af22e4f79ba4d226",
