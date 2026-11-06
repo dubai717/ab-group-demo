@@ -19,7 +19,7 @@ jobs:
       - name: Build staging application without cloud access
         run: node backend/deploy/build.mjs
       - name: Existing demo data and behavior regressions
-        run: node --test tests/*.test.cjs
+        run: node --test tests/*.test.cjs backend/deploy/v2/*.test.mjs
       - name: Prepare isolated synthetic PostgreSQL only
         run: npm run backend:test:db
       - name: Server authorization RLS and isolated backup restoration
@@ -51,6 +51,8 @@ jobs:
           node backend/tests/central.browser.cjs
           node backend/tests/register-lifecycle.browser.cjs
           node backend/tests/workspace-components.browser.cjs
+          node backend/tests/company-profile.browser.cjs
+          node backend/tests/pdf-preview.browser.cjs
       - name: Financial workbench in both schema states with synthetic data only
         shell: bash
         run: |

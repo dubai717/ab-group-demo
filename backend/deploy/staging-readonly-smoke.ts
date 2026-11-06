@@ -1,3 +1,4 @@
+import {controllerContext} from './v2/context.mjs';
 // Post-deployment GET-only checks. Never provision Auth identities or business fixtures.
 import {readFile} from 'node:fs/promises';import {sha} from '../src/core.js';
 const origin='https://ab-group-demo.onrender.com',projectHash='9ea1a5dcb06a135b7c29d99699651b34d11f795d525b7861865c0c842fff954f';
@@ -16,8 +17,10 @@ export async function readOnlySmoke(expectedSha:string,appHash:string,request:ty
 async function main(){try{
  const e=process.env;need(e.GITHUB_ACTIONS==='true'&&e.GITHUB_REPOSITORY==='dubai717/ab-group-demo','RUNNER_CONTEXT');
  let expected=e.GITHUB_SHA||'';
+ if(controllerContext(e))expected=e.AB_STAGING_SOURCE_SHA!;
+ else
  if(e.GITHUB_REF==='refs/heads/verify/reset-readonly-smoke-20261105')expected='4a162b926352208b85cf53a8d9d4f0c3ecc20841';else need(e.GITHUB_REF==='refs/heads/staging/ab-group-test'&&e.GITHUB_EVENT_NAME==='push','STAGING_CONTEXT');
- await readOnlySmoke(expected,sha(await readFile('app.js','utf8')));
+ await readOnlySmoke(expected,sha(await readFile(controllerContext(e)?'candidate/app.js':'app.js','utf8')));
  const {chromium}=await import('playwright');const browser=await chromium.launch({headless:true,executablePath:e.AB_BROWSER_EXECUTABLE||undefined,args:['--no-sandbox']});try{for(const width of [1440,390]){const page=await browser.newPage({viewport:{width,height:900}}),errors:string[]=[];page.on('pageerror',()=>errors.push('javascript-error'));await page.goto(origin,{waitUntil:'domcontentloaded'});await page.locator('#login-form').waitFor();need(await page.locator('[data-demo-user]').count()===0,'CENTRAL_MODE_REQUIRED');need((await page.locator('#username').count())===1&&(await page.locator('#password').count())===1,'LOGIN_FORM_REQUIRED');const toggle=page.locator('[data-action="toggle-language"]');if(await toggle.count()){await toggle.first().click();await page.locator('#login-form').waitFor();}need(errors.length===0,'PUBLIC_UI_JAVASCRIPT_ERROR');await page.close();}}finally{await browser.close();}
  console.log('RESULT: READ_ONLY_POST_DEPLOY_SMOKE_PASS; NO_LOGINS_USERS_FIXTURES_DATABASE_OR_STORAGE_WRITES');
 }catch(e){const code=e instanceof Error&&/^[A-Z_]+$/.test(e.message)?e.message:'DETAILS_WITHHELD';console.log('RESULT: READ_ONLY_POST_DEPLOY_SMOKE_STOP; CODE='+code);process.exitCode=1;}}
