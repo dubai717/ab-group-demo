@@ -31,13 +31,6 @@ jobs:
           fs.appendFileSync(e.GITHUB_OUTPUT,'sha='+sha+'\nrun='+run.id+'\n');console.log('RESULT: CURRENT_STAGING_SOURCE_AND_SUCCESSFUL_CHECKS_PINNED');
         }catch{console.log('RESULT: NO_MATCHING_SUCCESSFUL_CURRENT_SOURCE_CHECKS; NO_DEPLOYMENT');process.exitCode=1;}})();
         NODE
-  deliver:
-    needs: source
-    uses: dubai717/ab-group-demo/.github/workflows/trusted-staging-controller.yml@c55be73258e294216e589359ff0bffebfc52fb30
-    with:
-      controller_ref: c55be73258e294216e589359ff0bffebfc52fb30
-      source_sha: ${{ needs.source.outputs.sha }}
-      source_run_id: ${{ needs.source.outputs.run }}
   approval-test:
     if: github.repository == 'dubai717/ab-group-demo' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.mode == 'approval-test'
     runs-on: ubuntu-latest
@@ -45,6 +38,255 @@ jobs:
     permissions: {}
     steps:
     - run: 'echo "RESULT: OWNER_GATE_APPROVED; NO_PROVIDER_SECRETS_OR_DATA_OPERATIONS"'
+  policy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: read
+      actions: read
+    outputs:
+      app_sha: ${{ steps.policy.outputs.app_sha }}
+      hook_hash: ${{ steps.policy.outputs.hook_hash }}
+      previous_sha: ${{ steps.policy.outputs.previous_sha }}
+      requires_owner: ${{ steps.policy.outputs.requires_owner }}
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: c55be73258e294216e589359ff0bffebfc52fb30
+        fetch-depth: 0
+        persist-credentials: false
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: ${{ needs.source.outputs.sha }}
+        path: candidate
+        fetch-depth: 0
+        persist-credentials: false
+    - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+      with:
+        node-version: '24'
+    - run: npm ci --ignore-scripts --no-audit --no-fund
+    - id: policy
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: node backend/deploy/v2/preflight.mjs
+    - name: Record classification and tested source
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: staging-classification-${{ inputs.source_sha }}
+        path: classification.json
+        if-no-files-found: ignore
+        retention-days: 90
+    needs:
+    - source
+    env:
+      AB_STAGING_SOURCE_SHA: ${{ needs.source.outputs.sha }}
+      AB_SOURCE_RUN_ID: ${{ needs.source.outputs.run }}
+  schema:
+    needs:
+    - source
+    - policy
+    - owner-approval
+    runs-on: ubuntu-latest
+    environment: supabase-test
+    timeout-minutes: 25
+    steps:
+    - name: Verify protected environment bindings without revealing values
+      env:
+        PRESENT_SUPABASE_URL: ${{ secrets.SUPABASE_URL != '' }}
+        PRESENT_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY != '' }}
+        PRESENT_SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY != '' }}
+        PRESENT_MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL != '' }}
+        PRESENT_DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY != '' }}
+        PRESENT_BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY != '' }}
+        PRESENT_RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
+      run: |
+        node <<'NODE'
+        let valid=true;
+        for(const name of ["SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY", "MIGRATION_DATABASE_URL", "DATA_ENCRYPTION_KEY", "BACKUP_ENCRYPTION_KEY", "RENDER_DEPLOY_HOOK"]){const present=process.env['PRESENT_'+name]==='true';console.log('CHECK: SECRET_PRESENT_'+name+'='+present);valid&&=present;}
+        if(!valid){console.log('RESULT: REQUIRED_ENVIRONMENT_SECRETS_UNAVAILABLE; VALUES_WITHHELD');process.exitCode=1;}
+        NODE
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: c55be73258e294216e589359ff0bffebfc52fb30
+        fetch-depth: 0
+        persist-credentials: false
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: ${{ needs.source.outputs.sha }}
+        path: candidate
+        fetch-depth: 0
+        persist-credentials: false
+    - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+      with:
+        node-version: '24'
+    - run: npm ci --ignore-scripts --no-audit --no-fund
+    - name: Refuse delivery during reset or unresolved recovery
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
+      run: node --import tsx backend/reset/ci-preflight.ts
+    - name: Isolated PostgreSQL 17 for actual backup restoration
+      shell: bash
+      run: |
+        set -euo pipefail
+        docker run --detach --name ab-backup-drill-postgres --publish 127.0.0.1:5547:5432 --tmpfs /var/lib/postgresql/data:rw,nosuid,nodev,size=1g -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_DB=ab_drill postgres:17 > /dev/null
+        docker cp backend/certificates/supabase-prod-ca-2021.crt ab-backup-drill-postgres:/tmp/ab-ca.crt
+        for i in $(seq 1 60); do
+          if docker exec ab-backup-drill-postgres pg_isready -U postgres -d ab_drill > /dev/null; then exit 0; fi
+          sleep 1
+        done
+        exit 1
+    - name: Fresh private backup, restoration and strictly additive schema gates
+      env:
+        NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
+        AB_STAGING_AUTOMATION: controlled-test-only
+        AB_BACKUP_DRILL_APPROVED: read-only-source-isolated-restore
+        AB_BACKUP_RETAIN_APPROVED: private-bucket-no-overwrite
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
+        BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+      run: |
+        node --import tsx backend/deploy/backup-restore-drill.ts
+        node --import tsx backend/deploy/apply-safe-staging-additives.ts
+    - name: Remove only isolated runner copies
+      if: always()
+      run: |
+        docker rm --force --volumes ab-backup-drill-postgres > /dev/null 2>&1 || true
+        rm -rf -- work/backups
+    if: always() && needs.policy.result == 'success' && (needs.owner-approval.result == 'success' || needs.owner-approval.result == 'skipped')
+    env:
+      AB_STAGING_SOURCE_SHA: ${{ needs.source.outputs.sha }}
+      AB_SOURCE_RUN_ID: ${{ needs.source.outputs.run }}
+  release:
+    needs:
+    - source
+    - policy
+    - schema
+    runs-on: ubuntu-latest
+    environment: supabase-test
+    timeout-minutes: 16
+    permissions:
+      contents: read
+      deployments: write
+    outputs:
+      deployment_id: ${{ steps.trigger.outputs.deployment_id }}
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: c55be73258e294216e589359ff0bffebfc52fb30
+        fetch-depth: 0
+        persist-credentials: false
+    - id: trigger
+      name: Deploy exact tested commit and wait for matching live release
+      env:
+        RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        GH_TOKEN: ${{ github.token }}
+        EXPECTED_HOOK_HASH: ${{ needs.policy.outputs.hook_hash }}
+        EXPECTED_APP_HASH: ${{ needs.policy.outputs.app_sha }}
+        PREVIOUS_SHA: ${{ needs.policy.outputs.previous_sha }}
+      shell: bash
+      run: |
+        node <<'NODE'
+        (async()=>{let stage='GUARD';try{
+         const fs=require('node:fs'),crypto=require('node:crypto'),e=process.env,need=(v,l)=>{if(!v)throw Error(l);};
+         need(e.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&e.GITHUB_REF==='refs/heads/main'&&['workflow_run','workflow_dispatch'].includes(e.GITHUB_EVENT_NAME)&&e.GITHUB_WORKFLOW_REF==='dubai717/ab-group-demo/.github/workflows/staging-delivery-dispatch.yml@refs/heads/main','CONTEXT');
+         const sha=e.AB_STAGING_SOURCE_SHA,origin='https://ab-group-demo.onrender.com';need(/^[a-f0-9]{40}$/.test(sha||'')&&/^[a-f0-9]{64}$/.test(e.EXPECTED_HOOK_HASH||'')&&/^[a-f0-9]{64}$/.test(e.EXPECTED_APP_HASH||''),'INPUTS');
+         const u=new URL(e.RENDER_DEPLOY_HOOK||'');need(u.protocol==='https:'&&u.hostname==='api.render.com'&&/^\/deploy\/srv-[a-z0-9]+$/.test(u.pathname)&&u.searchParams.get('key')&&!u.username&&!u.password&&!u.hash&&crypto.createHash('sha256').update(u.pathname).digest('hex')===e.EXPECTED_HOOK_HASH,'DEPLOY_SECRET_OR_TARGET');
+         const api=async(path,method='GET',body)=>{const r=await fetch('https://api.github.com/repos/dubai717/ab-group-demo'+path,{method,headers:{authorization:'Bearer '+e.GH_TOKEN,accept:'application/vnd.github+json',...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{}),redirect:'error',signal:AbortSignal.timeout(20000)});need(r.ok,'GITHUB_DEPLOYMENT_RECORD');return r.status===204?null:r.json();};
+         stage='CURRENT_BRANCH';need((await api('/git/ref/heads/staging/ab-group-test')).object.sha===sha,'SUPERSEDED_COMMIT');
+         stage='RECORD_RELEASE';const d=await api('/deployments','POST',{ref:sha,task:'ab-group-staging',environment:'supabase-test',auto_merge:false,required_contexts:[],production_environment:false,transient_environment:true,description:'AB Group tested staging release',payload:{abGroupStaging:true,origin,appSha:e.EXPECTED_APP_HASH,previousSha:e.PREVIOUS_SHA,controller:e.AB_CONTROLLER_REF,sourceRun:e.AB_SOURCE_RUN_ID}});need(Number.isSafeInteger(d.id),'DEPLOYMENT_ID');fs.appendFileSync(e.GITHUB_OUTPUT,'deployment_id='+d.id+'\n');await api('/deployments/'+d.id+'/statuses','POST',{state:'in_progress',environment_url:origin,description:'Tests, backup and schema gates passed; verifying the exact release'});
+         stage='SUBMIT_TESTED_COMMIT';u.searchParams.set('ref',sha);const submitted=await fetch(u,{method:'POST',redirect:'error',signal:AbortSignal.timeout(30000)});need(submitted.ok,'RENDER_SUBMISSION');await submitted.body?.cancel();
+         stage='WAIT_FOR_EXACT_LIVE_VERSION';const until=Date.now()+12*60*1000;let ready=false;
+         while(Date.now()<until){try{const r=await fetch(origin+'/api/release',{redirect:'error',headers:{'cache-control':'no-cache'},signal:AbortSignal.timeout(15000)});if(r.ok){const v=await r.json();if(v.environment==='staging'&&v.commit===sha&&v.projectOriginSha256==='9ea1a5dcb06a135b7c29d99699651b34d11f795d525b7861865c0c842fff954f'){const h=await fetch(origin+'/api/health',{redirect:'error',signal:AbortSignal.timeout(15000)}),app=await fetch(origin+'/app.js',{redirect:'error',signal:AbortSignal.timeout(15000)});ready=h.ok&&app.ok&&crypto.createHash('sha256').update(await app.text()).digest('hex')===e.EXPECTED_APP_HASH;await h.body?.cancel();if(ready)break;}}else await r.body?.cancel();}catch{}await new Promise(r=>setTimeout(r,10000));}
+         need(ready,'LIVE_VERSION_TIMEOUT');console.log('RESULT: EXACT_TESTED_COMMIT_LIVE_ON_PINNED_STAGING_PROJECT; AUTH_AND_BROWSER_SMOKE_STILL_REQUIRED');
+         }catch(error){console.log('RESULT: STAGING_DEPLOY_STOP; STAGE='+stage+'; CODE='+(/^[A-Z_]+$/.test(error.message||'')?error.message:'WITHHELD')+'; HOOK_AND_PROVIDER_DETAILS_WITHHELD');process.exitCode=1;}})();
+        NODE
+    env:
+      AB_STAGING_SOURCE_SHA: ${{ needs.source.outputs.sha }}
+      AB_SOURCE_RUN_ID: ${{ needs.source.outputs.run }}
+  smoke:
+    needs:
+    - source
+    - release
+    runs-on: ubuntu-latest
+    environment: supabase-test
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: c55be73258e294216e589359ff0bffebfc52fb30
+        fetch-depth: 0
+        persist-credentials: false
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: ${{ needs.source.outputs.sha }}
+        path: candidate
+        fetch-depth: 0
+        persist-credentials: false
+    - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+      with:
+        node-version: '24'
+    - run: npm ci --ignore-scripts --no-audit --no-fund
+    - name: Prepare post-deploy browser without redundant downloads
+      shell: bash
+      run: |
+        set -euo pipefail
+        browser_path=$(command -v google-chrome || true)
+        if test -n "$browser_path"; then
+          echo "AB_BROWSER_EXECUTABLE=$browser_path" >> "$GITHUB_ENV"
+          "$browser_path" --version
+        else
+          node node_modules/playwright/cli.js install --with-deps chromium
+        fi
+    - name: Read-only release, public UI and authorization smoke (no generated data)
+      run: node --import tsx backend/deploy/staging-readonly-smoke.ts
+    env:
+      AB_STAGING_SOURCE_SHA: ${{ needs.source.outputs.sha }}
+      AB_SOURCE_RUN_ID: ${{ needs.source.outputs.run }}
+  finalize:
+    needs:
+    - source
+    - release
+    - smoke
+    if: always() && needs.release.outputs.deployment_id != ''
+    runs-on: ubuntu-latest
+    permissions:
+      deployments: write
+    steps:
+    - name: Record verified release success or failure; never mark tests alone as deployment
+      env:
+        GH_TOKEN: ${{ github.token }}
+        DEPLOYMENT_ID: ${{ needs.release.outputs.deployment_id }}
+        VERIFIED_STATE: ${{ needs.release.result == 'success' && needs.smoke.result == 'success' && 'success' || 'failure' }}
+      run: |
+        node <<'NODE'
+        (async()=>{try{
+          const e=process.env;if(!/^[0-9]+$/.test(e.DEPLOYMENT_ID||'')||!['success','failure'].includes(e.VERIFIED_STATE))throw Error();
+          const r=await fetch('https://api.github.com/repos/dubai717/ab-group-demo/deployments/'+e.DEPLOYMENT_ID+'/statuses',{method:'POST',headers:{authorization:'Bearer '+e.GH_TOKEN,accept:'application/vnd.github+json','content-type':'application/json'},body:JSON.stringify({state:e.VERIFIED_STATE,environment_url:'https://ab-group-demo.onrender.com',log_url:e.GITHUB_SERVER_URL+'/'+e.GITHUB_REPOSITORY+'/actions/runs/'+e.GITHUB_RUN_ID,description:e.VERIFIED_STATE==='success'?'Exact tested release and live smoke verified':'Release or live smoke failed; review required'}),redirect:'error',signal:AbortSignal.timeout(20000)});
+          if(!r.ok)throw Error();console.log('RESULT: STAGING_RELEASE_RECORDED_'+e.VERIFIED_STATE.toUpperCase());
+        }catch{console.log('RESULT: RELEASE_RECORD_UPDATE_FAILED; VALUES_WITHHELD');process.exitCode=1;}})();
+        NODE
+    env:
+      AB_STAGING_SOURCE_SHA: ${{ needs.source.outputs.sha }}
+      AB_SOURCE_RUN_ID: ${{ needs.source.outputs.run }}
+  owner-approval:
+    needs:
+    - source
+    - policy
+    if: needs.policy.outputs.requires_owner == 'true'
+    runs-on: ubuntu-latest
+    environment: staging-owner-approval
+    permissions: {}
+    steps:
+    - run: 'echo "RESULT: OWNER_APPROVED_THIS_RUN_AND_PINNED_SOURCE; NO_SECRET_OR_DATA_OPERATION"'
+    env:
+      AB_STAGING_SOURCE_SHA: ${{ needs.source.outputs.sha }}
+      AB_SOURCE_RUN_ID: ${{ needs.source.outputs.run }}
 'on':
   workflow_run:
     workflows:
@@ -63,3 +305,6 @@ jobs:
         options:
         - deploy
         - approval-test
+env:
+  AB_CONTROLLER_VERIFIED: protected-v2
+  AB_CONTROLLER_REF: c55be73258e294216e589359ff0bffebfc52fb30
