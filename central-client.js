@@ -627,6 +627,7 @@
       const form = event.target,
         button = form.querySelector("[type=submit]");
       if (form.dataset.centralBusy) return;
+      C.notice='';document.getElementById('central-notice')?.remove();
       if(globalThis.FormValidation && !FormValidation.validate(form))return;
       form.dataset.centralBusy = "1";
       if (button) button.disabled = true;
@@ -664,6 +665,7 @@
       if (um === "close") activeUser = null;
       if (cd === "close") activeCompany = null;
       if (
+        action === "open-company-form" ||
         bk === "new" ||
         um === "new" ||
         bk === "close" ||
