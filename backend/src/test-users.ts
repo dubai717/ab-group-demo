@@ -11,7 +11,9 @@ export const registrySchema=z.object({format:z.literal('AB-TEST-USERS-1'),projec
 export function testUsersEnvironment(e:NodeJS.ProcessEnv){try{const p=new URL(e.PUBLIC_ORIGIN||''),u=new URL(e.SUPABASE_URL||'');return e.APP_ENV==='staging'&&p.origin==='https://ab-group-demo.onrender.com'&&u.protocol==='https:'&&[p,u].every(x=>!x.username&&!x.password&&!x.search&&!x.hash&&x.pathname==='/')&&sha(u.origin)===testProjectHash;}catch{return false;}}
 export async function assertTestAccess(c:PoolClient,id:string,enabled:boolean){
  const data=(await c.query('select data from ab.users where id=$1',[id])).rows[0]?.data;
+ if(data?.ownerCreatedTest)requireOk(enabled,401,'loginRequired');
  const state=(await c.query('select value from ab.settings where key=$1',[stateKey])).rows[0]?.value;
+ const manual=(await c.query("select value from ab.settings where key='manual-test-passwords-v1'")).rows[0]?.value;if(manual?.[id])requireOk(enabled&&Date.parse(manual[id])>Date.now(),401,'loginRequired');
  if(!state&&!data?.managedTestSuite)return;
  requireOk(enabled&&state?.suite&&state.disabled===false,401,'loginRequired');
  if(state.passwordExpiresAt?.[id])requireOk(Date.parse(state.passwordExpiresAt[id])>Date.now(),401,'loginRequired');

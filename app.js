@@ -290,16 +290,16 @@ const seedCompany = {
 };
 
 const seedUsers = [
-  { id: 'u-owner', fullName: 'Ahmed Alhaj', username: 'owner', email: 'owner@abgroup.local', phone: '966500000001', password: 'Owner@12345', roleId: 'owner', departmentId: 'dept-management', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: null },
-  { id: 'u-gm', fullName: 'Khalid Ahmed', username: 'gm', email: 'gm@abgroup.local', phone: '966500000002', password: 'Gm@12345', roleId: 'general_manager', departmentId: 'dept-management', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-owner' },
-  { id: 'u-region', fullName: 'Samir Hassan', username: 'region_manager', email: 'region1@abgroup.local', phone: '966500000003', password: 'Region@12345', roleId: 'regional_manager', departmentId: 'dept-regional', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-gm' },
-  { id: 'u-hr', fullName: 'Nora Alsaeed', username: 'hr_manager', email: 'hr@abgroup.local', phone: '966500000004', password: 'Hr@12345', roleId: 'hr_manager', departmentId: 'dept-hr', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-gm' },
-  { id: 'u-pr', fullName: 'Omar Younis', username: 'pr_manager', email: 'pr@abgroup.local', phone: '966500000005', password: 'Pr@12345', roleId: 'pr_manager', departmentId: 'dept-pr', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-gm' },
-  { id: 'u-marketing', fullName: 'Faisal Hadi', username: 'marketing_manager', email: 'marketing@abgroup.local', phone: '966500000006', password: 'Mkt@12345', roleId: 'marketing_manager', departmentId: 'dept-marketing', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-gm' },
-  { id: 'u-finance', fullName: 'Ali Mustafa', username: 'finance_manager', email: 'finance@abgroup.local', phone: '966500000007', password: 'Fin@12345', roleId: 'finance_manager', departmentId: 'dept-finance', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-gm' },
-  { id: 'u-employee', fullName: 'Hassan Saleh', username: 'employee1', email: 'employee1@abgroup.local', phone: '966500000008', password: 'Emp@12345', roleId: 'employee', departmentId: 'dept-operations', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-region' },
-  { id: 'u-investor', fullName: 'Investor Trial', username: 'investor1', email: 'investor1@abgroup.local', phone: '966500000009', password: 'Inv@12345', roleId: 'investor', departmentId: 'dept-investor', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: null },
-  { id: 'u-partner', fullName: 'Marketing Company Trial', username: 'marketing_company', email: 'marketingcompany@abgroup.local', phone: '966500000010', password: 'MCompany@12345', roleId: 'marketing_company', departmentId: 'dept-external', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: null }
+  { id: 'u-owner', fullName: 'Ahmed Alhaj', username: 'owner', email: 'owner@abgroup.local', phone: '966500000001', passwordVerifier: {"algorithm":"PBKDF2-SHA256","iterations":600000,"salt":"b067b24dc8d2fe7596d10fc78b7430b6","hash":"835609c78f78bee02b1cc4ca4f062614d6c9a1657bb85b89e211853bd30ca0dd"}, roleId: 'owner', departmentId: 'dept-management', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: null },
+  { id: 'u-gm', fullName: 'Khalid Ahmed', username: 'gm', email: 'gm@abgroup.local', phone: '966500000002', passwordVerifier: {"algorithm":"PBKDF2-SHA256","iterations":600000,"salt":"5df49df45c4f4b70baae3dd75c5f66b4","hash":"32d8839b289ab97d222de93b2382b029daed691eb47825453c96acd586c32b2b"}, roleId: 'general_manager', departmentId: 'dept-management', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-owner' },
+  { id: 'u-region', fullName: 'Samir Hassan', username: 'region_manager', email: 'region1@abgroup.local', phone: '966500000003', passwordVerifier: {"algorithm":"PBKDF2-SHA256","iterations":600000,"salt":"904e435e176066c887d78f6e46dfff4e","hash":"147127970549a7ec830dbcedd5e87570caefa001b206d7528c913a0f597f7662"}, roleId: 'regional_manager', departmentId: 'dept-regional', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-gm' },
+  { id: 'u-hr', fullName: 'Nora Alsaeed', username: 'hr_manager', email: 'hr@abgroup.local', phone: '966500000004', passwordVerifier: {"algorithm":"PBKDF2-SHA256","iterations":600000,"salt":"c6fa6d72e3056326c32ddb6ee4ae9d47","hash":"933826cfa4a2c4a6482d19b688bb97ed92074d3576369765050c711f7e0af122"}, roleId: 'hr_manager', departmentId: 'dept-hr', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-gm' },
+  { id: 'u-pr', fullName: 'Omar Younis', username: 'pr_manager', email: 'pr@abgroup.local', phone: '966500000005', passwordVerifier: {"algorithm":"PBKDF2-SHA256","iterations":600000,"salt":"66512050591985d0f83890f1c68211c8","hash":"30dfcff15518233bb2afdf8931bf7ffd1d6e1353641889ec5ad6faf08c29cad5"}, roleId: 'pr_manager', departmentId: 'dept-pr', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-gm' },
+  { id: 'u-marketing', fullName: 'Faisal Hadi', username: 'marketing_manager', email: 'marketing@abgroup.local', phone: '966500000006', passwordVerifier: {"algorithm":"PBKDF2-SHA256","iterations":600000,"salt":"9fc36b2bb8e141774b79276bd3066b72","hash":"7999c3f8fb90db3f1a96a2e77cef2ca9b12605bbcd28489fe4bad50271144693"}, roleId: 'marketing_manager', departmentId: 'dept-marketing', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-gm' },
+  { id: 'u-finance', fullName: 'Ali Mustafa', username: 'finance_manager', email: 'finance@abgroup.local', phone: '966500000007', passwordVerifier: {"algorithm":"PBKDF2-SHA256","iterations":600000,"salt":"f2b50751bdb79417745fbc5d0a9e0142","hash":"26a0f78e6aab09bb1c7a7543da4daaa7cc302f33db228f625360ced75cad0acd"}, roleId: 'finance_manager', departmentId: 'dept-finance', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-gm' },
+  { id: 'u-employee', fullName: 'Hassan Saleh', username: 'employee1', email: 'employee1@abgroup.local', phone: '966500000008', passwordVerifier: {"algorithm":"PBKDF2-SHA256","iterations":600000,"salt":"5531787dd85cb82d954204efd94c7ba6","hash":"76e19c47ec54a596830b342d12501ea8fa18f72ddef6db25ae74dec74c365b89"}, roleId: 'employee', departmentId: 'dept-operations', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: 'u-region' },
+  { id: 'u-investor', fullName: 'Investor Trial', username: 'investor1', email: 'investor1@abgroup.local', phone: '966500000009', passwordVerifier: {"algorithm":"PBKDF2-SHA256","iterations":600000,"salt":"b15c91ecc4375e468437a3ac0c9f5be0","hash":"0556fe79a27191208f29a809871c3654afd19ffbe4c6eb1dd0f812e797e07d14"}, roleId: 'investor', departmentId: 'dept-investor', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: null },
+  { id: 'u-partner', fullName: 'Marketing Company Trial', username: 'marketing_company', email: 'marketingcompany@abgroup.local', phone: '966500000010', passwordVerifier: {"algorithm":"PBKDF2-SHA256","iterations":600000,"salt":"2c5867085b267c0a1e08c7a2b0679ef5","hash":"1ea4f86b565bc6afdd6a9b151ab6b192d9ba4fb0126e3390ca291bdc7fcc43a7"}, roleId: 'marketing_company', departmentId: 'dept-external', companyId: 'company-ab', status: 'Active', language: 'ar', managerId: null }
 ];
 
 const initialState = {
@@ -380,7 +380,7 @@ function loadState() {
     if (needsMigration) {
       // Create v3 only when absent. Keep the original v2 string untouched.
       try {
-        if (localStorage.getItem(STORAGE_KEY) === null) {
+        if (localStorage.getItem(STORAGE_KEY) === null && !parsed.users.some(u=>typeof u.password==='string') && !parsed.currentUser?.password) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
         }
       } catch (error) {
@@ -714,6 +714,8 @@ function renderDepartments() {
 }
 
 function renderCompanies(user) {
+  if(!app.state.companyRegisterInitialized){app.state.companyFilters={...app.state.companyFilters,status:'Active',licenseStatus:'Active'};app.state.companyRegisterInitialized=true;}
+  const currentProfile=CompanyDocuments.renderProfile();if(currentProfile&&!app.state.companyFormOpen)return currentProfile;
   const canManage = user.roleId === 'owner' || isUserAllowed(user, 'create_company') || isUserAllowed(user, 'edit_company');
   const filters = app.state.companyFilters || { query: '', status: 'all', emirate: 'all' };
   const companyRows = app.state.companies.filter((company) => {
@@ -721,7 +723,7 @@ function renderCompanies(user) {
     const matchesQuery = !query || [company.companyCode, company.arabicName, company.englishName, company.shortName, company.emirate, company.trafficCode, company.salikAccountNumber].join(' ').toLowerCase().includes(query) || CompanyDocuments.codeSearch(company, query);
     const matchesStatus = filters.status === 'all' || company.status === filters.status;
     const matchesEmirate = filters.emirate === 'all' || company.emirate === filters.emirate;
-    return matchesQuery && matchesStatus && matchesEmirate && CompanyDocuments.matchesFilters(company, filters);
+    return matchesQuery && matchesStatus && matchesEmirate && (!filters.licenseStatus||filters.licenseStatus==='all'||(company.licenseStatus||'Active')===filters.licenseStatus) && CompanyDocuments.matchesFilters(company, filters);
   });
 
   const emirates = AreaReference.emirates.map(e => e.legacy);
@@ -729,14 +731,14 @@ function renderCompanies(user) {
   return `
     <section class="content-panel company-panel">
       <div class="section-head">
-        <h2>${localeText('companyManagement')}</h2>
+        <h2>${localeText('companyManagement')}</h2><button type="button" class="ghost-btn" data-company-export>${getLocale()==='ar'?'تصدير Excel':'Export Excel'}</button>
         ${canManage ? `<button class="secondary-btn" data-action="open-company-form">${localeText('addCompany')}</button>` : ''}
       </div>
 
       <div class="company-desc">${localeText('legalEntitiesDesc')}</div>
       ${CompanyDocuments.renderSaveNotice()}
 
-      ${canManage ? `
+      ${canManage && app.state.companyFormOpen ? `
         <form id="company-form" class="company-form">
           <div class="form-grid">
             <div>
@@ -747,10 +749,7 @@ function renderCompanies(user) {
               <label>${localeText('companyEnglishName')}</label>
               <input class="input" name="englishName" required />
             </div>
-            <div>
-              <label>${localeText('companyCode')}</label>
-              <input class="input" name="companyCode" required />
-            </div>
+            <input type="hidden" name="companyCode" value="CO-${crypto.randomUUID()}" />
             <div>
               <label>${localeText('shortName')}</label>
               <input class="input" name="shortName" />
@@ -763,10 +762,8 @@ function renderCompanies(user) {
                 <option value="Suspended">${localeText('suspended')}</option>
               </select>
             </div>
-            <div>
-              <label>${localeText('companyLogo')}</label>
-              <input class="input" type="file" name="logo" accept="image/*" />
-            </div>
+            <div><img class="cd-company-logo" src="assets/Untitled.png" alt="AB Group" /></div>
+            ${CompanyDocuments.licenseFields({},true)}
 
             <div class="full split-title">${localeText('legalLicense')}</div>
             <div>
@@ -874,7 +871,7 @@ function renderCompanies(user) {
         <table>
           <thead>
             <tr>
-              <th>${localeText('companyTableCode')}</th>
+
               <th>${localeText('companyTableArabic')}</th>
               <th>${localeText('companyTableEnglish')}</th>
               <th>${localeText('companyTableLicense')}</th>
@@ -886,8 +883,8 @@ function renderCompanies(user) {
           </thead>
           <tbody>
             ${companyRows.length ? companyRows.map(company => `
-              <tr>
-                <td><strong>${CompanyDocuments.escape(company.companyCode)}</strong></td>
+              <tr data-company-row="${CompanyDocuments.escape(company.id)}">
+
                 <td>${CompanyDocuments.escape(company.arabicName)}</td>
                 <td>${CompanyDocuments.escape(company.englishName)}</td>
                 <td>${CompanyDocuments.escape(company.tradeLicenseNumber)}</td>
@@ -986,11 +983,11 @@ function renderLogin() {
   const appEl = document.getElementById('app');
   const locale = getLocale();
   const demoAccounts = [
-    { username: 'owner', password: 'Owner@12345', label: locale === 'ar' ? 'مالك النظام' : 'Owner' },
-    { username: 'gm', password: 'Gm@12345', label: locale === 'ar' ? 'المدير العام' : 'General Manager' },
-    { username: 'region_manager', password: 'Region@12345', label: locale === 'ar' ? 'مدير المنطقة' : 'Regional Manager' },
-    { username: 'employee1', password: 'Emp@12345', label: locale === 'ar' ? 'موظف' : 'Employee' },
-    { username: 'investor1', password: 'Inv@12345', label: locale === 'ar' ? 'مستثمر' : 'Investor' }
+    { username: 'owner', label: locale === 'ar' ? 'مالك النظام' : 'Owner' },
+    { username: 'gm', label: locale === 'ar' ? 'المدير العام' : 'General Manager' },
+    { username: 'region_manager', label: locale === 'ar' ? 'مدير المنطقة' : 'Regional Manager' },
+    { username: 'employee1', label: locale === 'ar' ? 'موظف' : 'Employee' },
+    { username: 'investor1', label: locale === 'ar' ? 'مستثمر' : 'Investor' }
   ];
 
   appEl.innerHTML = `
@@ -1039,7 +1036,7 @@ function renderLogin() {
             <h4>${localeText('demoAccess')}</h4>
             <div class="demo-users">
               ${demoAccounts.map(acc => `
-                <button class="demo-user-button" data-demo-user="${acc.username}" data-demo-pass="${acc.password}">${acc.label}</button>
+                <button class="demo-user-button" data-demo-user="${acc.username}">${acc.label}</button>
               `).join('')}
             </div>
           </div>
@@ -1074,10 +1071,9 @@ function renderLogin() {
   document.querySelectorAll('[data-demo-user]').forEach(button => {
     button.addEventListener('click', () => {
       const username = button.dataset.demoUser;
-      const password = button.dataset.demoPass;
       document.getElementById('username').value = username;
-      document.getElementById('password').value = password;
-      handleLogin({ preventDefault: () => {} });
+      document.getElementById('password').value = '';
+      document.getElementById('password').focus();
     });
   });
 }
@@ -1095,7 +1091,7 @@ async function handleLogin(event) {
   try {
     // Keep legacy demo credentials intact. New local accounts use a separate verifier.
     const legacy = app.state.users.find(u => u.username.toLowerCase() === username.toLowerCase());
-    let user = legacy && legacy.username === username && legacy.password === password ? legacy : null;
+    let user = legacy && legacy.username === username && await DemoCredentials.verifyLegacy(legacy,password) ? legacy : null;
     if (!legacy) user = await DemoCredentials.authenticate(username, password);
     if (attempt !== loginAttempt || !form.isConnected) return;
     if (!user || legacy && legacy.status !== 'Active' || UserManagement.effectiveUser(user)?.status !== 'Active') throw new Error('login');
@@ -1129,14 +1125,17 @@ function bindGlobalEvents() {
   BankAccounts.bind();
   CompanyDocuments.bind();
   document.querySelectorAll('[data-page]').forEach(button => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       if(!CustomerUI.leave())return;
       AuthFlows.leave();
       UserManagement.cleanup();
       BankAccounts.cleanup();
       CompanyDocuments.cleanupPreview();
       const page = button.dataset.page;
+      if(page==='companies'){CompanyDocuments.centralSelect(null);app.state.companyFormOpen=false;}
       app.state.currentPage = page;
+      if(page==='customers'){await CustomerUI.select('list',true);return;}
+      if(page==='vehicles'){await VehicleUI.select('list');return;}
       saveState();
       render();
     });
@@ -1238,7 +1237,8 @@ function bindGlobalEvents() {
         arabicName: String(fd.get('arabicName') || '').trim(),
         englishName: String(fd.get('englishName') || '').trim(),
         shortName: String(fd.get('shortName') || '').trim(),
-        logo: logoData || 'assets/logo.svg',
+        logo: 'assets/Untitled.png',
+        ...CompanyDocuments.licenseData(Object.fromEntries(fd)),
         status: String(fd.get('status') || 'Active'),
         tradeLicenseNumber: String(fd.get('tradeLicenseNumber') || '').trim(),
         issuingAuthority: String(fd.get('issuingAuthority') || '').trim(),
@@ -1271,7 +1271,7 @@ function bindGlobalEvents() {
         return;
       }
       CompanyDocuments.captureNew(newCompany.id, documentData.files);
-      CompanyDocuments.markCreated();
+      CompanyDocuments.markCreated();app.state.companyFormOpen=false;
       render();
       } catch (error) {
         const message = companyForm.querySelector('#company-doc-message');
@@ -1309,13 +1309,13 @@ function bindGlobalEvents() {
     });
   }
 
+  document.querySelectorAll('[data-company-row]').forEach(row=>row.addEventListener('click',ev=>{if(!ev.target.closest('button,a,input,select'))row.querySelector('[data-cd=profile]')?.click();}));
+  document.querySelector('[data-company-export]')?.addEventListener('click',async()=>{try{const filters=app.state.companyFilters||{};const query={q:filters.query||'',statuses:filters.status==='all'?'':filters.status||'',emirate:filters.emirate==='all'?'':filters.emirate||'',licenseStatus:filters.licenseStatus==='all'?'':filters.licenseStatus||'',trafficCode:filters.trafficCode||'',salikAccountNumber:filters.salikAccountNumber||''};const r=await ABCentral.api('registers/companies?'+new URLSearchParams({format:'excel',columns:'arabicName,englishName,status,emirate,trafficCode,salikAccountNumber',query:JSON.stringify(query)}));await RegisterExport.run(r,'excel');}catch{alert(getLocale()==='ar'?'تعذر التصدير وفق الصلاحيات.':'Export unavailable under current permissions.');}});
   const openCompanyBtn = document.querySelector('[data-action="open-company-form"]');
   if (openCompanyBtn) {
     openCompanyBtn.addEventListener('click', () => {
       const form = document.getElementById('company-form');
-      if (form) {
-        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      if(!form){CompanyDocuments.centralSelect(null);app.state.companyFormOpen=true;render();document.querySelector('#company-form input:not([type=hidden])')?.focus();}else form.scrollIntoView({ behavior:'smooth',block:'start' });
     });
   }
 }
@@ -1333,7 +1333,8 @@ async function readFileAsDataUrl(file) {
   });
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  if(!globalThis.ABCentral?.enabled){try{if(await DemoCredentials.upgradeLegacyState(app.state))saveState();}catch{stateStorageWritable=false;}}
   const storedLocale = localStorage.getItem(LOCALE_KEY);
   if (storedLocale) {
     document.body.dir = storedLocale === 'ar' ? 'rtl' : 'ltr';

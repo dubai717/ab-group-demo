@@ -1,3 +1,4 @@
+import {futureSchemaRehearsal} from './future-schema-rehearsal.js';
 // Full cycle against disposable PostgreSQL and pinned official local Supabase Auth/Storage services.
 // Cloud I/O is GET of the retained archive only. No hosted account or document mutation.
 import {build} from '../src/app.js';
@@ -9,7 +10,7 @@ const archivePath='ab-group-backups/v1/20261105T150819784Z-793d19a6-332c-4d54-97
 const qi=(s:string)=>'"'+s.replaceAll('"','""')+'"';
 let root:Pool|undefined,pool:Pool|undefined,stage='GUARD';
 try{
- const e=process.env;requireOk(e.GITHUB_ACTIONS==='true'&&e.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&e.GITHUB_EVENT_NAME==='push'&&e.GITHUB_REF==='refs/heads/verify/reset-full-cycle-20261105',403,'isolatedRunnerRequired');
+ const e=process.env;requireOk(e.GITHUB_ACTIONS==='true'&&e.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&e.GITHUB_EVENT_NAME==='push'&&['refs/heads/verify/reset-full-cycle-20261105','refs/heads/verify/workspace-cycle-20261105'].includes(e.GITHUB_REF||''),403,'isolatedRunnerRequired');
  const endpoint=new URL(e.SUPABASE_URL||'');requireOk(sha(endpoint.origin)===projectHash,403,'archiveProject');
  const get=async(path:string)=>{const key=e.SUPABASE_SECRET_KEY||'';const r=await fetch(endpoint.origin+'/storage/v1/object/ab-private-test/'+path.split('/').map(encodeURIComponent).join('/'),{headers:{apikey:key,...(!key.startsWith('sb_')?{authorization:'Bearer '+key}:{})},redirect:'error',signal:AbortSignal.timeout(30000)});requireOk(r.ok,409,'archiveUnavailable');const bytes=Buffer.from(await r.arrayBuffer());requireOk(bytes.length<64*1024*1024,409,'archiveSize');return bytes;};
  stage='DOWNLOAD_ENCRYPTED_ARCHIVE';const meta=await get(archivePath.replace('database.abbackup','metadata.abmeta'));requireOk(meta.subarray(0,17).toString()==='AB-BACKUP-META-1\n',409,'archiveMetadata');const proof=security(e.BACKUP_ENCRYPTION_KEY||'').open(meta.toString().slice(17)),bytes=await get(archivePath);requireOk(proof.restoreVerified&&proof.archiveSha256===sha(bytes),409,'archiveIntegrity');
@@ -45,6 +46,7 @@ try{
     const runtime=new Pool({host:'127.0.0.1',port:5547,user:'postgres',database:name,ssl:false,options:'-c role=ab_runtime'});const app=await build({pool:runtime,key:e.DATA_ENCRYPTION_KEY!,origin:'http://127.0.0.1:3100',secureCookies:false,auth,objects:{async get(){throw Error('notAllowed');},async put(){throw Error('notAllowed');}}});try{const login=await app.inject({method:'POST',url:'/api/login',headers:{origin:'http://127.0.0.1:3100','x-ab-request':'1'},payload:{username:'trial_4db27b82b8bf',password:localOwnerPassword}});requireOk(login.statusCode===200,409,'isolatedBackendOwnerLogin');const boot=await app.inject({method:'GET',url:'/api/bootstrap',headers:{cookie:String(login.headers['set-cookie']).split(';')[0]}});requireOk(boot.statusCode===200,409,'isolatedOwnerBootstrap');console.log('CHECK: REAL_LOCAL_GOTRUE_PASSWORD_BACKEND_LOGIN_AND_RUNTIME_RLS_BOOTSTRAP_AFTER_'+(failure?'RECOVERY':'RESET')+'=PASS; PASSWORD_ONLY_SET_ON_DISPOSABLE_CLONE');}finally{await app.close();await runtime.end();}
   }finally{await stopLocalProviders();db.release();await pool.end();pool=undefined;}
  }
+ await futureSchemaRehearsal();
  console.log('RESULT: FULL_RESET_AND_RECOVERY_ISOLATED_CONTRACT_PASS; NO_HOSTED_WRITES_DELETIONS_RESET_OR_DEPLOYMENT');
 }catch(error){console.log('RESULT: FULL_RESET_ISOLATED_STOP; STAGE='+stage+'; CODE='+(error instanceof ApiError?error.code:/^[0-9A-Z]{5}$/.test((error as any)?.code||'')?(error as any).code:'WITHHELD'));process.exitCode=1;}
 finally{await stopLocalProviders();await pool?.end().catch(()=>{});await root?.end().catch(()=>{});}

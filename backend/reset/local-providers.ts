@@ -4,7 +4,7 @@ import {randomBytes,createHmac} from 'node:crypto';import {docker} from '../depl
 const names=['ab-reset-local-storage','ab-reset-local-auth'];
 export async function stopLocalProviders(){for(const name of names)await docker(['rm','--force','--volumes',name]).catch(()=>{});}
 export async function localProviders(database:string){
- requireOk(['ab_reset_rehearsal','ab_reset_rollback'].includes(database)&&process.env.GITHUB_ACTIONS==='true'&&process.env.GITHUB_REF==='refs/heads/verify/reset-full-cycle-20261105',403,'isolatedProvidersOnly');
+ requireOk(['ab_reset_rehearsal','ab_reset_rollback'].includes(database)&&process.env.GITHUB_ACTIONS==='true'&&['refs/heads/verify/reset-full-cycle-20261105','refs/heads/verify/workspace-cycle-20261105'].includes(process.env.GITHUB_REF||''),403,'isolatedProvidersOnly');
  await stopLocalProviders();const secret=randomBytes(48).toString('hex');const enc=(x:any)=>Buffer.from(JSON.stringify(x)).toString('base64url');const unsigned=enc({alg:'HS256',typ:'JWT'})+'.'+enc({role:'postgres',iss:'supabase',iat:Math.floor(Date.now()/1000),exp:Math.floor(Date.now()/1000)+3600});const token=unsigned+'.'+createHmac('sha256',secret).update(unsigned).digest('base64url');
  const start=async(name:string,image:string,env:Record<string,string>)=>docker(['run','--detach','--name',name,'--network','container:ab-backup-drill-postgres',...(name.includes('storage')?['--tmpfs','/var/lib/storage:rw,nosuid,nodev,size=128m']:[]),...Object.keys(env).flatMap(k=>['--env',k]),image],env);
  const uri='postgres://postgres@127.0.0.1:5432/'+database+'?sslmode=disable';

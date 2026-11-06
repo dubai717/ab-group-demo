@@ -153,7 +153,7 @@
     },
   };
   C.bankDocuments = (id) =>
-    (C.documents.get("bankAccountId=" + id) || []).map((d) => ({
+    (C.documents.get("bankAccountId=" + id) || []).filter(d=>!d.withdrawn).map((d) => ({
       ...d,
       id: d.versionId,
       parentId: d.parentVersionId || null,
@@ -228,7 +228,8 @@
   }
   async function readDocuments(owner) {
     const q = new URLSearchParams(owner).toString();
-    const rows = await api("documents?" + q);
+    if(C.documentOwnerKey!==q){C.documentHistory=false;C.documentOwnerKey=q;}
+    const rows = await api("documents?" + q+(C.documentHistory?"&history=true":""));
     C.documents.set(q, rows);
     return rows;
   }
@@ -267,6 +268,10 @@
     )
       section.innerHTML += `<form id="central-doc-form" data-company="${escape(owner.companyId)}"><div class="form-grid"><label>${text("المستند", "Document")}<input name="file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.docx,.xlsx,.pptx" required /></label><label>${text("العنوان", "Title")}<input class="input" name="title" maxlength="200" required /></label><label>${text("الوصف", "Description")}<input class="input" name="description" maxlength="4000" /></label><label>${text("التاريخ", "Date")}<input class="input" name="date" type="date" required /></label><label>${text("التصنيف", "Category")}<select class="input" name="category">${["original", "annex", "amendment", "correspondence", "other"].map((c) => `<option value="${c}">${escape(c)}</option>`).join("")}</select></label><label>${text("المستند السابق", "Previous document")}<select class="input" name="parentId"><option value="">—</option>${rows.map((d) => `<option value="${d.versionId}">${escape(d.title)} v${d.version}</option>`).join("")}</select></label><label>${text("العلاقة", "Relationship")}<select class="input" name="relation"><option value="related">${text("مستند مرتبط", "Related document")}</option><option value="version">${text("إصدار جديد", "New version")}</option></select></label></div><button type="submit" class="secondary-btn">${text("حفظ المستند على الخادم", "Save document on server")}</button></form>`;
     host.append(section);
+    globalThis.AttachmentViewer?.bindInputs(host);
+    const bankCompany=app.state.bankAccounts.find(a=>a.id===owner.bankAccountId)?.companyId;
+    const canRemove=C.actor.roleId==='owner'||owner.companyId&&C.actor.permissions.includes('edit_company')||owner.bankAccountId&&C.actor.companyBankPermissions?.some(g=>g.companyId===bankCompany&&g.permissions.includes('manage_documents'));
+    AttachmentViewer.mountActions(section,{items:rows,history:!!C.documentHistory,canRemove,id:d=>d.versionId,findButton:d=>section.querySelector('[data-central-download="'+CSS.escape(d.versionId)+'"]'),remove:d=>api('documents/'+d.versionId+'/withdraw','POST',{reason:'Confirmed removal from current attachments; retain history'},crypto.randomUUID()),reload:async value=>{C.documentHistory=value;await readDocuments(owner);render();}});
   }
   C.bind = () => {
     document.querySelector(".demo-box")?.remove();
@@ -430,7 +435,7 @@
             {},
             idempotency(form, "genericFile" + i),
           );
-      activeCompany = result.id;
+      app.state.companyFormOpen=false;activeCompany = result.id;
       CompanyDocuments.centralSelect(result.id);
       await readDocuments({ companyId: result.id });
       await load();
@@ -677,7 +682,8 @@
           FinanceWorkbench.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();
           C.actor = null;
           C.csrf = "";
-          C.documents.clear();
+          C.documents.clear();C.documentOwnerKey=null;C.documentHistory=false;
+          globalThis.AttachmentViewer?.close();
           C.enrollment.clear();
           activeBank = activeCompany = activeUser = null;
           BankAccounts.logout();
@@ -770,12 +776,7 @@
             { credentials: "same-origin" },
           );
           if (!r.ok) throw Error((await r.json()).error);
-          const url = URL.createObjectURL(await r.blob()),
-            a = document.createElement("a");
-          a.href = url;
-          a.download = "document";
-          a.click();
-          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          const blob=await r.blob();await AttachmentViewer.show([{name:'document',load:async()=>blob}]);
         }
       } catch (e) {
         error(e);

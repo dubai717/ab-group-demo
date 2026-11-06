@@ -1,7 +1,7 @@
 name: Reset final isolated regression and authorization checks
 on:
   push:
-    branches: [verify/reset-integration-20261105]
+    branches: [verify/reset-integration-20261105, verify/workspace-registers-20261105]
 permissions:
   contents: read
 jobs:
@@ -26,3 +26,18 @@ jobs:
         env:
           AB_BROWSER_EXECUTABLE: /usr/bin/google-chrome
         run: node backend/tests/reset-control.browser.cjs
+
+      - name: Real loopback API + original workspace UI contracts
+        env:
+          AB_BROWSER_EXECUTABLE: /usr/bin/google-chrome
+        run: |
+          set -euo pipefail
+          node --import tsx backend/tests/workspace-serve.ts > /tmp/ab-workspace-fixture.log 2>&1 &
+          fixture_pid=$!
+          trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 60); do
+            if test -f work/workspace-browser.json; then break; fi
+            if ! kill -0 "$fixture_pid" 2>/dev/null; then echo 'RESULT: WORKSPACE_FIXTURE_START_FAILED'; exit 1; fi
+            sleep 1
+          done
+          node backend/tests/workspace.browser.cjs
