@@ -1,0 +1,31 @@
+name: AB Group final native owner gate verification
+on:
+  push:
+    branches: [verify/staging-owner-gate-final-20261106]
+permissions:
+  contents: read
+  actions: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Prove native approval waits and cancel only this isolated test
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_MAIN_SHA: de93dfa37443157bf3ab23ae21ee5dfe78d517a9
+          EXPECTED_ENTRY_BLOB: ee63900032125a67de2feb0dc6e21a786e597207
+        run: |
+          node <<'NODE'
+          (async()=>{const e=process.env,base='https://api.github.com/repos/dubai717/ab-group-demo',need=(v,c)=>{if(!v)throw Error(c);},pause=ms=>new Promise(r=>setTimeout(r,ms));let owned;
+          const api=async(p,method='GET',body)=>{const r=await fetch(base+p,{method,headers:{authorization:'Bearer '+e.GH_TOKEN,accept:'application/vnd.github+json',...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{}),redirect:'error',signal:AbortSignal.timeout(20000)});need(r.ok,'GITHUB_API');return r.status===202||r.status===204?null:r.json();};
+          try{need(e.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&e.GITHUB_REF==='refs/heads/verify/staging-owner-gate-final-20261106','CONTEXT');need((await api('/git/ref/heads/main')).object.sha===e.EXPECTED_MAIN_SHA,'MAIN_CHANGED');need((await api('/contents/.github/workflows/staging-delivery-dispatch.yml?ref=main')).sha===e.EXPECTED_ENTRY_BLOB,'ENTRY_CHANGED');
+          const settings=await api('/environments/staging-owner-approval'),review=settings.protection_rules.find(r=>r.type==='required_reviewers');need(settings.can_admins_bypass===false&&review?.reviewers?.length===1&&review.reviewers[0].reviewer?.login==='dubai717','OWNER_SETTINGS');
+          const list=async()=> (await api('/actions/workflows/staging-delivery-dispatch.yml/runs?branch=main&event=workflow_dispatch&per_page=30')).workflow_runs;
+          const prior=new Set((await list()).map(r=>r.id));await api('/actions/workflows/staging-delivery-dispatch.yml/dispatches','POST',{ref:'main',inputs:{mode:'approval-test'}});
+          for(let i=0;i<40;i++){const rows=(await list()).filter(r=>!prior.has(r.id)&&r.head_sha===e.EXPECTED_MAIN_SHA);need(rows.length<=1,'AMBIGUOUS_RUN');if(rows.length){owned=rows[0];break;}await pause(2000);}need(owned,'RUN_NOT_VISIBLE');console.log('CHECK: OWNER_GATE_TEST_RUN='+owned.id);
+          let verified=false;for(let i=0;i<45;i++){const pending=await api('/actions/runs/'+owned.id+'/pending_deployments'),p=pending.find(p=>p.environment.name==='staging-owner-approval');if(p){need(p.current_user_can_approve===false&&p.reviewers?.length===1&&p.reviewers[0].reviewer?.login==='dubai717','NON_OWNER_MUST_NOT_APPROVE');const jobs=(await api('/actions/runs/'+owned.id+'/jobs')).jobs;if(jobs.filter(j=>j.name!=='approval-test').every(j=>j.conclusion==='skipped')){verified=true;break;}}await pause(2000);}need(verified,'PENDING_GATE_NOT_PROVEN');
+          console.log('CHECK: FINAL_NATIVE_OWNER_GATE_WAITING=true; WORKFLOW_TOKEN_CAN_APPROVE=false; ADMIN_BYPASS=false; ALL_PROVIDER_JOBS_SKIPPED=true');await api('/actions/runs/'+owned.id+'/cancel','POST');let cancelled=false;for(let i=0;i<30;i++){const r=await api('/actions/runs/'+owned.id);if(r.status==='completed'){need(r.conclusion==='cancelled','UNEXPECTED_COMPLETION');cancelled=true;break;}await pause(2000);}need(cancelled,'CANCELLATION_PENDING');
+          console.log('RESULT: FINAL_OWNER_GATE_PASS; TEST_CANCELLED_WITHOUT_APPROVAL; LIVE_APPLICATION_UNCHANGED');
+          }catch(error){if(owned)try{const r=await api('/actions/runs/'+owned.id);if(r.status!=='completed')await api('/actions/runs/'+owned.id+'/cancel','POST');}catch{}console.log('RESULT: FINAL_OWNER_GATE_STOP; CODE='+(/^[A-Z_]+$/.test(error.message||'')?error.message:'WITHHELD'));process.exitCode=1;}})();
+          NODE
