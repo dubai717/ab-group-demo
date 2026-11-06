@@ -19,6 +19,7 @@ const { chromium } = require("playwright"),
   p.on("pageerror", (e) => errors.push(e.message));
   try {
     await p.addInitScript(() => {
+      if (window !== window.top) return; // Test instrumentation belongs to the app, not sandboxed document previews.
       localStorage.setItem(
         "ab_group_demo_state_v3",
         "BROWSER-DATA-MUST-REMAIN",
