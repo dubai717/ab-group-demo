@@ -361,6 +361,7 @@
     if (activeUser)
       panel({ userId: activeUser }, document.querySelector(".um-editor"));
   };
+  function unlockProfile(form){for(const input of form._centralLockedFields||[])if(input.isConnected)input.disabled=false;delete form._centralLockedFields;}
   async function saveForm(form) {
     const fd = new FormData(form),
       kind = form.id;
@@ -411,6 +412,8 @@
           throw Error("Raster logo limit: 500 KB");
         data.logo = "data:" + logo.type + ";base64," + (await readFile(logo));
       }
+      const submittedProfile=kind==='cd-profile-form'?JSON.parse(RecordProfile.snapshot(form)):null;
+      if(submittedProfile){form._centralLockedFields=[...form.closest('.record-drawer').querySelectorAll('form input,form select,form textarea,form button')].filter(input=>!input.disabled);for(const input of form._centralLockedFields)input.disabled=true;}
       const result = await api(
         "companies" + (old ? "/" + old : ""),
         old ? "PATCH" : "POST",
@@ -418,6 +421,7 @@
         idempotency(form),
       );
       form.dataset.savedId = result.id;
+      if(submittedProfile){form.dataset.companyRevision=String(data.revision+1);const baseline=new Map(JSON.parse(form.dataset.original||'[]'));for(const [key,value]of submittedProfile)if(form.elements.namedItem(key)?.type!=='file')baseline.set(key,value);form.dataset.original=JSON.stringify([...baseline]);}
       await load(false); // committed metadata survives an attachment failure; do not create it twice on retry
       for (const category of [
         "tradeLicense",
@@ -467,6 +471,7 @@
       );
       // Preserve the committed identity before readback: a failed refresh must never create a duplicate.
       form.dataset.savedId = result.id;
+      form.dataset.bankRevision = String(data.revision===undefined?1:data.revision+1);
       const persisted = await api("bank-accounts/" + result.id);
       if (persisted.id !== result.id) throw Error("verificationUnavailable");
       await load(false);
@@ -641,6 +646,7 @@
       try {
         await saveForm(form);
       } catch (e) {
+        unlockProfile(form);
         globalThis.FormValidation?.fromError(form,e);
         if (form.dataset.savedId)
           show(
@@ -651,6 +657,7 @@
           );
         else error(e);
       } finally {
+        unlockProfile(form);
         delete form.dataset.centralBusy;
         if (button?.isConnected) button.disabled = false;
       }
@@ -722,9 +729,10 @@
           render();
         } else if (action === "toggle-company-status") {
           if(C.companyStatusBusy)return;
-          const r=app.state.companies.find(c=>c.id===b.dataset.companyId);if(!r)throw Error('notFound');
-          if(!confirm(text('تأكيد تغيير حالة الشركة: ','Confirm company status change: ')+(getLocale()==='ar'?r.arabicName:r.englishName)))return;
-          C.companyStatusBusy=true;const page=app.state.currentPage,formOpen=app.state.companyFormOpen,profileId=activeCompany,status=r.status==='Active'?'Inactive':'Active';let committed=false;
+          const r=app.state.companies.find(c=>c.id===b.dataset.companyId)||await api('companies/'+b.dataset.companyId);
+          const nextStatus=b.dataset.nextStatus||(r.status==='Active'?'Inactive':'Active');
+          if(!confirm(text('تأكيد ','Confirm ')+localeText(nextStatus==='Active'?'enable':'disable')+text(' الشركة: ',' company: ')+(getLocale()==='ar'?(r.arabicName||r.englishName):(r.englishName||r.arabicName))))return;
+          C.companyStatusBusy=true;const page=app.state.currentPage,formOpen=app.state.companyFormOpen,profileId=activeCompany,status=nextStatus;let committed=false;
           try{await api('companies/'+r.id,'PATCH',{revision:r.revision,status});committed=true;const verified=await api('companies/'+r.id);if(verified.status!==status)throw Error('verificationUnavailable');await load(false);await RegisterStore.get('companies').refresh(r.id);if(app.state.currentPage===page&&app.state.companyFormOpen===formOpen&&activeCompany===profileId&&!RecordProfile.dirty(document.getElementById('cd-profile-form')))render();show(text('تم حفظ حالة الشركة والتحقق منها.','Company status saved and verified.'));}
           catch(e){if(committed)throw Error(text('حُفظ طلب الحالة، لكن تعذر التحقق من استرجاعها. حدّث السجل قبل المحاولة مجدداً.','Status committed, but readback could not be verified. Refresh before retrying.'));throw e;}finally{C.companyStatusBusy=false;}
         } else if (bk === "toggle") {

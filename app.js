@@ -863,7 +863,7 @@ function renderCompanies(user) {
                 <td>
                   <div class="row-actions">
                     ${CompanyDocuments.profileButton(company.id)}
-                    ${CompanyDocuments.canAction(company.status==='Active'?'deactivate':'activate')?`<button type="button" class="ghost-btn" data-action="toggle-company-status" data-company-id="${company.id}">${company.status === 'Active' ? localeText('disable') : localeText('enable')}</button>`:''}
+                    ${CompanyDocuments.canAction(company.status==='Active'?'deactivate':'activate')?`<button type="button" class="ghost-btn" data-action="toggle-company-status" data-company-id="${company.id}" data-next-status="${company.status==='Active'?'Inactive':'Active'}">${company.status === 'Active' ? localeText('disable') : localeText('enable')}</button>`:''}
                   </div>
                 </td>
               </tr>
@@ -1156,7 +1156,7 @@ function bindGlobalEvents() {
       const target = app.state.companies.find(c => c.id === companyId);
       if (!target) return;
       if(!confirm(getLocale()==='ar'?'تأكيد تغيير حالة الشركة؟':'Confirm company status change?'))return;
-      CompanyDocuments.updateStatus(companyId,target.status==='Active'?'Inactive':'Active');
+      CompanyDocuments.updateStatus(companyId,button.dataset.nextStatus||(target.status==='Active'?'Inactive':'Active'));
       render();
     });
   });
