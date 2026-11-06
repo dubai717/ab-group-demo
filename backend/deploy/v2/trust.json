@@ -1,5 +1,5 @@
 {
   "format": "AB-CONTROLLER-TRUST-2",
-  "approvedSourceTree": "ae719dc8b2e312d2ea57aa814856674e5adbc048",
-  "note": "Exact owner-approved staging policy bootstrap and PR30/31 source tree. No wildcard or data mutation."
+  "approvedSourceTree": "b2b83515ba6d2a6db2146d6cb61d0224dccac8fb",
+  "note": "Owner-authorized initial staging release, preserving the previously approved source plus the reviewed runtime module packaging correction only. Full source CI is mandatory before deployment; no data, grants, credentials or migrations change."
 }
