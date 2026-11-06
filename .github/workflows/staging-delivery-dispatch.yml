@@ -209,6 +209,7 @@ jobs:
     env:
       AB_STAGING_SOURCE_SHA: ${{ needs.source.outputs.sha }}
       AB_SOURCE_RUN_ID: ${{ needs.source.outputs.run }}
+    if: always() && needs.source.result == 'success' && needs.policy.result == 'success' && needs.schema.result == 'success'
   smoke:
     needs:
     - source
@@ -248,6 +249,7 @@ jobs:
     env:
       AB_STAGING_SOURCE_SHA: ${{ needs.source.outputs.sha }}
       AB_SOURCE_RUN_ID: ${{ needs.source.outputs.run }}
+    if: always() && needs.source.result == 'success' && needs.release.result == 'success'
   finalize:
     needs:
     - source
@@ -287,6 +289,28 @@ jobs:
     env:
       AB_STAGING_SOURCE_SHA: ${{ needs.source.outputs.sha }}
       AB_SOURCE_RUN_ID: ${{ needs.source.outputs.run }}
+  delivery-result:
+    needs:
+    - source
+    - policy
+    - schema
+    - release
+    - smoke
+    - finalize
+    if: always() && needs.source.result == 'success'
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+    - env:
+        RELEASE_RESULT: ${{ needs.release.result }}
+        SMOKE_RESULT: ${{ needs.smoke.result }}
+        FINALIZE_RESULT: ${{ needs.finalize.result }}
+      run: |
+        node <<'NODE'
+        const complete=['RELEASE_RESULT','SMOKE_RESULT','FINALIZE_RESULT'].every(k=>process.env[k]==='success');
+        console.log('RESULT: '+(complete?'LIVE_STAGING_DELIVERY_VERIFIED':'NO_VERIFIED_DEPLOYMENT; FAILED_OR_SKIPPED_RELEASE'));
+        if(!complete)process.exitCode=1;
+        NODE
 'on':
   workflow_run:
     workflows:
