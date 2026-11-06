@@ -13,8 +13,8 @@ jobs:
       - name: Resume installed checked staging pipeline; do not repeat successful owner gate test
         env:
           GH_TOKEN: ${{ github.token }}
-          EXPECTED_MAIN_SHA: de93dfa37443157bf3ab23ae21ee5dfe78d517a9
-          EXPECTED_ENTRY_BLOB: ee63900032125a67de2feb0dc6e21a786e597207
+          EXPECTED_MAIN_SHA: a1725afdc6360a0b622b695fe898fa74306ec065
+          EXPECTED_ENTRY_BLOB: 068a98e276b3b67367e9c638981f1a85ab8631c9
         run: |
           node <<'NODE'
           (async()=>{try{const e=process.env,base='https://api.github.com/repos/dubai717/ab-group-demo',need=(v,c)=>{if(!v)throw Error(c);};
@@ -23,7 +23,7 @@ jobs:
           need((await api('/git/ref/heads/main')).object.sha===e.EXPECTED_MAIN_SHA,'MAIN_CHANGED');
           need((await api('/contents/.github/workflows/staging-delivery-dispatch.yml?ref=main')).sha===e.EXPECTED_ENTRY_BLOB,'ENTRY_CHANGED');
           const list=async()=> (await api('/actions/workflows/staging-delivery-dispatch.yml/runs?branch=main&event=workflow_dispatch&per_page=30')).workflow_runs;
-          const prior=new Set((await list()).map(r=>r.id));await api('/actions/workflows/staging-delivery-dispatch.yml/dispatches',{ref:'main',inputs:{mode:'deploy'}});
+          const canonical=await api('/actions/workflows/staging-ci.yml');console.log('CHECK: SOURCE_CANONICAL_WORKFLOW_NAME='+JSON.stringify(canonical.name));const prior=new Set((await list()).map(r=>r.id));await api('/actions/workflows/staging-delivery-dispatch.yml/dispatches',{ref:'main',inputs:{mode:'deploy'}});
           for(let i=0;i<40;i++){const rows=(await list()).filter(r=>!prior.has(r.id)&&r.head_sha===e.EXPECTED_MAIN_SHA);need(rows.length<=1,'AMBIGUOUS_DISPATCH');if(rows.length){console.log('RESULT: CHECKED_STAGING_DISPATCH_STARTED; RUN='+rows[0].id+'; OWNER_GATE_UNCHANGED; NO_SHA_VARIABLE_EDIT');return;}await new Promise(r=>setTimeout(r,2000));}throw Error('DISPATCH_NOT_VISIBLE');
           }catch(error){console.log('RESULT: DISPATCH_STOP; CODE='+(/^[A-Z_]+$/.test(error.message||'')?error.message:'WITHHELD'));process.exitCode=1;}})();
           NODE
