@@ -133,7 +133,17 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - run: node node_modules/playwright/cli.js install --with-deps chromium
+      - name: Prepare post-deploy browser without redundant downloads
+        shell: bash
+        run: |
+          set -euo pipefail
+          browser_path=$(command -v google-chrome || true)
+          if test -n "$browser_path"; then
+            echo "AB_BROWSER_EXECUTABLE=$browser_path" >> "$GITHUB_ENV"
+            "$browser_path" --version
+          else
+            node node_modules/playwright/cli.js install --with-deps chromium
+          fi
       - name: Read-only release, public UI and authorization smoke (no generated data)
         run: node --import tsx backend/deploy/staging-readonly-smoke.ts
   finalize:
