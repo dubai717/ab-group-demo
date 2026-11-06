@@ -8,7 +8,8 @@ export async function readOnlySmoke(expectedSha:string,appHash:string,request:ty
  const version=await get('/api/release');need(version.ok,'RELEASE_UNAVAILABLE');const r=await version.json() as any;
  need(r.environment==='staging'&&r.commit===expectedSha&&r.projectOriginSha256===projectHash,'RELEASE_TARGET_MISMATCH');
  need((await get('/api/health')).ok,'HEALTH_FAILED');const app=await get('/app.js');need(app.ok&&sha(await app.text())===appHash,'APP_BYTES_MISMATCH');
- for(const path of ['/api/bootstrap','/api/companies/00000000-0000-4000-8000-000000000000','/api/bank-accounts/00000000-0000-4000-8000-000000000000']){const denied=await get(path);need(!denied.ok,'UNAUTHENTICATED_DATA_EXPOSURE');need(denied.status===401,'AUTH_BOUNDARY_STATUS_UNEXPECTED');await denied.body?.cancel();}
+ for(const path of ['/api/bootstrap','/api/companies/00000000-0000-4000-8000-000000000000','/api/bank-accounts/00000000-0000-4000-8000-000000000000','/api/registers/customers','/api/registers/vehicles','/api/customers/capabilities','/api/vehicles/capabilities','/api/documents']){const denied=await get(path);need(!denied.ok,'UNAUTHENTICATED_DATA_EXPOSURE');need(denied.status===401,'AUTH_BOUNDARY_STATUS_UNEXPECTED');await denied.body?.cancel();}
+ const capability=await get('/api/reset-capability');need(capability.ok,'RESET_CAPABILITY_UNAVAILABLE');const reset=await capability.json() as any;need(reset.enabled===false&&reset.workerConfigured===false,'RESET_EXECUTION_MUST_REMAIN_DISABLED');console.log('CHECK: HOSTED_RESET_DISABLED_AND_WORKER_UNCONFIGURED_GET_ONLY=PASS');
  console.log('CHECK: EXACT_STAGING_RELEASE_HEALTH_APP_BYTES_AND_UNAUTHENTICATED_DENIAL_GET_ONLY=PASS');
 }
 async function main(){try{
