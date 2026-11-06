@@ -137,6 +137,7 @@
     "user-management.js": "92e218828a63a318544c644cb0d66ad91ec49e86d9ff795bd30c409331608f9a",
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
     "vehicles.js": "a06a54f8fc92c03caa373040ba8e5770851539b56de60bc12f59a2c88d14c775",
-    "workspace-ui.js": "7890b76c144f824b03a68785c46f71d7404c16f7fad295625530ba091bf1f619"
+    "workspace-ui.js": "7890b76c144f824b03a68785c46f71d7404c16f7fad295625530ba091bf1f619",
+    ".github/workflows/staging-checks.yml": "d56cacb7b8aee4ba61532f34f98a509d5b130c3f1842679bb3eed46dd798221a"
   }
 }
