@@ -212,6 +212,12 @@ export async function persistCompany(
 ) {
   const data = bounded(input, 1024 * 1024);
   const isNew = !id;
+  requireOk(id ? m.company.canEdit() : m.company.canCreate());
+  const fieldErrors:Record<string,string>={};for(const key of ['arabicName','englishName','tradeLicenseNumber'])if((!id||Object.hasOwn(data,key))&&(typeof data[key]!=='string'||!data[key].trim()))fieldErrors[key]='required';
+  if(data.email&&!/^[^\s@]+@[^\s@]+$/.test(data.email))fieldErrors.email='invalidEmail';
+  for(const key of ['issueDate','expiryDate','establishmentDate'])if(data[key]&&!CompanyPolicy.validDate(data[key]))fieldErrors[key]='invalidDates';
+  if(Object.keys(fieldErrors).length)throw Object.assign(new ApiError(422,'invalidFields'),{fieldErrors});
+
   const prior = id
     ? structuredClone(m.state.companies.find((co: any) => co.id === id))
     : null;

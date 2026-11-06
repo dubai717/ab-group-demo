@@ -87,6 +87,8 @@ const { chromium } = require("playwright"),
           (c) => c.englishName === "Central UI " + window.testUnique,
         ).id,
     );
+    assert.equal(await p.locator("#company-form").count(),0);
+    await p.locator('[data-cd="profile"][data-company="'+companyId+'"]').click();
     await p.locator("#cd-profile-form").waitFor();
     await p
       .locator('#cd-profile-form [name="notes"]')
@@ -114,6 +116,7 @@ const { chromium } = require("playwright"),
       .locator("#central-notice")
       .filter({ hasText: "Saved and verified" })
       .waitFor();
+    assert.equal(await p.locator("#bk-account-form").count(),0);
     const accountId = await p.evaluate(
       () =>
         app.state.bankAccounts.find(

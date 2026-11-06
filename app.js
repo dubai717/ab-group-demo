@@ -711,25 +711,16 @@ function renderDepartments() {
 }
 
 function renderCompanies(user) {
-  if(!app.state.companyRegisterInitialized){app.state.companyFilters={...app.state.companyFilters,status:'Active',licenseStatus:'Active'};app.state.companyRegisterInitialized=true;}
   const currentProfile=CompanyDocuments.renderProfile();if(currentProfile&&!app.state.companyFormOpen)return currentProfile;
   const canManage = user.roleId === 'owner' || isUserAllowed(user, 'create_company') || isUserAllowed(user, 'edit_company');
-  const filters = app.state.companyFilters || { query: '', status: 'all', emirate: 'all' };
-  const companyRows = app.state.companies.filter((company) => {
-    const query = filters.query.trim().toLowerCase();
-    const matchesQuery = !query || [company.companyCode, company.arabicName, company.englishName, company.shortName, company.emirate, company.trafficCode, company.salikAccountNumber].join(' ').toLowerCase().includes(query) || CompanyDocuments.codeSearch(company, query);
-    const matchesStatus = filters.status === 'all' || company.status === filters.status;
-    const matchesEmirate = filters.emirate === 'all' || company.emirate === filters.emirate;
-    return matchesQuery && matchesStatus && matchesEmirate && (!filters.licenseStatus||filters.licenseStatus==='all'||(company.licenseStatus||'Active')===filters.licenseStatus) && CompanyDocuments.matchesFilters(company, filters);
-  });
-
-  const emirates = AreaReference.emirates.map(e => e.legacy);
-
+  const grid=RegisterStore.get('companies',['arabicName','englishName','tradeLicenseNumber','emirate','expiryDate','licenseStatus','status'],{grid:{version:2,values:{status:['Active']}}});if(!app.state.companyFormOpen)grid.ensure();
+  const companyRows=grid.rows;
+  const columnTitles={arabicName:localeText('companyTableArabic'),englishName:localeText('companyTableEnglish'),tradeLicenseNumber:localeText('companyTableLicense'),emirate:localeText('companyTableEmirate'),expiryDate:localeText('companyTableExpiry'),licenseStatus:getLocale()==='ar'?'حالة الرخصة':'Licence status',status:localeText('companyTableStatus')};grid.labels=columnTitles;
   return `
     <section class="content-panel company-panel">
       <div class="section-head">
-        <h2>${localeText('companyManagement')}</h2><button type="button" class="ghost-btn" data-company-export>${getLocale()==='ar'?'تصدير Excel':'Export Excel'}</button>
-        ${canManage ? `<button class="secondary-btn" data-action="open-company-form">${localeText('addCompany')}</button>` : ''}
+        <h2>${localeText('companyManagement')}</h2>
+        ${app.state.companyFormOpen?`<button type="button" class="ghost-btn" data-company-back>${getLocale()==='ar'?'الرجوع للسجل':'Back to register'}</button>`:canManage?`<button class="secondary-btn" data-action="open-company-form">${localeText('addCompany')}</button>`:''}
       </div>
 
       <div class="company-desc">${localeText('legalEntitiesDesc')}</div>
@@ -759,7 +750,6 @@ function renderCompanies(user) {
                 <option value="Suspended">${localeText('suspended')}</option>
               </select>
             </div>
-            <div><img class="cd-company-logo" src="assets/Untitled.png" alt="AB Group" /></div>
             ${CompanyDocuments.licenseFields({},true)}
 
             <div class="full split-title">${localeText('legalLicense')}</div>
@@ -849,32 +839,13 @@ function renderCompanies(user) {
         </form>
       ` : ''}
 
-      <div class="filter-row">
-        <input id="company-search" class="input" placeholder="${localeText('filterSearch')}" value="${filters.query}" />
-        <select id="company-status-filter" class="input">
-          <option value="all">${localeText('allStatuses')}</option>
-          <option value="Active" ${filters.status === 'Active' ? 'selected' : ''}>${localeText('active')}</option>
-          <option value="Inactive" ${filters.status === 'Inactive' ? 'selected' : ''}>${localeText('inactive')}</option>
-          <option value="Suspended" ${filters.status === 'Suspended' ? 'selected' : ''}>${localeText('suspended')}</option>
-        </select>
-        <select id="company-emirate-filter" class="input">
-          <option value="all">${localeText('allEmirates')}</option>
-          ${emirates.map(v => `<option value="${v}" ${filters.emirate === v ? 'selected' : ''}>${v}</option>`).join('')}
-        </select>
-      </div>
-
-      ${CompanyDocuments.filterFields(filters)}
+      ${!app.state.companyFormOpen ? `      <div class="register-actions">${grid.search()}${['excel','pdf','print'].map(format=>`<button type="button" class="ghost-btn" data-register-export="${format}">${format==='print'?(getLocale()==='ar'?'طباعة':'Print'):format.toUpperCase()}</button>`).join('')}</div><p role="status">${grid.busy?(getLocale()==='ar'?'جارٍ تحميل السجل…':'Loading register…'):grid.error?CompanyDocuments.text(grid.error):''}</p>
       <div class="table-wrap company-table-wrap">
         <table>
           <thead>
             <tr>
 
-              <th>${localeText('companyTableArabic')}</th>
-              <th>${localeText('companyTableEnglish')}</th>
-              <th>${localeText('companyTableLicense')}</th>
-              <th>${localeText('companyTableEmirate')}</th>
-              <th>${localeText('companyTableExpiry')}</th>
-              <th>${localeText('companyTableStatus')}</th>
+              ${grid.columns.map(key=>`<th>${RegisterTools.head(key,columnTitles[key],grid.facets[key]||[],grid.grid,v=>v,key==='expiryDate'?'date':'text')}</th>`).join('')}
               <th>${localeText('companyTableActions')}</th>
             </tr>
           </thead>
@@ -887,6 +858,7 @@ function renderCompanies(user) {
                 <td>${CompanyDocuments.escape(company.tradeLicenseNumber)}</td>
                 <td>${CompanyDocuments.escape(company.emirate)}</td>
                 <td>${CompanyDocuments.escape(company.expiryDate || '-')}</td>
+                <td>${CompanyDocuments.escape(company.licenseStatus||'Active')}</td>
                 <td><span class="badge ${company.status === 'Active' ? 'active' : company.status === 'Inactive' ? 'pending' : 'disabled'}">${CompanyDocuments.escape(company.status)}</span></td>
                 <td>
                   <div class="row-actions">
@@ -902,7 +874,7 @@ function renderCompanies(user) {
             `}
           </tbody>
         </table>
-      </div>
+      </div>${grid.pages()}` : ''}
     </section>
   ` + CompanyDocuments.renderProfile();
 }
@@ -1275,35 +1247,9 @@ function bindGlobalEvents() {
     });
   }
 
-  const companySearch = document.getElementById('company-search');
-  if (companySearch) {
-    companySearch.addEventListener('input', (event) => {
-      app.state.companyFilters.query = event.target.value;
-      saveState();
-      render();
-    });
-  }
-
-  const companyStatusFilter = document.getElementById('company-status-filter');
-  if (companyStatusFilter) {
-    companyStatusFilter.addEventListener('change', (event) => {
-      app.state.companyFilters.status = event.target.value;
-      saveState();
-      render();
-    });
-  }
-
-  const companyEmirateFilter = document.getElementById('company-emirate-filter');
-  if (companyEmirateFilter) {
-    companyEmirateFilter.addEventListener('change', (event) => {
-      app.state.companyFilters.emirate = event.target.value;
-      saveState();
-      render();
-    });
-  }
-
-  document.querySelectorAll('[data-company-row]').forEach(row=>row.addEventListener('click',ev=>{if(!ev.target.closest('button,a,input,select'))row.querySelector('[data-cd=profile]')?.click();}));
-  document.querySelector('[data-company-export]')?.addEventListener('click',async()=>{try{const filters=app.state.companyFilters||{};const query={q:filters.query||'',statuses:filters.status==='all'?'':filters.status||'',emirate:filters.emirate==='all'?'':filters.emirate||'',licenseStatus:filters.licenseStatus==='all'?'':filters.licenseStatus||'',trafficCode:filters.trafficCode||'',salikAccountNumber:filters.salikAccountNumber||''};const r=await ABCentral.api('registers/companies?'+new URLSearchParams({format:'excel',columns:'arabicName,englishName,status,emirate,trafficCode,salikAccountNumber',query:JSON.stringify(query)}));await RegisterExport.run(r,'excel');}catch{alert(getLocale()==='ar'?'تعذر التصدير وفق الصلاحيات.':'Export unavailable under current permissions.');}});
+  document.querySelector('[data-company-back]')?.addEventListener('click',()=>{app.state.companyFormOpen=false;render();});
+  const companyGridHost=document.querySelector('.company-panel');if(companyGridHost&&!app.state.companyFormOpen)RegisterStore.get('companies').bind(companyGridHost);
+  document.querySelectorAll('[data-company-row]').forEach(row=>row.addEventListener('click',ev=>{if(!ev.target.closest('button,a,input,select,summary,details'))row.querySelector('[data-cd=profile]')?.click();}));
   const openCompanyBtn = document.querySelector('[data-action="open-company-form"]');
   if (openCompanyBtn) {
     openCompanyBtn.addEventListener('click', () => {
