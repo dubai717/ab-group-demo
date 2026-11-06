@@ -69,6 +69,7 @@
     return r.json();
   }
   C.api=api;
+  C.companyClosed=()=>{activeCompany=null;};
   async function load(draw = true) {
     const b = await api("bootstrap");
     C.actor = b.actor;
@@ -171,6 +172,7 @@
     );
   }
   function idempotency(form, slot = "operation") {
+    (form._centralKeySlots ||= new Set()).add(slot);
     return form.dataset[slot] || (form.dataset[slot] = crypto.randomUUID());
   }
   const readFile = (file) =>
@@ -244,6 +246,7 @@
         document.querySelector(".main") || document.getElementById("app")
       ).prepend(node);
     }
+    const drawer=document.querySelector('.cd-profile[open]');if(drawer&&node.parentElement!==drawer)drawer.prepend(node);
     node.textContent = message;
   }
   function error(e) {
@@ -261,7 +264,7 @@
     section.className = "central-documents";
     section.innerHTML = `<h3>${text("المستندات المركزية وإصداراتها", "Central documents and versions")}</h3><p>${text("الإصدارات القديمة محفوظة. التنزيل متاح بعد اجتياز فحص الملفات.", "Previous versions are retained. Download requires a clean file scan.")}</p><div class="table-wrap"><table><tbody>${rows.map((d) => `<tr><td>${escape(d.title)}</td><td>${escape(d.category)}</td><td>v${d.version}</td><td>${escape(rows.find((p) => p.versionId === d.parentVersionId)?.title || "—")}</td><td>${escape(d.createdBy)}</td><td>${escape(d.createdAt)}</td><td>${escape(d.scanStatus)}</td><td><button type="button" class="ghost-btn" data-central-download="${d.versionId}" ${d.scanStatus === "clean" ? "" : "disabled"}>${text("تنزيل / عرض", "Download / view")}</button></td></tr>`).join("")}</tbody></table></div>`;
     if (
-      owner.companyId &&
+      owner.companyId && CompanyDocuments.isEditing() &&
       (C.actor.roleId === "owner" ||
         C.actor.permissions.includes("edit_company"))
     )
@@ -269,7 +272,7 @@
     host.append(section);
     globalThis.AttachmentViewer?.bindInputs(host);
     const bankCompany=app.state.bankAccounts.find(a=>a.id===owner.bankAccountId)?.companyId;
-    const canRemove=C.actor.roleId==='owner'||owner.companyId&&C.actor.permissions.includes('edit_company')||owner.bankAccountId&&C.actor.companyBankPermissions?.some(g=>g.companyId===bankCompany&&g.permissions.includes('manage_documents'));
+    const canRemove=(!owner.companyId||CompanyDocuments.isEditing())&&(C.actor.roleId==='owner'||owner.companyId&&C.actor.permissions.includes('edit_company')||owner.bankAccountId&&C.actor.companyBankPermissions?.some(g=>g.companyId===bankCompany&&g.permissions.includes('manage_documents')));
     AttachmentViewer.mountActions(section,{items:rows,history:!!C.documentHistory,canRemove,id:d=>d.versionId,findButton:d=>section.querySelector('[data-central-download="'+CSS.escape(d.versionId)+'"]'),remove:d=>api('documents/'+d.versionId+'/withdraw','POST',{reason:'Confirmed removal from current attachments; retain history'},crypto.randomUUID()),reload:async value=>{C.documentHistory=value;await readDocuments(owner);render();}});
   }
   C.bind = () => {
@@ -375,8 +378,9 @@
         ]),
     );
     if (form._centralStamp !== stamp) {
-      for (const k of Object.keys(form.dataset))
-        if (k !== "centralBusy" && k !== "savedId") delete form.dataset[k];
+      // Reset only keys owned by this adapter. Preserve revision, edit baseline, owner IDs and validation context.
+      for (const k of form._centralKeySlots || []) delete form.dataset[k];
+      form._centralKeySlots = new Set();
       form._centralStamp = stamp;
     }
     if (kind === "login-form") {
@@ -387,15 +391,17 @@
       await load();
       return;
     }
+    if(kind==='um-company-rights'){await api('users/'+form.dataset.user+'/company-permissions','PATCH',{revision:Number(form.dataset.revision),...values(form,false)},idempotency(form));await load();show(text('تم حفظ صلاحيات الشركات.','Company permissions saved.'));return;}
     if (kind === "company-form" || kind === "cd-profile-form") {
-      const data = values(form);
+      const data = values(form,false);
+      if(kind==='cd-profile-form'){if(!CompanyDocuments.isEditing())throw Error('denied');const original=new Map(JSON.parse(form.dataset.original||'[]'));for(const key of Object.keys(data))if(original.get(key)===data[key])delete data[key];delete data.status;}
       delete data["baseRole"];
       const old =
         kind === "cd-profile-form" ? activeCompany : form.dataset.savedId;
       const row = app.state.companies.find((c) => c.id === old);
-      if (row) data.revision = row.revision;
-      const location = C.areaStore.selection(data.emirate, data.areaId);
-      Object.assign(data, location);
+      if (row) data.revision = kind==='cd-profile-form'?Number(form.dataset.companyRevision):row.revision;
+      if(kind==='company-form'||form.dataset.locationDirty==='true')Object.assign(data,C.areaStore.selection(form.elements.emirate.value,form.elements.areaId.value));
+      else for(const key of ['emirate','emirateId','areaId','region'])delete data[key];
       const logo = fd.get("logo");
       if (logo?.name) {
         if (
@@ -601,6 +607,7 @@
   }
   const forms = new Set([
     "login-form",
+    "um-company-rights",
     "company-form",
     "cd-profile-form",
     "bk-account-form",
@@ -659,11 +666,12 @@
         bk = b.dataset.bk,
         um = b.dataset.um,
         cd = b.dataset.cd;
+      if(action==='logout'&&!CompanyDocuments.leave()){event.preventDefault();event.stopImmediatePropagation();return;}
       if (bk === "new") activeBank = null;
       if (bk === "close") activeBank = null;
       if (um === "new") activeUser = null;
       if (um === "close") activeUser = null;
-      if (cd === "close") activeCompany = null;
+      if(cd==='close'){if(!CompanyDocuments.leave()){event.preventDefault();event.stopImmediatePropagation();return;}CompanyDocuments.cancelEdit(false);activeCompany=null;}
       if (
         action === "open-company-form" ||
         bk === "new" ||
@@ -713,15 +721,12 @@
           app.state = C.emptyState();
           render();
         } else if (action === "toggle-company-status") {
-          const r = app.state.companies.find(
-            (c) => c.id === b.dataset.companyId,
-          );
-          if(!confirm(text("تأكيد تغيير حالة الشركة: ","Confirm company status change: ")+(getLocale()==='ar'?r.arabicName:r.englishName)))return;
-          await api("companies/" + r.id, "PATCH", {
-            revision: r.revision,
-            status: r.status === "Active" ? "Inactive" : "Active",
-          });
-          await load(false);await RegisterStore.get('companies').refresh(r.id);render();
+          if(C.companyStatusBusy)return;
+          const r=app.state.companies.find(c=>c.id===b.dataset.companyId);if(!r)throw Error('notFound');
+          if(!confirm(text('تأكيد تغيير حالة الشركة: ','Confirm company status change: ')+(getLocale()==='ar'?r.arabicName:r.englishName)))return;
+          C.companyStatusBusy=true;const page=app.state.currentPage,formOpen=app.state.companyFormOpen,profileId=activeCompany,status=r.status==='Active'?'Inactive':'Active';let committed=false;
+          try{await api('companies/'+r.id,'PATCH',{revision:r.revision,status});committed=true;const verified=await api('companies/'+r.id);if(verified.status!==status)throw Error('verificationUnavailable');await load(false);await RegisterStore.get('companies').refresh(r.id);if(app.state.currentPage===page&&app.state.companyFormOpen===formOpen&&activeCompany===profileId&&!RecordProfile.dirty(document.getElementById('cd-profile-form')))render();show(text('تم حفظ حالة الشركة والتحقق منها.','Company status saved and verified.'));}
+          catch(e){if(committed)throw Error(text('حُفظ طلب الحالة، لكن تعذر التحقق من استرجاعها. حدّث السجل قبل المحاولة مجدداً.','Status committed, but readback could not be verified. Refresh before retrying.'));throw e;}finally{C.companyStatusBusy=false;}
         } else if (bk === "toggle") {
           const row=await api('bank-accounts/'+b.dataset.id);
           if(!confirm(text('تأكيد تغيير حالة الحساب: ','Confirm account status change: ')+row.accountName))return;
@@ -802,7 +807,7 @@
             { credentials: "same-origin" },
           );
           if (!r.ok) throw Error((await r.json()).error);
-          const blob=await r.blob();await AttachmentViewer.show([{name:'document',load:async()=>blob}]);
+          const blob=await r.blob();let name='document';try{const encoded=r.headers.get('Content-Disposition')?.match(/filename\*=UTF-8''(.+)$/i)?.[1];if(encoded)name=decodeURIComponent(encoded);}catch{}await AttachmentViewer.show([{name,load:async()=>blob}]);
         }
       } catch (e) {
         error(e);

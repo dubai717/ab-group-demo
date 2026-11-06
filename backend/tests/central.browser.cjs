@@ -90,6 +90,7 @@ const { chromium } = require("playwright"),
     assert.equal(await p.locator("#company-form").count(),0);
     await p.locator('[data-cd="profile"][data-company="'+companyId+'"]').click();
     await p.locator("#cd-profile-form").waitFor();
+    assert(await p.locator('#cd-profile-form [name=notes]').isDisabled());await p.locator('[data-cd=edit]').click();
     await p
       .locator('#cd-profile-form [name="notes"]')
       .fill("Persisted central note");
@@ -98,6 +99,7 @@ const { chromium } = require("playwright"),
       .locator("#central-notice")
       .filter({ hasText: "Saved and verified" })
       .waitFor();
+    await p.locator('[data-cd=close]').click();
     await p.locator('[data-page="bankAccounts"]').click();
     await p.locator('[data-bk="new"]').click();
     await p.locator("#bk-companyId").selectOption(companyId);

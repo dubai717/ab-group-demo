@@ -1,3 +1,4 @@
+import {companyAuditView} from './company-audit.js';
 import {withdrawAttachment} from './attachment-history.js';
 import {registerTestWorkspace} from './test-workspace.js';
 import {registerRegisters} from './registers.js';
@@ -75,7 +76,7 @@ export async function build(options: Options) {
         "Content-Security-Policy",
         req.url.startsWith("/api/documents/") && req.url.endsWith("/file")
           ? "sandbox; default-src 'none'"
-          : "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+          : "default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
       )
       .header("X-Content-Type-Options", "nosniff")
       .header("Referrer-Policy", "same-origin");
@@ -335,14 +336,15 @@ export async function build(options: Options) {
           "select * from ab.audit_events where ($1::boolean or actor_id=$2) order by created_at desc limit 500",
           [m.actor.roleId === "owner", s.user_id],
         )
-      ).rows.map((r) => ({
+      ).rows.map((raw) => {const r=companyAuditView(cipher,raw,canCompany);return ({
+        entityType:r.entity_type,companyChange:r.companyChange,
         id: r.id,
         at: r.created_at.toISOString(),
         actorId: r.actor_id,
         targetId: r.entity_id,
         action: r.action,
         fields: r.fields,
-      }));
+      });});
       const bankRows = m.bank.list();
       const bankAccountAudit = (
         await c.query(
@@ -683,6 +685,12 @@ export async function build(options: Options) {
   };
   app.post("/api/users", call(userSave));
   app.patch("/api/users/:id", call(userSave));
+  // Owner-controlled overrides are opt-in; no existing user, role or grant is rewritten on deploy.
+  app.patch('/api/users/:id/company-permissions',call(async(c,m,s,req)=>{
+    requireOk(m.actor.roleId==='owner');const id=uuid(req.params.id),target=m.state.users.find((u:any)=>u.id===id);requireOk(target,404,'notFound');requireOk(target.roleId!=='owner'&&id!==s.user_id,403,'ownerProtected');
+    const parsed=z.object({revision:z.number().int(),edit:z.enum(['inherit','allow','deny']),activate:z.enum(['inherit','allow','deny']),deactivate:z.enum(['inherit','allow','deny'])}).strict().safeParse(req.body);requireOk(parsed.success,422,'invalid');if(!parsed.success)throw Error('unreachable');assertRevision(target.revision,parsed.data.revision);
+    const next={edit:parsed.data.edit,activate:parsed.data.activate,deactivate:parsed.data.deactivate};const result=await c.query("update ab.users set data=jsonb_set(data,'{companyPermissions}',$2::jsonb),revision=revision+1,updated_at=now() where id=$1 and revision=$3",[id,JSON.stringify(next),target.revision]);requireOk(result.rowCount===1,409,'revisionConflict');await audit(c,s.tenant_id,s.user_id,'company_permissions_updated','user',id,Object.keys(next).filter(k=>(target.companyPermissions?.[k]||'inherit')!==next[k as keyof typeof next]));return {id};
+  }));
   app.post(
     "/api/users/:id/grants",
     call(async (c, m, s, req) => {
@@ -742,7 +750,7 @@ export async function build(options: Options) {
         await c.query(
           "select id,actor_id,actor_type,action,entity_type,entity_id,fields,created_at from ab.audit_events order by created_at desc limit 500",
         )
-      ).rows;
+      ).rows.map(r=>companyAuditView(cipher,r,true));
     }),
   );
   // Explicit ownership FKs; no generic ownerId that can point outside the tenant/account.
@@ -1137,6 +1145,10 @@ export async function build(options: Options) {
         .send("window.AB_CONFIG={central:true};"),
     );
     // Explicit public allowlist: never serve backend/, migrations, .env, .git or node_modules.
+    // Only renderer assets from the pinned installed package are exposed; no arbitrary node_modules access.
+    const pdfBuild:Record<string,string>={'pdf.mjs':'pdf.min.mjs','pdf.worker.mjs':'pdf.worker.min.mjs','pdf.renderer.mjs':'pdf.renderer.min.mjs'};
+    app.get('/assets/pdfjs/:file',async(req:any,reply)=>{const name=pdfBuild[req.params.file];if(!name)return reply.code(404).send();return reply.type('application/javascript').send(await readFile(join(root,'node_modules/pdfjs-dist/build',name)));});
+    app.get('/assets/pdfjs/:kind/:file',async(req:any,reply)=>{const {kind,file}=req.params;if(!['cmaps','standard_fonts'].includes(kind)||!/^[a-zA-Z0-9_.-]+\.(bcmap|pfb|ttf)$/.test(file))return reply.code(404).send();try{return reply.type('application/octet-stream').send(await readFile(join(root,'node_modules/pdfjs-dist',kind,file)));}catch{return reply.code(404).send();}});
     const publicFiles = [
       "index.html",
       "app.js",

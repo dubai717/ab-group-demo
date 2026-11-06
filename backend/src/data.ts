@@ -1,3 +1,4 @@
+import {companyAuditFields} from './company-audit.js';
 import { createRequire } from "node:module";
 import { randomUUID } from "node:crypto";
 import type { PoolClient } from "pg";
@@ -96,6 +97,7 @@ export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
   };
   const policy = UserPolicy.createService(state, undefined, {
     initialGrants,
+    auditCipher:cipher,
     grantsChanged: (rows: any[]) => {
       nextGrants = rows;
     },
@@ -149,6 +151,7 @@ export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
     company,
     grants,
     initialGrants,
+    auditCipher:cipher,
     getNextGrants: () => nextGrants,
   };
 }
@@ -212,7 +215,9 @@ export async function persistCompany(
 ) {
   const data = bounded(input, 1024 * 1024);
   const isNew = !id;
-  requireOk(id ? m.company.canEdit() : m.company.canCreate());
+  const statusOnly=id&&Object.keys(data).every(k=>['revision','status'].includes(k))&&Object.hasOwn(data,'status');
+  requireOk(!id||m.company.canRead());
+  requireOk(id?(statusOnly?(data.status==='Active'?m.company.canActivate():m.company.canDeactivate()):m.company.canEdit()):m.company.canCreate());
   const fieldErrors:Record<string,string>={};for(const key of ['arabicName','englishName','tradeLicenseNumber'])if((!id||Object.hasOwn(data,key))&&(typeof data[key]!=='string'||!data[key].trim()))fieldErrors[key]='required';
   if(data.email&&!/^[^\s@]+@[^\s@]+$/.test(data.email))fieldErrors.email='invalidEmail';
   for(const key of ['issueDate','expiryDate','establishmentDate'])if(data[key]&&!CompanyPolicy.validDate(data[key]))fieldErrors[key]='invalidDates';
@@ -272,12 +277,13 @@ export async function persistCompany(
         row.areaId || null,
       ],
     );
-  else
-    await c.query(
-      "update ab.companies set data=$2,emirate_id=$3,area_id=$4,revision=revision+1,updated_at=now() where id=$1",
-      [id, payload, row.emirateId || null, row.areaId || null],
-    );
-  await c.query(
+  else {
+    const updated=statusOnly?await c.query("update ab.companies set data=jsonb_set(data,'{status}',to_jsonb($2::text)),revision=revision+1,updated_at=now() where id=$1 and revision=$3",[id,row.status,prior.revision]):await c.query(
+      "update ab.companies set data=$2,emirate_id=$3,area_id=$4,revision=revision+1,updated_at=now() where id=$1 and revision=$5",
+      [id, payload, row.emirateId || null, row.areaId || null,prior.revision],
+    );requireOk(updated.rowCount===1,409,'revisionConflict');
+  }
+  if(!statusOnly)await c.query(
     `insert into ab.company_licenses(id,tenant_id,company_id,number,authority,issued_on,expires_on,is_primary)values($1,$2,$3,$4,$5,$6,$7,true) on conflict(company_id) where is_primary do update set number=excluded.number,authority=excluded.authority,issued_on=excluded.issued_on,expires_on=excluded.expires_on`,
     [
       licenseId || randomUUID(),
@@ -296,11 +302,9 @@ export async function persistCompany(
     isNew ? "created" : "updated",
     "company",
     id!,
-    Object.keys(row).filter(
-      (k) =>
-        !["id", "revision", "createdAt", "licenseId"].includes(k) &&
-        JSON.stringify(row[k]) !== JSON.stringify(prior?.[k]),
-    ),
+    companyAuditFields(m.auditCipher,Object.keys(row).filter(
+      (k) => !["id", "revision", "createdAt", "licenseId"].includes(k) && JSON.stringify(row[k]) !== JSON.stringify(prior?.[k])
+    ),prior,row),
   );
   return id!;
 }
