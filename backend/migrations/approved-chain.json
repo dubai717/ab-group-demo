@@ -1,0 +1,83 @@
+{
+  "format": "AB-APPROVED-CHAIN-1",
+  "migrations": [
+    {
+      "name": "202611010001_foundation.sql",
+      "path": "supabase/migrations/202611010001_foundation.sql",
+      "sha256": "569f9fb73b7390174601cdded01df636d019eaaa79a8a803c7bd971c9aaf1b8b",
+      "sequence": 1
+    },
+    {
+      "name": "202611010002_role_catalog.sql",
+      "path": "supabase/migrations/202611010002_role_catalog.sql",
+      "sha256": "eb38ca7214e0a5cdfc2b4fc719bdf3770cc234cf84210add541c465ab159d351",
+      "sequence": 2
+    },
+    {
+      "name": "202611010003_membership_history.sql",
+      "path": "supabase/migrations/202611010003_membership_history.sql",
+      "sha256": "2938e060d9ca5d62e1d1fae6c4b49bc4b2a42b93d8fd9796778f3261529522fb",
+      "sequence": 3
+    },
+    {
+      "name": "202611010004_request_dedup.sql",
+      "path": "supabase/migrations/202611010004_request_dedup.sql",
+      "sha256": "b123f3a5a6511cd0f11f9b6c47f5e095a9d5f0ebe3efaa584607ef71883646bf",
+      "sequence": 4
+    },
+    {
+      "name": "202611010005_version_metadata.sql",
+      "path": "supabase/migrations/202611010005_version_metadata.sql",
+      "sha256": "305c73eea53eac621c22d88af3fad45435a382ae597983ac98d5943a0bca4f23",
+      "sequence": 5
+    },
+    {
+      "name": "202611010006_scanning_contacts.sql",
+      "path": "supabase/migrations/202611010006_scanning_contacts.sql",
+      "sha256": "551aaf2bfb80acc91f75e0253d89fb1a4c944caffa66838fd6bf6b5a443b6aca",
+      "sequence": 6
+    },
+    {
+      "name": "202611010007_user_invariants.sql",
+      "path": "supabase/migrations/202611010007_user_invariants.sql",
+      "sha256": "c3558cf7678699581862ff57c45d0fc60a0eb60d939ef28bce58b8fe49054b8b",
+      "sequence": 7
+    },
+    {
+      "name": "202611020008_schema_integrity.sql",
+      "path": "supabase/migrations/202611020008_schema_integrity.sql",
+      "sha256": "62218181cd7dd42e8d76331beb5e9e0fccc37641b1bfedcbdccde5fe40eb5ab4",
+      "sequence": 8
+    },
+    {
+      "name": "009_financial_workbench.sql",
+      "path": "supabase/proposed/009_financial_workbench.sql",
+      "sha256": "2af0b3f0a6b6978200b0e60c84c940afeb322803f9d44e8b119e7b56c7d1fc06",
+      "sequence": 9
+    },
+    {
+      "name": "010_customers.sql",
+      "path": "supabase/proposed/010_customers.sql",
+      "sha256": "68b1b531b43d4e28cfce3458c0cd836d9e30d7935f42e39aec14a208262b485e",
+      "sequence": 10
+    },
+    {
+      "name": "011_vehicles.sql",
+      "path": "supabase/proposed/011_vehicles.sql",
+      "sha256": "870b3c699a964cd0cbeed9f3ca5696c1cfeb4fc6e576991e3df43f0b3937d00b",
+      "sequence": 11
+    },
+    {
+      "name": "012_financial_management.sql",
+      "path": "supabase/proposed/012_financial_management.sql",
+      "sha256": "717d6279420c1e79b7752ec2f0571ebfb559e24613828b5319a62f92808bbd24",
+      "sequence": 12
+    },
+    {
+      "name": "013_personnel_tasks_performance.sql",
+      "path": "supabase/proposed/013_personnel_tasks_performance.sql",
+      "sha256": "9cdf974b9a57cb5d9cde44458b3ecce6773803dbe975f354ecb93b673de8a45f",
+      "sequence": 13
+    }
+  ]
+}

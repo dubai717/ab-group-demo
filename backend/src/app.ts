@@ -1,3 +1,7 @@
+import {withdrawAttachment} from './attachment-history.js';
+import {registerTestWorkspace} from './test-workspace.js';
+import {registerRegisters} from './registers.js';
+import {registerResetControl,ResetWorker} from './reset-control.js';
 import {registerTestUsers,assertTestAccess,registryKey} from './test-users.js';
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
@@ -48,6 +52,9 @@ export interface Options {
   ) => Promise<"clean" | "pending" | "rejected">;
   serveFrontend?: boolean;
   testUsersEnabled?: boolean;
+  resetEnabled?: boolean;
+  resetWorker?: ResetWorker;
+  resetStatus?: (id:string)=>Promise<any>;
 }
 export async function build(options: Options) {
   const { pool, auth, objects } = options,
@@ -166,6 +173,8 @@ export async function build(options: Options) {
     return { ...s, sid };
   };
   registerTestUsers(app,{pool,key:options.key,auth,enabled:options.testUsersEnabled===true,session});
+  registerTestWorkspace(app,{pool,auth,enabled:options.testUsersEnabled===true,session});
+  registerResetControl(app,{pool,key:options.key,auth,enabled:options.resetEnabled===true,worker:options.resetWorker,session,status:options.resetStatus});
   const call =
     (handler: (c: PoolClient, m: any, s: any, req: any) => Promise<any>) =>
     async (req: any) => {
@@ -213,6 +222,7 @@ export async function build(options: Options) {
   registerFinance(app,call,cipher);
   registerCustomers(app,call,cipher,options);
   registerVehicles(app,call,cipher,options);
+  registerRegisters(app,call,cipher);
   registerLedger(app,call,cipher);
   registerPersonnel(app,call,cipher,options);
   app.get("/api/health", async () => {
@@ -354,7 +364,8 @@ export async function build(options: Options) {
         .rows;
       return {
         actor: m.actor,
-        testUsersAvailable: options.testUsersEnabled===true&&m.actor.roleId==='owner'&&settings.some(row=>row.key===registryKey),
+        resetTestDatabaseAvailable: options.resetEnabled===true&&m.actor.roleId==='owner'&&m.actor.username==='trial_4db27b82b8bf',
+        testUsersAvailable: options.testUsersEnabled===true&&m.actor.roleId==='owner',
         audit: ownAudit,
         summary: m.policy.summary(),
         bankAccountAudit,
@@ -587,6 +598,9 @@ export async function build(options: Options) {
       revision,
       ...payload
     } = saved;
+    if(!id)delete payload.ownerCreatedTest;
+    if(!id&&options.testUsersEnabled&&m.actor.roleId==="owner")payload.ownerCreatedTest={owner:s.user_id};
+    if(id){if(previous?.ownerCreatedTest)payload.ownerCreatedTest=previous.ownerCreatedTest;else delete payload.ownerCreatedTest;}
     if (!id)
       await c.query(
         "insert into ab.users(id,tenant_id,auth_id,auth_email,username,role_id,status,manager_id,data,private_cipher)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
@@ -785,12 +799,13 @@ export async function build(options: Options) {
       documentRight(m, owner, false);
       return (
         await c.query(
-          `select d.*,v.id version_id,v.version,v.original_name,v.mime,v.size,v.scan_status,v.title version_title,v.description version_description,v.document_date version_date,v.category version_category,v.parent_version_id from ab.documents d join ab.document_versions v on v.document_id=d.id where d.company_id=$1 or d.bank_account_id=$2 or d.user_id=$3 order by d.created_at,v.version`,
+          `select d.*,exists(select 1 from ab.audit_events a where a.entity_type='document' and a.entity_id=d.id::text and a.action='attachment_withdrawn') withdrawn,v.id version_id,v.version,v.original_name,v.mime,v.size,v.scan_status,v.title version_title,v.description version_description,v.document_date version_date,v.category version_category,v.parent_version_id from ab.documents d join ab.document_versions v on v.document_id=d.id where d.company_id=$1 or d.bank_account_id=$2 or d.user_id=$3 order by d.created_at,v.version`,
           Object.values(owner),
         )
       ).rows.map((r) => ({
         id: r.id,
         versionId: r.version_id,
+        withdrawn:r.withdrawn,
         version: r.version,
         title: r.version_title,
         description: r.version_description,
@@ -804,7 +819,7 @@ export async function build(options: Options) {
         scanStatus: r.scan_status,
         createdBy: r.created_by,
         createdAt: r.created_at,
-      }));
+      })).filter(r=>q.history==='true'||!r.withdrawn);
     }),
   );
   app.post(
@@ -1068,6 +1083,7 @@ export async function build(options: Options) {
       return { id: documentId, versionId, version, scanStatus: scan };
     }),
   );
+  app.post('/api/documents/:versionId/withdraw',call(async(c,m,s,req)=>{const body=z.object({reason:z.string().trim().min(1).max(2000)}).strict().parse(req.body);const row=(await c.query('select d.* from ab.documents d join ab.document_versions v on v.document_id=d.id where v.id=$1',[uuid(req.params.versionId)])).rows[0];requireOk(row,404,'notFound');documentRight(m,row,true);return withdrawAttachment(c,s.tenant_id,s.user_id,'document',row.id,body.reason);}));
   app.get("/api/documents/:versionId/file", async (req, reply) => {
     const s = await session(req);
     const result = await transaction(
@@ -1133,6 +1149,9 @@ export async function build(options: Options) {
       "auth-flows.js",
       "central-client.js",
       "test-users-ui.js",
+      "reset-test-database-ui.js",
+      "register-tools.js",
+      "attachment-viewer.js",
       "vehicle-policy.js",
       "vehicles.js",
       "customer-policy.js",

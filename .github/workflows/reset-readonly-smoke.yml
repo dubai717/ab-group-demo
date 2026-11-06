@@ -1,0 +1,24 @@
+name: Verify fixture-free staging smoke without deployment
+on:
+  push:
+    branches: [verify/reset-readonly-smoke-20261105]
+permissions:
+  contents: read
+jobs:
+  read-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    # No Environment or Supabase credentials: all remote requests are unauthenticated GETs.
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node --import tsx backend/tests/staging-readonly-smoke.test.ts
+      - run: test -x /usr/bin/google-chrome
+      - run: node --import tsx backend/deploy/staging-readonly-smoke.ts
+        env:
+          AB_BROWSER_EXECUTABLE: /usr/bin/google-chrome

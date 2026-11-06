@@ -1,0 +1,23 @@
+name: Focused Reset controller and browser safety checks
+on:
+  push:
+    branches: [verify/reset-controller-review-20261105]
+permissions:
+  contents: read
+jobs:
+  controller:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node backend/tests/local-db.mjs
+      - run: node --import tsx backend/tests/reset-control.test.ts
+      - run: node --check reset-test-database-ui.js
+      - run: node node_modules/playwright/cli.js install --with-deps chromium
+      - run: node backend/tests/reset-control.browser.cjs

@@ -3,6 +3,7 @@ const { chromium } = require("playwright"),
   fs = require("node:fs"),
   path = require("node:path");
 (async () => {
+  const userPassword = require("node:crypto").randomBytes(30).toString("base64url") + "Aa1!";
   const f = JSON.parse(
       fs.readFileSync(
         path.join(__dirname, "../../work/central-browser-fixture.json"),
@@ -58,6 +59,7 @@ const { chromium } = require("playwright"),
     await p.locator(".stats-grid").waitFor();
     await p.locator('[data-action="toggle-language"]').click();
     await p.locator('[data-page="companies"]').click();
+    await p.locator('[data-action="open-company-form"]').click();
     const unique = Date.now(),
       bban = "033" + String(unique).padStart(16, "0"),
       iban =
@@ -68,7 +70,6 @@ const { chromium } = require("playwright"),
     for (const [k, v] of Object.entries({
       arabicName: "شركة مركزية",
       englishName: "Central UI " + unique,
-      companyCode: "UI-" + unique,
       tradeLicenseNumber: "UI-" + unique,
       salikAccountNumber: "000456",
       trafficCode: "000123",
@@ -82,12 +83,10 @@ const { chromium } = require("playwright"),
     const companyId = await p.evaluate(
       () =>
         app.state.companies.find(
-          (c) => c.companyCode === "UI-" + window.testUnique,
+          (c) => c.englishName === "Central UI " + window.testUnique,
         ).id,
     );
-    await p
-      .locator('[data-cd="profile"][data-company="' + companyId + '"]')
-      .click();
+    await p.locator("#cd-profile-form").waitFor();
     await p
       .locator('#cd-profile-form [name="notes"]')
       .fill("Persisted central note");
@@ -158,8 +157,8 @@ const { chromium } = require("playwright"),
       nameEn: "Central Employee",
       username: "ui_" + unique,
       email: "ui_" + unique + "@example.test",
-      demoPassword: "Central-User@2026",
-      demoConfirm: "Central-User@2026",
+      demoPassword: userPassword,
+      demoConfirm: userPassword,
     }))
       await p.locator("#um-" + k).fill(v);
     await p.locator("#um-companyIds").selectOption(companyId);

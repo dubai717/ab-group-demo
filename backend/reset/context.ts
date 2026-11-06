@@ -1,0 +1,2 @@
+
+export function trustedResetContext(e:NodeJS.ProcessEnv){return e.GITHUB_ACTIONS==='true'&&e.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&e.GITHUB_EVENT_NAME==='workflow_dispatch'&&e.GITHUB_REF==='refs/heads/staging/ab-group-test'&&e.GITHUB_WORKFLOW_REF==='dubai717/ab-group-demo/.github/workflows/reset-test-database.yml@refs/heads/staging/ab-group-test'&&e.APP_ENV==='staging'&&e.RESET_EXECUTION_ARMED==='owner-confirmed-test-only-v1';}

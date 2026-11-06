@@ -3,7 +3,7 @@ import {execFileSync} from 'node:child_process';
 import {readFileSync,appendFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 const hash=s=>createHash('sha256').update(s).digest('hex');
-export function sensitivePath(p){return /^(finance|ledger|personnel|user-management|bank-account)[^/]*\.js$/.test(p)||/(^|\/)[^/]*policy\.(js|ts)$/.test(p)|| /^(supabase\/(migrations|proposed)\/|backend\/actions\/|backend\/deploy\/|\.github\/workflows\/)/.test(p)||/\.sql$/.test(p)||/^(package(-lock)?\.json|backend\/src\/(app|core|data|database|provision|bootstrap|server|domain-access|.*(finance|financial|ledger|personnel|auth|permission|provider)).*|.*(finance-policy|ledger-policy|personnel-policy|user-management-policy|bank-account-policy)\.js)$/.test(p);}
+export function sensitivePath(p){return /^(finance|ledger|personnel|user-management|bank-account)[^/]*\.js$/.test(p)||/(^|\/)[^/]*policy\.(js|ts)$/.test(p)|| /^(supabase\/(migrations|proposed)\/|backend\/actions\/|backend\/deploy\/|\.github\/workflows\/)/.test(p)||/\.sql$/.test(p)||/^(backend\/reset\/|backend\/src\/reset-control\.ts|package(-lock)?\.json|backend\/src\/(app|core|data|database|provision|bootstrap|server|domain-access|.*(finance|financial|ledger|personnel|auth|permission|provider)).*|.*(finance-policy|ledger-policy|personnel-policy|user-management-policy|bank-account-policy)\.js)$/.test(p);}
 const need=(ok,label)=>{if(!ok)throw Error(label);};
 async function run(){let stage='CONTEXT';try{
  const e=process.env;need(e.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&e.GITHUB_REF==='refs/heads/staging/ab-group-test'&&e.GITHUB_EVENT_NAME==='push','TRUSTED_STAGING_PUSH');

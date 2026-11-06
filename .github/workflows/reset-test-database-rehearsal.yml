@@ -1,0 +1,107 @@
+name: Reset application schema rehearsal on isolated restored clone
+on:
+  push:
+    branches: [verify/reset-test-database-rehearsal-20261105]
+permissions:
+  contents: read
+concurrency:
+  group: ab-test-data-reset-feasibility
+  cancel-in-progress: false
+jobs:
+  controller:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node backend/tests/local-db.mjs
+      - run: npm run backend:test
+      - run: node --check reset-test-database-ui.js
+      - run: node --test tests/*.test.cjs
+      - run: node node_modules/playwright/cli.js install --with-deps chromium
+      - run: node backend/tests/reset-control.browser.cjs
+  review:
+    needs: controller
+    runs-on: ubuntu-latest
+    environment: supabase-test
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node node_modules/typescript-portable/bin/tsc -p backend/tsconfig.json
+      - name: Isolated local restore destination only
+        run: |
+          set -euo pipefail
+          docker run --detach --name ab-backup-drill-postgres --publish 127.0.0.1:5547:5432 --tmpfs /var/lib/postgresql/data:rw,nosuid,nodev,size=1g -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_DB=ab_drill postgres:17 > /dev/null
+          docker cp backend/certificates/supabase-prod-ca-2021.crt ab-backup-drill-postgres:/tmp/ab-ca.crt
+          for i in $(seq 1 60); do
+            if docker exec ab-backup-drill-postgres pg_isready -U postgres -d ab_drill > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Restore existing encrypted archive and inspect current guards without source writes
+        env:
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
+          AB_RESET_REVIEW: read-only-existing-backup-and-guards
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: node --import tsx backend/reset/rehearsal.ts
+      - name: Remove only the ephemeral local restore container
+        if: always()
+        run: docker rm --force --volumes ab-backup-drill-postgres > /dev/null 2>&1 || true
+      # No source mutations, reversal, archive/hide, trigger/RLS changes, cloud resources or deployment.
+  fresh-backup:
+    needs: controller
+    runs-on: ubuntu-latest
+    environment: supabase-test
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node node_modules/typescript-portable/bin/tsc -p backend/tsconfig.json
+      - name: Isolated local restore destination only
+        run: |
+          set -euo pipefail
+          docker run --detach --name ab-backup-drill-postgres --publish 127.0.0.1:5547:5432 --tmpfs /var/lib/postgresql/data:rw,nosuid,nodev,size=1g -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_DB=ab_drill postgres:17 > /dev/null
+          docker cp backend/certificates/supabase-prod-ca-2021.crt ab-backup-drill-postgres:/tmp/ab-ca.crt
+          for i in $(seq 1 60); do
+            if docker exec ab-backup-drill-postgres pg_isready -U postgres -d ab_drill > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Restore existing encrypted archive and inspect current guards without source writes
+        env:
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
+          AB_BACKUP_DRILL_APPROVED: read-only-source-isolated-restore
+          AB_BACKUP_RETAIN_APPROVED: private-bucket-no-overwrite
+          AB_STAGING_AUTOMATION: controlled-test-only
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: node --import tsx backend/reset/fresh-backup.ts
+      - name: Remove only the ephemeral local restore container
+        if: always()
+        run: docker rm --force --volumes ab-backup-drill-postgres > /dev/null 2>&1 || true
+      # No source mutations, reversal, archive/hide, trigger/RLS changes, cloud resources or deployment.

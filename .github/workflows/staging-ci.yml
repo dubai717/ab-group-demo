@@ -47,6 +47,12 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Refuse delivery during reset or unresolved recovery
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
+        run: node --import tsx backend/reset/ci-preflight.ts
       - name: Isolated PostgreSQL 17 for actual backup restoration
         shell: bash
         run: |
@@ -128,15 +134,8 @@ jobs:
           node-version: '24'
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: node node_modules/playwright/cli.js install --with-deps chromium
-      - name: Real login, central persistence and browser smoke with new fictional fixtures only
-        env:
-          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
-          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
-          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
-        run: node --import tsx backend/deploy/staging-live-smoke.ts
+      - name: Read-only release, public UI and authorization smoke (no generated data)
+        run: node --import tsx backend/deploy/staging-readonly-smoke.ts
   finalize:
     needs: [release, smoke]
     if: always() && needs.release.outputs.deployment_id != ''

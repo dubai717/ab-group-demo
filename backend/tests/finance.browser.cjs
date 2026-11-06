@@ -6,9 +6,10 @@ try{
  await p.goto('http://127.0.0.1:3200');await p.locator('#login-form').waitFor();await p.fill('#username',f.username);await p.fill('#password',f.password);await p.locator('#login-form [type=submit]').click();await p.locator('.stats-grid').waitFor();
  const stamp=String(Date.now());
  await p.locator('[data-page="companies"]').click();assert(await p.locator('.workspace-toolbar').innerText().then(s=>!s.includes('Cheques')&&!s.includes('الشيكات')));
- for(const [k,v] of Object.entries({arabicName:'شركة اختبار الواجهة المالية',englishName:'Finance Browser Test '+stamp,companyCode:'FW-'+stamp,tradeLicenseNumber:'FW-'+stamp}))await p.locator('#company-form [name="'+k+'"]').fill(v);
+ await p.locator('[data-action="open-company-form"]').click();
+ for(const [k,v] of Object.entries({arabicName:'شركة اختبار الواجهة المالية',englishName:'Finance Browser Test '+stamp,tradeLicenseNumber:'FW-'+stamp}))await p.locator('#company-form [name="'+k+'"]').fill(v);
  await p.locator('#company-form [type=submit]').click();await p.locator('#central-notice').waitFor();
- const company=await p.evaluate(stamp=>app.state.companies.find(c=>c.companyCode==='FW-'+stamp).id,stamp);await p.locator('[data-page="bankAccounts"]').click();
+ const company=await p.evaluate(stamp=>app.state.companies.find(c=>c.englishName==='Finance Browser Test '+stamp).id,stamp);await p.locator('[data-page="bankAccounts"]').click();
  await p.locator('[data-ws="action"][data-value="bank-new"]').click();await p.locator('#bk-companyId').selectOption(company);
  for(const [k,v] of Object.entries({accountName:'Fictional browser bank',accountNumber:'FW-'+stamp,iban:(()=>{const bban='033'+stamp.padStart(16,'0');return 'AE'+String(98-Number(BigInt(bban+'101400')%97n)).padStart(2,'0')+bban;})(),openedAt:'2026-01-01',openingBalance:'1000.125',relationshipManagerName:'Fictional relationship manager',relationshipManagerPhone:'+971500000000',relationshipManagerEmail:'manager@example.test'}))await p.locator('#bk-'+k).fill(v);
  await p.locator('#bk-account-form [type=submit]').click();await p.locator('#central-notice').waitFor();
