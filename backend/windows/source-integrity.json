@@ -26,7 +26,7 @@
     "backend/certificates/README.md": "4acd8081dbe914f4dba239e18fc03df7ad44f5d74aa0df02ad57f52385f51288",
     "backend/certificates/supabase-prod-ca-2021.crt": "700723581420dd1ac98fd7e9ac529f0ef210eadcaf87fc868a3ad7d114c2f3b7",
     "backend/deploy/backup-staging.ts": "78492a9755f5497aa5b044498678e867cd7fdfcdbfbaedd3515da31cffa625db",
-    "backend/deploy/build.mjs": "e862b3022e5a5d88463b223e6ea71ba7b9b23c2b291272e59a43918d99f50df9",
+    "backend/deploy/build.mjs": "86141b4c53467d6b4092538907aa77a7011ecbe8c491e872228c9e60b9838720",
     "backend/deploy/financial-release-plan.json": "2a7481ffdd01ba6bfb499cfefcfcd87dd6e8509472baf13d0a3d488bc815d525",
     "backend/deploy/financial-release.ts": "41f5f43641a834def837937644974668f0413611a054f8a1a0e7bc5dbee8d0ed",
     "backend/deploy/personnel-release-plan.json": "32ba0504a4c34dbd36adc3322708dd9327564574ffa9cff8ba44bc263a7ec8f2",
