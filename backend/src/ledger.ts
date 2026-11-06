@@ -1,3 +1,4 @@
+import {registerArgs,filterRegister,registerResponse} from './register-query.js';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { createRequire } from 'node:module';
@@ -13,6 +14,30 @@ import {createFinancialVoucher} from './ledger-domain.js';
 import { L, P, need, ready, company, open, event, notify, fact, config, chart, resolve, item, line, journal, post, reverse, evidence, balance, invoices, customer, invoice, linkInvoice, custody, move, moveAmount, bankPosting, allocateReceipt, postReceipt } from './ledger-domain.js';
 const id = z.uuid(), day = z.iso.date(), money = z.string().regex(/^\d{1,15}(\.\d{1,3})?$/), positive = money.refine(x => L.units(x) > 0n), currency = z.string().regex(/^[A-Z]{3}$/), text = z.string().trim().min(1).max(2000), opt = id.nullish();
 const invoiceSchema = z.object({ companyId: id, customerId: id, vehicleId: opt, itemId: id, amount: positive, currency, issuedOn: day, dueOn: day, sourceKey: z.string().trim().min(1).max(160), description: z.string().max(2000).default('') }).strict();
+export async function ledgerWorkbench(c:any,m:any,s:any,cipher:any,companyId:string){
+        const co = id.parse(companyId);
+        need(m, 'view', co);
+        const tables = ['finance_accounts', 'finance_items', 'finance_chart', 'finance_funds', 'finance_vouchers', 'finance_deposits', 'finance_custody_transfers', 'finance_journals', 'finance_periods', 'finance_cards', 'finance_card_charges', 'finance_statements', 'finance_intercompany', 'finance_kpi_facts'];
+        const out: any = { companyId: co, rights: L.rights.filter((r: string) => financeRight(m, r, co)), config: await config(c, cipher, co), banks: m.bank.list().filter((b: any) => b.companyId === co), users: m.state.users.filter((u: any) => u.status === 'Active').map((u: any) => ({ id: u.id, name: u.nameEn || u.fullName || u.username })), scope: 'posted ledger only; no inferred opening balances; currencies kept separate' };
+        for (const tab of tables) {
+            const global = ['finance_accounts', 'finance_items'].includes(tab);
+            let rows = (await c.query('select * from ab.' + tab + (global ? '' : ' where company_id=$1') + ' order by created_at desc limit 20001', global ? [] : [co])).rows;
+            requireOk(rows.length<=20000,422,'registerTooLarge');
+            if (tab === 'finance_items')
+                rows = rows.filter((r: any) => { const d = cipher.open(r.payload_cipher); return !d.companyIds?.length || d.companyIds.includes(co); });
+            if (tab === 'finance_kpi_facts' && !financeRight(m, 'ledger_audit', co))
+                rows = rows.filter((r: any) => r.employee_id === s.user_id);
+            out[tab] = rows.map((r: any) => ({ ...r, ...(r.payload_cipher ? { details: cipher.open(r.payload_cipher) } : {}), payload_cipher: undefined }));
+        }
+        out.receipts = (await c.query('select id,receipt_number,customer_id,vehicle_id,item_id,kind,amount::text,currency,holder_id,payment_state,received_on,batch_id from ab.finance_receipts where company_id=$1 and item_id is not null order by created_at desc limit 20001', [co])).rows;
+        out.custody = (await c.query('select m.holder_id,m.currency,r.kind,sum(m.amount)::text amount from ab.finance_custody_moves m join ab.finance_receipts r on r.id=m.receipt_id where m.company_id=$1 group by m.holder_id,m.currency,r.kind having sum(m.amount)<>0', [co])).rows.filter((r: any) => r.holder_id === s.user_id || financeRight(m, 'ledger_audit', co));
+        for (const f of out.finance_funds) {
+            f.balance = L.money(await balance(c, f.chart_id));
+            f.refill = L.money(L.units(f.ceiling) - L.units(f.balance));
+            f.needsRefill = L.units(f.balance) < L.units(f.threshold);
+        }
+        requireOk(out.receipts.length<=20000,422,'registerTooLarge');out.complete=true;return out;
+}
 export function registerLedger(app: any, call: any, cipher: any) {
     const route = (fn: any) => call(async (c: any, m: any, s: any, req: any) => {
         await ready(c);
@@ -29,29 +54,8 @@ export function registerLedger(app: any, call: any, cipher: any) {
     });
     const companyIds = (m: any, right = 'view') => m.state.companies.filter((co: any) => financeRight(m, 'ledger_' + right, co.id)).map((co: any) => co.id);
     app.get('/api/ledger/capabilities', call(async (c: any, m: any) => ({ available: !!(await c.query("select to_regclass('ab.finance_journals') ok")).rows[0].ok, companies: m.state.companies.filter((co: any) => companyIds(m).includes(co.id)), rights: L.rights, ocr: false, bankFeed: false, whatsapp: false, cloudMigrationsAppliedByThisFeature: false })));
-    app.get('/api/ledger/workbench', route(async (c: any, m: any, s: any, req: any) => {
-        const co = id.parse(req.query.companyId);
-        need(m, 'view', co);
-        const tables = ['finance_accounts', 'finance_items', 'finance_chart', 'finance_funds', 'finance_vouchers', 'finance_deposits', 'finance_custody_transfers', 'finance_journals', 'finance_periods', 'finance_cards', 'finance_card_charges', 'finance_statements', 'finance_intercompany', 'finance_kpi_facts'];
-        const out: any = { companyId: co, rights: L.rights.filter((r: string) => financeRight(m, r, co)), config: await config(c, cipher, co), banks: m.bank.list().filter((b: any) => b.companyId === co), users: m.state.users.filter((u: any) => u.status === 'Active').map((u: any) => ({ id: u.id, name: u.nameEn || u.fullName || u.username })), scope: 'posted ledger only; no inferred opening balances; currencies kept separate' };
-        for (const tab of tables) {
-            const global = ['finance_accounts', 'finance_items'].includes(tab);
-            let rows = (await c.query('select * from ab.' + tab + (global ? '' : ' where company_id=$1') + ' order by created_at desc limit 200', global ? [] : [co])).rows;
-            if (tab === 'finance_items')
-                rows = rows.filter((r: any) => { const d = cipher.open(r.payload_cipher); return !d.companyIds?.length || d.companyIds.includes(co); });
-            if (tab === 'finance_kpi_facts' && !financeRight(m, 'ledger_audit', co))
-                rows = rows.filter((r: any) => r.employee_id === s.user_id);
-            out[tab] = rows.map((r: any) => ({ ...r, ...(r.payload_cipher ? { details: cipher.open(r.payload_cipher) } : {}), payload_cipher: undefined }));
-        }
-        out.receipts = (await c.query('select id,receipt_number,customer_id,vehicle_id,item_id,kind,amount::text,currency,holder_id,payment_state,received_on,batch_id from ab.finance_receipts where company_id=$1 and item_id is not null order by created_at desc limit 200', [co])).rows;
-        out.custody = (await c.query('select m.holder_id,m.currency,r.kind,sum(m.amount)::text amount from ab.finance_custody_moves m join ab.finance_receipts r on r.id=m.receipt_id where m.company_id=$1 group by m.holder_id,m.currency,r.kind having sum(m.amount)<>0', [co])).rows.filter((r: any) => r.holder_id === s.user_id || financeRight(m, 'ledger_audit', co));
-        for (const f of out.finance_funds) {
-            f.balance = L.money(await balance(c, f.chart_id));
-            f.refill = L.money(L.units(f.ceiling) - L.units(f.balance));
-            f.needsRefill = L.units(f.balance) < L.units(f.threshold);
-        }
-        return out;
-    }));
+    app.get('/api/ledger/register-view',route(async(c:any,m:any,s:any,req:any)=>{const q=z.object({companyId:id,source:z.enum(['finance_accounts','finance_items','finance_chart','finance_funds','finance_vouchers','finance_deposits','finance_custody_transfers','finance_journals','finance_periods','finance_cards','finance_card_charges','finance_statements','finance_intercompany','finance_kpi_facts','receipts','custody','invoices']),columns:z.string().max(2000),...registerArgs,format:z.enum(['json','csv','excel','print']).default('json')}).strict().parse(req.query);need(m,'view',q.companyId);if(q.format!=='json'){need(m,'report',q.companyId);need(m,q.format==='print'?'print':'export',q.companyId);}const book=await ledgerWorkbench(c,m,s,cipher,q.companyId),rows=q.source==='invoices'?await invoices(c,{companyId:q.companyId}):book[q.source],fields=q.columns.split(',');requireOk(fields.length<=30&&fields.every(k=>/^[a-zA-Z_][a-zA-Z0-9_]{0,79}$/.test(k)&&!/(cipher|password|token)/i.test(k)&&(!rows.length||rows.some((r:any)=>Object.hasOwn(r,k)))),422,'invalidRegisterColumn');return registerResponse(rows,q,fields,q.source);}));
+    app.get('/api/ledger/workbench',route(async(c:any,m:any,s:any,req:any)=>ledgerWorkbench(c,m,s,cipher,req.query.companyId)));
     app.get('/api/ledger/receipt-batches/:id', route(async (c: any, m: any, s: any, req: any) => { const r = (await c.query('select * from ab.finance_receipt_batches where id=$1', [id.parse(req.params.id)])).rows[0]; requireOk(r, 404, 'notFound'); need(m, 'view', r.company_id); return { id: r.id, chequeId: r.cheque_id, operationId: r.operation_id }; }));
     app.get('/api/ledger/card-charges/:id', route(async (c: any, m: any, s: any, req: any) => { const r = (await c.query('select * from ab.finance_card_charges where id=$1', [id.parse(req.params.id)])).rows[0]; requireOk(r, 404, 'notFound'); need(m, 'cards', r.company_id); const rows = (await c.query('select * from ab.finance_card_splits where charge_id=$1', [r.id])).rows.filter((x: any) => financeRight(m, 'ledger_view', x.company_id)); return { id: r.id, splits: rows }; }));
     app.get('/api/ledger/preferences', route(async (c: any, m: any, s: any) => { const r = (await c.query('select value from ab.settings where key=$1', ['ledger-prefs:' + s.user_id])).rows[0]; return r ? cipher.open(r.value.cipher) : {}; }));
@@ -158,7 +162,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
         if (q.customerId)
             await customer(c, m, q.customerId, q.companyId, q.vehicleId);
         const rows = await invoices(c, q);
-        return { rows: rows.slice(0, 1000), truncated: rows.length > 1000 };
+        requireOk(rows.length<=20000,422,'registerTooLarge');return {rows,truncated:false,complete:true};
     }));
     app.post('/api/ledger/invoices/:id/correct', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ amount: positive, reason: text, effectiveOn: day }).strict().parse(req.body), i = (await c.query('select i.*,l.item_id from ab.vehicle_invoices i join ab.finance_invoice_links l on l.invoice_id=i.id where i.id=$1', [id.parse(req.params.id)])).rows[0];
@@ -757,7 +761,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
     }));
     app.get('/api/ledger/events', route(async (c: any, m: any, s: any, req: any) => { const co = id.parse(req.query.companyId); need(m, 'audit', co); return { rows: (await c.query("select * from ab.finance_events where company_id=$1 and entity_type='ledger' order by created_at desc limit 200", [co])).rows.map((r: any) => ({ ...r, payload: cipher.open(r.payload_cipher), payload_cipher: undefined })) }; }));
     app.get('/api/ledger/reports', route(async (c: any, m: any, s: any, req: any) => {
-        const q = z.object({ companies: z.string().min(1), from: day, to: day, kind: z.enum(['trial', 'balance', 'profit', 'cashflow', 'ledger', 'journal', 'receivables', 'custody', 'vouchers', 'cards', 'kpi', 'vat', 'collections', 'deposits', 'cheques', 'funds', 'intercompany', 'installments', 'adjustments', 'profitability']), currency: currency.optional(), employeeId: id.optional(), itemId: id.optional(), emirate: z.string().max(100).optional(), areaId: z.string().max(100).optional(), page: z.coerce.number().int().min(0).default(0), format: z.enum(['json', 'csv', 'excel', 'print']).default('json'), consolidated: z.enum(['true', 'false']).default('false'), groupBy: z.enum(['day', 'month', 'year', 'employee', 'item']).default('day') }).strict().parse(req.query);
+        const q = z.object({ companies: z.string().min(1), from: day, to: day, kind: z.enum(['trial', 'balance', 'profit', 'cashflow', 'ledger', 'journal', 'receivables', 'custody', 'vouchers', 'cards', 'kpi', 'vat', 'collections', 'deposits', 'cheques', 'funds', 'intercompany', 'installments', 'adjustments', 'profitability']), currency: currency.optional(), employeeId: id.optional(), itemId: id.optional(), emirate: z.string().max(100).optional(), areaId: z.string().max(100).optional(), page: z.coerce.number().int().min(0).default(0), format: z.enum(['json', 'csv', 'excel', 'print']).default('json'), consolidated: z.enum(['true', 'false']).default('false'), groupBy: z.enum(['day', 'month', 'year', 'employee', 'item']).default('day'),...registerArgs }).strict().parse(req.query);
         const cos = [...new Set(q.companies.split(',').map((x: string) => id.parse(x)))];
         requireOk(q.to >= q.from, 422, 'invalidDate');
         for (const co of cos) {
@@ -893,13 +897,14 @@ export function registerLedger(app: any, call: any, cipher: any) {
             }
             scope += '; consolidation removes only configured balanced reciprocal accounts, no FX conversion';
         }
+        if(q.full==='true'||q.search||q.grid!=='{}')rows=filterRegister(rows,q).rows;
         const total = rows.length, totals: any = {};
         for (const r of rows)
             if (r.currency && r.net) {
                 const k = r.currency;
                 totals[k] = L.money(L.units(totals[k] || '0') + L.units(r.net));
             }
-        rows = rows.slice(q.page * 200, (q.page + 1) * 200);
+        if(q.full!=='true')rows = rows.slice(q.page * 200, (q.page + 1) * 200);
         const coverage = (await c.query('select count(*)n from ab.vehicle_invoices i where company_id=any($1::uuid[])and not exists(select 1 from ab.finance_invoice_links l where l.invoice_id=i.id)', [selected])).rows[0].n;
         const unpostedAdjustments = Number((await c.query("select count(*)n from ab.vehicle_invoice_adjustments a join ab.finance_invoice_links l on l.invoice_id=a.invoice_id where a.company_id=any($1::uuid[])and not exists(select 1 from ab.finance_journals j where j.company_id=a.company_id and j.status='Posted'and j.source_key='credit:'||a.id::text)", [selected])).rows[0].n);
         const profitByCurrency: Record<string, string> = {};

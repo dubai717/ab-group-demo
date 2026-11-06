@@ -1,0 +1,24 @@
+// Pure read-side filtering. Callers must select/authorize their complete source first.
+import {createRequire} from 'node:module';
+import {z} from 'zod';
+import {requireOk} from './core.js';
+const Grid=createRequire(import.meta.url)('../../register-tools.js');
+export const registerArgs={search:z.string().max(5000).default(''),grid:z.string().max(40000).default('{}'),full:z.enum(['true','false']).default('false')};
+export function registerType(key:string):string{return /(^|_)(amount|paid|outstanding|balance|refill|debit|credit|net|total|priority|score|opening_balance|closing_balance|ceiling|threshold|confirmed)$|^(bookOutstanding|openingBalance|closingBalance|invoiceNumber|invoice_number|receipt_number|number)$/.test(key)?'number':/(_on|_at)$|^(dueOn|issuedOn|createdAt|effectiveOn|month|period_from|period_to)$/.test(key)?'date':'text';}
+export function filterRegister(rows:any[],q:any,fields?:string[]){
+ requireOk(rows.length<=20000,422,'registerTooLarge');
+ const allowed=fields||[...new Set(rows.flatMap(r=>Object.keys(r)))].filter(k=>!/(cipher|password|token)/i.test(k));
+ let state:any;try{state=z.object({version:z.literal(2).optional(),sort:z.string().max(80).optional(),direction:z.enum(['asc','desc']).optional(),values:z.record(z.string(),z.array(z.string().max(5000)).max(1000)).optional(),conditions:z.record(z.string(),z.object({op:z.string().max(30),type:z.enum(['text','number','date']).optional(),value:z.string().max(5000).optional(),value2:z.string().max(5000).optional()}).strict()).optional()}).strict().parse(JSON.parse(q.grid||'{}'));}catch{requireOk(false,422,'invalidRegisterFilters');}
+ const keys=[...(state.sort?[state.sort]:[]),...Object.keys(state.values||{}),...Object.keys(state.conditions||{})];requireOk(keys.every(k=>allowed.includes(k)),422,'invalidRegisterColumn');
+ const types=Object.fromEntries(allowed.map(k=>[k,registerType(k)]));
+ for(const [k,r]of Object.entries(state.conditions||{})as any){const type=types[k];requireOk(Grid.operators[type].includes(r.op),422,'invalidRegisterCondition');r.type=type;if(!['blank','notBlank'].includes(r.op))for(const v of r.op==='between'?[r.value,r.value2]:[r.value]){requireOk(typeof v==='string'&&v.length>0,422,'invalidRegisterCondition');if(type==='number')requireOk(v.length<=100&&Grid.numeric(v)!==null,422,'invalidRegisterCondition');if(type==='date')requireOk(z.iso.date().safeParse(v).success,422,'invalidRegisterCondition');}}
+ const canonical=rows.map(r=>Object.fromEntries(Object.entries(r).map(([k,v])=>[k,v instanceof Date?v.toISOString():v]))),source=canonical.filter(r=>Grid.search([r,Object.values(r).map(v=>({Pending:'معلق',Approved:'معتمد',Rejected:'مرفوض',Active:'نشط',Inactive:'غير نشط',Draft:'مسودة',Closed:'مغلق',Review:'للمراجعة',Paid:'مدفوع مسدد',Unpaid:'غير مسدد',Partial:'جزئي',Collected:'محصل مصروف مصرفياً',Cancelled:'ملغى',Received:'مستلم',Held:'في العهدة',payment:'دفع صادر',receipt:'قبض إيداع وارد',transfer:'تحويل',cash:'نقد',cheque:'شيك'}as any)[String(v)]||'')],q.search||''));
+ const order=new Map(source.map((r,i)=>[r,i])),selected=Grid.apply(source,state,undefined,types);if(!state.sort)selected.sort((a:any,b:any)=>order.get(a)!-order.get(b)!);return {rows:selected,facets:Grid.facets(source,allowed,state,types),types,state};
+}
+export function registerResponse(rows:any[],q:any,fields:string[],name:string){const keyed=rows.map((r,i)=>({...r,_registerKey:String(r.id??(r.holder_id&&r.currency&&r.kind?[r.holder_id,r.currency,r.kind].join(':'):i))})),r=filterRegister(keyed,q,fields),total=r.rows.length,page=q.page||0,selected=q.full==='true'?r.rows:r.rows.slice(page*200,(page+1)*200),result={...r,rows:selected.map((row:any)=>Object.fromEntries(['_registerKey',...fields].map(k=>[k,row[k]??null]))),total,page,pageSize:q.full==='true'?20000:200,complete:q.full==='true'};
+ if(!q.format||q.format==='json')return result;
+ const matrix=selected.map((row:any)=>fields.map(k=>row[k]==null?'':typeof row[k]==='object'?JSON.stringify(row[k]):String(row[k])));
+ if(q.format==='print')return {...result,columns:fields,matrix};
+ const cell=(v:any)=>/^[\s]*[=+@\-\t\r]/.test(String(v))?"'"+v:String(v),xml=(v:string)=>v.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}as any)[c]);const values=[fields,...matrix].map(r=>r.map(cell));
+ return {...result,filename:name+(q.format==='csv'?'.csv':'.xml'),mime:q.format==='csv'?'text/csv;charset=utf-8':'application/vnd.ms-excel',data:q.format==='csv'?'\uFEFF'+values.map(r=>r.map((v:string)=>'"'+v.replaceAll('"','""')+'"').join(',')).join('\r\n'):'<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Register"><Table>'+values.map(r=>'<Row>'+r.map((v:string)=>'<Cell><Data ss:Type="String">'+xml(v)+'</Data></Cell>').join('')+'</Row>').join('')+'</Table></Worksheet></Workbook>'};
+}

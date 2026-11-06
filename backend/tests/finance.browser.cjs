@@ -27,7 +27,7 @@ try{
   const b=await p.evaluate(()=>ABCentral.api('finance/workbench'));assert.equal(b.operations.find(o=>o.company_id===company).status,'Draft');assert.equal(b.balances.find(b=>b.companyId===company).bookBalance,'1000.125');
   await p.locator('[data-ws="finance"][data-value="cheques"]').click();await p.locator('#fw-form [name="number"]').waitFor();
   for(const tab of ['custody','reconciliation','expenses','reports','chart','notifications']){await p.locator('[data-ws="finance"][data-value="'+tab+'"]').click();await p.locator('.fw-section').waitFor();}
-  await p.locator('[data-ws="finance"][data-value="reports"]').click();await p.locator('#fw-report [name="reportKind"]').selectOption('operations');await p.locator('#fw-report [type=submit]').click();await p.getByText('UI-EXACT',{exact:true}).waitFor();await p.locator('[data-fw="group-report"]').click();await p.getByText(/ملخص بنوك فقط|Bank-only summary/).waitFor();
+  await p.locator('[data-ws="finance"][data-value="reports"]').click();await p.locator('#fw-report [name="reportKind"]').selectOption('operations');await p.locator('#fw-report [type=submit]').click();await p.locator('tbody td').getByText('UI-EXACT',{exact:true}).waitFor();await p.locator('[data-fw="group-report"]').click();await p.getByText(/ملخص بنوك فقط|Bank-only summary/).waitFor();
   await p.screenshot({path:'work/finance-register-desktop.png',fullPage:false});
 
  }
