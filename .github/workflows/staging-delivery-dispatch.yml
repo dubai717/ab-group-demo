@@ -39,8 +39,8 @@ jobs:
           NODE
   deliver:
     needs: source
-    uses: dubai717/ab-group-demo/.github/workflows/trusted-staging-controller.yml@c9b945042c4a8701ccb6067775a22934dfe2ac2b
+    uses: dubai717/ab-group-demo/.github/workflows/trusted-staging-controller.yml@915c7503fd9822becee59feba9c7a404e6b29498
     with:
-      controller_ref: c9b945042c4a8701ccb6067775a22934dfe2ac2b
+      controller_ref: 915c7503fd9822becee59feba9c7a404e6b29498
       source_sha: ${{ needs.source.outputs.sha }}
       source_run_id: ${{ needs.source.outputs.run }}
