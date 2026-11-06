@@ -711,7 +711,7 @@ function renderDepartments() {
 }
 
 function renderCompanies(user) {
-  const currentProfile=CompanyDocuments.renderProfile();if(currentProfile&&!app.state.companyFormOpen)return currentProfile;
+
   const canManage = user.roleId === 'owner' || isUserAllowed(user, 'create_company') || isUserAllowed(user, 'edit_company');
   const grid=RegisterStore.get('companies',['arabicName','englishName','tradeLicenseNumber','emirate','expiryDate','licenseStatus','status'],{grid:{version:2}});if(!app.state.companyFormOpen)grid.ensure();
   const companyRows=grid.rows;
@@ -863,7 +863,7 @@ function renderCompanies(user) {
                 <td>
                   <div class="row-actions">
                     ${CompanyDocuments.profileButton(company.id)}
-                    ${user.roleId==='owner'||isUserAllowed(user,'edit_company')?`<button class="ghost-btn" data-action="toggle-company-status" data-company-id="${company.id}">${company.status === 'Active' ? localeText('disable') : localeText('enable')}</button>`:''}
+                    ${CompanyDocuments.canAction(company.status==='Active'?'deactivate':'activate')?`<button type="button" class="ghost-btn" data-action="toggle-company-status" data-company-id="${company.id}">${company.status === 'Active' ? localeText('disable') : localeText('enable')}</button>`:''}
                   </div>
                 </td>
               </tr>
@@ -1093,7 +1093,7 @@ function bindGlobalEvents() {
   CompanyDocuments.bind();
   document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', async () => {
-      if(!CustomerUI.leave())return;
+      if(!CustomerUI.leave()||!CompanyDocuments.leave())return;
       AuthFlows.leave();
       UserManagement.cleanup();
       BankAccounts.cleanup();
@@ -1155,8 +1155,8 @@ function bindGlobalEvents() {
       const companyId = button.dataset.companyId;
       const target = app.state.companies.find(c => c.id === companyId);
       if (!target) return;
-      target.status = target.status === 'Active' ? 'Inactive' : 'Active';
-      saveState();
+      if(!confirm(getLocale()==='ar'?'تأكيد تغيير حالة الشركة؟':'Confirm company status change?'))return;
+      CompanyDocuments.updateStatus(companyId,target.status==='Active'?'Inactive':'Active');
       render();
     });
   });

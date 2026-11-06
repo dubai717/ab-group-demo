@@ -157,6 +157,7 @@
         }
         if (a === 'download' || a === 'library-download'||a==='library-download-version') {
             const v = a === 'download' ? await api(ep + '/documents/' + key) : a==='library-download-version'?await api('library/'+key.split('/')[0]+'/documents/'+key.split('/')[1]):await api('library/' + key + '/documents/' + library.find(r => r.id === key).versions[0].version_id), bytes = Uint8Array.from(atob(v.base64), c => c.charCodeAt(0)), url = URL.createObjectURL(new Blob([bytes], { type: v.mime })), link = document.createElement('a');
+            if(v.mime==='application/pdf'){URL.revokeObjectURL(url);await AttachmentViewer.show([{name:v.name,load:async()=>new Blob([bytes],{type:v.mime})}]);return;}
             link.href = url;
             link.download = v.name;
             link.click();
