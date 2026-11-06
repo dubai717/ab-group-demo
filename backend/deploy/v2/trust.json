@@ -1,1 +1,5 @@
-{"format":"AB-CONTROLLER-TRUST-2","approvedSourceTree":null,"note":"Fail closed until the owner-approved source tree is pinned in the immutable control commit."}
+{
+  "format": "AB-CONTROLLER-TRUST-2",
+  "approvedSourceTree": "87e3485ebf8fe25a591e41b024bd0d07e6176f4e",
+  "note": "Exact bootstrap source tree approved by owner for PR30/31 and staging policy activation; no wildcard."
+}
