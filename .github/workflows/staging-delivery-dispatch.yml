@@ -315,6 +315,7 @@ jobs:
   workflow_run:
     workflows:
     - AB Group controlled staging delivery
+    - AB Group staging checks (no deployment or cloud secrets)
     types:
     - completed
     branches:
