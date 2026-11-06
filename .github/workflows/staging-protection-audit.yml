@@ -1,0 +1,30 @@
+name: AB Group read-only staging protection audit
+on:
+  push:
+    branches: [verify/staging-protection-audit-20261106]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Inspect protection metadata only; no environment or provider secrets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node <<'NODE'
+          (async()=>{const e=process.env,base='https://api.github.com/repos/dubai717/ab-group-demo';
+          if(e.GITHUB_REPOSITORY!=='dubai717/ab-group-demo'||e.GITHUB_REF!=='refs/heads/verify/staging-protection-audit-20261106')throw Error('CONTEXT');
+          const get=async p=>{const r=await fetch(base+p,{headers:{authorization:'Bearer '+e.GH_TOKEN,accept:'application/vnd.github+json'},redirect:'error',signal:AbortSignal.timeout(15000)});return {status:r.status,value:r.ok?await r.json():null};};
+          for(const name of ['supabase-test','staging-owner-approval']){
+           const r=await get('/environments/'+name);console.log('CHECK: '+name+' HTTP='+r.status);
+           if(!r.value)continue;const v=r.value,rules=v.protection_rules||[],approval=rules.find(x=>x.type==='required_reviewers');
+           console.log('CHECK: '+name+' '+JSON.stringify({selectedBranchPolicy:v.deployment_branch_policy,ownerOnlyReviewer:approval?.reviewers?.length===1&&approval.reviewers[0].type==='User'&&approval.reviewers[0].reviewer?.login==='dubai717',adminBypass:v.can_admins_bypass,selfReviewPrevented:approval?.prevent_self_review}));
+           const b=await get('/environments/'+name+'/deployment-branch-policies');console.log('CHECK: '+name+' BRANCHES '+JSON.stringify({http:b.status,policies:b.value?.branch_policies?.map(x=>({name:x.name,type:x.type}))}));
+          }
+          const b=await get('/branches/main');console.log('CHECK: MAIN '+JSON.stringify({http:b.status,protected:b.value?.protected}));
+          console.log('RESULT: READ_ONLY_PROTECTION_AUDIT_COMPLETE; NO_SECRETS_OR_SETTINGS_CHANGED');
+          })().catch(()=>{console.log('RESULT: READ_ONLY_AUDIT_UNAVAILABLE; DETAILS_WITHHELD');process.exitCode=1;});
+          NODE
