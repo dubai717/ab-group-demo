@@ -7,7 +7,10 @@ starts read-only. Editing is explicit and saving submits only changed fields wit
 the revision captured when editing began; Cancel discards the draft. Close, Escape,
 logout and browser unload guard unsaved profile changes. A status operation uses a
 named confirmation, a status-only revision-checked UPDATE, a verified readback,
-and stays in the same register/profile. Repeated status clicks are blocked. Failed
+and stays in the same register/profile. Repeated status clicks are blocked.
+An in-flight save cannot be cancelled as though it had not been submitted; after
+a committed metadata write, its revision/baseline checkpoint permits attachment
+retry without stale-revision failure or loss of selected files. Failed
 writes retain the original UI state; a committed write followed by failed readback
 is reported as unverified, never claimed to have rolled back.
 
