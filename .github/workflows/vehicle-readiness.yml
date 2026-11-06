@@ -1,7 +1,4 @@
 name: Vehicle staging readiness (read-only, no deployment)
-on:
-  push:
-    branches: ['verify/vehicles-staging-readonly-*']
 permissions:
   contents: read
 jobs:
@@ -10,22 +7,36 @@ jobs:
     environment: supabase-test
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
-        with:
-          persist-credentials: false
-          ref: ${{ github.sha }}
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
-        with:
-          node-version: '24'
-      - run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Read-only connection, schema and private-store readiness
-        env:
-          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
-          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
-          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
-          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
-        run: node --import tsx backend/deploy/vehicle-readiness.ts
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        persist-credentials: false
+        ref: ${{ github.sha }}
+    - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+      with:
+        node-version: '24'
+    - run: npm ci --ignore-scripts --no-audit --no-fund
+    - name: Read-only connection, schema and private-store readiness
+      env:
+        NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
+        BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+      run: node --import tsx backend/deploy/vehicle-readiness.ts
+    needs:
+    - owner-approval
+    if: github.repository == 'dubai717/ab-group-demo' && github.ref == 'refs/heads/main' && (true)
+  owner-approval:
+    if: github.repository == 'dubai717/ab-group-demo' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: staging-owner-approval
+    permissions: {}
+    steps:
+    - run: 'echo "RESULT: LEGACY_SENSITIVE_OPERATION_REQUIRES_OWNER_APPROVAL"'
+'on':
+  push:
+    branches:
+    - verify/vehicles-staging-readonly-*

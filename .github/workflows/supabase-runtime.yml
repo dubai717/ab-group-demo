@@ -1,8 +1,4 @@
 name: Supabase runtime credential and synthetic trial (no deployment)
-on:
-  push:
-    branches:
-      - 'verify/supabase-test-runtime-approved-20261102'
 permissions:
   contents: read
 concurrency:
@@ -10,61 +6,77 @@ concurrency:
   cancel-in-progress: false
 jobs:
   configure-runtime:
-    if: github.repository == 'dubai717/ab-group-demo'
+    if: github.repository == 'dubai717/ab-group-demo' && github.ref == 'refs/heads/main' && (github.repository == 'dubai717/ab-group-demo')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: supabase-test
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-        with:
-          persist-credentials: false
-          ref: ${{ github.sha }}
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
-        with:
-          node-version: '24'
-      - run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Check protected runtime connection before role setup
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: node --import tsx backend/actions/runtime-readiness.ts --runtime-only
-      - name: Verify corrected independent runtime access without modifying credentials
-        env:
-          AB_SYNTHETIC_PROJECT: 'yes'
-          APP_ENV: staging
-          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: node --import tsx backend/actions/runtime-setup.ts --verify-only
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        persist-credentials: false
+        ref: ${{ github.sha }}
+    - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+      with:
+        node-version: '24'
+    - run: npm ci --ignore-scripts --no-audit --no-fund
+    - name: Check protected runtime connection before role setup
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      run: node --import tsx backend/actions/runtime-readiness.ts --runtime-only
+    - name: Verify corrected independent runtime access without modifying credentials
+      env:
+        AB_SYNTHETIC_PROJECT: 'yes'
+        APP_ENV: staging
+        NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      run: node --import tsx backend/actions/runtime-setup.ts --verify-only
+    needs:
+    - owner-approval
   synthetic-trial:
-    needs: configure-runtime
+    needs:
+    - owner-approval
+    - configure-runtime
     runs-on: ubuntu-latest
     timeout-minutes: 25
     environment: supabase-test
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-        with:
-          persist-credentials: false
-          ref: ${{ github.sha }}
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
-        with:
-          node-version: '24'
-      - run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Require durable encryption before creating any trial data
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
-        run: node --import tsx backend/actions/runtime-readiness.ts
-      - name: Provision only fictional fixture and run isolated runtime-only API trials
-        env:
-          APP_ENV: staging
-          AB_SYNTHETIC_PROJECT: 'yes'
-          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
-          SUPABASE_BUCKET: ab-private-test
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
-          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
-        run: node --import tsx backend/actions/live-trial.ts
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        persist-credentials: false
+        ref: ${{ github.sha }}
+    - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+      with:
+        node-version: '24'
+    - run: npm ci --ignore-scripts --no-audit --no-fund
+    - name: Require durable encryption before creating any trial data
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
+      run: node --import tsx backend/actions/runtime-readiness.ts
+    - name: Provision only fictional fixture and run isolated runtime-only API trials
+      env:
+        APP_ENV: staging
+        AB_SYNTHETIC_PROJECT: 'yes'
+        NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
+        SUPABASE_BUCKET: ab-private-test
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
+      run: node --import tsx backend/actions/live-trial.ts
+    if: github.repository == 'dubai717/ab-group-demo' && github.ref == 'refs/heads/main' && (true)
+  owner-approval:
+    if: github.repository == 'dubai717/ab-group-demo' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: staging-owner-approval
+    permissions: {}
+    steps:
+    - run: 'echo "RESULT: LEGACY_SENSITIVE_OPERATION_REQUIRES_OWNER_APPROVAL"'
+'on':
+  push:
+    branches:
+    - verify/supabase-test-runtime-approved-20261102
