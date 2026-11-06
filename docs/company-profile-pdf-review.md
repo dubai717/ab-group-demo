@@ -27,7 +27,8 @@ for each capability independently. Overrides use the existing protected user JSO
 record and a revision-checked owner-only endpoint; no new SQL, RLS rule or grant is
 needed. Other admins cannot use this endpoint, mutate the owner, or inject overrides
 through ordinary user editing. View access and document permissions remain separate
-and unchanged. Override scope matches the existing company permission scope.
+and unchanged. Existing company-creation authorization and initial-state validation
+are retained independently; edit/status overrides do not silently revoke creation. Override scope matches the existing company permission scope.
 
 The shared RecordProfile helper establishes the future view -> explicit edit ->
 save/cancel -> audit contract without rebuilding unrelated record screens.

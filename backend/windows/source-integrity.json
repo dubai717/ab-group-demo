@@ -72,7 +72,7 @@
     "backend/src/customer-spreadsheet-worker.ts": "7fe7bd1d6272177391fd6922c55fb6c5f1705045e7916b8d1aa442ad31504643",
     "backend/src/customer-spreadsheet.ts": "03bb3a433307f2e7cd76d7bab28645f7a82b6a2a319c5d7a551c7e7ed78b3197",
     "backend/src/customers.ts": "46e24dd3209ba2c6ee84f51bbfe917a39674e3c63fe1d61eef7de2f75f5e685b",
-    "backend/src/data.ts": "39abae1947bc4bae28a68d278335d73ede1c665778dd40eabcbad7e378126686",
+    "backend/src/data.ts": "9a35205d58e5c7771872bd7e95a2c192d8cc884518bc257e807a023b6179e6c6",
     "backend/src/database.ts": "7b82d290feb2ee440437d82006367c47000b4f558d874c810662b4f7a02be2df",
     "backend/src/finance.ts": "5140fc5ff8a1449024ab3e24e95053b20f971e59f7cee64f0b41b20ecccb2a38",
     "backend/src/financial-jobs.ts": "84a1450cedc32ff4afb5880be0a83414aa485a1d848486858397d551e6a3b57b",

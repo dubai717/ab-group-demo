@@ -246,9 +246,10 @@ export async function persistCompany(
     m.state.companies.push(temporary);
     id = temporary.id;
     m.state.areas = await loadAreas(c);
+    // Creation is already authorized above. Preserve its existing initial-field policy independently of edit/status overrides.
     CompanyPolicy.createService({
       state: () => m.state,
-      actor: () => ({ ...m.actor, permissions: ["edit_company"] }),
+      actor: () => ({ ...m.actor, companyPermissions:undefined, permissions: ["edit_company"] }),
       persist: () => true,
       validateLocation: (d: any) => location(m.state, d),
     }).update(id, data);
