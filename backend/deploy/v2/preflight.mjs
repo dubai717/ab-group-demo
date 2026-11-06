@@ -31,7 +31,7 @@ export async function preflight(e,api,request=fetch){
  const raw=git('ls-tree','-r','--name-only',sha,'supabase').trim().split('\n').filter(p=>p.endsWith('.sql'));
  need(raw.length===13&&catalog.every(m=>{const p=m.path||'supabase/migrations/'+m.name;return raw.includes(p)&&hash(readFileSync('candidate/'+p,'utf8'))===m.sha256;}),'IMMUTABLE_APPROVED_SQL_REQUIRED');
  // Declared schema additions are deferred until a controller review supports their exact plan.
- const additions=git('ls-tree','-r','--name-only',sha,'supabase/additive').trim();need(!additions,'ADDITIVE_CONTROLLER_REVIEW_REQUIRED');
+ const additions=git('ls-tree','-r','--name-only',sha,'supabase/additive').trim().split('\n').filter(Boolean).filter(p=>p!=='supabase/additive/README.md');need(additions.length===0,'ADDITIVE_CONTROLLER_REVIEW_REQUIRED');
  const record={...result,sourceSha:sha,sourceTree:tree,controller:e.AB_CONTROLLER_REF,sourceRun:e.AB_SOURCE_RUN_ID,previousSha:previous.sha};writeFileSync('classification.json',JSON.stringify(record,null,2));
  for(const [k,value]of Object.entries({requires_owner:String(result.requiresOwner),app_sha:hash(readFileSync('candidate/app.js')),hook_hash:cfg.deployHookPathSha256,previous_sha:previous.sha}))appendFileSync(e.GITHUB_OUTPUT,k+'='+value+'\n');
  console.log('RESULT: CLASSIFICATION_'+result.risk.toUpperCase().replaceAll('-','_')+'; VALUES_WITHHELD; SOURCE_TESTS_VERIFIED');return record;
