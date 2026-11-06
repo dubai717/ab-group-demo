@@ -1,4 +1,4 @@
-name: AB Group staging checks (no deployment or cloud secrets)
+name: AB Group controlled staging delivery
 on:
   push:
     branches: [staging/ab-group-test]
