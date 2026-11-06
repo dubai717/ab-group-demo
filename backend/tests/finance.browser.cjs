@@ -1,6 +1,6 @@
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
 (async()=>{const f=JSON.parse(fs.readFileSync('work/finance-browser-fixture.json')),browser=await chromium.launch({executablePath:process.env.AB_BROWSER_EXECUTABLE||(fs.existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined),headless:true,args:['--no-sandbox']}),p=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
-p.on('pageerror',e=>errors.push(e.message));p.on('response',async r=>{if(r.url().includes('/api/finance/')&&r.status()>=400){const body=await r.json().catch(()=>({}));console.error('FINANCE_API_FAILURE:',r.status(),body.error||'unknown');}});
+p.on('pageerror',e=>{errors.push(e.message);console.error('FINANCE_BROWSER_JS_ERROR:',e.message);});p.on('response',async r=>{if(r.url().includes('/api/finance/')&&r.status()>=400){const body=await r.json().catch(()=>({}));console.error('FINANCE_API_FAILURE:',r.status(),body.error||'unknown');}});
 try{
  await p.addInitScript(()=>{const w=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(!['ab_group_demo_locale'].includes(k)&&/state|finance|bank|password|session|token/i.test(k))throw Error('Sensitive browser write: '+k);return w.call(this,k,v);};});
  await p.goto('http://127.0.0.1:3200');await p.locator('#login-form').waitFor();await p.fill('#username',f.username);await p.fill('#password',f.password);await p.locator('#login-form [type=submit]').click();await p.locator('.stats-grid').waitFor();

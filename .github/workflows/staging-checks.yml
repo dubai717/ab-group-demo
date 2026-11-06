@@ -49,6 +49,8 @@ jobs:
           done
           curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null
           node backend/tests/central.browser.cjs
+          node backend/tests/register-lifecycle.browser.cjs
+          node backend/tests/workspace-components.browser.cjs
       - name: Financial workbench in both schema states with synthetic data only
         shell: bash
         run: |
@@ -162,3 +164,18 @@ jobs:
         run: docker build -f Dockerfile.staging -t ab-group-staging-ci:${{ github.sha }} .
       - name: Required checks completed
         run: echo 'PASS - build, preservation, authorization, RLS, backup restore, browser and portable image; no cloud deployment'
+
+      - name: Unified registers company profiles AR EN desktop tablet phone
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --import tsx backend/tests/workspace-serve.ts > work/workspace-browser-fixture.log 2>&1 &
+          fixture_pid=$!
+          trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:3360/api/health >/dev/null; then break; fi
+            if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:3360/api/health >/dev/null
+          node backend/tests/workspace.browser.cjs

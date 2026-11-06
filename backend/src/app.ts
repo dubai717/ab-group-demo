@@ -131,7 +131,7 @@ export async function build(options: Options) {
       code = status >= 500 ? "unavailable" : "invalid";
     }
     if (status < 400 || status > 599) status = 422;
-    reply.code(status).send({ error: code });
+    reply.code(status).send({ error: code, ...(e instanceof ApiError && (e as any).fieldErrors ? {fieldErrors:(e as any).fieldErrors}: {}) });
   });
   const uuid = (v: any) => z.uuid().parse(v);
   const session = async (req: any) => {
