@@ -10,6 +10,8 @@ export function verifyRun(run,sha){need(run?.head_sha===sha&&run.head_branch===b
 export async function preflight(e,api,request=fetch){
  requireController(e);const sha=e.AB_STAGING_SOURCE_SHA;
  for(const name of ['supabase-test','staging-owner-approval']){environmentProtection(await api('/environments/'+name),name);verifyBranches(await api('/environments/'+name+'/deployment-branch-policies'));}
+ // GitHub prevents non-admin deletion of its default branch; the update restriction also covers force updates.
+ need((await api('')).default_branch==='main','MAIN_DEFAULT_BRANCH_REQUIRED');
  const rules=await api('/rules/branches/main'),sets=[];for(const id of new Set(rules.map(r=>r.ruleset_id)))sets.push(await api('/rulesets/'+id));branchProtection(rules,sets);
  need((await api('/git/ref/heads/'+branch)).object.sha===sha,'SOURCE_HEAD_CHANGED');
  need(/^\d+$/.test(e.AB_SOURCE_RUN_ID||''),'SOURCE_RUN_REQUIRED');verifyRun(await api('/actions/runs/'+e.AB_SOURCE_RUN_ID),sha);

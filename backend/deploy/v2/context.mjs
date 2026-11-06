@@ -8,6 +8,6 @@ export function environmentProtection(value,name){
  requireValue(value.deployment_branch_policy?.custom_branch_policies===true&&value.deployment_branch_policy.protected_branches===false,'EXPLICIT_MAIN_ONLY_ENVIRONMENT_REQUIRED');
 }
 export function branchProtection(rules,sets){
- requireValue(Array.isArray(rules)&&['update','deletion','non_fast_forward'].every(t=>rules.some(r=>r.type===t)),'MAIN_RULESET_REQUIRED');
- for(const r of rules.filter(r=>['update','deletion','non_fast_forward'].includes(r.type))){const set=sets.find(s=>s.id===r.ruleset_id);requireValue(set?.enforcement==='active','MAIN_RULESET_NOT_ENFORCED');requireValue((set.bypass_actors||[]).every(a=>a.actor_type==='RepositoryRole'&&a.actor_id===5),'ONLY_REPOSITORY_ADMINS_MAY_UPDATE_CONTROLLER_ENTRY');}
+ requireValue(Array.isArray(rules)&&rules.some(r=>r.type==='update'),'MAIN_UPDATE_RESTRICTION_REQUIRED');
+ for(const r of rules.filter(r=>r.type==='update')){const set=sets.find(s=>s.id===r.ruleset_id);requireValue(set?.enforcement==='active','MAIN_RULESET_NOT_ENFORCED');requireValue((set.bypass_actors||[]).every(a=>a.actor_type==='RepositoryRole'&&a.actor_id===5),'ONLY_REPOSITORY_ADMINS_MAY_UPDATE_CONTROLLER_ENTRY');}
 }
