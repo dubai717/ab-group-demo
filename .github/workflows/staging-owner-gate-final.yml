@@ -13,8 +13,8 @@ jobs:
       - name: Prove native approval waits and cancel only this isolated test
         env:
           GH_TOKEN: ${{ github.token }}
-          EXPECTED_MAIN_SHA: 5f43f4337dd1c8fb5cbeec33648609b2625395bf
-          EXPECTED_ENTRY_BLOB: 0588bb78a38682f1ee444b98a890f2190449cbc4
+          EXPECTED_MAIN_SHA: 4f34e4338d708d4baf9580bf0c47226b1bc26362
+          EXPECTED_ENTRY_BLOB: 8560cbf4b3300dfc5c5217024d923e283a893f57
         run: |
           node <<'NODE'
           (async()=>{const e=process.env,base='https://api.github.com/repos/dubai717/ab-group-demo',need=(v,c)=>{if(!v)throw Error(c);},pause=ms=>new Promise(r=>setTimeout(r,ms));let owned;
