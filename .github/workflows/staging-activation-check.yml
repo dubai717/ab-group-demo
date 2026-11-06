@@ -13,8 +13,8 @@ jobs:
       - name: Resume installed checked staging pipeline; do not repeat successful owner gate test
         env:
           GH_TOKEN: ${{ github.token }}
-          EXPECTED_MAIN_SHA: edb0c85b4a9ac46a0baded7a5c3757d82da96367
-          EXPECTED_ENTRY_BLOB: 3332872766f12eafe80b6ddcac5ff511c226ec09
+          EXPECTED_MAIN_SHA: de93dfa37443157bf3ab23ae21ee5dfe78d517a9
+          EXPECTED_ENTRY_BLOB: ee63900032125a67de2feb0dc6e21a786e597207
         run: |
           node <<'NODE'
           (async()=>{try{const e=process.env,base='https://api.github.com/repos/dubai717/ab-group-demo',need=(v,c)=>{if(!v)throw Error(c);};
