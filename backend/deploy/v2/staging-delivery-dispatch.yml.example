@@ -1,0 +1,46 @@
+name: AB Group protected staging dispatch
+on:
+  workflow_run:
+    workflows: [AB Group controlled staging delivery]
+    types: [completed]
+    branches: [staging/ab-group-test]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  deployments: write
+concurrency:
+  group: ab-protected-staging-dispatch
+  cancel-in-progress: false
+jobs:
+  source:
+    if: github.repository == 'dubai717/ab-group-demo' && github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+      run: ${{ steps.source.outputs.run }}
+    steps:
+      - id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          node <<'NODE'
+          (async()=>{try{
+            const e=process.env,fs=require('node:fs'),base='https://api.github.com/repos/dubai717/ab-group-demo';
+            const get=async p=>{const r=await fetch(base+p,{headers:{authorization:'Bearer '+e.GH_TOKEN,accept:'application/vnd.github+json'},redirect:'error',signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error();return r.json();};
+            const sha=(await get('/git/ref/heads/staging/ab-group-test')).object.sha;
+            if(!/^[a-f0-9]{40}$/.test(sha))throw Error();
+            const runs=e.GITHUB_EVENT_NAME==='workflow_run'?[await get('/actions/runs/'+e.EVENT_RUN_ID)]:(await get('/actions/workflows/staging-ci.yml/runs?branch=staging%2Fab-group-test&event=push&status=success&per_page=100')).workflow_runs;
+            const run=runs.find(r=>r.head_sha===sha&&r.head_branch==='staging/ab-group-test'&&r.event==='push'&&r.conclusion==='success'&&r.path==='.github/workflows/staging-ci.yml'&&r.repository?.full_name==='dubai717/ab-group-demo');
+            if(!run||!Number.isSafeInteger(run.id))throw Error();
+            fs.appendFileSync(e.GITHUB_OUTPUT,'sha='+sha+'\nrun='+run.id+'\n');console.log('RESULT: CURRENT_STAGING_SOURCE_AND_SUCCESSFUL_CHECKS_PINNED');
+          }catch{console.log('RESULT: NO_MATCHING_SUCCESSFUL_CURRENT_SOURCE_CHECKS; NO_DEPLOYMENT');process.exitCode=1;}})();
+          NODE
+  deliver:
+    needs: source
+    uses: dubai717/ab-group-demo/.github/workflows/trusted-staging-controller.yml@CONTROLLER_COMMIT
+    with:
+      controller_ref: CONTROLLER_COMMIT
+      source_sha: ${{ needs.source.outputs.sha }}
+      source_run_id: ${{ needs.source.outputs.run }}

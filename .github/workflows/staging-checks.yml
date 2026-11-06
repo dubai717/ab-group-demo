@@ -19,7 +19,7 @@ jobs:
       - name: Build staging application without cloud access
         run: node backend/deploy/build.mjs
       - name: Existing demo data and behavior regressions
-        run: node --test tests/*.test.cjs
+        run: node --test tests/*.test.cjs backend/deploy/v2/*.test.mjs
       - name: Prepare isolated synthetic PostgreSQL only
         run: npm run backend:test:db
       - name: Server authorization RLS and isolated backup restoration
@@ -41,7 +41,7 @@ jobs:
           set -euo pipefail
           node --import tsx backend/tests/serve-fixture.ts > work/browser-fixture.log 2>&1 &
           fixture_pid=$!
-          trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+          trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
           for attempt in $(seq 1 90); do
             if curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null; then break; fi
             if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
@@ -51,6 +51,21 @@ jobs:
           node backend/tests/central.browser.cjs
           node backend/tests/register-lifecycle.browser.cjs
           node backend/tests/workspace-components.browser.cjs
+      - name: Company drawer and PDF with fresh isolated provider state
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --import tsx backend/tests/serve-fixture.ts > work/profile-browser-fixture.log 2>&1 &
+          fixture_pid=$!
+          trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null; then break; fi
+            if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null
+          node backend/tests/company-profile.browser.cjs
+          node backend/tests/pdf-preview.browser.cjs
       - name: Financial workbench in both schema states with synthetic data only
         shell: bash
         run: |
@@ -58,7 +73,7 @@ jobs:
           for schema in yes no; do
             AB_TEST_FINANCE_SCHEMA="$schema" node --import tsx backend/tests/serve-finance-fixture.ts > work/finance-browser-fixture.log 2>&1 &
             fixture_pid=$!
-            trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+            trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
             for attempt in $(seq 1 90); do
               if curl --fail --silent http://127.0.0.1:3200/api/health >/dev/null; then break; fi
               if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
@@ -77,7 +92,7 @@ jobs:
           for schema in yes no; do
             AB_TEST_CUSTOMERS_SCHEMA="$schema" node --import tsx backend/tests/serve-customers-fixture.ts > work/customers-browser-fixture.log 2>&1 &
             fixture_pid=$!
-            trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+            trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
             for attempt in $(seq 1 90); do
               if curl --fail --silent http://127.0.0.1:3300/api/health >/dev/null; then break; fi
               if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
@@ -96,7 +111,7 @@ jobs:
           for schema in yes no; do
             AB_TEST_VEHICLES_SCHEMA="$schema" node --import tsx backend/tests/serve-vehicles-fixture.ts > work/vehicles-browser-fixture.log 2>&1 &
             fixture_pid=$!
-            trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+            trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
             for attempt in $(seq 1 90); do
               if curl --fail --silent http://127.0.0.1:3400/api/health >/dev/null; then break; fi
               if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
@@ -115,7 +130,7 @@ jobs:
           for schema in yes no; do
             AB_TEST_LEDGER_SCHEMA="$schema" node --import tsx backend/tests/serve-ledger-fixture.ts > work/ledger-browser-fixture.log 2>&1 &
             fixture_pid=$!
-            trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+            trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
             for attempt in $(seq 1 90); do
               if curl --fail --silent http://127.0.0.1:3500/api/health >/dev/null; then break; fi
               if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
@@ -134,7 +149,7 @@ jobs:
           for schema in yes no; do
             AB_TEST_PERSONNEL_SCHEMA="$schema" node --import tsx backend/tests/serve-personnel-fixture.ts > work/personnel-browser-fixture.log 2>&1 &
             fixture_pid=$!
-            trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+            trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
             for attempt in $(seq 1 90); do
               if curl --fail --silent http://127.0.0.1:3600/api/health >/dev/null; then break; fi
               if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
@@ -152,7 +167,7 @@ jobs:
           set -euo pipefail
           node --import tsx backend/tests/serve-test-users-fixture.ts > work/test-users-browser-fixture.log 2>&1 &
           fixture_pid=$!
-          trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+          trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
           for attempt in $(seq 1 90); do
             if curl --fail --silent http://127.0.0.1:3700/api/health >/dev/null; then break; fi
             if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
@@ -171,7 +186,7 @@ jobs:
           set -euo pipefail
           node --import tsx backend/tests/workspace-serve.ts > work/workspace-browser-fixture.log 2>&1 &
           fixture_pid=$!
-          trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+          trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
           for attempt in $(seq 1 90); do
             if curl --fail --silent http://127.0.0.1:3360/api/health >/dev/null; then break; fi
             if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
@@ -186,7 +201,7 @@ jobs:
           set -euo pipefail
           node --import tsx backend/tests/serve-financial-registers-fixture.ts > work/financial-registers-browser.log 2>&1 &
           fixture_pid=$!
-          trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+          trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
           for attempt in $(seq 1 90); do
             if curl --fail --silent http://127.0.0.1:3800/api/health >/dev/null; then break; fi
             if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi

@@ -1,3 +1,4 @@
+import {controllerContext} from './v2/context.mjs';
 import {approvedChain} from '../reset/schema.js';
 import {trustedResetContext} from '../reset/context.js';
 // One-shot read-only hosted capture; restoration commands target ONLY the named ephemeral local container.
@@ -32,6 +33,7 @@ export function docker(args:string[],env:NodeJS.ProcessEnv={},input?:Buffer):Pro
  });
 }
 export function drillGuard(e:NodeJS.ProcessEnv){
+ if(controllerContext(e)){check(e.AB_BACKUP_DRILL_APPROVED==='read-only-source-isolated-restore'&&e.AB_STAGING_AUTOMATION==='controlled-test-only'&&sha(new URL(e.SUPABASE_URL||'').origin)==='9ea1a5dcb06a135b7c29d99699651b34d11f795d525b7861865c0c842fff954f','PINNED_CONTROLLER_BACKUP_REQUIRED');return backupConnection(e);}
  check(e.GITHUB_ACTIONS==='true'&&e.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&(e.GITHUB_EVENT_NAME==='push'||trustedResetContext(e))&&(e.GITHUB_REF==='refs/heads/verify/backup-restore-20261104'||['refs/heads/activate/personnel-staging-approved','refs/heads/verify/staging-rehearsal-009-013-20261104','refs/heads/staging/ab-group-test','refs/heads/verify/staging-delivery-preflight-20261104','refs/heads/verify/test-data-cleanup-preview-20261105','refs/heads/verify/reset-test-database-rehearsal-20261105','refs/heads/verify/reset-fresh-backup-20261105'].includes(e.GITHUB_REF||''))&&e.AB_BACKUP_DRILL_APPROVED==='read-only-source-isolated-restore','RUNNER_GUARD');
  if(['refs/heads/activate/personnel-staging-approved','refs/heads/verify/staging-rehearsal-009-013-20261104','refs/heads/staging/ab-group-test','refs/heads/verify/staging-delivery-preflight-20261104','refs/heads/verify/test-data-cleanup-preview-20261105','refs/heads/verify/reset-test-database-rehearsal-20261105','refs/heads/verify/reset-fresh-backup-20261105'].includes(e.GITHUB_REF||'')){if(sha(new URL(e.SUPABASE_URL||'').origin)!=='9ea1a5dcb06a135b7c29d99699651b34d11f795d525b7861865c0c842fff954f'||!((e.AB_PERSONNEL_RELEASE_APPROVED==='owner-approved-staging-only'&&e.AB_SYNTHETIC_PROJECT==='yes')||(['refs/heads/staging/ab-group-test','refs/heads/verify/staging-delivery-preflight-20261104','refs/heads/verify/test-data-cleanup-preview-20261105','refs/heads/verify/reset-test-database-rehearsal-20261105','refs/heads/verify/reset-fresh-backup-20261105'].includes(e.GITHUB_REF||'')&&e.AB_STAGING_AUTOMATION==='controlled-test-only')))throw Error('PINNED_APPROVED_TEST_RELEASE_REQUIRED');}
  return backupConnection(e);
@@ -145,10 +147,10 @@ export async function main(){
   }finally{await t2.query('ROLLBACK').catch(()=>{});t2.release();}
   // This is read-only; source data changes by other actors cannot be categorically ruled out.
   const final=await source.connect();try{await final.query('BEGIN READ ONLY');const ledger=(await final.query('select name,sha256 from public.ab_schema_migrations order by name')).rows;check(JSON.stringify(ledger)===JSON.stringify(context.ledger),'SOURCE_LEDGER_CHANGED');await final.query('ROLLBACK');}finally{await final.query('ROLLBACK').catch(()=>{});final.release();}
-  await writeFile('work/backups/restore-proof.json',JSON.stringify({format:'AB-BACKUP-RESTORE-DRILL-1',snapshotId:snapshot,encryptedObjectsVerified:true,createdAt:new Date().toISOString(),sourceCommit:process.env.GITHUB_SHA,archiveSha256:sha(sealed),restoreVerified:true,sourceReadOnly:true,baseMigrations:context.ledger.length,tables:before.rows.length,archiveRetention:retain?'existing private bucket; create-only':'ephemeral runner only; no durable archive uploaded'},null,2),{mode:0o600,flag:'wx'});
+  await writeFile('work/backups/restore-proof.json',JSON.stringify({format:'AB-BACKUP-RESTORE-DRILL-1',snapshotId:snapshot,encryptedObjectsVerified:true,createdAt:new Date().toISOString(),sourceCommit:process.env.AB_STAGING_SOURCE_SHA||process.env.GITHUB_SHA,archiveSha256:sha(sealed),restoreVerified:true,sourceReadOnly:true,baseMigrations:context.ledger.length,tables:before.rows.length,archiveRetention:retain?'existing private bucket; create-only':'ephemeral runner only; no durable archive uploaded'},null,2),{mode:0o600,flag:'wx'});
   if(retain){
    stage='PRIVATE_METADATA_UPLOAD';
-   const proof={format:'AB-RETAINED-BACKUP-1',createdAt:new Date().toISOString(),archivePath:paths.archive,archiveSha256:sha(sealed),sourceCommit:process.env.GITHUB_SHA,snapshotId:snapshot,restoreVerified:true,encryptedObjectsVerified:true,baseMigrations:context.ledger.length,backupArchiveBytesExcluded:true};
+   const proof={format:'AB-RETAINED-BACKUP-1',createdAt:new Date().toISOString(),archivePath:paths.archive,archiveSha256:sha(sealed),sourceCommit:process.env.AB_STAGING_SOURCE_SHA||process.env.GITHUB_SHA,snapshotId:snapshot,restoreVerified:true,encryptedObjectsVerified:true,baseMigrations:context.ledger.length,backupArchiveBytesExcluded:true};
    const metadata=Buffer.from('AB-BACKUP-META-1\n'+security(cfg.key).seal(proof));
    await store.upload(paths.metadata,metadata);
    const downloaded=await store.downloadVerified(paths.metadata,metadata);await store.verifyNotPublic(paths.metadata);await store.verifyBucket(sealed.length);
