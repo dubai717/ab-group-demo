@@ -1,0 +1,27 @@
+name: Company status owner-requested read-only investigation
+on:
+  push:
+    branches: [verify/company-status-readonly-20261106]
+permissions:
+  contents: read
+jobs:
+  read-only:
+    if: github.repository == 'dubai717/ab-group-demo' && github.ref == 'refs/heads/verify/company-status-readonly-20261106'
+    runs-on: ubuntu-latest
+    environment: supabase-test
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Read only target company status and aggregate relationship/audit counts
+        env:
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        run: node --import tsx backend/review/company-status-readonly.ts
+      # No deploy hook, auth key, encryption key, provider login, writes, artifacts or migrations.

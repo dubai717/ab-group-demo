@@ -1,0 +1,19 @@
+// Owner-requested, narrowly scoped investigation. No business/identity/storage writes.
+import {Pool} from 'pg';import {databaseOptions,assertVerifiedDatabaseTls} from '../src/database.js';import {sha} from '../src/core.js';
+const need=(ok:unknown,code:string)=>{if(!ok)throw Error(code);},normalize=(v:string)=>v.normalize('NFKC').replace(/[\u064B-\u065F\u0670\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/[^\p{L}\p{N}]/gu,'').toLowerCase();
+async function run(){let pool:Pool|undefined;try{
+ need(process.env.GITHUB_ACTIONS==='true'&&process.env.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&process.env.GITHUB_REF==='refs/heads/verify/company-status-readonly-20261106','CONTEXT');
+ const u=new URL(process.env.SUPABASE_URL||''),d=new URL(process.env.MIGRATION_DATABASE_URL||'');need(sha(u.origin)==='9ea1a5dcb06a135b7c29d99699651b34d11f795d525b7861865c0c842fff954f'&&u.protocol==='https:'&&!u.username&&!u.password&&!u.search&&!u.hash,'PROJECT_PIN');need(['postgres:','postgresql:'].includes(d.protocol)&&decodeURIComponent(d.username)==='postgres.'+u.hostname.split('.')[0]&&d.hostname.endsWith('.pooler.supabase.com')&&(d.port||'5432')==='5432'&&d.pathname==='/postgres'&&[...d.searchParams.keys()].every(k=>k==='sslmode'),'DATABASE_TARGET');
+ pool=new Pool({...databaseOptions(d.href),max:1,options:'-c default_transaction_read_only=on -c search_path=pg_catalog'});pool.on('error',()=>{});const c=await pool.connect();try{assertVerifiedDatabaseTls(c);await c.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');need((await c.query('SHOW transaction_read_only')).rows[0].transaction_read_only==='on','READ_ONLY_REQUIRED');await c.query("SET LOCAL statement_timeout='15s'");
+ const target=normalize('معيب للنقل'),rows=(await c.query("select id,tenant_id,data->>'arabicName' name_ar,data->>'englishName' name_en,data->>'status' status,revision from ab.companies")).rows,matches=rows.filter(r=>normalize(r.name_ar||'')===target||normalize(r.name_ar||'').includes(target));
+ console.log('CHECK: PROJECT_PIN_TLS_READ_ONLY=PASS');console.log('CHECK: TARGET_MATCH_COUNT='+matches.length);
+ if(matches.length!==1){console.log('RESULT: '+(matches.length?'AMBIGUOUS_COMPANY_MATCH_NO_CHANGES':'COMPANY_NOT_FOUND_NOT_PROOF_OF_DELETION')+'; READ_ONLY');return;}
+ const row=matches[0];need(['Active','Inactive','Suspended'].includes(row.status),'UNRECOGNIZED_STATUS');
+ const audit=(await c.query("select count(*)::int n,max(created_at) latest from ab.audit_events where tenant_id=$1 and entity_type='company' and entity_id=$2 and 'status'=any(fields)",[row.tenant_id,row.id])).rows[0];
+ const links=(await c.query("select distinct n.nspname schema_name,t.relname table_name from pg_constraint f join pg_class t on t.oid=f.conrelid join pg_namespace n on n.oid=t.relnamespace where f.contype='f'and f.confrelid='ab.companies'::regclass and n.nspname='ab'and exists(select 1 from pg_attribute a where a.attrelid=t.oid and a.attname='company_id'and not a.attisdropped)")).rows;let related=0;for(const link of links){need(/^[a-z_]+$/.test(link.table_name),'CATALOG_NAME');related+=Number((await c.query('select count(*) n from ab."'+link.table_name+'" where company_id=$1',[row.id])).rows[0].n);}
+ console.log('CHECK: COMPANY_EXISTS=true; STATUS='+row.status+'; REVISION='+row.revision);console.log('CHECK: STATUS_AUDIT_EVENTS='+audit.n+'; RELATED_ROWS='+related+'; RELATED_TABLES='+links.length);console.log('CHECK: ACTIVE_ONLY_DEFAULT_EXCLUDES_COMPANY='+(row.status!=='Active'));console.log('RESULT: COMPANY_STATUS_READ_ONLY_COMPLETE; NO_ROWS_USERS_PERMISSIONS_STORAGE_OR_SETTINGS_CHANGED');
+ }finally{await c.query('ROLLBACK').catch(()=>{});c.release();}
+}catch(e){console.log('RESULT: COMPANY_STATUS_READ_ONLY_STOP; CODE='+(e instanceof Error&&/^[A-Z_]+$/.test(e.message)?e.message:'WITHHELD')+'; NO_CHANGES');process.exitCode=1;}finally{await pool?.end().catch(()=>{});}
+
+}
+await run();
