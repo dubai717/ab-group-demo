@@ -701,7 +701,7 @@
           FinanceWorkbench.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();
           C.actor = null;
           C.csrf = "";
-          globalThis.RegisterStore?.clear();
+          globalThis.RegisterStore?.clear();globalThis.RegisterView?.clear();globalThis.FinancialTables?.clear();
           C.documents.clear();C.documentOwnerKey=null;C.documentHistory=false;
           globalThis.AttachmentViewer?.close();
           C.enrollment.clear();

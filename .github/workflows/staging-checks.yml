@@ -179,3 +179,18 @@ jobs:
           done
           curl --fail --silent http://127.0.0.1:3360/api/health >/dev/null
           node backend/tests/workspace.browser.cjs
+
+      - name: Complete financial register sources and Excel controls beyond old row limits
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --import tsx backend/tests/serve-financial-registers-fixture.ts > work/financial-registers-browser.log 2>&1 &
+          fixture_pid=$!
+          trap 'kill "$fixture_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:3800/api/health >/dev/null; then break; fi
+            if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:3800/api/health >/dev/null
+          node backend/tests/financial-registers.browser.cjs
