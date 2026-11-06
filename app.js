@@ -480,6 +480,7 @@ function getSidebarItems(user) {
 }
 
 function render() {
+  if (['testData','testUsers','test-data','test-users'].includes(app.state.currentPage)) app.state.currentPage = 'dashboard';
   if(globalThis.ABCentral?.enabled&&!globalThis.ABCentral.ready){globalThis.ABCentral.loading();return;}
   const currentUser = getCurrentUser();
   document.body.dir = getLocale() === 'ar' ? 'rtl' : 'ltr';
@@ -494,8 +495,6 @@ function render() {
   }
 
   const sidebarItems = getSidebarItems(currentUser).filter(i=>!['roles','departments'].includes(i.id));
-  if(globalThis.TestDataUI?.canEnter())sidebarItems.push({id:'testData',label:getLocale()==='ar'?'بيانات التجربة':'Test Data'});
-  if(globalThis.TestUsersUI?.canEnter())sidebarItems.push({id:'testUsers',label:getLocale()==='ar'?'تجربة المستخدمين':'Test Users'});
   if(CustomerUI.canEnter())sidebarItems.push({id:'customers',label:getLocale()==='ar'?'العملاء':'Customers'});
   if(PersonnelUI.canEnter())sidebarItems.push({id:'personnel',label:getLocale()==='ar'?'شؤون الموظفين':'Personnel'});
   if(LedgerUI.canEnter())sidebarItems.push({id:'financialManagement',label:getLocale()==='ar'?'الإدارة المالية والخزينة':'Finance & treasury'});
@@ -551,7 +550,7 @@ function render() {
 }
 
 function pageTitle(page) {
-  const titles = {testData:getLocale()==='ar'?'بيانات التجربة':'Test Data',testUsers:getLocale()==='ar'?'تجربة المستخدمين':'Test Users',personnel:getLocale()==='ar'?'شؤون الموظفين':'Personnel',financialManagement:getLocale()==='ar'?'الإدارة المالية والخزينة':'Finance & treasury',customers:getLocale()==='ar'?'العملاء':'Customers',vehicles:getLocale()==='ar'?'المركبات':'Vehicles',
+  const titles = {personnel:getLocale()==='ar'?'شؤون الموظفين':'Personnel',financialManagement:getLocale()==='ar'?'الإدارة المالية والخزينة':'Finance & treasury',customers:getLocale()==='ar'?'العملاء':'Customers',vehicles:getLocale()==='ar'?'المركبات':'Vehicles',
     dashboard: localeText('dashboard'),
     users: localeText('userManagement'),
     roles: localeText('roles'),
@@ -569,8 +568,6 @@ function renderCurrentPage() {
   const user = getCurrentUser();
   const page = app.state.currentPage;
 
-  if(page==='testData')return globalThis.TestDataUI?.render()||'';
-  if(page==='testUsers')return globalThis.TestUsersUI?.render()||'';
   if (page === 'dashboard') return renderDashboard(user);
   if (page === 'users') return renderUsers(user);
   if (page === 'roles') return renderRoles(user);
@@ -1112,8 +1109,6 @@ async function handleLogin(event) {
 }
 
 function bindGlobalEvents() {
-  globalThis.TestUsersUI?.bind();
-  globalThis.TestDataUI?.bind();
   WorkspaceUI.bind();
   CustomerUI.bind();
   VehicleUI.bind();
@@ -1146,8 +1141,6 @@ function bindGlobalEvents() {
       FinanceWorkbench.reset();
       LedgerUI.reset();
       PersonnelUI.reset();
-      globalThis.TestUsersUI?.reset();
-      globalThis.TestDataUI?.reset();
       CustomerUI.reset();
       VehicleUI.reset();
       BankAccounts.logout();

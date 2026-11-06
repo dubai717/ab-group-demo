@@ -1148,8 +1148,6 @@ export async function build(options: Options) {
       "demo-credentials.js",
       "auth-flows.js",
       "central-client.js",
-      "test-users-ui.js",
-      "reset-test-database-ui.js",
       "register-tools.js",
       "attachment-viewer.js",
       "vehicle-policy.js",
