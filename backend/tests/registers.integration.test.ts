@@ -9,3 +9,17 @@ test('register headers filter/sort all pages, navigation and exports share exact
  await f.req('GET','/api/registers/banks?grid='+encodeURIComponent(JSON.stringify({conditions:{openedAt:{op:'gt',value:'2026-02-31'}}})),undefined,422);
  const user=await f.employee();await f.req('POST','/api/users/'+user.id+'/grants',{action:'customer_view',scope:{type:'company',id:f.co1},delegable:false});await f.login(user.username,user.password);const deniedBanks=await f.req('GET','/api/registers/banks');assert.equal(deniedBanks.total,0);await f.req('GET','/api/bank-accounts/'+bank.id,undefined,403);const scoped=await f.req('GET','/api/registers/customers');assert(scoped.rows.every((x:any)=>x.companyId===f.co1));await f.req('GET','/api/registers/customers?format=excel',undefined,403);await f.req('GET','/api/registers/vehicles?grid='+encodeURIComponent(JSON.stringify({values:{private:['x']}})),undefined,422);
  }finally{await f.close();}});
+
+test('company deactivation remains listed and readable, preserves links and permissions, records audit and reactivates',async()=>{const f=await vehicleFixture();try{
+ const permissions=(await f.admin.query('select * from ab.role_permissions order by role_id,permission_id')).rows;
+ const original=await f.req('GET','/api/companies/'+f.co1);await f.req('PATCH','/api/companies/'+f.co1,{revision:original.revision,status:'Inactive'});
+ const inactive=await f.req('GET','/api/companies/'+f.co1);assert.equal(inactive.status,'Inactive');assert.equal(inactive.arabicName,original.arabicName);assert.equal(inactive.tradeLicenseNumber,original.tradeLicenseNumber);
+ const list=await f.req('GET','/api/registers/companies');assert(list.rows.some((c:any)=>c.id===f.co1&&c.status==='Inactive'));
+ const filtered=await f.req('GET','/api/registers/companies?grid='+encodeURIComponent(JSON.stringify({version:2,values:{status:['Active']}})));assert(!filtered.rows.some((c:any)=>c.id===f.co1));
+ const onlyInactive=await f.req('GET','/api/registers/companies?grid='+encodeURIComponent(JSON.stringify({version:2,values:{status:['Inactive']}})));assert(onlyInactive.rows.some((c:any)=>c.id===f.co1));
+ assert.equal((await f.admin.query('select company_id from ab.customers where id=$1',[f.client])).rows[0].company_id,f.co1);
+ await f.req('PATCH','/api/companies/'+f.co1,{revision:inactive.revision,status:'Active'});assert.equal((await f.req('GET','/api/companies/'+f.co1)).status,'Active');
+ const audit=await f.admin.query("select action,fields from ab.audit_events where entity_type='company'and action='updated'and entity_id=$1 and 'status'=any(fields)",[f.co1]);assert.equal(audit.rows.length,2);assert(audit.rows.every(x=>x.action==='updated'));
+ assert.deepEqual((await f.admin.query('select * from ab.role_permissions order by role_id,permission_id')).rows,permissions);
+ const denied=await f.employee();await f.login(denied.username,denied.password);await f.req('PATCH','/api/companies/'+f.co1,{revision:3,status:'Inactive'},403);
+ }finally{await f.close();}});
