@@ -1,0 +1,47 @@
+name: AB Group staging activation verification
+on:
+  push:
+    branches: [verify/staging-activation-20261106]
+permissions:
+  contents: read
+  actions: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Test native owner approval, cancel only this test, then dispatch checked staging pipeline
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_MAIN_SHA: 3ec48c896b11b2d833c063564c2af9bd6cf9852d
+          EXPECTED_ENTRY_BLOB: ae20181b06c89cdb544ff27fcac20a857a9a09ed
+        run: |
+          node <<'NODE'
+          // Owner-authorized activation verification. Provider secrets and databases are never accessed here.
+          const e=process.env,base='https://api.github.com/repos/dubai717/ab-group-demo';
+          const need=(ok,label)=>{if(!ok)throw Error(label);},pause=ms=>new Promise(r=>setTimeout(r,ms));
+          const api=async(path,method='GET',body)=>{const r=await fetch(base+path,{method,headers:{authorization:'Bearer '+e.GH_TOKEN,accept:'application/vnd.github+json',...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{}),redirect:'error',signal:AbortSignal.timeout(20000)});need(r.ok,'GITHUB_API_UNAVAILABLE');return r.status===204||r.status===202?null:r.json();};
+          const list=async()=> (await api('/actions/workflows/staging-delivery-dispatch.yml/runs?branch=main&event=workflow_dispatch&per_page=30')).workflow_runs;
+          const dispatch=async mode=>{const prior=new Set((await list()).map(r=>r.id));await api('/actions/workflows/staging-delivery-dispatch.yml/dispatches','POST',{ref:'main',inputs:{mode}});for(let i=0;i<40;i++){const rows=(await list()).filter(r=>!prior.has(r.id)&&r.head_sha===e.EXPECTED_MAIN_SHA);need(rows.length<=1,'AMBIGUOUS_DISPATCH');if(rows.length)return rows[0];await pause(2000);}throw Error('DISPATCH_NOT_VISIBLE');};
+          (async()=>{let approvalRun;
+          try{
+           need(e.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&e.GITHUB_REF==='refs/heads/verify/staging-activation-20261106','CONTEXT');
+           need((await api('/git/ref/heads/main')).object.sha===e.EXPECTED_MAIN_SHA,'MAIN_MOVED_REVIEW_REQUIRED');
+           need((await api('/contents/.github/workflows/staging-delivery-dispatch.yml?ref=main')).sha===e.EXPECTED_ENTRY_BLOB,'ENTRY_CHANGED_REVIEW_REQUIRED');
+           const gate=await api('/environments/staging-owner-approval'),review=gate.protection_rules.find(r=>r.type==='required_reviewers');
+           need(review?.reviewers?.length===1&&review.reviewers[0].type==='User'&&review.reviewers[0].reviewer.login==='dubai717'&&gate.can_admins_bypass===false,'OWNER_GATE_SETTINGS');
+           approvalRun=await dispatch('approval-test');console.log('CHECK: APPROVAL_TEST_RUN='+approvalRun.id);
+           let pendingVerified=false;
+           for(let i=0;i<45;i++){const pending=await api('/actions/runs/'+approvalRun.id+'/pending_deployments'),p=pending.find(p=>p.environment.name==='staging-owner-approval');if(p){need(p.reviewers?.length===1&&p.reviewers[0].type==='User'&&p.reviewers[0].reviewer.login==='dubai717','OWNER_ONLY_REQUIRED');need(p.current_user_can_approve===false,'WORKFLOW_TOKEN_MUST_NOT_APPROVE');const jobs=(await api('/actions/runs/'+approvalRun.id+'/jobs')).jobs;if(jobs.filter(j=>j.name!=='approval-test').every(j=>j.conclusion==='skipped')){pendingVerified=true;break;}}await pause(2000);}
+           need(pendingVerified,'OWNER_GATE_NOT_PROVEN_PENDING');
+           console.log('CHECK: LIVE_OWNER_GATE_WAITING=true; OWNER_ONLY=true; ADMIN_BYPASS=false; WORKFLOW_TOKEN_CAN_APPROVE=false; DEPLOYMENT_JOBS_SKIPPED=true');
+           await api('/actions/runs/'+approvalRun.id+'/cancel','POST');
+           let cancelled=false;for(let i=0;i<30;i++){const r=await api('/actions/runs/'+approvalRun.id);if(r.status==='completed'){need(r.conclusion==='cancelled','UNEXPECTED_APPROVAL_TEST_COMPLETION');cancelled=true;break;}await pause(2000);}need(cancelled,'APPROVAL_TEST_CANCELLATION_PENDING');
+           console.log('RESULT: LIVE_OWNER_GATE_TEST_PASS; CANCELLED_WITHOUT_APPROVAL; NO_PROVIDER_SECRETS_OR_DATA_OPERATIONS');
+           need((await api('/git/ref/heads/main')).object.sha===e.EXPECTED_MAIN_SHA,'MAIN_MOVED_REVIEW_REQUIRED');
+           const release=await dispatch('deploy');console.log('CHECK: STAGING_DISPATCH_RUN='+release.id);
+           for(let i=0;i<120;i++){const jobs=(await api('/actions/runs/'+release.id+'/jobs')).jobs,policy=jobs.find(j=>j.name.endsWith('/ policy'));if(policy?.status==='completed'){console.log('RESULT: STAGING_POLICY_JOB='+policy.id+'; CONCLUSION='+policy.conclusion+'; RUN='+release.id);if(policy.conclusion==='failure'){need(jobs.filter(j=>/\/ (schema|release|smoke)$/.test(j.name)).every(j=>j.status!=='in_progress'&&j.conclusion!=='success'),'UNEXPECTED_PROVIDER_JOB');}return;}const r=await api('/actions/runs/'+release.id);if(r.status==='completed'){console.log('RESULT: STAGING_DISPATCH_COMPLETED='+r.conclusion+'; RUN='+release.id);return;}await pause(2500);}
+           console.log('RESULT: STAGING_DISPATCH_STARTED; MONITOR_RUN='+release.id);
+          }catch(error){console.log('RESULT: ACTIVATION_VERIFICATION_STOP; CODE='+(/^[A-Z_]+$/.test(error.message||'')?error.message:'WITHHELD')+'; NO_SECRET_VALUES');process.exitCode=1;}
+          })();
+          NODE
