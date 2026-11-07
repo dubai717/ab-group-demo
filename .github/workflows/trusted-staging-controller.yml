@@ -30,7 +30,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
       with:
-        node-version: '24'
+        node-version: "24"
     - run: npm ci --ignore-scripts --no-audit --no-fund
     - id: policy
       env:
@@ -48,11 +48,13 @@ jobs:
     needs:
     - policy
     - owner-approval
+    - schema-readiness
     runs-on: ubuntu-latest
     environment: supabase-test
     timeout-minutes: 25
     steps:
-    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+    - &a1
+      uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       with:
         ref: ${{ inputs.controller_ref }}
         fetch-depth: 0
@@ -63,9 +65,10 @@ jobs:
         path: candidate
         fetch-depth: 0
         persist-credentials: false
-    - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+    - &a2
+      uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
       with:
-        node-version: '24'
+        node-version: "24"
     - run: npm ci --ignore-scripts --no-audit --no-fund
     - name: Refuse delivery during reset or unresolved recovery
       env:
@@ -73,6 +76,14 @@ jobs:
         SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
         DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
       run: node --import tsx backend/reset/ci-preflight.ts
+    - id: current-schema
+      name: Recheck current ledger; ordinary releases never run migrations or backup restore
+      env: &a3
+        NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      run: node --import tsx backend/deploy/schema-readiness.ts
     - name: Isolated PostgreSQL 17 for actual backup restoration
       shell: bash
       run: |
@@ -84,6 +95,7 @@ jobs:
           sleep 1
         done
         exit 1
+      if: steps.current-schema.outputs.pending != '0'
     - name: Fresh private backup, restoration and strictly additive schema gates
       env:
         NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
@@ -102,12 +114,13 @@ jobs:
         node --import tsx backend/deploy/diagnose-source-drift.ts
         node --import tsx backend/deploy/backup-restore-drill.ts
         node --import tsx backend/deploy/apply-business-centers-release.ts
+      if: steps.current-schema.outputs.pending != '0'
     - name: Remove only isolated runner copies
-      if: always()
+      if: always() && steps.current-schema.outputs.pending != '0'
       run: |
         docker rm --force --volumes ab-backup-drill-postgres > /dev/null 2>&1 || true
         rm -rf -- work/backups
-    if: always() && needs.policy.result == 'success' && (needs.owner-approval.result == 'success' || needs.owner-approval.result == 'skipped')
+    if: always() && needs.policy.result == 'success' && (needs.owner-approval.result == 'success' || needs.owner-approval.result == 'skipped') && needs.schema-readiness.result == 'success'
   release:
     needs:
     - policy
@@ -170,7 +183,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
       with:
-        node-version: '24'
+        node-version: "24"
     - run: npm ci --ignore-scripts --no-audit --no-fund
     - name: Prepare post-deploy browser without redundant downloads
       shell: bash
@@ -215,7 +228,25 @@ jobs:
     permissions: {}
     steps:
     - run: 'echo "RESULT: OWNER_APPROVED_THIS_RUN_AND_PINNED_SOURCE; NO_SECRET_OR_DATA_OPERATION"'
-'on':
+  schema-readiness:
+    needs:
+    - policy
+    runs-on: ubuntu-latest
+    environment: supabase-test
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      pending: ${{ steps.readiness.outputs.pending }}
+    steps:
+    - *a1
+    - *a2
+    - run: npm ci --ignore-scripts --no-audit --no-fund
+    - id: readiness
+      name: Read-only ledger and actual runtime identity; no role impersonation
+      env: *a3
+      run: node --import tsx backend/deploy/schema-readiness.ts
+on:
   workflow_call:
     inputs:
       source_sha:

@@ -39,3 +39,15 @@ test('isolated complete preflight: ordinary auto, unknown owner gate, failed che
   put('candidate/supabase/migrations/001_fixture.sql','-- changed');source=commit();await assert.rejects(preflight(env(),api,request),/IMMUTABLE_APPROVED_SQL_REQUIRED/);
  }finally{process.chdir(original);rmSync(dir,{recursive:true,force:true});}
 });
+
+test('fast staging checks schema read-only first and restores a backup only for pending migrations',()=>{
+ const w=parse(readFileSync('.github/workflows/trusted-staging-controller.yml','utf8'));
+ const r=w.jobs['schema-readiness'];assert.equal(r.environment,'supabase-test');assert.deepEqual(r.needs,['policy']);
+ assert.ok(!JSON.stringify(r).includes('BACKUP_ENCRYPTION_KEY'));assert.ok(!JSON.stringify(r).includes('SUPABASE_SECRET_KEY'));
+ assert.ok(r.steps.some(s=>s.run==='node --import tsx backend/deploy/schema-readiness.ts'));
+ assert.ok(w.jobs.schema.needs.includes('schema-readiness'));assert.match(w.jobs.schema.if,/schema-readiness.result == 'success'/);
+ const capture=w.jobs.schema.steps.find(s=>s.run?.includes('backup-restore-drill.ts')),docker=w.jobs.schema.steps.find(s=>s.name==='Isolated PostgreSQL 17 for actual backup restoration');
+ assert.equal(capture.if,"steps.current-schema.outputs.pending != '0'");assert.equal(docker.if,capture.if);
+ assert.ok(w.jobs.schema.steps.findIndex(s=>s.id==='current-schema')<w.jobs.schema.steps.indexOf(capture));
+ assert.equal(w.jobs['owner-approval'].environment,'staging-owner-approval');assert.equal(w.jobs['owner-approval'].if,"needs.policy.outputs.requires_owner == 'true'");
+});

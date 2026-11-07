@@ -29,28 +29,41 @@ async function checkGuard(c:PoolClient,before:Awaited<ReturnType<typeof guardSna
  for(const kind of ['constraints','policies','triggers']as const){const values=new Set(after.structure[kind].map((x:any)=>JSON.stringify(x)));for(const old of before.structure[kind])need(values.has(JSON.stringify(old)),'BUSINESS_ORIGINAL_'+kind.toUpperCase()+'_CHANGED');}
  for(const t of before.structure.rows){const now=after.structure.rows.find((x:any)=>x.s===t.s&&x.t===t.t);need(now&&now.r===t.r&&now.f===t.f,'BUSINESS_ORIGINAL_RLS_CHANGED');if(['auth','storage'].includes(t.s))need(now.n===t.n&&now.h===t.h,'BUSINESS_AUTH_OR_STORAGE_CHANGED');}
 }
-async function runtimeReads(c:PoolClient,tables:string[]){
+export async function runtimeOwner(c:PoolClient){
  const owner=(await c.query("select id,tenant_id,auth_id,auth_email from ab.users where role_id='owner'and status='Active'order by id limit 1")).rows[0];need(owner,'BUSINESS_OWNER_REQUIRED');
  const identity=(await c.query('select email=$2 matching,email_confirmed_at is not null confirmed,deleted_at is null retained,banned_until is null or banned_until<=now() allowed from auth.users where id=$1',[owner.auth_id,owner.auth_email])).rows[0];need(identity?.matching&&identity.confirmed&&identity.retained&&identity.allowed,'BUSINESS_OWNER_AUTH_IDENTITY');
  const role=(await c.query("select rolsuper,rolbypassrls from pg_roles where rolname='ab_runtime'")).rows[0];need(role&&!role.rolsuper&&!role.rolbypassrls,'BUSINESS_RUNTIME_ROLE');
- await c.query('SET LOCAL ROLE ab_runtime');await c.query("select set_config('ab.tenant','',true),set_config('ab.actor','',true)");need((await c.query('select count(*)::int n from ab.companies')).rows[0].n===0,'BUSINESS_UNSCOPED_ACCESS');
+ return owner;
+}
+async function scopedReads(c:PoolClient,owner:any,tables:string[]){
+ await c.query("select set_config('ab.tenant','',true),set_config('ab.actor','',true)");need((await c.query('select count(*)::int n from ab.companies')).rows[0].n===0,'BUSINESS_UNSCOPED_ACCESS');
  await c.query("select set_config('ab.tenant',$1,true),set_config('ab.actor',$2,true)",[owner.tenant_id,owner.id]);
  for(const t of new Set(['companies','bank_accounts','customers','vehicles','finance_journals','tasks',...tables]))await c.query('select count(*) from ab.'+qi(t));
- await c.query('RESET ROLE');
 }
-export async function applyBusinessCenters(pool:Pool,backupContext:any,options:{rehearsed?:boolean;dryRun?:boolean}={}){
- const c=await pool.connect();let phase='BEGIN';try{
+export async function actualRuntimeReads(pool:Pool,owner:any,tables:string[]){
+ const r=await pool.connect();try{await r.query('BEGIN READ ONLY');const role=(await r.query('select current_user n,rolsuper,rolbypassrls from pg_roles where rolname=current_user')).rows[0];need(role?.n==='ab_runtime'&&!role.rolsuper&&!role.rolbypassrls,'BUSINESS_REAL_RUNTIME_REQUIRED');await scopedReads(r,owner,tables);await r.query('ROLLBACK');}finally{await r.query('ROLLBACK').catch(()=>{});r.release();}
+}
+async function runtimeReads(c:PoolClient,tables:string[]){const owner=await runtimeOwner(c);await c.query('SET LOCAL ROLE ab_runtime');await scopedReads(c,owner,tables);await c.query('RESET ROLE');}
+export async function applyBusinessCenters(pool:Pool,backupContext:any,options:{rehearsed?:boolean;dryRun?:boolean;runtimePool?:Pool}={}){
+ const c=await pool.connect();let phase='BEGIN',committed=false;try{
  await c.query('BEGIN');await c.query("set local lock_timeout='10s'");await c.query("set local statement_timeout='120s'");await c.query("select pg_advisory_xact_lock(hashtext('ab-schema-migrations'))");
  const ledger=(await c.query('select name,sha256 from public.ab_schema_migrations order by name')).rows,plan=businessCatalog(),pending=validateBusinessLedger(ledger,await approvedCatalog(),plan);
- if(!pending.length){await integrity(c);await runtimeReads(c,plan.flatMap(m=>m.tables));await c.query('ROLLBACK');return {applied:0};}
+ if(!pending.length){await integrity(c);if(options.runtimePool)await actualRuntimeReads(options.runtimePool,await runtimeOwner(c),plan.flatMap(m=>m.tables));else await runtimeReads(c,plan.flatMap(m=>m.tables));await c.query('ROLLBACK');return {applied:0};}
  need(options.dryRun===true||options.rehearsed===true,'BUSINESS_REHEARSAL_REQUIRED');
  need(JSON.stringify(ledger)===JSON.stringify(backupContext.ledger),'BUSINESS_BACKUP_LEDGER_CHANGED');
  phase='LOCK_CURRENT_TABLES';const names=(await c.query("select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='ab'and c.relkind in('r','p')order by relname")).rows.map(r=>r.relname);await c.query('LOCK TABLE '+names.map(n=>'ab.'+qi(n)).join(',')+' IN SHARE ROW EXCLUSIVE MODE');
  phase='VERIFY_SOURCE';const oldTables=backupContext.manifest.rows.filter((r:any)=>r.s==='ab'),fingerprints=await sourceTableFingerprints(c,oldTables);for(const t of oldTables){const now=fingerprints.find(r=>r.s===t.s&&r.t===t.t)!;if(sourceDifference(t,now)&&!['audit_events','sessions'].includes(t.t))throw Object.assign(Error('BUSINESS_SOURCE_CHANGED_SINCE_BACKUP'),{drift:{table:t.s+'.'+t.t,before:Number(t.n),after:Number(now.n),sameCount:t.n===now.n}});}
  phase='VERIFY_ACCESS_CONTINUITY';const access=assertAccessContinuity(backupContext.manifest.access,await accessWitness(c));
  phase='CAPTURE_PRE_MIGRATION';const before=await preserveSnapshot(c),guard=await guardSnapshot(c);await integrity(c);
+ const owner=await runtimeOwner(c);if(options.runtimePool){phase='REAL_RUNTIME_BEFORE_MIGRATION';await actualRuntimeReads(options.runtimePool,owner,[]);}
  for(const m of pending){phase='APPLY_'+m.name.slice(0,3);await c.query(m.sql);await c.query('insert into public.ab_schema_migrations(name,sha256)values($1,$2)',[m.name,m.sha256]);}
- phase='VERIFY_MIGRATED_STATE';await c.query('SET CONSTRAINTS ALL IMMEDIATE');await assertPreserved(c,before);await checkGuard(c,guard,pending.map(m=>m.name.slice(0,3)));await integrity(c);await runtimeReads(c,plan.flatMap(m=>m.tables));
- await c.query(options.dryRun?'ROLLBACK':'COMMIT');return {applied:pending.length,access};
- }catch(error){await c.query('ROLLBACK').catch(()=>{});if(error&&typeof error==='object')Object.assign(error,{phase});throw error;}finally{c.release();}
+ phase='VERIFY_MIGRATED_STATE';await c.query('SET CONSTRAINTS ALL IMMEDIATE');await assertPreserved(c,before);await checkGuard(c,guard,pending.map(m=>m.name.slice(0,3)));await integrity(c);
+ if(options.runtimePool){need(!options.dryRun&&options.rehearsed===true,'BUSINESS_ISOLATED_RUNTIME_REHEARSAL_REQUIRED');const rights=(await c.query("select bool_and(has_table_privilege('ab_runtime','ab.'||t,'SELECT')) ok from unnest($1::text[])t",[plan.flatMap(m=>m.tables)])).rows[0];need(rights?.ok,'BUSINESS_RUNTIME_NEW_TABLE_ACCESS');}else{phase='ISOLATED_RUNTIME_IMPERSONATION';await runtimeReads(c,plan.flatMap(m=>m.tables));}
+ phase='COMMIT_VERIFIED_SCHEMA';await c.query(options.dryRun?'ROLLBACK':'COMMIT');committed=!options.dryRun;
+ // Hosted operator is NOT granted SET ROLE. New schema cannot be read by a
+ // second connection before commit; rehearse RLS on the clone first, verify
+ // exact grants/structure in this transaction, then read through real runtime.
+ if(options.runtimePool){phase='REAL_RUNTIME_AFTER_COMMIT';await actualRuntimeReads(options.runtimePool,owner,plan.flatMap(m=>m.tables));}
+ return {applied:pending.length,access};
+ }catch(error){await c.query('ROLLBACK').catch(()=>{});if(error&&typeof error==='object')Object.assign(error,{phase,committed});throw error;}finally{c.release();}
 }
