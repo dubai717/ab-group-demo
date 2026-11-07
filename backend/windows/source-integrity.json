@@ -30,7 +30,7 @@
     "backend/deploy/apply-safe-staging-additives.ts": "ad64c08e34b2a3919becb1a529acaad14b31a2c0b87dd2e8b30ec267400cbf30",
     "backend/deploy/backup-restore-drill.ts": "8d4ab61c126d1eea27b7d5275bb35495cc8e547e3cf69338e701d3676bf05eba",
     "backend/deploy/backup-staging.ts": "78492a9755f5497aa5b044498678e867cd7fdfcdbfbaedd3515da31cffa625db",
-    "backend/deploy/build.mjs": "99cf43aca67bbd5e5ef2920d266496d1ba0a7e45bc63455bf9b1b8024ff3d5e2",
+    "backend/deploy/build.mjs": "0527d6a504c0c56cf681918f7988e6f2910d56dba14399da00ce0b4a162e6e24",
     "backend/deploy/business-centers-catalog.d.mts": "b16340fb86e6aa62a85999de8ffd739408bf139d9dd1403f1154cf8e4023d7dd",
     "backend/deploy/business-centers-catalog.mjs": "4312999cd4572d39de38b1136bb0df589e0b9ebe7c36a01e113a7fbb8236b420",
     "backend/deploy/business-centers-release-plan.json": "d03e1fee936d30a3cfc177f0345eb4c63e37a6cc27f6d14e26bd22f1ef7318a5",
