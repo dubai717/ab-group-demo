@@ -8,7 +8,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   source:
-    if: github.repository == 'dubai717/ab-group-demo' && github.ref == 'refs/heads/main' && ((github.event_name == 'workflow_dispatch' && inputs.mode == 'deploy') || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'))
+    if: (github.repository == 'dubai717/ab-group-demo' && github.ref == 'refs/heads/main' && ((github.event_name == 'workflow_dispatch' && inputs.mode == 'deploy') || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'))) || (github.repository == 'dubai717/ab-group-demo' && github.ref == 'refs/heads/main' && github.event_name == 'push')
     runs-on: ubuntu-latest
     outputs:
       sha: ${{ steps.source.outputs.sha }}
@@ -52,7 +52,7 @@ jobs:
     steps:
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       with:
-        ref: 68894d89c05e4af0e28ad2503fd2d0d5b01cfff4
+        ref: eb36e78f04f8180c351a92892b711026507173be
         fetch-depth: 0
         persist-credentials: false
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -108,7 +108,7 @@ jobs:
         NODE
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       with:
-        ref: 68894d89c05e4af0e28ad2503fd2d0d5b01cfff4
+        ref: eb36e78f04f8180c351a92892b711026507173be
         fetch-depth: 0
         persist-credentials: false
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -152,6 +152,8 @@ jobs:
         DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
         BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
       run: |
+        set -euo pipefail
+        node --import tsx backend/deploy/diagnose-source-drift.ts
         node --import tsx backend/deploy/backup-restore-drill.ts
         node --import tsx backend/deploy/apply-business-centers-release.ts
     - name: Remove only isolated runner copies
@@ -179,7 +181,7 @@ jobs:
     steps:
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       with:
-        ref: 68894d89c05e4af0e28ad2503fd2d0d5b01cfff4
+        ref: eb36e78f04f8180c351a92892b711026507173be
         fetch-depth: 0
         persist-credentials: false
     - id: trigger
@@ -195,7 +197,7 @@ jobs:
         node <<'NODE'
         (async()=>{let stage='GUARD';try{
          const fs=require('node:fs'),crypto=require('node:crypto'),e=process.env,need=(v,l)=>{if(!v)throw Error(l);};
-         need(e.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&e.GITHUB_REF==='refs/heads/main'&&['workflow_run','workflow_dispatch'].includes(e.GITHUB_EVENT_NAME)&&e.GITHUB_WORKFLOW_REF==='dubai717/ab-group-demo/.github/workflows/staging-delivery-dispatch.yml@refs/heads/main','CONTEXT');
+         need(e.GITHUB_REPOSITORY==='dubai717/ab-group-demo'&&e.GITHUB_REF==='refs/heads/main'&&['workflow_run','workflow_dispatch','push'].includes(e.GITHUB_EVENT_NAME)&&e.GITHUB_WORKFLOW_REF==='dubai717/ab-group-demo/.github/workflows/staging-delivery-dispatch.yml@refs/heads/main','CONTEXT');
          const sha=e.AB_STAGING_SOURCE_SHA,origin='https://ab-group-demo.onrender.com';need(/^[a-f0-9]{40}$/.test(sha||'')&&/^[a-f0-9]{64}$/.test(e.EXPECTED_HOOK_HASH||'')&&/^[a-f0-9]{64}$/.test(e.EXPECTED_APP_HASH||''),'INPUTS');
          const u=new URL(e.RENDER_DEPLOY_HOOK||'');need(u.protocol==='https:'&&u.hostname==='api.render.com'&&/^\/deploy\/srv-[a-z0-9]+$/.test(u.pathname)&&u.searchParams.get('key')&&!u.username&&!u.password&&!u.hash&&crypto.createHash('sha256').update(u.pathname).digest('hex')===e.EXPECTED_HOOK_HASH,'DEPLOY_SECRET_OR_TARGET');
          const api=async(path,method='GET',body)=>{const r=await fetch('https://api.github.com/repos/dubai717/ab-group-demo'+path,{method,headers:{authorization:'Bearer '+e.GH_TOKEN,accept:'application/vnd.github+json',...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{}),redirect:'error',signal:AbortSignal.timeout(20000)});need(r.ok,'GITHUB_DEPLOYMENT_RECORD');return r.status===204?null:r.json();};
@@ -221,7 +223,7 @@ jobs:
     steps:
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       with:
-        ref: 68894d89c05e4af0e28ad2503fd2d0d5b01cfff4
+        ref: eb36e78f04f8180c351a92892b711026507173be
         fetch-depth: 0
         persist-credentials: false
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -313,6 +315,9 @@ jobs:
         if(!complete)process.exitCode=1;
         NODE
 'on':
+  push:
+    branches: [main]
+    paths: [.github/workflows/staging-delivery-dispatch.yml]
   workflow_run:
     workflows:
     - AB Group controlled staging delivery
@@ -333,4 +338,4 @@ jobs:
         - approval-test
 env:
   AB_CONTROLLER_VERIFIED: protected-v2
-  AB_CONTROLLER_REF: 68894d89c05e4af0e28ad2503fd2d0d5b01cfff4
+  AB_CONTROLLER_REF: eb36e78f04f8180c351a92892b711026507173be
