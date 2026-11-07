@@ -85,3 +85,5 @@ Reset has not been run, enabled or expanded by this delivery. Its legacy reconst
 ## CI browser isolation correction
 
 Full source checks passed server authorization and synthetic restoration, then the sequential central-browser scripts exhausted the unchanged global 300 requests/minute limit through shared server state and repeated asset loads. The same sequence reproduced HTTP 429 locally; the bank retry cycle passed when isolated. Each central/business browser suite now gets a fresh loopback server and synthetic tenant. Production rate limits, authentication and retry behavior are not changed or bypassed. Browser suites also honor the runner's existing AB_BROWSER_EXECUTABLE setting. The complete source CI must pass before activation.
+
+The retired-page regression also runs each of its three role cases on a separate minimal synthetic fixture (roles and the authorized company only). It no longer seeds unrelated finance/vehicle business data merely to check navigation. All 18 role/locale/viewport cases passed locally with the original rate limit. No production fixture, role assignment or application logic changed.

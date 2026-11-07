@@ -164,20 +164,25 @@ jobs:
             wait "$fixture_pid"
             trap - EXIT
           done
-      - name: Retired test-tool pages absent for all roles with operational navigation preserved
+      - name: Retired test tools absent for each role with independent rate-limited fixtures
         shell: bash
         run: |
           set -euo pipefail
-          node --import tsx backend/tests/serve-test-users-fixture.ts > work/test-users-browser-fixture.log 2>&1 &
-          fixture_pid=$!
-          trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
-          for attempt in $(seq 1 90); do
-            if curl --fail --silent http://127.0.0.1:3700/api/health >/dev/null; then break; fi
-            if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
-            sleep 1
+          for role_index in 0 1 2; do
+            node --import tsx backend/tests/serve-test-users-fixture.ts > work/test-users-browser-fixture.log 2>&1 &
+            fixture_pid=$!
+            trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
+            for attempt in $(seq 1 90); do
+              if curl --fail --silent http://127.0.0.1:3700/api/health >/dev/null; then break; fi
+              if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
+              sleep 1
+            done
+            curl --fail --silent http://127.0.0.1:3700/api/health >/dev/null
+            AB_RETIRED_ROLE_INDEX="$role_index" node backend/tests/test-users.browser.cjs
+            kill "$fixture_pid"
+            wait "$fixture_pid"
+            trap - EXIT
           done
-          curl --fail --silent http://127.0.0.1:3700/api/health >/dev/null
-          node backend/tests/test-users.browser.cjs
       - name: Validate portable image builds without credentials
         run: docker build -f Dockerfile.staging -t ab-group-staging-ci:${{ github.sha }} .
       - name: Required checks completed
