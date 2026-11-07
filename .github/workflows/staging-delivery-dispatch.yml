@@ -52,7 +52,7 @@ jobs:
     steps:
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       with:
-        ref: 4e201f36d9494af5c57e2b41a0e890dca7505c2f
+        ref: 98f5b0b03744990a2c9294080e683ba986a5360c
         fetch-depth: 0
         persist-credentials: false
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -108,7 +108,7 @@ jobs:
         NODE
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       with:
-        ref: 4e201f36d9494af5c57e2b41a0e890dca7505c2f
+        ref: 98f5b0b03744990a2c9294080e683ba986a5360c
         fetch-depth: 0
         persist-credentials: false
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -148,11 +148,12 @@ jobs:
         SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
         MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
         DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
         BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
       run: |
         node --import tsx backend/deploy/backup-restore-drill.ts
-        node --import tsx backend/deploy/apply-safe-staging-additives.ts
+        node --import tsx backend/deploy/apply-business-centers-release.ts
     - name: Remove only isolated runner copies
       if: always()
       run: |
@@ -178,7 +179,7 @@ jobs:
     steps:
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       with:
-        ref: 4e201f36d9494af5c57e2b41a0e890dca7505c2f
+        ref: 98f5b0b03744990a2c9294080e683ba986a5360c
         fetch-depth: 0
         persist-credentials: false
     - id: trigger
@@ -220,7 +221,7 @@ jobs:
     steps:
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       with:
-        ref: 4e201f36d9494af5c57e2b41a0e890dca7505c2f
+        ref: 98f5b0b03744990a2c9294080e683ba986a5360c
         fetch-depth: 0
         persist-credentials: false
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -332,4 +333,4 @@ jobs:
         - approval-test
 env:
   AB_CONTROLLER_VERIFIED: protected-v2
-  AB_CONTROLLER_REF: 4e201f36d9494af5c57e2b41a0e890dca7505c2f
+  AB_CONTROLLER_REF: 98f5b0b03744990a2c9294080e683ba986a5360c
