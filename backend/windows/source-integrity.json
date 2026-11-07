@@ -152,6 +152,7 @@
     "backend/tests/document-center.test.ts": "74729ca6c80312f49b10a259eb6c69d4545d693802ca31806691549c2d4546b4",
     "backend/tests/document-text-portable.test.ts": "acd43c14d5324c8f2ceaf30d3138922d9264bd6785e32be752a5d7f1b738f23d",
     "backend/tests/document-text.test.ts": "d3fe8a31eacd93ceef0a16a625939d37155f870c8354994428e8eb786c0cf69f",
+    "backend/tests/financial-registers.browser.cjs": "6d91fbf80cf1aeb6a89d4d483f2429571b4ee171d22bb7c96deb70f32970f61f",
     "backend/tests/investor-evidence.browser.cjs": "dcaacc1d90969db27769c0e4067ae039876624caacb46c69ff09c6926da7cf0e",
     "backend/tests/investor-evidence.test.ts": "bf6a5e47fa970c09f0d4a8ca6eb40454e2c37870b90a3ad848057ea86c30be2e",
     "backend/tests/investors.test.ts": "0a114d745132d048f48292bb27c2060d49e3b565f7c858f9e1876b6f6a809edd",
@@ -159,8 +160,10 @@
     "backend/tests/migration-registry.test.ts": "c74309dc71d4fb2d195ca3f7bfa7e2f12db8aa901e79d0619dbb795c1a4d9b7f",
     "backend/tests/report-jobs.test.ts": "300dc9aec9ca5b54078e83f00124b6cad40dd97e3951898f861669235904c121",
     "backend/tests/serve-business-centers-fixture.ts": "249151a34c2ea874cfaf5defe2c0210ef716329c35a27cab45a93371f0882344",
+    "backend/tests/serve-test-users-fixture.ts": "b21f4f792e9dcdf0176c2694f3f4562dff6816a31ecff65523c87d6df732ed67",
     "backend/tests/source-fingerprint.d.mts": "1dcb2609482ec2751553ea75408f46817b19d8f8b66dc880dd754c6098404eea",
     "backend/tests/source-fingerprint.mjs": "543b3ef7eba1238a11c696c2d54db54ed36cada1a0ad29c379354ce035fe7a6e",
+    "backend/tests/test-users.browser.cjs": "4ca192aeba78e1b97d9f0a784fed3fea3ffde0650cb8bb616635c1dc82fd6e13",
     "backend/tests/view-as.test.ts": "5e65b9b7d8fc3460ddb8bd6af4350db36f521604c22d24f6b0d8cf1926713cb0",
     "backend/tsconfig.json": "bc54938bfc1f4129213db63e5e8753c9997b5bf3bb3ee87103f22517c2e1a445",
     "backend/windows/Start-ABGroup.ps1": "57eef943a6ed33ffcc61dfb34eb6db27b1e17456c6cff3a907c164cdabd1f2f9",
@@ -223,8 +226,6 @@
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
     "vehicles.js": "e85418df559ef8ad949f426bd79d5a676970bdb01fbeac3de7c93cfb7c82f77b",
     "view-as-ui.js": "406841beae070bd16c8be952d5b2abcd05e41a2d353a68a1bcae37b5ec47cb03",
-    "workspace-ui.js": "af607edf9d07b45a6e276a8e7477330dd751a36899a9981c9ba2b60ddfcc2ed3",
-    "backend/tests/test-users.browser.cjs": "4ca192aeba78e1b97d9f0a784fed3fea3ffde0650cb8bb616635c1dc82fd6e13",
-    "backend/tests/serve-test-users-fixture.ts": "b21f4f792e9dcdf0176c2694f3f4562dff6816a31ecff65523c87d6df732ed67"
+    "workspace-ui.js": "af607edf9d07b45a6e276a8e7477330dd751a36899a9981c9ba2b60ddfcc2ed3"
   }
 }
