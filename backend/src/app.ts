@@ -1,7 +1,7 @@
 import {investorEvidenceRead,investorEvidenceUpload,recordInvestorEvidence,registerInvestorEvidence} from './investor-evidence.js';
 import {registerRecordLinks} from './record-links.js';
 import {registerInvestorRatingPolicy} from './investor-rating.js';
-import { projectOwnerSession,registerViewAs,viewAsCookie } from './view-as.js';
+import { projectOwnerSession,registerViewAs,viewAsCookie,isReadOnlyPost } from './view-as.js';
 import { indexDocumentText } from './document-text.js';
 import { registerCommunications } from './communications.js';
 import { registerCentralDashboard } from './central-dashboard.js';
@@ -198,7 +198,7 @@ export async function build(options: Options) {
       const s = await session(req);
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
         // Personnel export contains personal contact data; never cache the file in request_dedup.
-        const key = s.viewAs || req.method === "GET" || ["/api/personnel/export","/api/central-reports/preview","/api/central-reports/export","/api/communication-templates/preview","/api/communications/from-template/preview"].includes(req.url.split("?")[0]) ? undefined : req.headers["idempotency-key"];
+        const key = s.viewAs || req.method === "GET" || isReadOnlyPost(req.url.split("?")[0]) ? undefined : req.headers["idempotency-key"];
         const fingerprint = cipher.digest(
           req.method + req.url + JSON.stringify(req.body || null),
         );

@@ -574,10 +574,10 @@ function renderCurrentPage() {
   const user = getCurrentUser();
   const page = app.state.currentPage;
 
-  if(page==='contractingCompanies')return ContractingCompaniesUI.render();
-  if(page==='marketing')return MarketingUI.render();
-  if(page==='investors')return InvestorUI.render();
-  if (['documentCenter','approvalCenter'].includes(page)) return BusinessCenters.render(page);
+  if(globalThis.ABCentral?.enabled&&page==='contractingCompanies')return ContractingCompaniesUI.render();
+  if(globalThis.ABCentral?.enabled&&page==='marketing')return MarketingUI.render();
+  if(globalThis.ABCentral?.enabled&&page==='investors')return InvestorUI.render();
+  if (globalThis.ABCentral?.enabled&&['documentCenter','approvalCenter'].includes(page)) return BusinessCenters.render(page);
   if (page === 'dashboard') return renderDashboard(user);
   if (page === 'users') return renderUsers(user);
   if (page === 'roles') return renderRoles(user);

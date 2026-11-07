@@ -51,3 +51,5 @@ DO $$DECLARE tab text;BEGIN FOREACH tab IN ARRAY ARRAY['marketing_prospects','ma
 DO $$DECLARE tab text;BEGIN FOREACH tab IN ARRAY ARRAY['marketing_prospects','marketing_opportunities','marketing_contracts','marketing_allocations','marketing_events','marketing_targets']LOOP
  EXECUTE format('CREATE POLICY personnel_active_actor ON ab.%I AS RESTRICTIVE TO ab_runtime USING(ab.hr_actor_allowed())WITH CHECK(ab.hr_actor_allowed())',tab);
 END LOOP;END$$;
+CREATE INDEX marketing_entity_history ON ab.marketing_events(tenant_id,company_id,entity_id,created_at,id);
+CREATE INDEX marketing_review_history ON ab.marketing_events(tenant_id,company_id,kind,created_at DESC,id DESC);
