@@ -1,3 +1,13 @@
+import { indexDocumentText } from './document-text.js';
+import { registerCommunications } from './communications.js';
+import { registerCentralDashboard } from './central-dashboard.js';
+import { registerCentralReports } from './central-reports.js';
+import { registerInvestors } from './investors.js';
+import { registerMarketing } from './marketing.js';
+import { registerApprovalCenter } from './approval-center.js';
+import { registerDocumentCenter } from './document-center.js';
+import { documentRight } from './document-access.js';
+import { registerCollectionFollowup } from './collection-followup.js';
 import {companyAuditView} from './company-audit.js';
 import {withdrawAttachment} from './attachment-history.js';
 import {registerTestWorkspace} from './test-workspace.js';
@@ -182,7 +192,7 @@ export async function build(options: Options) {
       const s = await session(req);
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
         // Personnel export contains personal contact data; never cache the file in request_dedup.
-        const key = req.method === "GET" || req.url === "/api/personnel/export" ? undefined : req.headers["idempotency-key"];
+        const key = req.method === "GET" || ["/api/personnel/export","/api/central-reports/preview","/api/central-reports/export","/api/communication-templates/preview"].includes(req.url.split("?")[0]) ? undefined : req.headers["idempotency-key"];
         const fingerprint = cipher.digest(
           req.method + req.url + JSON.stringify(req.body || null),
         );
@@ -222,6 +232,14 @@ export async function build(options: Options) {
     };
   registerFinance(app,call,cipher);
   registerCustomers(app,call,cipher,options);
+  registerCollectionFollowup(app,call,cipher);
+  registerDocumentCenter(app,call,cipher,options);
+  registerApprovalCenter(app,call);
+  registerMarketing(app,call,cipher);
+  registerInvestors(app,call,cipher);
+  registerCentralReports(app,call,cipher);
+  registerCentralDashboard(app,call,cipher);
+  registerCommunications(app,call,cipher);
   registerVehicles(app,call,cipher,options);
   registerRegisters(app,call,cipher);
   registerLedger(app,call,cipher);
@@ -754,42 +772,6 @@ export async function build(options: Options) {
     }),
   );
   // Explicit ownership FKs; no generic ownerId that can point outside the tenant/account.
-  const documentRight = (
-    m: any,
-    owner: any,
-    write: boolean,
-    initialEnrollment = false,
-  ) => {
-    requireOk(!owner.employee_id && !owner.personnel_library_id,403,"personnelDocumentRouteRequired");
-    if (owner.bank_account_id) {
-      const row = m.state.bankAccounts.find(
-        (b: any) => b.id === owner.bank_account_id,
-      );
-      requireOk(row, 404, "notFound");
-      requireOk(
-        m.bank.can(
-          write ? "manage_documents" : "view_documents",
-          row.companyId,
-        ),
-      );
-    } else if (owner.company_id) {
-      requireOk(
-        m.state.companies.some((co: any) => co.id === owner.company_id),
-        404,
-        "notFound",
-      );
-      requireOk(write ? m.company.canEdit() : m.company.canFiles());
-    } else {
-      const user = m.policy.actor(owner.user_id);
-      requireOk(user, 404, "notFound");
-      requireOk(
-        m.policy.can(m.actor.id, "attachments", user) &&
-          (!write ||
-            m.policy.can(m.actor.id, "edit", user) ||
-            (initialEnrollment && m.policy.can(m.actor.id, "create", user))),
-      );
-    }
-  };
   app.get(
     "/api/documents",
     call(async (c, m, s, req) => {
@@ -1088,6 +1070,7 @@ export async function build(options: Options) {
         documentId,
         ["version", String(version), d.category],
       );
+      await indexDocumentText(c,cipher,s,'version_id',versionId,file,d.mime,scan);
       return { id: documentId, versionId, version, scanStatus: scan };
     }),
   );
@@ -1172,6 +1155,14 @@ export async function build(options: Options) {
       "ledger-ui.js",
       "personnel-policy.js",
       "personnel-ui.js",
+      "business-centers.js",
+      "center-forms.js",
+      "collection-ui.js",
+      "dashboard-ui.js",
+      "reports-ui.js",
+      "communications-ui.js",
+      "marketing-ui.js",
+      "investors-ui.js",
       "workspace-ui.js",
       "data/uae-areas.js",
       "assets/Untitled.png",

@@ -72,6 +72,7 @@
   C.companyClosed=()=>{activeCompany=null;};
   async function load(draw = true) {
     const b = await api("bootstrap");
+    if(C.actor?.id!==b.actor.id)globalThis.CenterForms?.clear();
     C.actor = b.actor;
     C.resetTestDatabaseAvailable=b.resetTestDatabaseAvailable===true;
     C.csrf = b.csrfToken;
@@ -714,6 +715,7 @@
         if (action === "logout") {
           await api("logout", "POST", {});
           FinanceWorkbench.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();
+          globalThis.CenterForms?.clear();
           C.actor = null;
           C.csrf = "";
           globalThis.RegisterStore?.clear();globalThis.RegisterView?.clear();globalThis.FinancialTables?.clear();

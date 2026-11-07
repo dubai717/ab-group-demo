@@ -499,6 +499,10 @@ function render() {
   if(PersonnelUI.canEnter())sidebarItems.push({id:'personnel',label:getLocale()==='ar'?'شؤون الموظفين':'Personnel'});
   if(LedgerUI.canEnter())sidebarItems.push({id:'financialManagement',label:getLocale()==='ar'?'الإدارة المالية والخزينة':'Finance & treasury'});
   if(VehicleUI.canEnter())sidebarItems.push({id:'vehicles',label:getLocale()==='ar'?'المركبات':'Vehicles'});
+  sidebarItems.push(...BusinessCenters.sidebar());
+  if(MarketingUI.canEnter())sidebarItems.push({id:'marketing',label:getLocale()==='ar'?'التسويق وتطوير الأعمال':'Marketing & business development'});
+  if(InvestorUI.canEnter())sidebarItems.push({id:'investors',label:getLocale()==='ar'?'المستثمرون':'Investors'});
+  if(globalThis.ABCentral?.enabled&&currentUser.roleId==='investor'){sidebarItems.splice(0,sidebarItems.length,{id:'investors',label:getLocale()==='ar'?'لوحة المستثمر':'Investor portal'});if(app.state.currentPage==='dashboard')app.state.currentPage='investors';}
   appEl.innerHTML = `
     <div class="app-shell">
       <aside class="sidebar">
@@ -561,13 +565,16 @@ function pageTitle(page) {
     reports: localeText('reports'),
     notifications: localeText('notifications')
   };
-  return titles[page] || localeText('dashboard');
+  return BusinessCenters.title(page) || titles[page] || localeText('dashboard');
 }
 
 function renderCurrentPage() {
   const user = getCurrentUser();
   const page = app.state.currentPage;
 
+  if(page==='marketing')return MarketingUI.render();
+  if(page==='investors')return InvestorUI.render();
+  if (['documentCenter','approvalCenter'].includes(page)) return BusinessCenters.render(page);
   if (page === 'dashboard') return renderDashboard(user);
   if (page === 'users') return renderUsers(user);
   if (page === 'roles') return renderRoles(user);
@@ -579,12 +586,13 @@ function renderCurrentPage() {
   if(page==='personnel')return PersonnelUI.render();
   if(page==='financialManagement')return LedgerUI.render();
   if (page === 'tasks') return globalThis.ABCentral?.enabled?PersonnelUI.renderTasks():renderTasks(user);
-  if (page === 'reports') return renderReports(user);
-  if (page === 'notifications') return renderNotifications(user)+CustomerUI.notificationHTML();
+  if (page === 'reports') return globalThis.ABCentral?.enabled?ReportUI.render():renderReports(user);
+  if (page === 'notifications') return globalThis.ABCentral?.enabled?CommunicationsUI.render():renderNotifications(user)+CustomerUI.notificationHTML();
   return renderDashboard(user);
 }
 
 function renderDashboard(user) {
+  if(globalThis.ABCentral?.enabled)return DashboardUI.render();
   const summary = UserManagement.summary();
   const totalUsers = summary.total;
   const activeUsers = summary.active;
@@ -1081,6 +1089,12 @@ async function handleLogin(event) {
 }
 
 function bindGlobalEvents() {
+  BusinessCenters.bind();
+  CommunicationsUI.bind();
+  DashboardUI.bind();
+  ReportUI.bind();
+  MarketingUI.bind();
+  InvestorUI.bind();
   WorkspaceUI.bind();
   CustomerUI.bind();
   VehicleUI.bind();

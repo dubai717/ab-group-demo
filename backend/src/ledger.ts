@@ -1,3 +1,4 @@
+import { assertInvestorPayoutEligible,notifyInvestorCheque } from './investors.js';
 import {registerArgs,filterRegister,registerResponse} from './register-query.js';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
@@ -400,6 +401,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
             if (snapshot.length > 1)
                 need(m, 'voucher_batch', r.company_id);
             requireOk(r.status === 'Pending' && r.revision === expected.revision, 409, 'revisionConflict');
+            await assertInvestorPayoutEligible(c,cipher,r.id);
             const ch = (await c.query('select * from ab.finance_cheques where id=$1', [r.cheque_id])).rows[0];
             await evidence(c, m, r.company_id, ch.document_version_id);
             const it = await item(c, cipher, m, r.item_id, r.company_id, true), details = cipher.open(r.payload_cipher), payable = details.payableOverrideId ? await chart(c, r.company_id, r.currency, details.payableOverrideId) : await resolve(c, r.company_id, r.currency, it.data.payableId);
@@ -409,6 +411,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
             }
             await c.query("update ab.finance_vouchers set status='Approved',approved_by=$2,approved_at=now(),revision=revision+1 where id=$1", [r.id, s.user_id]);
             await event(c, cipher, s, r.company_id, r.id, 'voucher_approved', { status: r.status }, { status: 'Approved', bankCleared: false, signedEvidenceAttestation: true });
+            await notifyInvestorCheque(c,s,r.id);
         }
         await c.query('update ab.finance_approval_batches set used_at=now()where id=$1', [b.id]);
         return { approved: snapshot.length, bankCleared: false };
@@ -418,6 +421,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
         requireOk(r, 404, 'notFound');
         need(m, 'settle', r.company_id);
         requireOk(r.status === 'Approved' && r.cheque_id && !r.operation_id, 409, 'invalidTransition');
+        await assertInvestorPayoutEligible(c,cipher,r.id);
         requireOk(d.effectiveOn >= r.issued_on.toISOString().slice(0, 10), 422, 'invalidDate');
         const ch = (await c.query('select * from ab.finance_cheques where id=$1', [r.cheque_id])).rows[0];
         requireOk(!['Returned', 'Cancelled', 'Collected'].includes(ch.status), 409, 'invalidTransition');
