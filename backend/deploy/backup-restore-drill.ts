@@ -1,4 +1,5 @@
-import {sourceTableFingerprint} from './source-fingerprint.js';
+import {accessWitness} from './access-continuity.js';
+import {sourceTableFingerprints} from './source-fingerprint.js';
 import {businessCatalog,validateBusinessLedger} from './business-centers-catalog.mjs';
 import {approvedCatalog} from './safe-staging-additives.js';
 import {controllerContext} from './v2/context.mjs';
@@ -43,15 +44,11 @@ export function drillGuard(e:NodeJS.ProcessEnv){
 }
 export async function manifest(c:PoolClient){
  const tables=(await c.query("select n.nspname s,c.relname t,c.relrowsecurity r,c.relforcerowsecurity f from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname=any($1::text[]) and c.relkind in('r','p') order by 1,2",[schemas])).rows;
- const rows=[];
- for(const t of tables){
-  const r=await sourceTableFingerprint(c,t.s,t.t);
-  rows.push({...t,...r});
- }
+ const fingerprints=await sourceTableFingerprints(c,tables),rows=tables.map(t=>({...t,...fingerprints.find(r=>r.s===t.s&&r.t===t.t)}));
  const constraints=(await c.query("select n.nspname s,t.relname t,c.conname n,c.contype y,c.convalidated v,pg_get_constraintdef(c.oid) d from pg_constraint c join pg_class t on t.oid=c.conrelid join pg_namespace n on n.oid=t.relnamespace where n.nspname=any($1::text[]) order by 1,2,3",[schemas])).rows;
  const policies=(await c.query('select * from pg_policies where schemaname=any($1::text[]) order by schemaname,tablename,policyname',[schemas])).rows;
  const triggers=(await c.query("select n.nspname s,t.relname t,g.tgname n,g.tgenabled e,pg_get_triggerdef(g.oid) d from pg_trigger g join pg_class t on t.oid=g.tgrelid join pg_namespace n on n.oid=t.relnamespace where n.nspname=any($1::text[]) and not g.tgisinternal order by 1,2,3",[schemas])).rows;
- return {rows,constraints,policies,triggers};
+ return {rows,constraints,policies,triggers,access:await accessWitness(c)};
 }
 export async function main(){
  let source:Pool|undefined,target:Pool|undefined,stage='GUARD';let retainedPath:string|undefined;

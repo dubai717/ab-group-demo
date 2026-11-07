@@ -1,4 +1,5 @@
-import {sourceTableFingerprint,sourceDifference} from './source-fingerprint.js';
+import {accessWitness,assertAccessContinuity} from './access-continuity.js';
+import {sourceTableFingerprints,sourceDifference} from './source-fingerprint.js';
 // Exact reviewed SQL only. Every change is transactional; original rows and grants are compared.
 import type {Pool,PoolClient} from 'pg';
 import {manifest} from './backup-restore-drill.js';
@@ -38,17 +39,18 @@ async function runtimeReads(c:PoolClient,tables:string[]){
  await c.query('RESET ROLE');
 }
 export async function applyBusinessCenters(pool:Pool,backupContext:any,options:{rehearsed?:boolean;dryRun?:boolean}={}){
- const c=await pool.connect();try{
+ const c=await pool.connect();let phase='BEGIN';try{
  await c.query('BEGIN');await c.query("set local lock_timeout='10s'");await c.query("set local statement_timeout='120s'");await c.query("select pg_advisory_xact_lock(hashtext('ab-schema-migrations'))");
  const ledger=(await c.query('select name,sha256 from public.ab_schema_migrations order by name')).rows,plan=businessCatalog(),pending=validateBusinessLedger(ledger,await approvedCatalog(),plan);
  if(!pending.length){await integrity(c);await runtimeReads(c,plan.flatMap(m=>m.tables));await c.query('ROLLBACK');return {applied:0};}
  need(options.dryRun===true||options.rehearsed===true,'BUSINESS_REHEARSAL_REQUIRED');
  need(JSON.stringify(ledger)===JSON.stringify(backupContext.ledger),'BUSINESS_BACKUP_LEDGER_CHANGED');
- const names=(await c.query("select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='ab'and c.relkind in('r','p')order by relname")).rows.map(r=>r.relname);await c.query('LOCK TABLE '+names.map(n=>'ab.'+qi(n)).join(',')+' IN SHARE ROW EXCLUSIVE MODE');
- for(const t of backupContext.manifest.rows.filter((r:any)=>r.s==='ab')){const now=await sourceTableFingerprint(c,t.s,t.t);if(sourceDifference(t,now))throw Object.assign(Error('BUSINESS_SOURCE_CHANGED_SINCE_BACKUP'),{drift:{table:t.s+'.'+t.t,before:Number(t.n),after:Number(now.n),sameCount:t.n===now.n}});}
- const before=await preserveSnapshot(c),guard=await guardSnapshot(c);await integrity(c);
- for(const m of pending){await c.query(m.sql);await c.query('insert into public.ab_schema_migrations(name,sha256)values($1,$2)',[m.name,m.sha256]);}
- await c.query('SET CONSTRAINTS ALL IMMEDIATE');await assertPreserved(c,before);await checkGuard(c,guard,pending.map(m=>m.name.slice(0,3)));await integrity(c);await runtimeReads(c,plan.flatMap(m=>m.tables));
- await c.query(options.dryRun?'ROLLBACK':'COMMIT');return {applied:pending.length};
- }catch(error){await c.query('ROLLBACK').catch(()=>{});throw error;}finally{c.release();}
+ phase='LOCK_CURRENT_TABLES';const names=(await c.query("select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='ab'and c.relkind in('r','p')order by relname")).rows.map(r=>r.relname);await c.query('LOCK TABLE '+names.map(n=>'ab.'+qi(n)).join(',')+' IN SHARE ROW EXCLUSIVE MODE');
+ phase='VERIFY_SOURCE';const oldTables=backupContext.manifest.rows.filter((r:any)=>r.s==='ab'),fingerprints=await sourceTableFingerprints(c,oldTables);for(const t of oldTables){const now=fingerprints.find(r=>r.s===t.s&&r.t===t.t)!;if(sourceDifference(t,now)&&!['audit_events','sessions'].includes(t.t))throw Object.assign(Error('BUSINESS_SOURCE_CHANGED_SINCE_BACKUP'),{drift:{table:t.s+'.'+t.t,before:Number(t.n),after:Number(now.n),sameCount:t.n===now.n}});}
+ phase='VERIFY_ACCESS_CONTINUITY';const access=assertAccessContinuity(backupContext.manifest.access,await accessWitness(c));
+ phase='CAPTURE_PRE_MIGRATION';const before=await preserveSnapshot(c),guard=await guardSnapshot(c);await integrity(c);
+ for(const m of pending){phase='APPLY_'+m.name.slice(0,3);await c.query(m.sql);await c.query('insert into public.ab_schema_migrations(name,sha256)values($1,$2)',[m.name,m.sha256]);}
+ phase='VERIFY_MIGRATED_STATE';await c.query('SET CONSTRAINTS ALL IMMEDIATE');await assertPreserved(c,before);await checkGuard(c,guard,pending.map(m=>m.name.slice(0,3)));await integrity(c);await runtimeReads(c,plan.flatMap(m=>m.tables));
+ await c.query(options.dryRun?'ROLLBACK':'COMMIT');return {applied:pending.length,access};
+ }catch(error){await c.query('ROLLBACK').catch(()=>{});if(error&&typeof error==='object')Object.assign(error,{phase});throw error;}finally{c.release();}
 }

@@ -3,7 +3,7 @@ import {docker} from '../deploy/backup-restore-drill.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {sourceTableFingerprint} from '../deploy/source-fingerprint.js';
+import {sourceTableFingerprint,sourceTableFingerprints} from '../deploy/source-fingerprint.js';
 import {personnelFixture} from './personnel-fixture.js';
 import {manifest} from '../deploy/backup-restore-drill.js';
 import {applyBusinessCenters} from '../deploy/business-centers-release.js';
@@ -21,6 +21,20 @@ test('ordered business migration rehearsal preserves populated original finance,
  const bill=await f.bill('100'),receipt=await f.collection('25');const context=async()=>{const c=await f.admin.connect();try{return{ledger:(await c.query('select name,sha256 from public.ab_schema_migrations order by name')).rows,manifest:await manifest(c)};}finally{c.release();}};
  const original=(await f.admin.query('select * from ab.vehicle_invoices where id=$1',[bill.id])).rows[0],grants=(await f.admin.query('select * from ab.role_permissions order by role_id,permission_id')).rows;
  await t.test('missing rehearsal permission stops without DDL',async()=>{await assert.rejects(applyBusinessCenters(f.admin,await context()),/BUSINESS_REHEARSAL_REQUIRED/);assert.equal((await f.admin.query("select to_regclass('ab.contracting_companies')x")).rows[0].x,null);});
+ await t.test('login committing concurrently with the migration lock is preserved and rehearsed',async()=>{
+  const ctx=await context(),writer=await f.admin.connect(),u=(await f.admin.query("select id,tenant_id from ab.users where role_id='owner' limit 1")).rows[0];
+  try{await writer.query('begin');await writer.query("insert into ab.sessions values($1,$2,$3,'synthetic-token',now()+interval '1 hour')",[crypto.randomUUID(),u.tenant_id,u.id]);await writer.query("insert into ab.audit_events(id,tenant_id,actor_id,action,entity_type,request_id)values(gen_random_uuid(),$1,$2,'login','session',gen_random_uuid())",[u.tenant_id,u.id]);
+   const pending=applyBusinessCenters(f.admin,ctx,{dryRun:true});await new Promise(r=>setTimeout(r,50));await writer.query('commit');const result=await pending;assert.equal(result.applied,12);assert.equal(result.access?.auditAdded,1);assert.equal(result.access?.sessionsAdded,1);
+  }finally{await writer.query('rollback');writer.release();}
+ });
+ await t.test('logout expiry and its audit survive the migration unchanged',async()=>{
+  const ctx=await context(),u=(await f.admin.query("select id,tenant_id from ab.users where role_id='owner' limit 1")).rows[0];
+  await f.admin.query("with expired as(update ab.sessions set expires_at=now() where id_hash=(select id_hash from ab.sessions where token_cipher='synthetic-token' limit 1))insert into ab.audit_events(id,tenant_id,actor_id,action,entity_type,request_id)values(gen_random_uuid(),$1,$2,'logout','session',gen_random_uuid())",[u.tenant_id,u.id]);
+  assert.equal((await applyBusinessCenters(f.admin,ctx,{dryRun:true})).access?.sessionsExpired,1);
+ });
+ await t.test('concurrent financial activity still stops before applying any migration',async()=>{const ctx=await context();await f.bill('17');await assert.rejects(applyBusinessCenters(f.admin,ctx,{dryRun:true}),/BUSINESS_SOURCE_CHANGED_SINCE_BACKUP/);assert.equal((await f.admin.query('select count(*)::int n from public.ab_schema_migrations')).rows[0].n,13);});
+ await t.test('changed permission distribution still stops before DDL',async()=>{const ctx=await context(),grant=(await f.admin.query("select role_id,permission_id from ab.role_permissions where role_id<>'owner' limit 1")).rows[0];assert.ok(grant);await f.admin.query('delete from ab.role_permissions where role_id=$1 and permission_id=$2',[grant.role_id,grant.permission_id]);try{await assert.rejects(applyBusinessCenters(f.admin,ctx,{dryRun:true}),/BUSINESS_SOURCE_CHANGED_SINCE_BACKUP/);}finally{await f.admin.query('insert into ab.role_permissions(role_id,permission_id)values($1,$2)',[grant.role_id,grant.permission_id]);}});
+ await t.test('batched source check is exactly equal to individual table hashes',async()=>{const c=await f.admin.connect();try{const tables=['audit_events','sessions','users','finance_entries','role_permissions'].map(t=>({s:'ab',t}));const batch=await sourceTableFingerprints(c,tables);for(const t of tables){const r=batch.find(x=>x.t===t.t)!;assert.deepEqual({n:r.n,h:r.h},await sourceTableFingerprint(c,t.s,t.t));}}finally{c.release();}});
  const backedUp=await context();
  await t.test('actual PostgreSQL archive settings extract is confined to isolated COPY data',async()=>{const bytes=await docker(['exec','-i','--env','PGPASSWORD','ab-postgres-foundation','pg_dump','--host=127.0.0.1','--username=postgres','--dbname='+f.sourceDatabase,'--format=custom','--data-only','--table=ab.settings'],{PGPASSWORD:f.secret.admin});const sql=await docker(['exec','-i','ab-postgres-foundation','pg_restore','--data-only','--schema=ab','--table=settings','--no-owner','--no-privileges','--file=-'],{},bytes);assert.ok(isolatedSettingsCopy(sql.toString()).toString().startsWith('COPY ab_drift_diagnostic.settings'));});
  await t.test('shared source fingerprint preserves the exact original restored-backup hash format',async()=>{const c=await f.admin.connect();try{for(const table of ['users','vehicle_invoices','finance_entries']){const legacy=(await c.query("select count(*)::text n,md5(coalesce(string_agg(md5(row_to_json(x)::text),'' order by md5(row_to_json(x)::text)),'')) h from ab.\""+table+"\" x")).rows[0];assert.deepEqual(await sourceTableFingerprint(c,'ab',table),legacy);}}finally{c.release();}});

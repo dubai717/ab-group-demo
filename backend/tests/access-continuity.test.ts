@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {assertAccessContinuity,type AccessWitness} from '../deploy/access-continuity.js';
+const session={id:'old',hash:'old',immutable:'identity-and-token',tenant:'tenant',actor:'user',expiry:1100,valid:true};
+const event={id:'old',hash:'untouched',tenant:'tenant',actor:'user',action:'login',kind:'session',entity:null,fields:[],actorType:'user',valid:true};
+const before=():AccessWitness=>({version:1,audit:[{...event}],sessions:[{...session}]});
+const login=(a:AccessWitness)=>{a.audit.push({...event,id:'login',hash:'new'});a.sessions.push({...session,id:'new',hash:'new',expiry:1200});return a;};
+test('concurrent login preserves every original record and matches one new session to audit',()=>{assert.deepEqual(assertAccessContinuity(before(),login(before()),1000),{auditAdded:1,sessionsAdded:1,sessionsExpired:0});});
+test('logout only shortens expiry and requires its new audit event',()=>{const a=before();a.sessions[0]={...session,hash:'expired',expiry:999};a.audit.push({...event,id:'logout',hash:'new',action:'logout'});assert.equal(assertAccessContinuity(before(),a,1000).sessionsExpired,1);a.audit.pop();assert.throws(()=>assertAccessContinuity(before(),a,1000),/LOGOUT_AUDIT/);});
+test('deleted or rewritten original audit rows always stop',()=>{for(const a of [before(),before()]){if(a.audit[0].hash==='untouched')a.audit[0].hash='changed';assert.throws(()=>assertAccessContinuity(before(),a,1000),/AUDIT_LOST_OR_MODIFIED/);}const a=before();a.audit=[];assert.throws(()=>assertAccessContinuity(before(),a,1000),/AUDIT_LOST_OR_MODIFIED/);});
+test('sessions cannot disappear, change identity/cipher, extend expiry or lack matching login',()=>{for(const change of ['delete','token','extend','missingAudit']){const a=login(before());if(change==='delete')a.sessions.shift();if(change==='token')a.sessions[0]={...session,hash:'new',immutable:'different',expiry:999};if(change==='extend')a.sessions[0]={...session,hash:'new',expiry:1200};if(change==='missingAudit')a.audit.pop();assert.throws(()=>assertAccessContinuity(before(),a,1000));}});
+test('unknown audit additions and cross-actor correlation are denied, never ignored',()=>{for(const patch of [{action:'granted'},{kind:'finance'},{actorType:'service'},{entity:'some-record'},{fields:['changed']},{valid:false},{actor:'other'}]){const a=login(before());Object.assign(a.audit[1],patch);assert.throws(()=>assertAccessContinuity(before(),a,1000));}});
+test('old backups without encrypted row witnesses cannot opt into the new policy',()=>{assert.throws(()=>assertAccessContinuity(undefined as any,before()),/WITNESS_REQUIRED/);});
