@@ -35,22 +35,25 @@ jobs:
           else
             node node_modules/playwright/cli.js install --with-deps chromium
           fi
-      - name: Exercise existing central UI against synthetic local providers
+      - name: Exercise central UI in independent rate-limited synthetic fixtures
         shell: bash
         run: |
           set -euo pipefail
-          node --import tsx backend/tests/serve-fixture.ts > work/browser-fixture.log 2>&1 &
-          fixture_pid=$!
-          trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
-          for attempt in $(seq 1 90); do
-            if curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null; then break; fi
-            if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
-            sleep 1
+          for suite in central register-lifecycle workspace-components; do
+            node --import tsx backend/tests/serve-fixture.ts > work/browser-fixture.log 2>&1 &
+            fixture_pid=$!
+            trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
+            for attempt in $(seq 1 90); do
+              if curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null; then break; fi
+              if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
+              sleep 1
+            done
+            curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null
+            node "backend/tests/$suite.browser.cjs"
+            kill "$fixture_pid"
+            wait "$fixture_pid"
+            trap - EXIT
           done
-          curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null
-          node backend/tests/central.browser.cjs
-          node backend/tests/register-lifecycle.browser.cjs
-          node backend/tests/workspace-components.browser.cjs
       - name: Company drawer and PDF with fresh isolated provider state
         shell: bash
         run: |
@@ -210,19 +213,22 @@ jobs:
           curl --fail --silent http://127.0.0.1:3800/api/health >/dev/null
           node backend/tests/financial-registers.browser.cjs
 
-      - name: Business centers contracting companies and localized responsive browser flows
+      - name: Business centers use independent rate-limited synthetic fixtures
         shell: bash
         run: |
           set -euo pipefail
-          node --import tsx backend/tests/serve-business-centers-fixture.ts > work/business-centers-browser.log 2>&1 &
-          fixture_pid=$!
-          trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
-          for attempt in $(seq 1 90); do
-            if curl --fail --silent http://127.0.0.1:3614/api/health >/dev/null; then break; fi
-            if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
-            sleep 1
+          for suite in business-centers contracting-companies investor-evidence; do
+            node --import tsx backend/tests/serve-business-centers-fixture.ts > work/business-centers-browser.log 2>&1 &
+            fixture_pid=$!
+            trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
+            for attempt in $(seq 1 90); do
+              if curl --fail --silent http://127.0.0.1:3614/api/health >/dev/null; then break; fi
+              if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
+              sleep 1
+            done
+            curl --fail --silent http://127.0.0.1:3614/api/health >/dev/null
+            node "backend/tests/$suite.browser.cjs"
+            kill "$fixture_pid"
+            wait "$fixture_pid"
+            trap - EXIT
           done
-          curl --fail --silent http://127.0.0.1:3614/api/health >/dev/null
-          node backend/tests/business-centers.browser.cjs
-          node backend/tests/contracting-companies.browser.cjs
-          node backend/tests/investor-evidence.browser.cjs
