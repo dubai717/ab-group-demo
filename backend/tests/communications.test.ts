@@ -35,3 +35,18 @@ test('Internal communications preserve source scope, template versions and truth
   });
  }finally{await f.close();}
 });
+
+test('Template messages resolve actual current balances, preferred locale and preview confirmation without fake delivery',async t=>{
+ const f=await businessCentersFixture();try{
+  const manager=await f.employee('general_manager');for(const action of ['ledger_view','customer_view'])await f.req('POST','/api/users/'+manager.id+'/grants',{action,scope:{type:'company',id:f.co1},delegable:false});
+  for(const locale of ['ar','en'])await f.req('POST','/api/communication-templates',{key:'balance',locale,title:locale+' {{recordNumber}}',body:'{{customerName}}: {{amount}} {{currency}} ({{invoiceAmount}} / {{paidAmount}}) {{link}}'});
+  await f.login(manager.username,manager.password);await f.req('POST','/api/notification-preferences',{locale:'en',optionalInternal:true});await f.login();const bill=await f.bill('100'),input={sourceType:'invoice',sourceId:bill.id,templateKey:'balance',fallbackLocale:'ar',recipientIds:[manager.id]};
+  const preview=await f.req('POST','/api/communications/from-template/preview',input);
+  await t.test('preferred locale and actual invoice amount are used in a read-only preview',async()=>{assert.equal(preview.sent,false);assert.equal(preview.messages[0].locale,'en');assert.match(preview.messages[0].body,/100\.000 AED/);assert.equal((await f.admin.query('select count(*)::int n from ab.communication_threads')).rows[0].n,0);});
+  await f.collection('25');
+  await t.test('a changed balance invalidates an old preview instead of sending stale information',async()=>{await f.req('POST','/api/communications/from-template',{...input,confirmDigest:preview.confirmDigest},409);});
+  const current=await f.req('POST','/api/communications/from-template/preview',input);assert.match(current.messages[0].body,/75\.000 AED/);
+  await t.test('only an explicitly confirmed preview sends once and preserves version and locale',async()=>{const saved=await f.req('POST','/api/communications/from-template',{...input,confirmDigest:current.confirmDigest});assert.equal(saved.externalSent,false);const repeated=await f.req('POST','/api/communications/from-template',{...input,confirmDigest:current.confirmDigest});assert.equal(repeated.rows[0].alreadyStored,true);const thread=await f.req('GET','/api/communications/'+saved.rows[0].threadId);assert.equal(thread.rows.length,1);assert.equal(thread.rows[0].templateVersion,1);assert.equal(thread.rows[0].locale,'en');assert.equal(thread.rows[0].delivered,null);});
+  await t.test('unauthorized or inactive recipients and unknown placeholders fail closed',async()=>{const other=await f.employee();await f.req('POST','/api/communications/from-template/preview',{...input,recipientIds:[other.id]},403);await f.req('POST','/api/communication-templates',{key:'invalid_title',locale:'ar',title:'{{password}}',body:'Valid body'},422);});
+ }finally{await f.close();}
+});

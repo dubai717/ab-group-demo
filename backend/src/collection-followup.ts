@@ -86,6 +86,6 @@ export function registerCollectionFollowup(app: any, call: any, cipher: any) {
         }
         await taskEvent(c,cipher,s,t.id,'collection_attempt',{attemptId:key,outcome:d.outcome,nextAt:due});
         await audit(c,s.tenant_id,s.user_id,'collection_attempt','task',t.id,['outcome','nextAt']);
-        return { id:key,saved:true,nextAt:due,taskClosed:false,reportedPaidVerified:d.outcome === 'paid' ? V.units(i.legalOutstanding) <= 0n : null };
+        return { id:key,saved:true,nextAt:due,taskClosed:false,reportedPaidVerified:d.outcome === 'paid' ? V.units(i.paid) >= V.units(i.amount) : null,invoiceSettled:V.units(i.legalOutstanding)<=0n };
     }));
 }

@@ -1,3 +1,4 @@
+import {contractingParty,contractingRight,exactFinancialParty} from './contracting-access.js';
 import { assertInvestorPayoutEligible,notifyInvestorCheque } from './investors.js';
 import {registerArgs,filterRegister,registerResponse} from './register-query.js';
 import { randomUUID } from 'node:crypto';
@@ -14,7 +15,7 @@ import { number, today } from './vehicle-domain.js';
 import {createFinancialVoucher} from './ledger-domain.js';
 import { L, P, need, ready, company, open, event, notify, fact, config, chart, resolve, item, line, journal, post, reverse, evidence, balance, invoices, customer, invoice, linkInvoice, custody, move, moveAmount, bankPosting, allocateReceipt, postReceipt } from './ledger-domain.js';
 const id = z.uuid(), day = z.iso.date(), money = z.string().regex(/^\d{1,15}(\.\d{1,3})?$/), positive = money.refine(x => L.units(x) > 0n), currency = z.string().regex(/^[A-Z]{3}$/), text = z.string().trim().min(1).max(2000), opt = id.nullish();
-const invoiceSchema = z.object({ companyId: id, customerId: id, vehicleId: opt, itemId: id, amount: positive, currency, issuedOn: day, dueOn: day, sourceKey: z.string().trim().min(1).max(160), description: z.string().max(2000).default('') }).strict();
+const invoiceSchema = z.object({ companyId: id, customerId: id.optional(), contractingCompanyId:id.optional(), vehicleId: opt, itemId: id, amount: positive, currency, issuedOn: day, dueOn: day, sourceKey: z.string().trim().min(1).max(160), description: z.string().max(2000).default('') }).strict().refine(exactFinancialParty,'financialPartyRequired');
 export async function ledgerWorkbench(c:any,m:any,s:any,cipher:any,companyId:string){
         const co = id.parse(companyId);
         need(m, 'view', co);
@@ -158,11 +159,12 @@ export function registerLedger(app: any, call: any, cipher: any) {
     app.post('/api/ledger/invoices', route(async (c: any, m: any, s: any, req: any) => { const d = invoiceSchema.parse(req.body); need(m, 'invoice_create', d.companyId); return invoice(c, cipher, m, s, d); }));
     app.post('/api/ledger/invoices/adopt', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ invoiceId: id, itemId: id, issuedOn: day, confirmHistoricalClassification: z.literal(true) }).strict().parse(req.body), i = (await c.query('select * from ab.vehicle_invoices where id=$1', [d.invoiceId])).rows[0]; requireOk(i, 404, 'notFound'); need(m, 'invoice_create', i.company_id); need(m, 'journal_approve', i.company_id); requireOk(!(await c.query('select 1 from ab.vehicle_allocations where invoice_id=$1', [i.id])).rowCount && !(await c.query('select 1 from ab.vehicle_invoice_adjustments where invoice_id=$1', [i.id])).rowCount, 409, 'historicalAccountingReviewRequired'); const it = await item(c, cipher, m, d.itemId, i.company_id); await linkInvoice(c, cipher, m, s, i.id, it, d.issuedOn, 'vehicle:' + i.id); return { id: i.id }; }));
     app.get('/api/ledger/invoices', route(async (c: any, m: any, s: any, req: any) => {
-        const q = z.object({ companyId: id, customerId: id.optional(), vehicleId: id.optional(), currency: currency.optional() }).strict().parse(req.query);
+        const q = z.object({ companyId: id, customerId: id.optional(), contractingCompanyId:id.optional(), vehicleId: id.optional(), currency: currency.optional() }).strict().parse(req.query);
         need(m, 'view', q.companyId);
         if (q.customerId)
             await customer(c, m, q.customerId, q.companyId, q.vehicleId);
-        const rows = await invoices(c, q);
+        if(q.contractingCompanyId)await contractingParty(c,m,q.contractingCompanyId,q.companyId,false);
+        const rows = (await invoices(c, q)).filter((r:any)=>!r.contracting_company_id||contractingRight(m,'view',q.companyId));
         requireOk(rows.length<=20000,422,'registerTooLarge');return {rows,truncated:false,complete:true};
     }));
     app.post('/api/ledger/invoices/:id/correct', route(async (c: any, m: any, s: any, req: any) => {
@@ -183,11 +185,11 @@ export function registerLedger(app: any, call: any, cipher: any) {
         await journal(c, cipher, s, i.company_id, d.effectiveOn, i.currency, 'credit:' + key, lines, { invoiceId: i.id, taxAmount: L.money(tax), ...d });
         return { id: key };
     }));
-    const collection = z.object({ companyId: id, customerId: id, vehicleId: opt, currency, receivedOn: day, method: z.enum(['cash', 'cheque', 'transfer']), mode: z.enum(['manual', 'automatic']), amount: positive, items: z.array(z.object({ itemId: id, amount: positive }).strict()).max(100).default([]), overridePriority: z.boolean().default(false), reason: z.string().max(2000).default(''), operationId: opt, cheque: z.object({ number: text, bankAccountId: id, beneficiary: text, issuedOn: day, dueOn: day }).strict().optional() }).strict();
+    const collection = z.object({ companyId: id, customerId: id.optional(), contractingCompanyId:id.optional(), vehicleId: opt, currency, receivedOn: day, method: z.enum(['cash', 'cheque', 'transfer']), mode: z.enum(['manual', 'automatic']), amount: positive, items: z.array(z.object({ itemId: id, amount: positive }).strict()).max(100).default([]), overridePriority: z.boolean().default(false), reason: z.string().max(2000).default(''), operationId: opt, cheque: z.object({ number: text, bankAccountId: id, beneficiary: text, issuedOn: day, dueOn: day }).strict().optional() }).strict().refine(exactFinancialParty,'financialPartyRequired');
     async function collect(c: any, m: any, s: any, d: any) {
         need(m, 'collect', d.companyId);
         company(m, d.companyId);
-        await customer(c, m, d.customerId, d.companyId, d.vehicleId);
+        if(d.contractingCompanyId)await contractingParty(c,m,d.contractingCompanyId,d.companyId);else await customer(c, m, d.customerId, d.companyId, d.vehicleId);
         await open(c, d.companyId, d.receivedOn);
         let selected = d.items;
         const due = (await invoices(c, d)).filter((i: any) => i.vehicle_id === (d.vehicleId || null));
@@ -226,24 +228,25 @@ export function registerLedger(app: any, call: any, cipher: any) {
             const b = m.bank.list().find((b: any) => b.id === d.cheque.bankAccountId && b.companyId === d.companyId && b.currency === d.currency && b.status === 'Active');
             requireOk(b && d.cheque.dueOn >= d.cheque.issuedOn, 422, 'invalidReference');
             chequeId = randomUUID();
-            await c.query("insert into ab.finance_cheques(id,tenant_id,company_id,bank_account_id,direction,number,beneficiary,amount,currency,issued_on,due_on,status,integration_refs,created_by)values($1,$2,$3,$4,'incoming',$5,$6,$7,$8,$9,$10,'Received',$11,$12)", [chequeId, s.tenant_id, d.companyId, b.id, d.cheque.number, d.cheque.beneficiary, d.amount, d.currency, d.cheque.issuedOn, d.cheque.dueOn, { clientReference: d.customerId, vehicleReference: d.vehicleId || '', receiptBatch: batchId }, s.user_id]);
+            await c.query("insert into ab.finance_cheques(id,tenant_id,company_id,bank_account_id,direction,number,beneficiary,amount,currency,issued_on,due_on,status,integration_refs,created_by)values($1,$2,$3,$4,'incoming',$5,$6,$7,$8,$9,$10,'Received',$11,$12)", [chequeId, s.tenant_id, d.companyId, b.id, d.cheque.number, d.cheque.beneficiary, d.amount, d.currency, d.cheque.issuedOn, d.cheque.dueOn, { ...(d.customerId?{clientReference:d.customerId}:{contractingReference:d.contractingCompanyId}), vehicleReference: d.vehicleId || '', receiptBatch: batchId }, s.user_id]);
         }
         else
             requireOk(!d.cheque, 422, 'invalidReference');
         if (d.method === 'transfer') {
             transfer = (await c.query('select * from ab.finance_operations where id=$1', [d.operationId])).rows[0];
-            requireOk(transfer && transfer.status === 'Approved' && transfer.kind === 'receipt' && !transfer.cheque_id && transfer.company_id === d.companyId && transfer.currency === d.currency && L.units(transfer.amount) === L.units(d.amount) && transfer.integration_refs.clientReference === d.customerId && (transfer.integration_refs.vehicleReference || null) === (d.vehicleId || null), 422, 'invalidReference');
+            requireOk(transfer && transfer.status === 'Approved' && transfer.kind === 'receipt' && !transfer.cheque_id && transfer.company_id === d.companyId && transfer.currency === d.currency && L.units(transfer.amount) === L.units(d.amount) && (d.contractingCompanyId?transfer.integration_refs.contractingReference===d.contractingCompanyId&&!transfer.integration_refs.clientReference:transfer.integration_refs.clientReference===d.customerId&&!transfer.integration_refs.contractingReference) && (transfer.integration_refs.vehicleReference || null) === (d.vehicleId || null), 422, 'invalidReference');
             requireOk(!(await c.query('select 1 from ab.vehicle_allocations where operation_id=$1', [transfer.id])).rowCount, 409, 'duplicate');
         }
         else
             requireOk(!d.operationId, 422, 'invalidReference');
-        await c.query('insert into ab.finance_receipt_batches(id,tenant_id,company_id,customer_id,vehicle_id,method,currency,amount,received_on,cheque_id,operation_id,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)', [batchId, s.tenant_id, d.companyId, d.customerId, d.vehicleId || null, d.method, d.currency, d.amount, d.receivedOn, chequeId, transfer?.id || null, cipher.seal(d), s.user_id]);
+        const corporateColumn=d.contractingCompanyId?',contracting_company_id':'';
+        await c.query('insert into ab.finance_receipt_batches(id,tenant_id,company_id,customer_id,vehicle_id,method,currency,amount,received_on,cheque_id,operation_id,payload_cipher,created_by'+corporateColumn+')values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13'+(d.contractingCompanyId?',$14':'')+')', [batchId, s.tenant_id, d.companyId, d.customerId, d.vehicleId || null, d.method, d.currency, d.amount, d.receivedOn, chequeId, transfer?.id || null, cipher.seal(d), s.user_id,...(d.contractingCompanyId?[d.contractingCompanyId]:[])]);
         const result = [];
         for (const selectedItem of selected) {
             const it = await item(c, cipher, m, selectedItem.itemId, d.companyId);
             requireOk(it.data.receipt, 403, 'denied');
             const key = randomUUID(), n = await number(c, s.tenant_id, 'receipt'), state = d.method === 'cheque' ? 'Pending' : 'Cleared';
-            await c.query('insert into ab.finance_receipts(id,tenant_id,company_id,holder_id,amount,currency,kind,cheque_id,reference,created_by,item_id,batch_id,customer_id,vehicle_id,receipt_number,received_on,payment_state,payload_cipher)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)', [key, s.tenant_id, d.companyId, s.user_id, selectedItem.amount, d.currency, d.method, chequeId, 'RC-' + n, s.user_id, it.id, batchId, d.customerId, d.vehicleId || null, n, d.receivedOn, state, cipher.seal({ override: d.overridePriority, reason: d.reason })]);
+            await c.query('insert into ab.finance_receipts(id,tenant_id,company_id,holder_id,amount,currency,kind,cheque_id,reference,created_by,item_id,batch_id,customer_id,vehicle_id,receipt_number,received_on,payment_state,payload_cipher'+corporateColumn+')values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18'+(d.contractingCompanyId?',$19':'')+')', [key, s.tenant_id, d.companyId, s.user_id, selectedItem.amount, d.currency, d.method, chequeId, 'RC-' + n, s.user_id, it.id, batchId, d.customerId, d.vehicleId || null, n, d.receivedOn, state, cipher.seal({ override: d.overridePriority, reason: d.reason }),...(d.contractingCompanyId?[d.contractingCompanyId]:[])]);
             const r = (await c.query('select * from ab.finance_receipts where id=$1', [key])).rows[0];
             if (d.method === 'cheque')
                 await move(c, s, d.companyId, key, s.user_id, d.currency, L.units(r.amount), 'physical-cheque:' + key, d.receivedOn);
@@ -282,7 +285,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
                 await c.query("update ab.finance_receipts set payment_state='Cleared'where id=$1", [r.id]);
                 await postReceipt(c, cipher, m, s, { ...r, payment_state: 'Cleared' }, 'cheque', d.effectiveOn);
             }
-            const cfg = await config(c, cipher, ch.company_id), operationId = await bankPosting(c, cipher, m, s, { companyId: ch.company_id, bankAccountId: ch.bank_account_id, kind: 'receipt', amount: ch.amount, currency: ch.currency, effectiveOn: d.effectiveOn, counterpartId: cfg.chequeTransitAccountId, chequeId: ch.id, reference: 'clear:' + ch.id, reason: d.reason, integrationRefs: { clientReference: batch.customer_id, vehicleReference: batch.vehicle_id || '', receiptBatch: batch.id } });
+            const cfg = await config(c, cipher, ch.company_id), operationId = await bankPosting(c, cipher, m, s, { companyId: ch.company_id, bankAccountId: ch.bank_account_id, kind: 'receipt', amount: ch.amount, currency: ch.currency, effectiveOn: d.effectiveOn, counterpartId: cfg.chequeTransitAccountId, chequeId: ch.id, reference: 'clear:' + ch.id, reason: d.reason, integrationRefs: { ...(batch.contracting_company_id?{contractingReference:batch.contracting_company_id}:{clientReference:batch.customer_id}), vehicleReference: batch.vehicle_id || '', receiptBatch: batch.id } });
             await c.query('update ab.finance_receipts set deposit_operation_id=$1 where batch_id=$2', [operationId, batch.id]);
         }
         else {
@@ -454,6 +457,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
     }));
     app.post('/api/ledger/work-amount', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ collection: collection, workItemId: id, workAmount: positive, dueOn: day, payoutReason: text, commission: z.object({ itemId: id, amount: positive }).strict().optional() }).strict().parse(req.body);
+        requireOk(!d.collection.contractingCompanyId,422,'individualCustomerRequired');
         requireOk(d.collection.method === 'cheque' && d.collection.mode === 'manual', 422, 'workAmountRequiresCheque');
         need(m, 'invoice_create', d.collection.companyId);
         const work = await item(c, cipher, m, d.workItemId, d.collection.companyId), revenue = await resolve(c, d.collection.companyId, d.collection.currency, work.data.revenueId), expense = await resolve(c, d.collection.companyId, d.collection.currency, work.data.expenseId), payable = await resolve(c, d.collection.companyId, d.collection.currency, work.data.payableId);

@@ -46,3 +46,8 @@ DO $$DECLARE tab text;BEGIN FOREACH tab IN ARRAY ARRAY['marketing_prospects','ma
  END LOOP;END$$;
 -- Resource overlap is checked under a per-resource advisory lock in the backend transaction.
 -- No new role/permission assignments or changes to legacy grants are made here.
+
+-- Apply the existing account-suspension guard to new tables as well.
+DO $$DECLARE tab text;BEGIN FOREACH tab IN ARRAY ARRAY['marketing_prospects','marketing_opportunities','marketing_contracts','marketing_allocations','marketing_events','marketing_targets']LOOP
+ EXECUTE format('CREATE POLICY personnel_active_actor ON ab.%I AS RESTRICTIVE TO ab_runtime USING(ab.hr_actor_allowed())WITH CHECK(ab.hr_actor_allowed())',tab);
+END LOOP;END$$;

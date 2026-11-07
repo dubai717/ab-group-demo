@@ -4,7 +4,7 @@ import {randomUUID} from 'node:crypto';
 let running=0;
 export async function extractDocumentText(bytes:Buffer,mime:string):Promise<{status:string;text:string;truncated:boolean}>{
  if(mime!=='application/pdf')return {status:'unsupported',text:'',truncated:false};
- if(running>=2)return {status:'deferred',text:'',truncated:false};
+ if(running>=1)return {status:'deferred',text:'',truncated:false};
  running++;
  try{return await new Promise(resolve=>{let complete=false;const worker=new Worker(new URL('./document-text-worker.mjs',import.meta.url),{execArgv:[],workerData:{bytes:new Uint8Array(bytes)},resourceLimits:{maxOldGenerationSizeMb:128,maxYoungGenerationSizeMb:32,stackSizeMb:4},stdout:true,stderr:true});
   // Parser diagnostics are deliberately withheld; the caller receives only a bounded status.
@@ -17,7 +17,8 @@ export const normalizeDocumentText=(v:string)=>v.normalize('NFKC').toLowerCase()
 export const documentSearchTokens=(cipher:any,text:string)=>[...new Set((normalizeDocumentText(text).match(/[\p{L}\p{N}]+/gu)||[]).slice(0,20000))].slice(0,8000).map(word=>cipher.digest('document-text:'+word));
 export async function indexDocumentText(c:any,cipher:any,s:any,column:'version_id'|'customer_file_id'|'vehicle_file_id',versionId:string,bytes:Buffer,mime:string,scanStatus:string){
  if(scanStatus!=='clean'||!(await c.query("select to_regclass('ab.document_text_index') ok")).rows[0].ok)return;
- if((await c.query('select 1 from ab.document_text_index where '+column+'=$1',[versionId])).rowCount)return;
+ const prior=(await c.query('select status,truncated from ab.document_text_index where '+column+'=$1',[versionId])).rows[0];if(prior)return prior;
  const result=await extractDocumentText(bytes,mime);
- await c.query('insert into ab.document_text_index(id,tenant_id,'+column+',status,text_cipher,search_tokens,truncated,created_by)values($1,$2,$3,$4,$5,$6,$7,$8)on conflict do nothing',[randomUUID(),s.tenant_id,versionId,result.status,cipher.seal({text:result.text}),documentSearchTokens(cipher,result.text),result.truncated,s.user_id]);
+ if(['failed','timeout','deferred'].includes(result.status))return {status:result.status,truncated:result.truncated};
+ await c.query('insert into ab.document_text_index(id,tenant_id,'+column+',status,text_cipher,search_tokens,truncated,created_by)values($1,$2,$3,$4,$5,$6,$7,$8)on conflict do nothing',[randomUUID(),s.tenant_id,versionId,result.status,cipher.seal({text:result.text}),documentSearchTokens(cipher,result.text),result.truncated,s.user_id]);return {status:result.status,truncated:result.truncated};
 }

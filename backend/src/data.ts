@@ -2,7 +2,7 @@ import {companyAuditFields} from './company-audit.js';
 import { createRequire } from "node:module";
 import { randomUUID } from "node:crypto";
 import type { PoolClient } from "pg";
-import { ApiError, requireOk, security } from "./core.js";
+import { ApiError, requireOk, security, deferReadAudit } from "./core.js";
 const require = createRequire(import.meta.url);
 export const UserPolicy = require("../../user-management.js");
 export const BankPolicy = require("../../bank-accounts.js");
@@ -19,6 +19,7 @@ export async function audit(
   id: string | null,
   fields: string[] = [],
 ) {
+  if(deferReadAudit(c,(real,owner,target)=>audit(real,tenant,owner,'owner_view:'+action,kind,id,[...fields,'viewed_as:'+target])))return;
   await c.query(
     "INSERT INTO ab.audit_events(id,tenant_id,actor_id,action,entity_type,entity_id,fields,request_id)VALUES($1,$2,$3,$4,$5,$6,$7,$8)",
     [randomUUID(), tenant, actor, action, kind, id, fields, randomUUID()],

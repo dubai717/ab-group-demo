@@ -1,3 +1,6 @@
+import DOMMatrix from '@thednp/dommatrix';
+// Text extraction needs the matrix API, not a native canvas renderer. Render omits optional binaries.
+globalThis.DOMMatrix ??= DOMMatrix;
 import {parentPort,workerData} from 'node:worker_threads';
 import {createRequire} from 'node:module';
 import {dirname,join} from 'node:path';

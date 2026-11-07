@@ -12,3 +12,8 @@ ALTER TABLE ab.document_text_index ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tenant_scope ON ab.document_text_index USING(tenant_id=ab.tenant())WITH CHECK(tenant_id=ab.tenant());
 GRANT SELECT,INSERT ON ab.document_text_index TO ab_runtime;
 CREATE TRIGGER immutable_history BEFORE UPDATE OR DELETE ON ab.document_text_index FOR EACH ROW EXECUTE FUNCTION ab.vehicle_immutable();
+
+-- Apply the existing account-suspension guard to new tables as well.
+DO $$DECLARE tab text;BEGIN FOREACH tab IN ARRAY ARRAY['document_text_index']LOOP
+ EXECUTE format('CREATE POLICY personnel_active_actor ON ab.%I AS RESTRICTIVE TO ab_runtime USING(ab.hr_actor_allowed())WITH CHECK(ab.hr_actor_allowed())',tab);
+END LOOP;END$$;

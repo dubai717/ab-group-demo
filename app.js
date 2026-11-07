@@ -500,6 +500,7 @@ function render() {
   if(LedgerUI.canEnter())sidebarItems.push({id:'financialManagement',label:getLocale()==='ar'?'الإدارة المالية والخزينة':'Finance & treasury'});
   if(VehicleUI.canEnter())sidebarItems.push({id:'vehicles',label:getLocale()==='ar'?'المركبات':'Vehicles'});
   sidebarItems.push(...BusinessCenters.sidebar());
+  if(ContractingCompaniesUI.canEnter())sidebarItems.push({id:'contractingCompanies',label:getLocale()==='ar'?'الشركات المتعاقدة':'Contracting Companies'});
   if(MarketingUI.canEnter())sidebarItems.push({id:'marketing',label:getLocale()==='ar'?'التسويق وتطوير الأعمال':'Marketing & business development'});
   if(InvestorUI.canEnter())sidebarItems.push({id:'investors',label:getLocale()==='ar'?'المستثمرون':'Investors'});
   if(globalThis.ABCentral?.enabled&&currentUser.roleId==='investor'){sidebarItems.splice(0,sidebarItems.length,{id:'investors',label:getLocale()==='ar'?'لوحة المستثمر':'Investor portal'});if(app.state.currentPage==='dashboard')app.state.currentPage='investors';}
@@ -545,6 +546,7 @@ function render() {
           </div>
         </header>
 
+        ${ViewAsUI.banner()}
         ${AuthFlows.isSettings() ? AuthFlows.renderSettings() : WorkspaceUI.toolbar(app.state.currentPage)+renderCurrentPage()}
       </main>
     </div>
@@ -572,6 +574,7 @@ function renderCurrentPage() {
   const user = getCurrentUser();
   const page = app.state.currentPage;
 
+  if(page==='contractingCompanies')return ContractingCompaniesUI.render();
   if(page==='marketing')return MarketingUI.render();
   if(page==='investors')return InvestorUI.render();
   if (['documentCenter','approvalCenter'].includes(page)) return BusinessCenters.render(page);
@@ -1089,11 +1092,13 @@ async function handleLogin(event) {
 }
 
 function bindGlobalEvents() {
+  ViewAsUI.bind();
   BusinessCenters.bind();
   CommunicationsUI.bind();
   DashboardUI.bind();
   ReportUI.bind();
   MarketingUI.bind();
+  ContractingCompaniesUI.bind();
   InvestorUI.bind();
   WorkspaceUI.bind();
   CustomerUI.bind();

@@ -2,9 +2,10 @@
 CREATE TABLE ab.communication_threads(
  id uuid PRIMARY KEY,tenant_id uuid NOT NULL REFERENCES ab.organizations,company_id uuid NOT NULL,
  source_type text NOT NULL CHECK(source_type IN('company','customer','vehicle','invoice','task','marketing','investment')),source_id uuid NOT NULL,
- subject_cipher text NOT NULL,created_by uuid NOT NULL,created_at timestamptz NOT NULL DEFAULT now(),
+ subject_cipher text NOT NULL,template_digest text,created_by uuid NOT NULL,created_at timestamptz NOT NULL DEFAULT now(),
  UNIQUE(tenant_id,id),FOREIGN KEY(tenant_id,company_id)REFERENCES ab.companies(tenant_id,id),FOREIGN KEY(tenant_id,created_by)REFERENCES ab.users(tenant_id,id)
 );
+CREATE UNIQUE INDEX communication_template_once ON ab.communication_threads(tenant_id,created_by,template_digest);
 CREATE TABLE ab.communication_participants(
  tenant_id uuid NOT NULL,thread_id uuid NOT NULL,user_id uuid NOT NULL,PRIMARY KEY(tenant_id,thread_id,user_id),
  FOREIGN KEY(tenant_id,thread_id)REFERENCES ab.communication_threads(tenant_id,id),FOREIGN KEY(tenant_id,user_id)REFERENCES ab.users(tenant_id,id)
@@ -36,3 +37,8 @@ DECLARE tab text;co uuid;BEGIN
  ELSE EXECUTE format('SELECT company_id FROM ab.%I WHERE id=$1 AND tenant_id=$2',tab)INTO co USING NEW.source_id,NEW.tenant_id;END IF;
  IF co IS NULL OR co IS DISTINCT FROM NEW.company_id THEN RAISE EXCEPTION 'communication source mismatch' USING ERRCODE='23514';END IF;RETURN NEW;END$$;
 CREATE TRIGGER source_validation BEFORE INSERT ON ab.communication_threads FOR EACH ROW EXECUTE FUNCTION ab.communication_source_valid();
+
+-- Apply the existing account-suspension guard to new tables as well.
+DO $$DECLARE tab text;BEGIN FOREACH tab IN ARRAY ARRAY['communication_threads','communication_participants','communication_messages','communication_templates','notification_receipts']LOOP
+ EXECUTE format('CREATE POLICY personnel_active_actor ON ab.%I AS RESTRICTIVE TO ab_runtime USING(ab.hr_actor_allowed())WITH CHECK(ab.hr_actor_allowed())',tab);
+END LOOP;END$$;

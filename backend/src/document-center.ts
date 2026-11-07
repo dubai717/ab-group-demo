@@ -1,3 +1,4 @@
+import {investorEvidenceRead} from './investor-evidence.js';
 import { documentSearchTokens,normalizeDocumentText,indexDocumentText } from './document-text.js';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
@@ -18,7 +19,7 @@ export function registerDocumentCenter(app:any,call:any,cipher:any,options:any){
         if(source==='vehicle'){requireOk(vehicleRight(m,'documents',r.company_id));return;}
         if(r.employee_id){const e=await employee(c,m,r.employee_id);requireOk(hrRight(m,write?'document_update':'documents',e.company_id)||e.user_id===m.actor.id);return;}
         if(r.personnel_library_id){const l=(await c.query('select * from ab.hr_library where id=$1',[r.personnel_library_id])).rows[0];requireOk(l,404,'notFound');requireOk(hrRight(m,write?'library_manage':'library_download',l.company_id));const p=cipher.open(l.payload_cipher);requireOk(write||m.actor.roleId==='owner'||!p.readerIds?.length||p.readerIds.includes(m.actor.id));return;}
-        documentRight(m,r,write);
+        if(r.category==='investorEvidence')r.investor_evidence=await investorEvidenceRead(c,m,r.id);documentRight(m,r,write);
     }
     async function original(c:any,m:any,source:string,id:string,write=false){
         const table=source==='document'?'documents':source==='customer'?'customer_files':'vehicle_files';
@@ -83,6 +84,7 @@ export function registerDocumentCenter(app:any,call:any,cipher:any,options:any){
         await c.query('insert into ab.document_archive_events(id,tenant_id,'+r.column+',action,reason_cipher,created_by)values($1,$2,$3,$4,$5,$6)',[randomUUID(),s.tenant_id,r.root,d.action,cipher.seal({reason:d.reason}),s.user_id]);
         await audit(c,s.tenant_id,s.user_id,'document_'+d.action,'document_center',r.root,['state']);return {saved:true,archived:d.action==='archive',fileDeleted:false};
     }));
+    app.get('/api/document-center/:source/:id/link-options',route(async(c:any,m:any,_s:any,req:any)=>{await original(c,m,z.enum(['document','customer','vehicle']).parse(req.params.source),z.uuid().parse(req.params.id),true);const options:any[]=[];for(const [type,table]of [['company','companies'],['customer','customers'],['vehicle','vehicles']]){const rows=(await c.query('select * from ab.'+table+' limit 20001')).rows;requireOk(rows.length<=20000,422,'registerTooLarge');for(const r of rows){try{await targetAllowed(c,m,{[type+'Id']:r.id});const p=type==='company'?r.data:cipher.open(r.payload_cipher);options.push({type,id:r.id,name:p.arabicName||p.englishName||p.fullName||p.plate||r.id});}catch(e:any){if(![403,404].includes(e.status))throw e;}}}return {options,originalFilesOnly:true};}));
     app.post('/api/document-center/:source/:id/links',route(async(c:any,m:any,s:any,req:any)=>{
         const d=z.object({companyId:z.uuid().optional(),customerId:z.uuid().optional(),vehicleId:z.uuid().optional()}).strict().refine(v=>Object.values(v).filter(Boolean).length===1).parse(req.body),source=kind.parse(req.params.source),r=await original(c,m,source,z.uuid().parse(req.params.id),true);await targetAllowed(c,m,d);
         requireOk((await c.query("select to_regclass('ab.document_links') ok")).rows[0].ok,503,'documentCenterMigrationPending');
@@ -97,7 +99,7 @@ export function registerDocumentCenter(app:any,call:any,cipher:any,options:any){
         else{file=(await c.query('select * from ab.'+r.table+' where id=$1',[d.versionId])).rows[0];column=source==='customer'?'customer_file_id':'vehicle_file_id';requireOk(file&&await attachmentRoot(c,r.table as 'customer_files'|'vehicle_files',file.id)===r.root,404,'notFound');}
         requireOk(file,404,'notFound');requireOk(file.scan_status==='clean',423,'fileQuarantined');const bytes=Buffer.from(cipher.open((await options.objects.get(file.storage_key)).toString()).bytes,'base64');
         requireOk(sha(bytes)===(file.sha256||file.digest),502,'integrityFailed');
-        await indexDocumentText(c,cipher,s,column,file.id,bytes,file.mime,file.scan_status);const result=(await c.query('select status,truncated from ab.document_text_index where '+column+'=$1',[file.id])).rows[0];await audit(c,s.tenant_id,s.user_id,'document_text_indexed','document_center',r.root,['text_layer']);return {...result,originalFileChanged:false,aiUsed:false};
+        const result=await indexDocumentText(c,cipher,s,column,file.id,bytes,file.mime,file.scan_status);await audit(c,s.tenant_id,s.user_id,'document_text_indexed','document_center',r.root,['text_layer']);return {...result,originalFileChanged:false,aiUsed:false};
     }));
 
 }

@@ -13,3 +13,8 @@ CREATE TABLE ab.marketing_services(
 DO $$DECLARE tab text;BEGIN FOREACH tab IN ARRAY ARRAY['marketing_driver_enrollments','marketing_services']LOOP
  EXECUTE format('ALTER TABLE ab.%I ENABLE ROW LEVEL SECURITY',tab);EXECUTE format('CREATE POLICY tenant_scope ON ab.%I USING(tenant_id=ab.tenant())WITH CHECK(tenant_id=ab.tenant())',tab);EXECUTE format('GRANT SELECT,INSERT ON ab.%I TO ab_runtime',tab);EXECUTE format('CREATE TRIGGER immutable_history BEFORE UPDATE OR DELETE ON ab.%I FOR EACH ROW EXECUTE FUNCTION ab.vehicle_immutable()',tab);
 END LOOP;END$$;
+
+-- Apply the existing account-suspension guard to new tables as well.
+DO $$DECLARE tab text;BEGIN FOREACH tab IN ARRAY ARRAY['marketing_driver_enrollments','marketing_services']LOOP
+ EXECUTE format('CREATE POLICY personnel_active_actor ON ab.%I AS RESTRICTIVE TO ab_runtime USING(ab.hr_actor_allowed())WITH CHECK(ab.hr_actor_allowed())',tab);
+END LOOP;END$$;

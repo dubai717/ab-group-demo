@@ -1,8 +1,13 @@
+import {investorEvidenceRead,investorEvidenceUpload,recordInvestorEvidence,registerInvestorEvidence} from './investor-evidence.js';
+import {registerRecordLinks} from './record-links.js';
+import {registerInvestorRatingPolicy} from './investor-rating.js';
+import { projectOwnerSession,registerViewAs,viewAsCookie } from './view-as.js';
 import { indexDocumentText } from './document-text.js';
 import { registerCommunications } from './communications.js';
 import { registerCentralDashboard } from './central-dashboard.js';
 import { registerCentralReports } from './central-reports.js';
 import { registerInvestors } from './investors.js';
+import {registerContractingCompanies} from './contracting-companies.js';
 import { registerMarketing } from './marketing.js';
 import { registerApprovalCenter } from './approval-center.js';
 import { registerDocumentCenter } from './document-center.js';
@@ -145,7 +150,7 @@ export async function build(options: Options) {
     reply.code(status).send({ error: code, ...(e instanceof ApiError && (e as any).fieldErrors ? {fieldErrors:(e as any).fieldErrors}: {}) });
   });
   const uuid = (v: any) => z.uuid().parse(v);
-  const session = async (req: any) => {
+  const session = async (req: any,realOnly=false) => {
     const sid = req.cookies[sidName];
     requireOk(
       typeof sid === "string" && /^[A-Za-z0-9_-]{43}$/.test(sid),
@@ -181,8 +186,9 @@ export async function build(options: Options) {
         "csrfRequired",
       );
     }
-    return { ...s, sid };
+    const real={...s,sid};return realOnly?real:projectOwnerSession(pool,cipher,real,req,options.testUsersEnabled===true);
   };
+  registerViewAs(app,{pool,cipher,session,secureCookies:options.secureCookies,testEnabled:options.testUsersEnabled===true});
   registerTestUsers(app,{pool,key:options.key,auth,enabled:options.testUsersEnabled===true,session});
   registerTestWorkspace(app,{pool,auth,enabled:options.testUsersEnabled===true,session});
   registerResetControl(app,{pool,key:options.key,auth,enabled:options.resetEnabled===true,worker:options.resetWorker,session,status:options.resetStatus});
@@ -192,7 +198,7 @@ export async function build(options: Options) {
       const s = await session(req);
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
         // Personnel export contains personal contact data; never cache the file in request_dedup.
-        const key = req.method === "GET" || ["/api/personnel/export","/api/central-reports/preview","/api/central-reports/export","/api/communication-templates/preview"].includes(req.url.split("?")[0]) ? undefined : req.headers["idempotency-key"];
+        const key = s.viewAs || req.method === "GET" || ["/api/personnel/export","/api/central-reports/preview","/api/central-reports/export","/api/communication-templates/preview","/api/communications/from-template/preview"].includes(req.url.split("?")[0]) ? undefined : req.headers["idempotency-key"];
         const fingerprint = cipher.digest(
           req.method + req.url + JSON.stringify(req.body || null),
         );
@@ -228,15 +234,19 @@ export async function build(options: Options) {
             JSON.stringify(result),
           ]);
         return result;
-      });
+      },s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:undefined);
     };
   registerFinance(app,call,cipher);
   registerCustomers(app,call,cipher,options);
   registerCollectionFollowup(app,call,cipher);
   registerDocumentCenter(app,call,cipher,options);
   registerApprovalCenter(app,call);
+  registerRecordLinks(app,call,cipher);
+  registerInvestorEvidence(app,call);
   registerMarketing(app,call,cipher);
+  registerContractingCompanies(app,call,cipher);
   registerInvestors(app,call,cipher);
+  registerInvestorRatingPolicy(app,call,cipher);
   registerCentralReports(app,call,cipher);
   registerCentralDashboard(app,call,cipher);
   registerCommunications(app,call,cipher);
@@ -298,6 +308,7 @@ export async function build(options: Options) {
           path: "/",
           maxAge: Math.min(user.expiresIn, 3600),
         });
+        reply.clearCookie(viewAsCookie,{path:"/"});
         return { ok: true };
       } catch {
         throw new ApiError(401, "loginFailed");
@@ -317,6 +328,7 @@ export async function build(options: Options) {
       await auth.logout(cipher.open(s.token_cipher).token);
     } catch {}
     reply.clearCookie(sidName, { path: "/" });
+    reply.clearCookie(viewAsCookie,{path:"/"});
     return { ok: true };
   });
   app.get(
@@ -384,6 +396,7 @@ export async function build(options: Options) {
         .rows;
       return {
         actor: m.actor,
+        viewAs:s.viewAs||null,
         resetTestDatabaseAvailable: options.resetEnabled===true&&m.actor.roleId==='owner'&&m.actor.username==='trial_4db27b82b8bf',
         testUsersAvailable: options.testUsersEnabled===true&&m.actor.roleId==='owner',
         audit: ownAudit,
@@ -820,6 +833,7 @@ export async function build(options: Options) {
           companyId: z.uuid().optional(),
           bankAccountId: z.uuid().optional(),
           userId: z.uuid().optional(),
+          investorAgreementId:z.uuid().optional(),
           category: z.enum([
             "original",
             "annex",
@@ -835,6 +849,7 @@ export async function build(options: Options) {
             "passport",
             "contract",
             "driving",
+            "investorEvidence",
           ]),
           title: z.string().trim().min(1).max(200),
           description: z.string().max(4000).default(""),
@@ -849,7 +864,7 @@ export async function build(options: Options) {
         })
         .strict()
         .parse(req.body);
-      const owner = {
+      const owner:any = {
         company_id: d.companyId || null,
         bank_account_id: d.bankAccountId || null,
         user_id: d.userId || null,
@@ -859,6 +874,7 @@ export async function build(options: Options) {
         422,
         "invalid",
       );
+      let investorEvidence:any=null;requireOk(d.category==='investorEvidence'?!!d.investorAgreementId&&!d.companyId&&!d.bankAccountId&&!!d.userId:!d.investorAgreementId,422,'investorEvidenceContextRequired');if(d.category==='investorEvidence'){investorEvidence=await investorEvidenceUpload(c,m,d.investorAgreementId!,d.userId!,d.parentId);owner.investor_evidence=true;owner.category=d.category;}
       let initialEnrollment = false;
       if (
         owner.user_id &&
@@ -931,6 +947,7 @@ export async function build(options: Options) {
             "passport",
             "contract",
             "driving",
+            "investorEvidence",
           ].includes(d.category) &&
             file.length <= 5 * 1024 * 1024 &&
             ["application/pdf", "image/png", "image/jpeg"].includes(d.mime),
@@ -1070,11 +1087,12 @@ export async function build(options: Options) {
         documentId,
         ["version", String(version), d.category],
       );
+      if(investorEvidence)await recordInvestorEvidence(c,m,s,cipher,investorEvidence,documentId,versionId);
       await indexDocumentText(c,cipher,s,'version_id',versionId,file,d.mime,scan);
       return { id: documentId, versionId, version, scanStatus: scan };
     }),
   );
-  app.post('/api/documents/:versionId/withdraw',call(async(c,m,s,req)=>{const body=z.object({reason:z.string().trim().min(1).max(2000)}).strict().parse(req.body);const row=(await c.query('select d.* from ab.documents d join ab.document_versions v on v.document_id=d.id where v.id=$1',[uuid(req.params.versionId)])).rows[0];requireOk(row,404,'notFound');documentRight(m,row,true);return withdrawAttachment(c,s.tenant_id,s.user_id,'document',row.id,body.reason);}));
+  app.post('/api/documents/:versionId/withdraw',call(async(c,m,s,req)=>{const body=z.object({reason:z.string().trim().min(1).max(2000)}).strict().parse(req.body);const row=(await c.query('select d.* from ab.documents d join ab.document_versions v on v.document_id=d.id where v.id=$1',[uuid(req.params.versionId)])).rows[0];requireOk(row,404,'notFound');if(row.category==='investorEvidence')row.investor_evidence=await investorEvidenceRead(c,m,row.id);documentRight(m,row,true);return withdrawAttachment(c,s.tenant_id,s.user_id,'document',row.id,body.reason);}));
   app.get("/api/documents/:versionId/file", async (req, reply) => {
     const s = await session(req);
     const result = await transaction(
@@ -1090,6 +1108,7 @@ export async function build(options: Options) {
             )
           ).rows[0];
         requireOk(row, 404, "notFound");
+        if(row.category==='investorEvidence')row.investor_evidence=await investorEvidenceRead(c,m,row.id);
         documentRight(m, row, false);
         requireOk(row.scan_status === "clean", 423, "fileQuarantined");
         const encrypted = await objects.get(row.storage_key),
@@ -1107,7 +1126,7 @@ export async function build(options: Options) {
           row.id,
         );
         return { bytes, row };
-      },
+      },s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:undefined,
     );
     reply
       .header("Content-Security-Policy", "sandbox; default-src 'none'")
@@ -1157,11 +1176,14 @@ export async function build(options: Options) {
       "personnel-ui.js",
       "business-centers.js",
       "center-forms.js",
+      "view-as-ui.js",
       "collection-ui.js",
       "dashboard-ui.js",
       "reports-ui.js",
       "communications-ui.js",
+      "record-links.js",
       "marketing-ui.js",
+      "contracting-companies-ui.js",
       "investors-ui.js",
       "workspace-ui.js",
       "data/uae-areas.js",

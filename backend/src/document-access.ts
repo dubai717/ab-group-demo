@@ -2,6 +2,7 @@ import { requireOk } from './core.js';
 
 // Shared with original document routes: a central index must never invent a broader grant.
 export function documentRight(m: any, owner: any, write: boolean, initialEnrollment = false) {
+    if(owner.investor_evidence===true){requireOk(owner.category==='investorEvidence'&&owner.user_id&&(!write||m.actor.roleId==='investor'&&owner.user_id===m.actor.id));return;}
     requireOk(!owner.employee_id && !owner.personnel_library_id,403,'personnelDocumentRouteRequired');
     if (owner.bank_account_id) {
         const row=m.state.bankAccounts.find((b:any)=>b.id===owner.bank_account_id);

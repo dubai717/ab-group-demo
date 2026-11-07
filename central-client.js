@@ -30,6 +30,7 @@
         })[c],
     );
   async function api(path, method = "GET", body, key) {
+    if(C.viewAs&&!["GET","HEAD"].includes(method)&&!["view-as/start","view-as/stop","logout","central-reports/preview","central-reports/export","personnel/export","communication-templates/preview","communications/from-template/preview"].includes(path.split("?")[0]))throw Error("viewAsReadOnly");
     if (key) {
       const digest = new Uint8Array(
         await crypto.subtle.digest(
@@ -70,10 +71,12 @@
   }
   C.api=api;
   C.companyClosed=()=>{activeCompany=null;};
+  C.openCompany=async id=>{if(!RecordProfile.confirmLeave(document.getElementById('cd-profile-form')))return;await api('companies/'+id);activeCompany=id;app.state.currentPage='companies';await readDocuments({companyId:id}).catch(()=>[]);CompanyDocuments.centralSelect(id);await load();};
   async function load(draw = true) {
     const b = await api("bootstrap");
-    if(C.actor?.id!==b.actor.id)globalThis.CenterForms?.clear();
+    if(C.actor?.id!==b.actor.id){globalThis.CenterForms?.clear();globalThis.AttachmentViewer?.close();globalThis.FinanceWorkbench?.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();globalThis.LedgerUI?.reset();globalThis.RegisterStore?.clear();globalThis.RegisterView?.clear();globalThis.FinancialTables?.clear();C.documents.clear();C.enrollment.clear();activeUser=activeCompany=activeBank=null;globalThis.CompanyDocuments?.centralSelect?.(null);globalThis.UserManagement?.centralSelect?.(null);}
     C.actor = b.actor;
+    C.viewAs=b.viewAs||null;
     C.resetTestDatabaseAvailable=b.resetTestDatabaseAvailable===true;
     C.csrf = b.csrfToken;
     C.areas = b.areas;
@@ -95,7 +98,9 @@
     C.ready = true;
     UserManagement.centralSelect(activeUser);
     if (draw) render();
+    if(draw&&globalThis.RecordLinks)void RecordLinks.openHash();
   }
+  C.reload=load;
   C.emptyState = () => ({
     users: [],
     roles: [],
@@ -717,6 +722,7 @@
           FinanceWorkbench.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();
           globalThis.CenterForms?.clear();
           C.actor = null;
+          C.viewAs=null;
           C.csrf = "";
           globalThis.RegisterStore?.clear();globalThis.RegisterView?.clear();globalThis.FinancialTables?.clear();
           C.documents.clear();C.documentOwnerKey=null;C.documentHistory=false;
@@ -832,6 +838,7 @@
       await load();
     } catch (e) {
       C.ready = true;
+      if(["viewAsExpired","viewAsInvalid","viewAsSessionMismatch","viewAsUnavailable"].includes(e.message)){await ViewAsUI.recover();return;}
       if (e.message === "loginRequired") {
         C.actor = null;
         render();

@@ -12,7 +12,7 @@ test('Unified document index preserves original storage, ACLs, versions and reve
    const r=await f.req('GET','/api/document-center?q=Synthetic');const item=r.rows.find((r:any)=>r.versionId===version);assert.equal(item.id,original);assert.equal(item.endpoint,'documents/'+version+'/file');assert.equal(item.archived,false);assert.equal(r.contentSearch,false);assert.equal(JSON.stringify(r).includes('storage_key'),false);
   });
   await t.test('link is deduplicated, scoped to a real target and does not copy a file',async()=>{
-   const url='/api/document-center/document/'+original+'/links';
+   const url='/api/document-center/document/'+original+'/links';const options=await f.req('GET','/api/document-center/document/'+original+'/link-options');assert.ok(options.options.some((x:any)=>x.type==='customer'&&x.id===f.client));
    assert.equal((await f.req('POST',url,{customerId:f.client})).created,true);
    assert.equal((await f.req('POST',url,{customerId:f.client})).created,false);
    const r=await f.req('GET','/api/document-center?customerId='+f.client);assert.ok(r.rows.some((r:any)=>r.id===original));assert.equal(count(),before);

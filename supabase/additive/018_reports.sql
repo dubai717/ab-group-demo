@@ -16,7 +16,7 @@ CREATE TABLE ab.report_schedules(
 );
 CREATE TABLE ab.report_runs(
  id uuid PRIMARY KEY,tenant_id uuid NOT NULL REFERENCES ab.organizations,schedule_id uuid NOT NULL,user_id uuid NOT NULL,due_at timestamptz NOT NULL,
- status text NOT NULL CHECK(status IN('available','access_denied')),created_at timestamptz NOT NULL DEFAULT now(),
+ status text NOT NULL CHECK(status IN('available','access_denied','too_large','threshold_not_met')),result_cipher text,created_at timestamptz NOT NULL DEFAULT now(),
  UNIQUE(tenant_id,schedule_id,user_id,due_at),FOREIGN KEY(tenant_id,schedule_id)REFERENCES ab.report_schedules(tenant_id,id),FOREIGN KEY(tenant_id,user_id)REFERENCES ab.users(tenant_id,id)
 );
 DO $$DECLARE tab text;BEGIN FOREACH tab IN ARRAY ARRAY['saved_reports','report_shares','report_schedules','report_runs']LOOP
@@ -34,3 +34,23 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,ab AS $$
 $$;
 REVOKE ALL ON FUNCTION ab.report_job_scopes()FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION ab.report_job_scopes()TO ab_runtime;
+-- Sharing changes are append-only; removing a share never removes its history.
+CREATE TABLE ab.report_share_events(
+ id uuid PRIMARY KEY,tenant_id uuid NOT NULL,report_id uuid NOT NULL,user_id uuid NOT NULL,active boolean NOT NULL,
+ created_by uuid NOT NULL,created_at timestamptz NOT NULL DEFAULT now(),
+ FOREIGN KEY(tenant_id,report_id,user_id)REFERENCES ab.report_shares(tenant_id,report_id,user_id),FOREIGN KEY(tenant_id,created_by)REFERENCES ab.users(tenant_id,id)
+);
+ALTER TABLE ab.report_share_events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_scope ON ab.report_share_events USING(tenant_id=ab.tenant())WITH CHECK(tenant_id=ab.tenant());
+GRANT SELECT,INSERT ON ab.report_share_events TO ab_runtime;
+CREATE TRIGGER immutable_history BEFORE UPDATE OR DELETE ON ab.report_share_events FOR EACH ROW EXECUTE FUNCTION ab.vehicle_immutable();
+CREATE FUNCTION ab.report_shared(report uuid,recipient uuid)RETURNS boolean LANGUAGE sql STABLE AS $$
+ SELECT EXISTS(SELECT 1 FROM ab.report_shares s WHERE s.tenant_id=ab.tenant()AND s.report_id=report AND s.user_id=recipient AND coalesce((SELECT e.active FROM ab.report_share_events e WHERE e.tenant_id=s.tenant_id AND e.report_id=s.report_id AND e.user_id=s.user_id ORDER BY e.created_at DESC,e.id DESC LIMIT 1),true))
+$$;
+REVOKE ALL ON FUNCTION ab.report_shared(uuid,uuid)FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION ab.report_shared(uuid,uuid)TO ab_runtime;
+
+-- Apply the existing account-suspension guard to new tables as well.
+DO $$DECLARE tab text;BEGIN FOREACH tab IN ARRAY ARRAY['saved_reports','report_shares','report_schedules','report_runs','report_share_events']LOOP
+ EXECUTE format('CREATE POLICY personnel_active_actor ON ab.%I AS RESTRICTIVE TO ab_runtime USING(ab.hr_actor_allowed())WITH CHECK(ab.hr_actor_allowed())',tab);
+END LOOP;END$$;

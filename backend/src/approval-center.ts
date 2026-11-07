@@ -1,3 +1,4 @@
+import {investorManager} from './investors.js';
 import { z } from 'zod';
 import { financeRight } from './finance.js';
 import { vehicleRight } from './vehicle-domain.js';
@@ -22,8 +23,9 @@ export function registerApprovalCenter(app:any,call:any){
         await add('hr_decisions','state','personnel',r=>hrRight(m,r.kind==='deduction'?'deductions':'awards',r.company_id),r=>({label:r.kind,sourcePage:'personnel',sourceId:r.employee_id,pending:r.state==='Requested',decision:r.state==='Requested'?{path:'personnel/decisions/'+r.id+'/approve',style:'boolean'}:null}));
         await add('hr_terminations','state','personnel',r=>hrRight(m,'termination',r.company_id),r=>({label:r.kind,sourcePage:'personnel',sourceId:r.employee_id,pending:r.state==='Requested',decision:r.state==='Requested'?{path:'personnel/terminations/'+r.id+'/approve',style:'boolean'}:null}));
         await add('hr_payroll','state','personnel',r=>hrRight(m,'payroll_approve',r.company_id),r=>({label:'Payroll '+String(r.month).slice(0,10),sourcePage:'personnel',sourceId:r.employee_id,pending:r.state==='Draft',decision:r.state==='Draft'?{path:'personnel/payroll/'+r.id+'/approve',style:'confirm',rejectUnsupported:true}:null}));
+        if((await c.query("select to_regclass('ab.investor_funding_requests') ok")).rows[0].ok){const agreements=(await c.query('select a.id,a.company_id,p.user_id from ab.investor_agreements a join ab.investor_profiles p on p.id=a.investor_id')).rows;await add('investor_funding_requests','state','investors',r=>agreements.some((a:any)=>a.id===r.agreement_id&&(a.user_id===m.actor.id||investorManager(m,a.company_id))),r=>({label:'Funding '+r.amount,sourcePage:'investors',sourceId:r.agreement_id,pending:r.state==='Requested',decision:r.state==='Requested'&&agreements.find((a:any)=>a.id===r.agreement_id)?.user_id===m.actor.id?{path:'investors/funding-requests/'+r.id+'/respond',style:'investor'}:null}));}
         await add('finance_operations','status','finance',r=>financeRight(m,'finance_approve',r.company_id),r=>({label:r.kind,sourcePage:'bankAccounts',sourceId:r.id,pending:r.status==='Draft',decision:null,originalProcedureRequired:true}));
-        await add('finance_vouchers','status','ledger',r=>financeRight(m,'ledger_voucher_approve',r.company_id),r=>({label:'Voucher #'+r.voucher_number,sourcePage:'financialManagement',sourceId:r.id,pending:r.status==='Pending',decision:null,originalProcedureRequired:true}));
+        await add('finance_vouchers','status','ledger',r=>financeRight(m,'ledger_voucher_approve',r.company_id),r=>({label:'Voucher #'+r.number,sourcePage:'financialManagement',sourceId:r.id,pending:r.status==='Pending',decision:null,originalProcedureRequired:true}));
         await add('finance_deposits','status','ledger',r=>financeRight(m,'ledger_deposit_verify',r.company_id),r=>({label:'Deposit',sourcePage:'financialManagement',sourceId:r.id,pending:r.status==='Review',decision:null,originalProcedureRequired:true}));
         return {rows:out.sort((a,b)=>new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime()),originalWorkflows:true,additionalApprovalSteps:0};
     }));

@@ -49,32 +49,24 @@ export const sha = (value: string | Buffer) =>
 let maintenanceCheck: (() => Promise<boolean>) | undefined;
 export function configureMaintenance(check?:()=>Promise<boolean>){maintenanceCheck=check;}
 export async function assertNotMaintenance(){requireOk(!maintenanceCheck||!(await maintenanceCheck()),503,'maintenance');}
+type DeferredReadAudit=(c:PoolClient,owner:string,target:string)=>Promise<void>;
+const readAuditContexts=new WeakMap<PoolClient,{owner:string,target:string,writes:DeferredReadAudit[]}>();
+export function deferReadAudit(c:PoolClient,write:DeferredReadAudit){const context=readAuditContexts.get(c);if(!context)return false;context.writes.push(write);return true;}
 export async function transaction<T>(
-  pool: Pool,
-  tenant: string,
-  actor: string,
-  fn: (c: PoolClient) => Promise<T>,
-): Promise<T> {
-  await assertNotMaintenance();
-  const c = await pool.connect();
-  try {
-    await c.query("BEGIN");
-    await c.query("select pg_advisory_xact_lock_shared(91717,1)");
-    await assertNotMaintenance();
-    await c.query(
-      "select set_config('ab.tenant',$1,true),set_config('ab.actor',$2,true)",
-      [tenant, actor],
-    );
-    await c.query("select pg_advisory_xact_lock(hashtext($1))", [tenant]);
-    const value = await fn(c);
-    await c.query("COMMIT");
-    return value;
-  } catch (e) {
-    await c.query("ROLLBACK");
-    throw e;
-  } finally {
-    c.release();
-  }
+ pool:Pool,tenant:string,actor:string,fn:(c:PoolClient)=>Promise<T>,options?:{readOnly?:boolean,auditActor?:string},
+):Promise<T>{
+ await assertNotMaintenance();const c=await pool.connect(),writes:DeferredReadAudit[]=[];let result!:T;
+ try{
+  if(options?.readOnly){requireOk(options.auditActor,500,'readonlyAuditActorRequired');readAuditContexts.set(c,{owner:options.auditActor,target:actor,writes});}
+  await c.query(options?.readOnly?'BEGIN READ ONLY':'BEGIN');
+  await c.query('select pg_advisory_xact_lock_shared(91717,1)');await assertNotMaintenance();
+  await c.query("select set_config('ab.tenant',$1,true),set_config('ab.actor',$2,true)",[tenant,actor]);
+  await c.query('select pg_advisory_xact_lock(hashtext($1))',[tenant]);result=await fn(c);await c.query('COMMIT');
+ }catch(e){await c.query('ROLLBACK');throw e;}
+ finally{readAuditContexts.delete(c);c.release();}
+ // Audit is a separate real-owner transaction; the projected principal never gains owner privileges.
+ if(options?.readOnly&&writes.length)await transaction(pool,tenant,options.auditActor!,async real=>{for(const write of writes)await write(real,options.auditActor!,actor);});
+ return result;
 }
 export interface AuthProvider {
   login(

@@ -45,6 +45,9 @@ test('EOS estimates preserve existing legal rules, self access and immutable his
             assert.ok(raw.every(r=>!r.payload_cipher.includes('3000')));
             await assert.rejects(f.admin.query('update ab.hr_eos_estimates set as_of=current_date where employee_id=$1',[e.id]));
         });
+        await t.test('revoked EOS delegation removes access in PostgreSQL itself',async()=>{
+            const reader=await f.employee('general_manager');await f.req('POST','/api/users/'+reader.id+'/grants',{action:'hr_eos_view',scope:{type:'company',id:f.co1},delegable:false});const {transaction}=await import('../src/core.js');const read=()=>transaction(f.runtime,f.org.tenant,reader.id,async c=>(await c.query('select id from ab.hr_eos_estimates where employee_id=$1',[e.id])).rowCount);assert.ok((await read())!>0);const grant=(await f.admin.query("select id from ab.permission_grants where user_id=$1 and permission_id='hr_eos_view'and revoked_at is null",[reader.id])).rows[0];await f.req('POST','/api/users/'+reader.id+'/revoke',{grantId:grant.id});assert.equal(await read(),0);
+        });
     } finally { await f.close(); }
 });
 
