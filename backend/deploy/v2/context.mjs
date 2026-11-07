@@ -1,6 +1,6 @@
 export const repo='dubai717/ab-group-demo',owner='dubai717',branch='staging/ab-group-test',entry='.github/workflows/staging-delivery-dispatch.yml',origin='https://ab-group-demo.onrender.com',project='9ea1a5dcb06a135b7c29d99699651b34d11f795d525b7861865c0c842fff954f';
 export function requireValue(ok,code){if(!ok)throw Error(code);}
-export function controllerContext(e){return e.GITHUB_ACTIONS==='true'&&e.GITHUB_REPOSITORY===repo&&e.GITHUB_REF==='refs/heads/main'&&['workflow_run','workflow_dispatch'].includes(e.GITHUB_EVENT_NAME)&&e.GITHUB_WORKFLOW_REF===repo+'/'+entry+'@refs/heads/main'&&e.AB_CONTROLLER_VERIFIED==='protected-v2'&&/^[a-f0-9]{40}$/.test(e.AB_STAGING_SOURCE_SHA||'')&&/^[a-f0-9]{40}$/.test(e.AB_CONTROLLER_REF||'');}
+export function controllerContext(e){return e.GITHUB_ACTIONS==='true'&&e.GITHUB_REPOSITORY===repo&&e.GITHUB_REF==='refs/heads/main'&&['workflow_run','workflow_dispatch','push'].includes(e.GITHUB_EVENT_NAME)&&e.GITHUB_WORKFLOW_REF===repo+'/'+entry+'@refs/heads/main'&&e.AB_CONTROLLER_VERIFIED==='protected-v2'&&/^[a-f0-9]{40}$/.test(e.AB_STAGING_SOURCE_SHA||'')&&/^[a-f0-9]{40}$/.test(e.AB_CONTROLLER_REF||'');}
 export function requireController(e){requireValue(controllerContext(e),'TRUSTED_CONTROLLER_CONTEXT_REQUIRED');}
 export function environmentProtection(value,name){
  requireValue(value?.name===name,'ENVIRONMENT_MISSING');const rules=value.protection_rules||[];

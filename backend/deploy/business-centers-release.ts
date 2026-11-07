@@ -1,3 +1,4 @@
+import {sourceTableFingerprint,sourceDifference} from './source-fingerprint.js';
 // Exact reviewed SQL only. Every change is transactional; original rows and grants are compared.
 import type {Pool,PoolClient} from 'pg';
 import {manifest} from './backup-restore-drill.js';
@@ -44,7 +45,7 @@ export async function applyBusinessCenters(pool:Pool,backupContext:any,options:{
  need(options.dryRun===true||options.rehearsed===true,'BUSINESS_REHEARSAL_REQUIRED');
  need(JSON.stringify(ledger)===JSON.stringify(backupContext.ledger),'BUSINESS_BACKUP_LEDGER_CHANGED');
  const names=(await c.query("select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='ab'and c.relkind in('r','p')order by relname")).rows.map(r=>r.relname);await c.query('LOCK TABLE '+names.map(n=>'ab.'+qi(n)).join(',')+' IN SHARE ROW EXCLUSIVE MODE');
- for(const t of backupContext.manifest.rows.filter((r:any)=>r.s==='ab')){const now=(await c.query(`select count(*)::text n,md5(coalesce(string_agg(md5(row_to_json(x)::text),'' order by md5(row_to_json(x)::text)),'')) h from ab.${qi(t.t)} x`)).rows[0];need(now.n===t.n&&now.h===t.h,'BUSINESS_SOURCE_CHANGED_SINCE_BACKUP');}
+ for(const t of backupContext.manifest.rows.filter((r:any)=>r.s==='ab')){const now=await sourceTableFingerprint(c,t.s,t.t);if(sourceDifference(t,now))throw Object.assign(Error('BUSINESS_SOURCE_CHANGED_SINCE_BACKUP'),{drift:{table:t.s+'.'+t.t,before:Number(t.n),after:Number(now.n),sameCount:t.n===now.n}});}
  const before=await preserveSnapshot(c),guard=await guardSnapshot(c);await integrity(c);
  for(const m of pending){await c.query(m.sql);await c.query('insert into public.ab_schema_migrations(name,sha256)values($1,$2)',[m.name,m.sha256]);}
  await c.query('SET CONSTRAINTS ALL IMMEDIATE');await assertPreserved(c,before);await checkGuard(c,guard,pending.map(m=>m.name.slice(0,3)));await integrity(c);await runtimeReads(c,plan.flatMap(m=>m.tables));

@@ -1,6 +1,9 @@
+import {isolatedSettingsCopy} from '../deploy/drift-settings.js';
+import {docker} from '../deploy/backup-restore-drill.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {sourceTableFingerprint} from '../deploy/source-fingerprint.js';
 import {personnelFixture} from './personnel-fixture.js';
 import {manifest} from '../deploy/backup-restore-drill.js';
 import {applyBusinessCenters} from '../deploy/business-centers-release.js';
@@ -19,6 +22,8 @@ test('ordered business migration rehearsal preserves populated original finance,
  const original=(await f.admin.query('select * from ab.vehicle_invoices where id=$1',[bill.id])).rows[0],grants=(await f.admin.query('select * from ab.role_permissions order by role_id,permission_id')).rows;
  await t.test('missing rehearsal permission stops without DDL',async()=>{await assert.rejects(applyBusinessCenters(f.admin,await context()),/BUSINESS_REHEARSAL_REQUIRED/);assert.equal((await f.admin.query("select to_regclass('ab.contracting_companies')x")).rows[0].x,null);});
  const backedUp=await context();
+ await t.test('actual PostgreSQL archive settings extract is confined to isolated COPY data',async()=>{const bytes=await docker(['exec','-i','--env','PGPASSWORD','ab-postgres-foundation','pg_dump','--host=127.0.0.1','--username=postgres','--dbname='+f.sourceDatabase,'--format=custom','--data-only','--table=ab.settings'],{PGPASSWORD:f.secret.admin});const sql=await docker(['exec','-i','ab-postgres-foundation','pg_restore','--data-only','--schema=ab','--table=settings','--no-owner','--no-privileges','--file=-'],{},bytes);assert.ok(isolatedSettingsCopy(sql.toString()).toString().startsWith('COPY ab_drift_diagnostic.settings'));});
+ await t.test('shared source fingerprint preserves the exact original restored-backup hash format',async()=>{const c=await f.admin.connect();try{for(const table of ['users','vehicle_invoices','finance_entries']){const legacy=(await c.query("select count(*)::text n,md5(coalesce(string_agg(md5(row_to_json(x)::text),'' order by md5(row_to_json(x)::text)),'')) h from ab.\""+table+"\" x")).rows[0];assert.deepEqual(await sourceTableFingerprint(c,'ab',table),legacy);}}finally{c.release();}});
  await t.test('changed rows since backup fail before DDL',async()=>{const bad=structuredClone(backedUp);bad.manifest.rows.find((x:any)=>x.s==='ab'&&x.t==='users').h='changed';await assert.rejects(applyBusinessCenters(f.admin,bad,{dryRun:true}),/BUSINESS_SOURCE_CHANGED_SINCE_BACKUP/);});
  await t.test('all twelve apply and validate on isolated rehearsal then roll back',async()=>{assert.equal((await applyBusinessCenters(f.admin,backedUp,{dryRun:true})).applied,12);assert.equal((await f.admin.query("select to_regclass('ab.contracting_companies')x")).rows[0].x,null);assert.equal((await f.admin.query('select count(*)::int n from public.ab_schema_migrations')).rows[0].n,13);});
  await t.test('an added guard that would change preserved structure blocks and rolls back',async()=>{await f.admin.query("create function ab.release_fault()returns event_trigger language plpgsql as $$begin if to_regclass('ab.contracting_companies')is not null then raise exception 'synthetic migration stop';end if;end$$;create event trigger isolated_migration_fault on ddl_command_end execute function ab.release_fault()");await assert.rejects(applyBusinessCenters(f.admin,await context(),{dryRun:true}));assert.equal((await f.admin.query("select to_regclass('ab.hr_eos_estimates')x")).rows[0].x,null);await f.admin.query('drop event trigger isolated_migration_fault;drop function ab.release_fault()');});

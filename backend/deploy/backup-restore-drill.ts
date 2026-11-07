@@ -1,3 +1,4 @@
+import {sourceTableFingerprint} from './source-fingerprint.js';
 import {businessCatalog,validateBusinessLedger} from './business-centers-catalog.mjs';
 import {approvedCatalog} from './safe-staging-additives.js';
 import {controllerContext} from './v2/context.mjs';
@@ -44,7 +45,7 @@ export async function manifest(c:PoolClient){
  const tables=(await c.query("select n.nspname s,c.relname t,c.relrowsecurity r,c.relforcerowsecurity f from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname=any($1::text[]) and c.relkind in('r','p') order by 1,2",[schemas])).rows;
  const rows=[];
  for(const t of tables){
-  const r=(await c.query(`select count(*)::text n,md5(coalesce(string_agg(md5(row_to_json(x)::text),'' order by md5(row_to_json(x)::text)),'')) h from ${qi(t.s)}.${qi(t.t)} x`)).rows[0];
+  const r=await sourceTableFingerprint(c,t.s,t.t);
   rows.push({...t,...r});
  }
  const constraints=(await c.query("select n.nspname s,t.relname t,c.conname n,c.contype y,c.convalidated v,pg_get_constraintdef(c.oid) d from pg_constraint c join pg_class t on t.oid=c.conrelid join pg_namespace n on n.oid=t.relnamespace where n.nspname=any($1::text[]) order by 1,2,3",[schemas])).rows;
