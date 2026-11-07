@@ -24,7 +24,7 @@ A sensitive approval is tied to a GitHub run and exact source commit, not a muta
 2. Protected controller preflight, pinned Render/Supabase identity and previous live release verification.
 3. Owner environment approval for sensitive/unknown changes; ordinary changes skip it.
 4. Existing fresh encrypted create-only backup and actual restoration in an isolated runner PostgreSQL instance.
-5. Immutable migrations 001–013 and existing additive schema validation; this activation performs no migrations. New additive declarations currently stop for controller review rather than guessing whether they are harmless.
+5. Immutable migrations 001–013 plus the exact checksum-reviewed business catalog 014–025. Unreviewed additions stop. Pending catalog entries require owner approval, a current retained encrypted backup, actual isolated restoration, transactional rehearsal and original-data/security preservation before an atomic staging-only application. Candidate runtime code is never imported in credential-bearing jobs.
 6. Exact tested source commit submitted to the existing Render hook; wait for matching version, app hash, health and GET-only live/browser smoke.
 7. GitHub deployment record includes source, prior release, controller and source test run. Classification is retained as a 90-day artifact. Failure never records success.
 

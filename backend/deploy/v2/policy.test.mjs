@@ -25,6 +25,7 @@ test('isolated complete preflight: ordinary auto, unknown owner gate, failed che
  try{
   for(const p of ['.github/workflows/staging-ci.yml','.github/workflows/staging-checks.yml']){const text=readFileSync(p,'utf8');put(p,text);put('candidate/'+p,text);}
   const migrations=[];for(let i=1;i<=13;i++){const name=String(i).padStart(3,'0')+'_fixture.sql',sql='-- synthetic schema fixture '+i;put('candidate/supabase/migrations/'+name,sql);migrations.push({name,sha256:digest(sql)});}
+  const business=[];for(let i=14;i<=25;i++){const name=String(i).padStart(3,'0')+'_fixture.sql',path='supabase/additive/'+name,sql='-- synthetic reviewed business schema '+i;put(path,sql);put('candidate/'+path,sql);business.push({name,path,sha256:digest(sql),tables:[]});}put('backend/deploy/business-centers-release-plan.json',JSON.stringify({format:'AB-REVIEWED-BUSINESS-SQL-1',migrations:business}));
   put('backend/actions/approved-migrations.json',JSON.stringify({migrations}));put('backend/deploy/personnel-release-plan.json',JSON.stringify({migrations:[]}));put('backend/deploy/staging-target.json',JSON.stringify({origin:'https://ab-group-demo.onrender.com',projectOriginSha256:'9ea1a5dcb06a135b7c29d99699651b34d11f795d525b7861865c0c842fff954f',deployHookPathSha256:'d'.repeat(64)}));put('backend/deploy/v2/trust.json',JSON.stringify({approvedSourceTree:null}));put('candidate/app.js','const title="fixture";');put('candidate/styles.css','a{width:1rem}');put('outputs','');
   git('init');git('config','user.name','Isolated Test');git('config','user.email','isolated@example.test');git('add','.');git('commit','-m','synthetic baseline');const previous=git('rev-parse','HEAD');
   const commit=()=>{git('add','.');git('commit','-m','synthetic candidate');return git('rev-parse','HEAD');};put('candidate/styles.css','a{width:2rem;white-space:nowrap}');let source=commit();let conclusion='success';
@@ -34,6 +35,7 @@ test('isolated complete preflight: ordinary auto, unknown owner gate, failed che
   assert.equal((await preflight(env(),api,request)).requiresOwner,false);
   put('candidate/unknown-runtime.js','const example=1');source=commit();assert.equal((await preflight(env(),api,request)).requiresOwner,true);
   conclusion='failure';await assert.rejects(preflight(env(),api,request),/SUCCESSFUL_SOURCE_CHECKS_REQUIRED/);
-  conclusion='success';put('candidate/supabase/migrations/001_fixture.sql','-- changed');source=commit();await assert.rejects(preflight(env(),api,request),/IMMUTABLE_APPROVED_SQL_REQUIRED/);
+  conclusion='success';put('candidate/supabase/additive/014_fixture.sql','-- unexpected SQL');source=commit();await assert.rejects(preflight(env(),api,request),/BUSINESS_SQL_HASH/);put('candidate/supabase/additive/014_fixture.sql','-- synthetic reviewed business schema 14');
+  put('candidate/supabase/migrations/001_fixture.sql','-- changed');source=commit();await assert.rejects(preflight(env(),api,request),/IMMUTABLE_APPROVED_SQL_REQUIRED/);
  }finally{process.chdir(original);rmSync(dir,{recursive:true,force:true});}
 });

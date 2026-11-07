@@ -94,11 +94,12 @@ jobs:
         SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
         MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
         DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
         BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
       run: |
         node --import tsx backend/deploy/backup-restore-drill.ts
-        node --import tsx backend/deploy/apply-safe-staging-additives.ts
+        node --import tsx backend/deploy/apply-business-centers-release.ts
     - name: Remove only isolated runner copies
       if: always()
       run: |

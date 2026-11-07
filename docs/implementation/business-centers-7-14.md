@@ -22,7 +22,7 @@ Canonical finance_notifications, tasks/hr_task_events, customer_events, document
 
 No live database changes, cloud business fixtures, role redistribution or external-provider calls have been performed for this branch. All new database work must first pass isolated synthetic tests and the approved backed-up release mechanism. Existing migrations 001–013 stay unchanged.
 
-Legal regime assignment is not inferred; existing unconfigured regimes remain unavailable for estimation. Owner clarification about the requested pause on restore tests versus mandatory isolated deployment restore is pending; restore tests and deployment must wait for that answer, while independent development continues.
+Legal regime assignment is not inferred; existing unconfigured regimes remain unavailable for estimation. Owner explicitly authorized fresh encrypted backup, isolated restore, ordered 014–025 rehearsal and conditional test-only application/deployment on 2026-11-07. No live schema application is allowed unless every preservation check succeeds.
 
 External AI/OCR/WhatsApp/SMS/email delivery remain explicitly inactive unless an existing approved integration is configured. No fabricated delivery/read states or automatic financial commitments.
 
@@ -46,9 +46,9 @@ Still incomplete or limited (do not describe these as delivered): definitive inv
 
 ## Deployment blockers (no bypass)
 
-The trusted v2 controller explicitly rejects any SQL under `supabase/additive` (`ADDITIVE_CONTROLLER_REVIEW_REQUIRED`). It requires an owner-reviewed additive migration catalog/rehearsal path before these migrations can run. The protected native owner approval remains mandatory for sensitive database/permission definitions. No SHA exception or weakening has been introduced.
+The updated controller is prepared with an exact reviewed 014–025 SQL checksum catalog. It rejects unreviewed SQL or JSON additions, altered original 001–013 hashes and a nonsequential migration ledger. Activation must pin this immutable controller in the main entry. The protected native owner approval remains mandatory; no SHA exception or weakening is introduced.
 
-The owner's instruction not to run a restore test conflicts in scope with mandatory isolated restore steps in the existing PR CI/delivery pipeline. Clarification was requested previously and is still pending. No actual restore, live database migration, PR-triggered full CI, merge or deployment has been performed. Feature-branch source preservation is permitted and does not trigger that pipeline. The existing live ERP and all business data remain unchanged.
+PR #40 now runs full required unprivileged CI, including synthetic restore tests, under the owner's new authorization. The first run passed 314 cases and failed the old all-SQL-in-Reset registry check; the new release catalog is now checked separately while Reset remains unmodified and fails closed on an unsupported ledger. Eight isolated release-runner tests passed, including populated original finance preservation, transactional rehearsal, injected failure rollback and verified repeated-application no-op. A current hosted backup/restore/rehearsal has not yet run; no hosted migrations, merge or deployment is claimed.
 
 
 ## Final independent additions
@@ -68,10 +68,16 @@ Snapshot access proofs now recheck each related record's current company as well
 ## Release preparation, not execution
 
 1. Preserve the current source tree on the feature branch; do not merge the ERP tree into the protected main controller branch.
-2. Resolve whether the requested pause on restore tests also covers the controller's isolated restore. No restore or live schema action has been run.
+2. Use the owner's approved fresh retained encrypted backup and isolated restore; never restore onto the source. No hosted restore or live schema action is claimed yet.
 3. Review additive SQL 014 through 025 in numeric order using the existing 001–013 schema as the unchanged baseline. These SQL migrations are outside the automatic JSON-only additive policy; the trusted controller must explicitly support and approve them before use. In particular, 023 changes the financial party invariant to exactly one individual or contracting party, while 025 changes contract identity to exactly one prospect or contracting company. Both preserve existing valid rows but require sensitive-schema review.
 4. Through the approved release mechanism, pin the existing test project/service, prove a fresh encrypted backup can be restored, rehearse the complete additions against the isolated copy and compare original data, balances, grants and relationships. Do not run business-data seeding on Supabase.
 5. Obtain the existing native owner approval for sensitive schema/permission definitions, then apply only the approved catalog and deploy the pinned build to the existing staging service. No secret or connection substitution is part of this change.
 6. Smoke-test the actual owner login, original companies/customers/vehicles/finance, independent contracting register and authorized file downloads. Until then, local passing tests are not evidence of hosted availability.
 
 Rollback must preserve database evidence: stop deployment on a mismatch; prefer the previous compatible application release without destructive down-migrations. A database restore is a separate explicitly authorized recovery action, not an automatic release cleanup. Newly entered development records must never be wiped by a deployment.
+
+## Approved release runner (prepared, activation still required)
+
+The credential-bearing controller executes its own checksum-reviewed SQL, never candidate JavaScript or candidate dependencies. The restored copy is rehearsed and rolled back. The source application uses one transaction and the existing schema advisory lock, refuses changed source rows since backup, verifies original projected-column row hashes, financial journal balance, users/role grants, role attributes/membership, old table/column/function ACLs, old constraints/triggers/policies and Auth/Storage data. Only the explicitly reviewed nullable-party changes in 023 and 025 are allowed. New tables require RLS and validated relationships. Runtime authentication/TLS/no-context denial and original owner Auth identity are checked without testing or changing a password. Failure rolls back pending DDL and blocks deployment; already committed releases never undergo destructive down-migrations.
+
+Reset has not been run, enabled or expanded by this delivery. Its legacy reconstruction chain remains separate and refuses a ledger it does not support. No data seeding is part of the release.
