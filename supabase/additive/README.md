@@ -9,3 +9,7 @@ Example (do not add it as a migration until actually required):
     {"format":"AB-SAFE-ADDITIVE-1","operations":[{"kind":"addNullableColumn","table":"companies","column":"custom_label","type":"text"}]}
 
 Complex migrations and changes to financial logic or permissions require explicit owner approval and a separately reviewed migration plan. This is intentionally a safe subset, not a classifier that declares arbitrary SQL harmless.
+
+## Business centers SQL proposal (014–025)
+
+The SQL files in this development branch are **not** `AB-SAFE-ADDITIVE-1` inputs and are not approved for automatic application by this README. They include new scoped permissions, triggers and financial-party invariants. They were exercised only on fresh synthetic databases. The trusted v2 controller intentionally stops at `ADDITIVE_CONTROLLER_REVIEW_REQUIRED`; do not bypass it or run these files manually against the hosted database. See `docs/implementation/business-centers-7-14.md` for review order, release prerequisites and rollback boundaries. Existing approved 001–013 files remain unchanged.

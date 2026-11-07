@@ -1,3 +1,4 @@
+import { indexDocumentText } from './document-text.js';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { requireOk, sha } from './core.js';
@@ -37,6 +38,7 @@ export function registerPersonnelDocuments(app: any, route: any, cipher: any, op
         else
             await c.query('insert into ab.hr_library_versions(id,tenant_id,library_id,version_id,version,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7)', [randomUUID(), s.tenant_id, own.libraryId, vid, version, cipher.seal(meta), s.user_id]);
         await auditHR(c, cipher, s, own.e, 'document_added', null, { versionId: vid, version, kind: d.kind, scanStatus: scan });
+        await indexDocumentText(c,cipher,s,'version_id',vid,bytes,d.mime,scan);
         return { id: vid, versionId: vid, documentId, version, scanStatus: scan, saved: true };
     }
     async function get(c: any, m: any, s: any, req: any) { const own = await owner(c, m, req), v = (await c.query('select v.*,d.employee_id,d.personnel_library_id from ab.document_versions v join ab.documents d on d.id=v.document_id where v.id=$1', [id.parse(req.params.versionId)])).rows[0]; requireOk(v && v.employee_id === own.employeeId && v.personnel_library_id === own.libraryId, 404, 'notFound'); requireOk(v.scan_status === 'clean', 409, 'filePending'); const meta = (await c.query(own.employeeId ? 'select payload_cipher from ab.hr_document_records where version_id=$1' : 'select payload_cipher from ab.hr_library_versions where version_id=$1', [v.id])).rows[0]; requireOk(meta, 404, 'notFound'); await auditHR(c, cipher, s, own.e, 'document_read', null, { versionId: v.id }); return { base64: cipher.open((await options.objects.get(v.storage_key)).toString()).bytes, mime: v.mime, name: cipher.open(meta.payload_cipher).name }; }

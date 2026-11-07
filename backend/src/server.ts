@@ -1,3 +1,4 @@
+import { startReportSchedules } from './report-jobs.js';
 import {remoteControl,markerPath} from '../reset/remote-control.js';
 import {actionsGateway,installMaintenance} from '../reset/gateway.js';
 import {configureMaintenance} from './core.js';
@@ -81,7 +82,9 @@ await app.listen({
 });
 const stopBilling=startVehicleBilling(pool,process.env.DATA_ENCRYPTION_KEY!,process.env.VEHICLE_BILLING_ENABLED==='true');
 const stopFinancial=startFinancialJobs(pool,process.env.DATA_ENCRYPTION_KEY!,process.env.FINANCIAL_JOBS_ENABLED==='true');
+const stopReports=startReportSchedules(pool,process.env.DATA_ENCRYPTION_KEY!);
 const stop = async () => {
+  await stopReports();
   stopPersonnelJobs();
   await stopFinancial();
   await stopBilling();

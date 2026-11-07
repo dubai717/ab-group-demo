@@ -8,6 +8,9 @@ await copyFile('backend/package.json','backend-build/package.json');
 // TypeScript does not emit this existing .mjs dependency reached through reset/gateway.
 await mkdir('backend-build/deploy/v2',{recursive:true});
 await copyFile('backend/deploy/v2/context.mjs','backend-build/deploy/v2/context.mjs');
+await copyFile('backend/deploy/business-centers-catalog.mjs','backend-build/deploy/business-centers-catalog.mjs');
+await mkdir('backend-build/src',{recursive:true});
+await copyFile('backend/src/document-text-worker.mjs','backend-build/src/document-text-worker.mjs');
 // Load the compiled runtime graph without starting the server or connecting to providers.
 await import(new URL('../../backend-build/reset/gateway.js',import.meta.url));
 console.log('PASS: compiled runtime module graph loads without provider connections');

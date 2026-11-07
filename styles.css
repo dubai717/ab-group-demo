@@ -907,3 +907,16 @@ th {
 .fw-section{grid-template-columns:minmax(0,1fr)}.fw-section>*,[data-ft-table]{min-width:0;max-width:100%}[data-ft-table]{width:100%}[data-ft-table]>.table-wrap{max-width:100%;overflow:auto}.fw-section>[data-ft-search],.ld-section>[data-ft-search]{max-width:100%}@media print{[data-ft-search],[data-ft-export],[data-ft-page]{display:none!important}}
 /* Shared side-profile pattern: view first, explicit edit, guarded dismissal. */
 .record-drawer{position:fixed;inset-block:0;inset-inline-start:auto;inset-inline-end:0;width:min(56rem,96vw);max-width:96vw;height:100dvh;max-height:100dvh;margin:0;border:1px solid var(--line);border-radius:0;overflow:auto;padding:1.25rem;box-shadow:var(--shadow);color:var(--text);background:var(--panel)}.record-drawer::backdrop{background:#0006}.record-drawer .section-head{gap:.5rem;align-items:start}.record-drawer input:disabled,.record-drawer textarea:disabled,.record-drawer select:disabled{color:var(--text);opacity:1;background:var(--panel-alt)}.attachment-content{max-height:65vh;overflow:auto;text-align:center}.attachment-content canvas{display:block;max-width:none;margin:auto}.attachment-controls{display:flex;flex-wrap:wrap;gap:.4rem;margin-block:.7rem}.attachment-preview .attachment-print{position:absolute;width:1px;height:1px;border:0;opacity:0;pointer-events:none}@media(max-width:600px){.record-drawer{width:100vw;max-width:100vw;padding:.75rem}}
+
+/* Central modules reuse the approved palette and keep record tools compact on small screens. */
+.register-search-row { display: flex; flex-wrap: wrap; align-items: end; gap: .65rem; margin-block: 1rem; }
+.register-search-row label { flex: 1 1 220px; min-width: 0; }
+.register-search-row .input { width: 100%; min-width: 0; }
+.register-search-row button { flex-shrink: 0; white-space: nowrap; }
+.record-form-dialog { width: min(1000px, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); color: var(--text); padding: 1.25rem; }
+.record-form-dialog::backdrop { background: rgb(36 25 24 / 35%); }
+.record-form-dialog .form-grid { min-width: 0; }
+.record-form-dialog label { min-width: 0; }
+.record-form-dialog textarea { width: 100%; min-height: 100px; }
+.view-as-banner { border: 1px solid var(--warning); background: var(--gold-soft); border-radius: var(--radius); padding: .9rem; margin-block: 1rem; }
+@media(max-width:600px) { .record-form-dialog .form-grid { grid-template-columns: minmax(0, 1fr); } .register-search-row label { flex-basis: 100%; } }

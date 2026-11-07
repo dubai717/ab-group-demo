@@ -1,0 +1,123 @@
+{
+  "format": "AB-REVIEWED-BUSINESS-SQL-1",
+  "scope": "existing pinned staging only; owner-approved backup restore and preservation required; no grant redistribution",
+  "migrations": [
+    {
+      "name": "014_followup_and_eos.sql",
+      "path": "supabase/additive/014_followup_and_eos.sql",
+      "sha256": "9cbdbeb1af74513f7da94c39a1c701e7f71054825f830d0f8653e13ceb5f1a69",
+      "tables": [
+        "hr_eos_estimates",
+        "collection_attempts"
+      ]
+    },
+    {
+      "name": "015_document_center.sql",
+      "path": "supabase/additive/015_document_center.sql",
+      "sha256": "676a9d583bd4534ae37b16fd82a217276f803212df34f2b615e28843a9a435a3",
+      "tables": [
+        "document_archive_events",
+        "document_links"
+      ]
+    },
+    {
+      "name": "016_marketing.sql",
+      "path": "supabase/additive/016_marketing.sql",
+      "sha256": "cd9cd41cb18f0bb2d789f395233427fe963c863806a1f5cb8a956e054bc34405",
+      "tables": [
+        "marketing_prospects",
+        "marketing_opportunities",
+        "marketing_contracts",
+        "marketing_allocations",
+        "marketing_events",
+        "marketing_targets"
+      ]
+    },
+    {
+      "name": "017_investors.sql",
+      "path": "supabase/additive/017_investors.sql",
+      "sha256": "69def133f6bdc854082513711efbd76f2aa276a32a47f98cb734dab6ef6dedfa",
+      "tables": [
+        "investor_profiles",
+        "investor_agreements",
+        "investor_funding_requests",
+        "investor_capital_links",
+        "investor_payouts",
+        "investor_events"
+      ]
+    },
+    {
+      "name": "018_reports.sql",
+      "path": "supabase/additive/018_reports.sql",
+      "sha256": "998e47394498aa3a028ec3fb28cf4c5efe71c33d42532b78f1d4c6a39e4f9f3f",
+      "tables": [
+        "saved_reports",
+        "report_shares",
+        "report_schedules",
+        "report_runs",
+        "report_share_events"
+      ]
+    },
+    {
+      "name": "019_communications.sql",
+      "path": "supabase/additive/019_communications.sql",
+      "sha256": "15dda385a4c2d420526a7b1d653cacaca3f3f97fcac56de1d50532fb1a8ccd23",
+      "tables": [
+        "communication_threads",
+        "communication_participants",
+        "communication_messages",
+        "communication_templates",
+        "notification_receipts"
+      ]
+    },
+    {
+      "name": "020_document_text.sql",
+      "path": "supabase/additive/020_document_text.sql",
+      "sha256": "959c504ba20411f609314ec26dec484cf4a345c87faa4c60e65e1041e8e78c4b",
+      "tables": [
+        "document_text_index"
+      ]
+    },
+    {
+      "name": "021_marketing_operations.sql",
+      "path": "supabase/additive/021_marketing_operations.sql",
+      "sha256": "82ee14427db031472ad99750ceb5500b7bdf895208f579bc49960da21e2d1524",
+      "tables": [
+        "marketing_driver_enrollments",
+        "marketing_services"
+      ]
+    },
+    {
+      "name": "022_contracting_companies.sql",
+      "path": "supabase/additive/022_contracting_companies.sql",
+      "sha256": "eb9c2331f2d79550338488e9bfcc1361f80be058f152f75342e95376a4a25779",
+      "tables": [
+        "contracting_companies",
+        "contracting_events",
+        "contracting_links"
+      ]
+    },
+    {
+      "name": "023_contracting_financial_party.sql",
+      "path": "supabase/additive/023_contracting_financial_party.sql",
+      "sha256": "187d7fd081387a11dc0a4b39551a7c7c3ea33191e5e974f5cf59401fec041b97",
+      "tables": [
+        "marketing_contract_bills"
+      ]
+    },
+    {
+      "name": "024_investor_evidence.sql",
+      "path": "supabase/additive/024_investor_evidence.sql",
+      "sha256": "d60e7ce79d87e108b09c38d5bb9ba4d81ab18352674e8d37d4bff97b8e43d04f",
+      "tables": [
+        "investor_evidence_links"
+      ]
+    },
+    {
+      "name": "025_direct_contracting_contracts.sql",
+      "path": "supabase/additive/025_direct_contracting_contracts.sql",
+      "sha256": "0a22455cd30389771fae699937b634695f1bc89c7683842da19bb4a574247d87",
+      "tables": []
+    }
+  ]
+}
