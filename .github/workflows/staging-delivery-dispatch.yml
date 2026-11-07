@@ -52,7 +52,7 @@ jobs:
     steps:
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       with:
-        ref: eb36e78f04f8180c351a92892b711026507173be
+        ref: e8c870a85fbc5f2aff84b1e1b3c6a8d255bbb831
         fetch-depth: 0
         persist-credentials: false
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -108,7 +108,7 @@ jobs:
         NODE
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       with:
-        ref: eb36e78f04f8180c351a92892b711026507173be
+        ref: e8c870a85fbc5f2aff84b1e1b3c6a8d255bbb831
         fetch-depth: 0
         persist-credentials: false
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -181,7 +181,7 @@ jobs:
     steps:
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       with:
-        ref: eb36e78f04f8180c351a92892b711026507173be
+        ref: e8c870a85fbc5f2aff84b1e1b3c6a8d255bbb831
         fetch-depth: 0
         persist-credentials: false
     - id: trigger
@@ -223,7 +223,7 @@ jobs:
     steps:
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       with:
-        ref: eb36e78f04f8180c351a92892b711026507173be
+        ref: e8c870a85fbc5f2aff84b1e1b3c6a8d255bbb831
         fetch-depth: 0
         persist-credentials: false
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -338,4 +338,4 @@ jobs:
         - approval-test
 env:
   AB_CONTROLLER_VERIFIED: protected-v2
-  AB_CONTROLLER_REF: eb36e78f04f8180c351a92892b711026507173be
+  AB_CONTROLLER_REF: e8c870a85fbc5f2aff84b1e1b3c6a8d255bbb831
