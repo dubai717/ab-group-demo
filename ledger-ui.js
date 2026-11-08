@@ -448,7 +448,7 @@
             try {
                 if (action === 'tab') {
                     tab = key;
-                    await api('preferences', 'POST', { companyId: co, tab: key }, crypto.randomUUID());
+                    if(!ABCentral.viewAs)await api('preferences', 'POST', { companyId: co, tab: key }, crypto.randomUUID());
                     report = null;
                     preview = null;
                     if (['invoices', 'collect'].includes(tab))
