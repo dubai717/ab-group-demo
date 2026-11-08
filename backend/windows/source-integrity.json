@@ -154,7 +154,7 @@
     "backend/tests/document-text-portable.test.ts": "acd43c14d5324c8f2ceaf30d3138922d9264bd6785e32be752a5d7f1b738f23d",
     "backend/tests/document-text.test.ts": "d3fe8a31eacd93ceef0a16a625939d37155f870c8354994428e8eb786c0cf69f",
     "backend/tests/financial-registers.browser.cjs": "6d91fbf80cf1aeb6a89d4d483f2429571b4ee171d22bb7c96deb70f32970f61f",
-    "backend/tests/investor-evidence.browser.cjs": "dcaacc1d90969db27769c0e4067ae039876624caacb46c69ff09c6926da7cf0e",
+    "backend/tests/investor-evidence.browser.cjs": "8ba9e9db449072538b3e780d597854e0a715f35a6a680c6811de6d878ce441c9",
     "backend/tests/investor-evidence.test.ts": "bf6a5e47fa970c09f0d4a8ca6eb40454e2c37870b90a3ad848057ea86c30be2e",
     "backend/tests/investors.test.ts": "0a114d745132d048f48292bb27c2060d49e3b565f7c858f9e1876b6f6a809edd",
     "backend/tests/marketing.test.ts": "7b3c96c6c8bc2f9638818de63584fc76c1241778925e42a782ce9dd0a1402da2",
