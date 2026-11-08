@@ -932,7 +932,7 @@ dialog.record-floating {position:fixed;inset:auto;left:50%;top:7vh;transform:tra
 .record-floating::backdrop {background:transparent;pointer-events:none;}
 .record-window-bar {display:flex;align-items:center;gap:.5rem;position:sticky;top:-18px;background:var(--panel,#fff);padding:.65rem;z-index:3;border-bottom:1px solid var(--line);cursor:move;touch-action:none;}
 .record-window-bar span {flex:1;font-weight:600;}.record-window-bar button {cursor:pointer;min-width:2.5rem;min-height:2.5rem;}
-dialog.record-maximized {left:1vw!important;top:1vh!important;transform:none!important;width:98vw!important;height:98vh!important;max-height:98vh!important;}
+dialog.record-maximized {left:var(--record-main-left,1vw)!important;top:1vh!important;transform:none!important;width:var(--record-main-width,98vw)!important;height:98vh!important;max-height:98vh!important;}
 .record-floating dl {display:grid;grid-template-columns:minmax(130px,.8fr) minmax(180px,1.4fr);gap:.6rem 1rem;margin-block:1rem;}.record-floating dt {font-weight:650;}.record-floating dd {margin:0;overflow-wrap:anywhere;}
 .record-section,.record-field-group {border:1px solid var(--line);border-radius:10px;padding:1rem;margin-block:.8rem;min-width:0;}.record-field-group .form-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;}.record-field-group legend{font-weight:700;padding-inline:.4rem;}
 .ws-required:has(>input[required])::after,.ws-required:has(>select[required])::after {content:none;}.required-mark {color:var(--danger);display:inline!important;font-weight:700;}.field-caption {display:block;}
@@ -943,3 +943,8 @@ dialog.record-maximized {left:1vw!important;top:1vh!important;transform:none!imp
 .record-section dl:has(>.record-detail-field){grid-template-columns:repeat(3,minmax(0,1fr));}.record-detail-field{min-width:0;}.record-detail-field dd{margin-block-start:.35rem;}
 @media(max-width:1100px){.record-section dl:has(>.record-detail-field){grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:720px){.record-section dl:has(>.record-detail-field){grid-template-columns:1fr;}}
+
+/* Keep navigation available beside non-modal records, including the phone menu. */
+.sidebar{z-index:10000;}
+
+@media(max-width:720px){.record-window-bar [data-window-max]{display:none;}}

@@ -1112,7 +1112,7 @@ function bindGlobalEvents() {
   CompanyDocuments.bind();
   document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', async () => {
-      if(!await WorkspaceUI.leave())return;
+      const allowed=await WorkspaceUI.leave();WorkspaceUI.closeMenu();if(!allowed)return;
       AuthFlows.leave();
       UserManagement.cleanup();
       BankAccounts.cleanup();

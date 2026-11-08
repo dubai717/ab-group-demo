@@ -10,7 +10,7 @@
     ".github/workflows/staging-ci.yml": "35d860305f445ee892d9cd0f0ee67fcba0a9e290fd4b0e9bf38e25184b987322",
     ".github/workflows/trusted-staging-controller.yml": "d5d453431acd5ed51535065c6485efe34da6ab0080491c76d1913c47be5f1d4f",
     "Dockerfile.staging": "d1048c0f00ec9fa4dc0c99cd1b9f5e184e04362bcb4dd6a99d2d208eab157725",
-    "app.js": "d348b007e34dde77ae1b23601a417272db24631ba6aec5c0d86e9039406070f5",
+    "app.js": "fa028646c2c55f6dcad00c978c4248cbe9fd9a15625e797247dab1a1f9da5625",
     "area-reference.js": "de548911272dcd49b6459bce07f47df968806eda4f45e6e6a6bccaa255da009b",
     "assets/Untitled.png": "afcbf7dc6b24c125177cbb41715dae17309225dc58d023939d6c8581dbee8c61",
     "assets/logo.svg": "3f854e3262d4430711a00028533afc8f473deab128abd483a3eee1380843dc14",
@@ -189,7 +189,7 @@
     "docs/implementation/business-centers-7-14.md": "e0e5b5777420da59e7bdcdf6f039d4c74bd6c987a88567f1a040d598b9143d7a",
     "finance-policy.js": "93c1464c55adfe6694c37dcb6d9e613cbf99e9dd32b72108a10cd598391589f2",
     "finance-workbench.js": "e06468613b7183c703136e0e924089d7a01fa2d86a07947b942cb418411dc669",
-    "floating-records.js": "931c5260a501b0c759818fb8606dbd6f45599c79d3182c2689106b2db5d5ba0e",
+    "floating-records.js": "4aac8e44f89e0019aec7033bebd5af08b1dfc3727cb8e0dd76e99872e1b82924",
     "index.html": "cf05685e2bafc1245b733fe87fdec35c58473e69c3a7914991b6a4380f31aa41",
     "investors-ui.js": "8335194cb5f9165ff03fa033d4e51ef00a9f07da935b052317bf255866f3ddbe",
     "ledger-policy.js": "a8609128e1a9e8ff98451fd6af51b9ba1cbbe2dcb7808744bd4cf56c1da442d6",
@@ -205,7 +205,7 @@
     "reports-ui.js": "6c6b591ca8537c08539992c7579dee6851c5fd083b70d50319422bada14a586f",
     "runtime-config.js": "c7620ce7a24aadc0d789008b7b5d0d934201708ec40df2024d44a29ec19e8aca",
     "server.js": "1f682dd293a894275429b3f3b7afb4cb901e6b0827f524ba0fa1bb3f67a299d7",
-    "styles.css": "7bce4db633247372cb04f15235d5df333faa53a682d712b5edf3d1a0258fc2ff",
+    "styles.css": "c7c6e0fb1c0ce74fed22e12295768782d63d77224880f8b2d3fe7129aa989cd5",
     "supabase/additive/014_followup_and_eos.sql": "9cbdbeb1af74513f7da94c39a1c701e7f71054825f830d0f8653e13ceb5f1a69",
     "supabase/additive/015_document_center.sql": "676a9d583bd4534ae37b16fd82a217276f803212df34f2b615e28843a9a435a3",
     "supabase/additive/016_marketing.sql": "cd9cd41cb18f0bb2d789f395233427fe963c863806a1f5cb8a956e054bc34405",
@@ -228,6 +228,6 @@
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
     "vehicles.js": "59ff6e6abe4a52562c98d490b4e1f9c304256c87656cfda06068a7ad4213160e",
     "view-as-ui.js": "9359c7b986dfcedbdf67ac0f6fab2dad951a4e54b0be03ca4befaa9b60d5327d",
-    "workspace-ui.js": "fa992685149e2497f2f9464651d394257b797b06996a5a5e3741e51ec2f58ec7"
+    "workspace-ui.js": "2235fc07ac5f13c0605f59c1c62084e2a312909f616000fd0be6fb98b15b921d"
   }
 }
