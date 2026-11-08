@@ -927,3 +927,19 @@ th {
 #central-dashboard .stat-value { display: block; font-size: 2.1rem; line-height: 1.25; font-weight: 750; }
 #central-dashboard .dashboard-details { min-width: 0; margin-block-start: 1.25rem; }
 #central-dashboard [data-register-view] tbody tr { cursor: pointer; }
+/* Shared non-modal record workspace, with the original record components. */
+dialog.record-floating {position:fixed;inset:auto;left:50%;top:7vh;transform:translateX(-50%);width:min(1060px,94vw);max-width:96vw;max-height:88vh;height:auto;margin:0;resize:both;overflow:auto;box-sizing:border-box;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel,#fff);box-shadow:0 14px 48px #35100b33;padding:18px;}
+.record-floating::backdrop {background:transparent;pointer-events:none;}
+.record-window-bar {display:flex;align-items:center;gap:.5rem;position:sticky;top:-18px;background:var(--panel,#fff);padding:.65rem;z-index:3;border-bottom:1px solid var(--line);cursor:move;touch-action:none;}
+.record-window-bar span {flex:1;font-weight:600;}.record-window-bar button {cursor:pointer;min-width:2.5rem;min-height:2.5rem;}
+dialog.record-maximized {left:1vw!important;top:1vh!important;transform:none!important;width:98vw!important;height:98vh!important;max-height:98vh!important;}
+.record-floating dl {display:grid;grid-template-columns:minmax(130px,.8fr) minmax(180px,1.4fr);gap:.6rem 1rem;margin-block:1rem;}.record-floating dt {font-weight:650;}.record-floating dd {margin:0;overflow-wrap:anywhere;}
+.record-section,.record-field-group {border:1px solid var(--line);border-radius:10px;padding:1rem;margin-block:.8rem;min-width:0;}.record-field-group .form-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;}.record-field-group legend{font-weight:700;padding-inline:.4rem;}
+.ws-required:has(>input[required])::after,.ws-required:has(>select[required])::after {content:none;}.required-mark {color:var(--danger);display:inline!important;font-weight:700;}.field-caption {display:block;}
+@media(min-width:1200px){.record-field-group .form-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(max-width:720px){dialog.record-floating{left:6px;top:2vh;transform:none;width:calc(100vw - 12px);max-width:calc(100vw - 12px);max-height:96vh;resize:none;padding:12px;}.record-floating dl,.record-field-group .form-grid{grid-template-columns:1fr;}.record-window-bar{top:-12px;font-size:.8rem;}}
+.movement-chart{display:flex;align-items:end;gap:1rem;overflow-x:auto;max-width:100%;padding:2rem .5rem 1rem;}.movement-month{min-width:70px;text-align:center;}.movement-bars{height:185px;display:flex;gap:.3rem;align-items:end;justify-content:center;}.movement-bar{height:var(--bar-height);width:26px;border:0;position:relative;padding:0;cursor:pointer;}.movement-bar span{position:absolute;bottom:100%;left:0;right:0;font-weight:700;color:var(--text);}.movement-in{background:#25854b;}.movement-out{background:#b53232;}.movement-bar:disabled{opacity:.55;cursor:default;}.draft-leave-dialog{max-width:90vw;border-radius:1rem;padding:1.5rem;}.draft-leave-dialog button{margin:.4rem;padding:.7rem;}
+
+.record-section dl:has(>.record-detail-field){grid-template-columns:repeat(3,minmax(0,1fr));}.record-detail-field{min-width:0;}.record-detail-field dd{margin-block-start:.35rem;}
+@media(max-width:1100px){.record-section dl:has(>.record-detail-field){grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:720px){.record-section dl:has(>.record-detail-field){grid-template-columns:1fr;}}

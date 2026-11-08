@@ -1,3 +1,4 @@
+import {registerVehicleMovementReport} from './vehicle-movement-report.js';
 import {dashboardFinancial} from './dashboard-financial.js';
 import {financeRight} from './finance.js';
 import {hrRight} from './personnel-domain.js';
@@ -9,6 +10,7 @@ import {centralDataset,datasetNames} from './central-read-models.js';
 import {V} from './vehicle-domain.js';
 
 export function registerCentralDashboard(app:any,call:any,cipher:any){
+ registerVehicleMovementReport(app,call,cipher);
  app.get('/api/central-dashboard',call(async(c:any,original:any,s:any,req:any)=>{
   const q=z.object({companyId:z.uuid().optional(),departmentId:z.uuid().optional(),from:z.iso.date().optional(),to:z.iso.date().optional(),asUserId:z.uuid().optional(),source:datasetNames.optional()}).strict().parse(req.query);
   let m=original;if(q.asUserId){requireOk(original.actor.roleId==='owner');const target=original.state.users.find((u:any)=>u.id===q.asUserId&&u.status==='Active');requireOk(target,404,'notFound');m=await model(c,target.id,cipher);await audit(c,s.tenant_id,s.user_id,'owner_readonly_dashboard_preview','user',target.id,['dashboard','reports']);}
