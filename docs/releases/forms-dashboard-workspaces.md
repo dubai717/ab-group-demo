@@ -39,3 +39,10 @@ synthetic fixture and rate limiter. No changes to protected delivery workflows.
 Deployment: follow the existing staging CI/controller. Native protected-environment
 review remains mandatory if the classifier requests it. Do not approve it on the
 owner's behalf or change manual SHA variables/protection settings.
+
+Local verification: 325 server regression cases passed. Existing central,
+bank/company lifecycle, company edit/status, PDF canvas and workspace presentation
+browser regressions passed. Customer regression passed with and without its schema,
+including transfer from inside the floating profile. New forms/report/IBAN suites
+passed independently. The owner-only employee-number enrichment also passed scoped
+report and View As regressions. Cloud CI remains required before staging merge.
