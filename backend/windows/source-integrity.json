@@ -182,7 +182,7 @@
     "company-documents.js": "67ada9191d5714931368df00b2a68e24910257986ad404595b2e509210812123",
     "contracting-companies-ui.js": "619b1142908a58063f99da0d3243543130cb5f793025c2a0acb30299c304b0dc",
     "customer-policy.js": "70b028e17768fbc945af1848a3bfceae9241260c661417b5d232057b804a99dd",
-    "customers.js": "ad022c76d2af1d27ace0697e3990687ad74571fc1ef7fbea5a3d713dbed47791",
+    "customers.js": "73ba15f6d8a0912a39a1cf2c77f2896309a93e8fa18dbe54d4b79529d7d7af4c",
     "dashboard-ui.js": "6f7c1f276e46af11248d6515742689ef662279e66d57c692eea7834e318c9e58",
     "data/uae-areas.js": "a5db8e1e0d1f6f3827dd359782bf772f0a80898d53317a8040e5eb1265279d7a",
     "demo-credentials.js": "6d11baa34790c15e593b0465a574ebf55d027bffd2446b40c17ac7c953ebe2ea",
@@ -193,7 +193,7 @@
     "index.html": "cf05685e2bafc1245b733fe87fdec35c58473e69c3a7914991b6a4380f31aa41",
     "investors-ui.js": "8335194cb5f9165ff03fa033d4e51ef00a9f07da935b052317bf255866f3ddbe",
     "ledger-policy.js": "a8609128e1a9e8ff98451fd6af51b9ba1cbbe2dcb7808744bd4cf56c1da442d6",
-    "ledger-ui.js": "e3775ea82080cbf2687a1c9456dd1c38391f9ecaa002e12e91761f25cf286b95",
+    "ledger-ui.js": "480924d40ca6a9b923cae325b941490ab21f3b1d1b09a0f52e8e2ab7b374805d",
     "marketing-ui.js": "6dfb80cb8fcdc9f26eb66c49dcafbb1020c1b2e0354b3aaa6c186a126979c0ed",
     "package-lock.json": "7eab6f13373e1644e557e58553ca2247054f8d3def1d48d3413afa0b08057530",
     "package.json": "8640569a112c9ad4df162b56646e2e1a25427b22c18b7fe3a3dac75744fd93c6",
@@ -226,7 +226,7 @@
     "supabase/proposed/013_personnel_tasks_performance.sql": "9cdf974b9a57cb5d9cde44458b3ecce6773803dbe975f354ecb93b673de8a45f",
     "user-management.js": "237281ba64542af854ec8e7179d178c273e19dfece65e0ca369f4d4b213b4c12",
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
-    "vehicles.js": "59ff6e6abe4a52562c98d490b4e1f9c304256c87656cfda06068a7ad4213160e",
+    "vehicles.js": "1d4faeefdefab99db8ffd6194c4c97f50607a5e3cee547671e27988ff8c329a8",
     "view-as-ui.js": "9359c7b986dfcedbdf67ac0f6fab2dad951a4e54b0be03ca4befaa9b60d5327d",
     "workspace-ui.js": "2235fc07ac5f13c0605f59c1c62084e2a312909f616000fd0be6fb98b15b921d"
   }
