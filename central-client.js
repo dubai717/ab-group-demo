@@ -67,11 +67,15 @@
       const d = await r.json().catch(() => ({ error: "unavailable" }));
       throw Object.assign(Error(d.error || "unavailable"),{fields:d.fieldErrors});
     }
-    return r.json();
+    const result=await r.json();
+    if(!["GET","HEAD"].includes(method))globalThis.DashboardUI?.invalidate();
+    return result;
   }
   C.api=api;
+  C.bankClosed=()=>{activeBank=null;};
+  C.openBank=async id=>{if(!WorkspaceUI.leave())return;await api('bank-accounts/'+id);activeBank=id;await readDocuments({bankAccountId:id}).catch(()=>[]);BankAccounts.centralSelect(id);FinanceWorkbench.select('accounts',false);app.state.currentPage='bankAccounts';await load();};
   C.companyClosed=()=>{activeCompany=null;};
-  C.openCompany=async id=>{if(!RecordProfile.confirmLeave(document.getElementById('cd-profile-form')))return;await api('companies/'+id);activeCompany=id;app.state.currentPage='companies';await readDocuments({companyId:id}).catch(()=>[]);CompanyDocuments.centralSelect(id);await load();};
+  C.openCompany=async id=>{if(!WorkspaceUI.leave())return;await api('companies/'+id);activeCompany=id;app.state.currentPage='companies';await readDocuments({companyId:id}).catch(()=>[]);CompanyDocuments.centralSelect(id);await load();};
   async function load(draw = true) {
     const b = await api("bootstrap");
     if(C.actor?.id!==b.actor.id){globalThis.CenterForms?.clear();globalThis.AttachmentViewer?.close();globalThis.FinanceWorkbench?.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();globalThis.LedgerUI?.reset();globalThis.RegisterStore?.clear();globalThis.RegisterView?.clear();globalThis.FinancialTables?.clear();C.documents.clear();C.enrollment.clear();activeUser=activeCompany=activeBank=null;globalThis.CompanyDocuments?.centralSelect?.(null);globalThis.UserManagement?.centralSelect?.(null);}
@@ -488,7 +492,7 @@
       if(!visible)throw Error('verificationUnavailable');
       activeBank = null;
       BankAccounts.centralSelect(null);
-      render();
+      globalThis.DashboardUI?.invalidate();render();
       if(!visible.match)savedMessage=text('حُفظ الحساب على الخادم؛ السجل خارج البحث أو الفلاتر الحالية.','Account saved on the server; it is outside the current search or filters.');
     } else if (kind === "um-profile") {
       const data = values(form, false);
@@ -680,6 +684,8 @@
         um = b.dataset.um,
         cd = b.dataset.cd;
       if(action==='logout'&&!CompanyDocuments.leave()){event.preventDefault();event.stopImmediatePropagation();return;}
+      if(["new","close","open"].includes(bk)&&!BankAccounts.leave()){event.preventDefault();event.stopImmediatePropagation();return;}
+      if(cd==="edit"&&C.companyStatusBusy){event.preventDefault();event.stopImmediatePropagation();return;}
       if (bk === "new") activeBank = null;
       if (bk === "close") activeBank = null;
       if (um === "new") activeUser = null;
@@ -740,9 +746,9 @@
           const r=app.state.companies.find(c=>c.id===b.dataset.companyId)||await api('companies/'+b.dataset.companyId);
           const nextStatus=b.dataset.nextStatus||(r.status==='Active'?'Inactive':'Active');
           if(!confirm(text('تأكيد ','Confirm ')+localeText(nextStatus==='Active'?'enable':'disable')+text(' الشركة: ',' company: ')+(getLocale()==='ar'?(r.arabicName||r.englishName):(r.englishName||r.arabicName))))return;
-          C.companyStatusBusy=true;const page=app.state.currentPage,formOpen=app.state.companyFormOpen,profileId=activeCompany,status=nextStatus;let committed=false;
-          try{await api('companies/'+r.id,'PATCH',{revision:r.revision,status});committed=true;const verified=await api('companies/'+r.id);if(verified.status!==status)throw Error('verificationUnavailable');await load(false);await RegisterStore.get('companies').refresh(r.id);if(app.state.currentPage===page&&app.state.companyFormOpen===formOpen&&activeCompany===profileId&&!RecordProfile.dirty(document.getElementById('cd-profile-form')))render();show(text('تم حفظ حالة الشركة والتحقق منها.','Company status saved and verified.'));}
-          catch(e){if(committed)throw Error(text('حُفظ طلب الحالة، لكن تعذر التحقق من استرجاعها. حدّث السجل قبل المحاولة مجدداً.','Status committed, but readback could not be verified. Refresh before retrying.'));throw e;}finally{C.companyStatusBusy=false;}
+          C.companyStatusBusy=true;const page=app.state.currentPage,status=nextStatus;let committed=false;
+          try{await api('companies/'+r.id,'PATCH',{revision:r.revision,status});committed=true;const verified=await api('companies/'+r.id);if(verified.status!==status)throw Error('verificationUnavailable');Object.assign(app.state.companies.find(c=>c.id===r.id)||r,verified);const grid=RegisterStore.get('companies');for(const item of grid.rows)if(item.id===r.id)Object.assign(item,verified);globalThis.DashboardUI?.invalidate();await grid.refresh(r.id,false);show(text('تم حفظ حالة الشركة والتحقق منها.','Company status saved and verified.'));}
+          catch(e){if(committed)throw Error(text('حُفظ طلب الحالة، لكن تعذر التحقق من استرجاعها. حدّث السجل قبل المحاولة مجدداً.','Status committed, but readback could not be verified. Refresh before retrying.'));throw e;}finally{C.companyStatusBusy=false;if(app.state.currentPage===page&&!RecordProfile.dirty(document.getElementById('cd-profile-form')))render();}
         } else if (bk === "toggle") {
           const row=await api('bank-accounts/'+b.dataset.id);
           if(!confirm(text('تأكيد تغيير حالة الحساب: ','Confirm account status change: ')+row.accountName))return;

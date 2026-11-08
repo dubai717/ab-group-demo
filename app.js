@@ -1112,12 +1112,13 @@ function bindGlobalEvents() {
   CompanyDocuments.bind();
   document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', async () => {
-      if(!CustomerUI.leave()||!CompanyDocuments.leave())return;
+      if(!WorkspaceUI.leave())return;
       AuthFlows.leave();
       UserManagement.cleanup();
       BankAccounts.cleanup();
       CompanyDocuments.cleanupPreview();
       const page = button.dataset.page;
+      if(page==='bankAccounts'){BankAccounts.enterRegister();FinanceWorkbench.select('accounts',false);}
       if(page==='companies'){CompanyDocuments.centralSelect(null);app.state.companyFormOpen=false;}
       app.state.currentPage = page;
       if(page==='customers'){await CustomerUI.select('list',true);return;}
@@ -1168,6 +1169,7 @@ function bindGlobalEvents() {
   });
 
   document.querySelectorAll('[data-action="toggle-company-status"]').forEach(button => {
+    if(globalThis.ABCentral?.companyStatusBusy)button.disabled=true;
     button.addEventListener('click', () => {
       const actor = getCanonicalActor();
       if(!actor || actor.status!=='Active' || !(actor.roleId==='owner'||isUserAllowed(actor,'edit_company'))) return;
@@ -1175,6 +1177,7 @@ function bindGlobalEvents() {
       const target = app.state.companies.find(c => c.id === companyId);
       if (!target) return;
       if(!confirm(getLocale()==='ar'?'تأكيد تغيير حالة الشركة؟':'Confirm company status change?'))return;
+      if(globalThis.ABCentral?.enabled)return;
       CompanyDocuments.updateStatus(companyId,button.dataset.nextStatus||(target.status==='Active'?'Inactive':'Active'));
       render();
     });
@@ -1266,7 +1269,7 @@ function bindGlobalEvents() {
     });
   }
 
-  document.querySelector('[data-company-back]')?.addEventListener('click',()=>{app.state.companyFormOpen=false;render();});
+  document.querySelector('[data-company-back]')?.addEventListener('click',()=>{if(!WorkspaceUI.leave())return;app.state.companyFormOpen=false;render();});
   const companyGridHost=document.querySelector('.company-panel');if(companyGridHost&&!app.state.companyFormOpen)RegisterStore.get('companies').bind(companyGridHost);
   document.querySelectorAll('[data-company-row]').forEach(row=>row.addEventListener('click',ev=>{if(!ev.target.closest('button,a,input,select,summary,details'))row.querySelector('[data-cd=profile]')?.click();}));
   const openCompanyBtn = document.querySelector('[data-action="open-company-form"]');

@@ -920,3 +920,10 @@ th {
 .record-form-dialog textarea { width: 100%; min-height: 100px; }
 .view-as-banner { border: 1px solid var(--warning); background: var(--gold-soft); border-radius: var(--radius); padding: .9rem; margin-block: 1rem; }
 @media(max-width:600px) { .record-form-dialog .form-grid { grid-template-columns: minmax(0, 1fr); } .register-search-row label { flex-basis: 100%; } }
+
+/* Shared dashboard metrics: label above the real scoped count. */
+#central-dashboard .stat-card { text-align: start; min-width: 0; }
+#central-dashboard .stat-label { display: block; white-space: normal; }
+#central-dashboard .stat-value { display: block; font-size: 2.1rem; line-height: 1.25; font-weight: 750; }
+#central-dashboard .dashboard-details { min-width: 0; margin-block-start: 1.25rem; }
+#central-dashboard [data-register-view] tbody tr { cursor: pointer; }
