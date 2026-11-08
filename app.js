@@ -1112,7 +1112,7 @@ function bindGlobalEvents() {
   CompanyDocuments.bind();
   document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', async () => {
-      if(!WorkspaceUI.leave())return;
+      const allowed=await WorkspaceUI.leave();WorkspaceUI.closeMenu();if(!allowed)return;
       AuthFlows.leave();
       UserManagement.cleanup();
       BankAccounts.cleanup();
@@ -1269,7 +1269,7 @@ function bindGlobalEvents() {
     });
   }
 
-  document.querySelector('[data-company-back]')?.addEventListener('click',()=>{if(!WorkspaceUI.leave())return;app.state.companyFormOpen=false;render();});
+  document.querySelector('[data-company-back]')?.addEventListener('click',async()=>{if(!await WorkspaceUI.leave())return;app.state.companyFormOpen=false;render();});
   const companyGridHost=document.querySelector('.company-panel');if(companyGridHost&&!app.state.companyFormOpen)RegisterStore.get('companies').bind(companyGridHost);
   document.querySelectorAll('[data-company-row]').forEach(row=>row.addEventListener('click',ev=>{if(!ev.target.closest('button,a,input,select,summary,details'))row.querySelector('[data-cd=profile]')?.click();}));
   const openCompanyBtn = document.querySelector('[data-action="open-company-form"]');
