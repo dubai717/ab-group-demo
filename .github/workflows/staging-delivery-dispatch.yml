@@ -49,7 +49,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: 0e09bbfce97a62e3afafbc5d5a1491f0d4e7ae90
+          ref: 05feb7326c3ca72b2fdd0719fa4ee0e3d522e516
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -107,7 +107,7 @@ jobs:
           NODE
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: 0e09bbfce97a62e3afafbc5d5a1491f0d4e7ae90
+          ref: 05feb7326c3ca72b2fdd0719fa4ee0e3d522e516
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -193,7 +193,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: 0e09bbfce97a62e3afafbc5d5a1491f0d4e7ae90
+          ref: 05feb7326c3ca72b2fdd0719fa4ee0e3d522e516
           fetch-depth: 0
           persist-credentials: false
       - id: trigger
@@ -238,7 +238,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: 0e09bbfce97a62e3afafbc5d5a1491f0d4e7ae90
+          ref: 05feb7326c3ca72b2fdd0719fa4ee0e3d522e516
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -264,6 +264,11 @@ jobs:
           fi
       - name: Read-only release, public UI and authorization smoke (no generated data)
         run: node --import tsx backend/deploy/staging-readonly-smoke.ts
+      - name: Verify live stylesheet bytes against the tested source
+        run: |-
+          node <<'NODE'
+          (async()=>{try{const fs=require('node:fs'),crypto=require('node:crypto'),hash=b=>crypto.createHash('sha256').update(b).digest('hex');const r=await fetch('https://ab-group-demo.onrender.com/styles.css',{redirect:'error',headers:{'cache-control':'no-cache'},signal:AbortSignal.timeout(20000)});if(!r.ok||hash(Buffer.from(await r.arrayBuffer()))!==hash(fs.readFileSync('candidate/styles.css')))throw Error();console.log('CHECK: LIVE_STYLESHEET_BYTES_MATCH_TESTED_SOURCE=PASS');}catch{console.log('RESULT: LIVE_STYLESHEET_MISMATCH_OR_UNAVAILABLE');process.exitCode=1;}})();
+          NODE
     env:
       AB_STAGING_SOURCE_SHA: ${{ needs.source.outputs.sha }}
       AB_SOURCE_RUN_ID: ${{ needs.source.outputs.run }}
@@ -344,7 +349,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: 0e09bbfce97a62e3afafbc5d5a1491f0d4e7ae90
+          ref: 05feb7326c3ca72b2fdd0719fa4ee0e3d522e516
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
@@ -372,7 +377,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: 0e09bbfce97a62e3afafbc5d5a1491f0d4e7ae90
+          ref: 05feb7326c3ca72b2fdd0719fa4ee0e3d522e516
           persist-credentials: false
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
@@ -406,4 +411,4 @@ on:
           - approval-test
 env:
   AB_CONTROLLER_VERIFIED: protected-v2
-  AB_CONTROLLER_REF: 0e09bbfce97a62e3afafbc5d5a1491f0d4e7ae90
+  AB_CONTROLLER_REF: 05feb7326c3ca72b2fdd0719fa4ee0e3d522e516
