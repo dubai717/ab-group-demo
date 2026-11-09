@@ -39,7 +39,7 @@ function boundary(source,path){
     else if(dangerousSql.test(sql.text)){keep('database-boundary',n);out.push(['guards',guards(n)]);}
    }
   }
-  if(ts.isIfStatement(n)||ts.isConditionalExpression(n)){const expr=ts.isIfStatement(n)?n.expression:n.condition;if(privileged.test(print(expr))||/\b(?:roleId|role_id|owner|can[A-Z]\w*|has[A-Z]\w*)\b/.test(print(expr)))keep('access-condition',expr);}
+  if(ts.isIfStatement(n)||ts.isConditionalExpression(n)){const expr=ts.isIfStatement(n)?n.expression:n.condition;if(privileged.test(print(expr))||/\b(?:roleId|role_id|owner|can[A-Z]\w*|has[A-Z]\w*)\b|\.(?:can|has)\s*\(/.test(print(expr))){keep('access-condition',expr);if(ts.isIfStatement(n))keep('access-guard-statement',n);}}
   if(ts.isBinaryExpression(n)&&n.operatorToken.kind>=ts.SyntaxKind.FirstAssignment&&n.operatorToken.kind<=ts.SyntaxKind.LastAssignment&&privileged.test(print(n.left)))keep('privileged-assignment',n);
   if(ts.isVariableDeclaration(n)&&privileged.test(print(n.name)))keep('privileged-variable',n);
   if(ts.isPropertyAssignment(n)&&privileged.test(print(n.name)))keep('privileged-property',n);
