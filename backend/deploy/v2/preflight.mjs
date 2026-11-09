@@ -22,7 +22,7 @@ export async function preflight(e,api,request=fetch){
  const live=await request(origin+'/api/release',{redirect:'error',signal:AbortSignal.timeout(20000)});need(live.ok,'LIVE_RELEASE_UNAVAILABLE');const v=await live.json();need(v.environment==='staging'&&v.commit===previous.sha&&v.projectOriginSha256===project,'LIVE_BASELINE_MISMATCH');
  const changes=[];const statuses=git('diff','--no-renames','--name-status','-z',previous.sha,sha).split('\0');for(let i=0;i<statuses.length-1;i+=2){const status=statuses[i],path=statuses[i+1];need(/^[AMD]$/.test(status),'UNSUPPORTED_CHANGE_STATUS');const show=ref=>git('show',ref+':'+path);const row=status==='D'?'':git('ls-tree',sha,'--',path);const mode=row.split(' ')[0]||'100644';changes.push({path,status,mode,before:status==='A'?'':show(previous.sha),after:status==='D'?'':show(sha)});}
  const result=classifyChanges(changes);need(result.risk!=='blocked','BLOCKED_CREDENTIAL_OR_LINK_CHANGE');
- // One-time source tree explicitly approved in the protected, immutable controller commit.
+ // One-time exact activation tree approved by the owner; never a wildcard or future-source exemption.
  const trust=JSON.parse(readFileSync('backend/deploy/v2/trust.json','utf8'));const tree=git('rev-parse',sha+'^{tree}').trim();const bootstrap=trust.approvedSourceTree===tree&&/^[a-f0-9]{40}$/.test(tree);
  if(bootstrap){result.risk='owner-approved-bootstrap';result.requiresOwner=false;}
  // SQL remains immutable even with owner approval; arbitrary migrations never run here.
