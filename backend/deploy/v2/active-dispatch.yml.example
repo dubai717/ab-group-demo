@@ -299,7 +299,7 @@ jobs:
       - source
       - policy
       - schema-readiness
-    if: needs.policy.outputs.requires_owner == 'true' || needs.schema-readiness.outputs.pending != '0'
+    if: needs.policy.outputs.requires_owner == 'true'
     runs-on: ubuntu-latest
     environment: staging-owner-approval
     permissions: {}
