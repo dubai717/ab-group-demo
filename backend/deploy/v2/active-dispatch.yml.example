@@ -62,6 +62,10 @@ jobs:
         with:
           node-version: "24"
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Wait read-only for any earlier started publication and verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node backend/deploy/v2/supersede.mjs --wait
       - id: policy
         env:
           GH_TOKEN: ${{ github.token }}
@@ -79,6 +83,7 @@ jobs:
     env:
       AB_STAGING_SOURCE_SHA: ${{ needs.source.outputs.sha }}
       AB_SOURCE_RUN_ID: ${{ needs.source.outputs.run }}
+    timeout-minutes: 65
   schema:
     needs:
       - source
