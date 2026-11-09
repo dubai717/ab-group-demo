@@ -948,3 +948,6 @@ dialog.record-maximized {left:var(--record-main-left,1vw)!important;top:1vh!impo
 .sidebar{z-index:10000;}
 
 @media(max-width:720px){.record-window-bar [data-window-max]{display:none;}}
+
+/* Keep the user-save progress line stable while its status text changes. */
+#um-profile [data-user-save-status] { min-height: 1.5em; }
