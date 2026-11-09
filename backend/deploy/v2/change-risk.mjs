@@ -3,9 +3,10 @@ import ts from 'typescript-portable';
 import {parseFragment,parse as parseHtml} from 'parse5';
 import {parse as parseCss,walk as walkCss} from 'css-tree';
 import {createHash} from 'node:crypto';
+import {classifyRuntime} from './runtime-risk.mjs';
 const digest=s=>createHash('sha256').update(s).digest('hex');
 const uiFiles=new Set(['app.js','company-documents.js','bank-accounts.js','user-management.js','customers.js','vehicles.js','finance-workbench.js','ledger-ui.js','personnel-ui.js','workspace-ui.js','register-tools.js','attachment-viewer.js']);
-const critical=/^(\.github\/|backend\/(deploy|actions|reset|review)\/|supabase\/|backend\/src\/|.*(?:^|\/)(?:AGENTS|CODEOWNERS)\b)|(?:^|\/)[^/]*(?:policy|auth|credential|permission|reset)[^/]*\.(?:js|ts|mjs)$|^(?:central-client\.js|server\.js|package(?:-lock)?\.json|Dockerfile[^/]*|\.dockerignore|\.npmrc)$/;
+const critical=/^(\.github\/|backend\/(deploy|actions|reset|review)\/|supabase\/|backend\/src\/(?:core|domain-access|data|reset|ledger|finance|investors|.*(?:auth|permission|policy))\.|.*(?:^|\/)(?:AGENTS|CODEOWNERS)\b)|(?:^|\/)[^/]*(?:policy|auth|credential|permission|reset)[^/]*\.(?:js|ts|mjs)$|^(?:server\.js|package(?:-lock)?\.json|Dockerfile[^/]*|\.dockerignore|\.npmrc)$/;
 const security=/owner|role|permission|grant|auth|password|secret|token|reset|delete|remove|withdraw|activat|deactivat|approv|can[A-Z]|rights|scope|حذف|تصفير|صلاح|تفعيل|تعطيل|كلمة مرور|موافقة/i;
 const forbidden=/^(?:constructor|__proto__|prototype|eval|Function|Reflect|Proxy|fetch|XMLHttpRequest|WebSocket|navigator|location|window|document|globalThis|process|require|module|exports|localStorage|sessionStorage|indexedDB|importScripts)$/;
 const plain=s=>typeof s==='string'&&!/[<>\\]|(?:https?:|javascript:|data:|\/\/)/i.test(s);
@@ -63,7 +64,8 @@ export function safeCss(text){try{let valid=true;const ast=parseCss(text,{positi
 export function credentialRisk(path,text){if(/(?:^|\/)\.env(?:\.|$)|\.(?:key|pem|pfx|p12)$|(?:^|\/)(?:id_rsa|credentials)$/i.test(path))return true;return /sb_secret_[A-Za-z0-9_-]{20,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/.test(text)||/postgres(?:ql)?:\/\/[^\s:'"`]+:[^\s@'"`$]+@(?!127\.0\.0\.1|localhost|[^\s/]+\.test\b)/i.test(text);}
 export function classifyChange(c){const {path,before='',after='',status='M',mode='100644'}=c;if(!path||path.startsWith('/')||path.split('/').includes('..')||/[\0\r\n]/.test(path))return {path,risk:'blocked',reason:'INVALID_PATH'};if(mode!=='100644'&&mode!=='100755')return {path,risk:'blocked',reason:'LINK_OR_SUBMODULE'};if(credentialRisk(path,after))return {path,risk:'blocked',reason:'CREDENTIAL_MATERIAL'};if(Buffer.byteLength(before)+Buffer.byteLength(after)>2500000)return {path,risk:'unknown',reason:'REVIEW_SIZE_LIMIT'};
  if(critical.test(path))return {path,risk:'sensitive',reason:'SECURITY_DATA_OR_DELIVERY_CONTROL'};
- if(/^(?:docs\/|README\.md$)/.test(path)||/^(?:tests\/.*\.test\.cjs|backend\/tests\/.*\.test\.ts)$/.test(path))return {path,risk:'ordinary',reason:'NON_RUNTIME_DOCUMENTATION_OR_TEST'};
+ if(/^(?:docs\/|README\.md$)/.test(path)||/^(?:tests\/|backend\/tests\/)/.test(path))return {path,risk:'ordinary',reason:'NON_RUNTIME_DOCUMENTATION_OR_TEST'};
+ if(/\.(?:js|mjs|cjs|ts)$/.test(path)&&status!=='D'&&(uiFiles.has(path)||path==='central-client.js'||path.startsWith('backend/src/')))return {path,risk:classifyRuntime(path,before,after),reason:'SEMANTIC_SENSITIVE_BOUNDARIES'};
  if(status==='D'||status==='A')return {path,risk:'unknown',reason:'RUNTIME_ADD_OR_REMOVE_REVIEW'};
  if(path==='styles.css')return {path,risk:safeCss(after)?'ordinary':'unknown',reason:'CSS_VALIDATION'};
  if(path==='index.html'){try{return {path,risk:same(htmlShape(before,true),htmlShape(after,true))?'ordinary':'unknown',reason:'HTML_CONTROL_CONTRACT'};}catch{return {path,risk:'unknown',reason:'ACTIVE_OR_UNPARSED_HTML'};}}

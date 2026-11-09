@@ -1,0 +1,10 @@
+// Retire only older deliveries with no started schema/release work. Never force-cancel.
+const mutableJobs=new Set(['schema','release','smoke','finalize']);
+export function maySupersede(run,jobs,current){
+ if(!run||run.id===current.id||run.path!=='.github/workflows/staging-delivery-dispatch.yml'||run.head_branch!=='main'||!['queued','waiting','in_progress','pending','requested'].includes(run.status)||!Number.isSafeInteger(run.id)||!(Date.parse(run.created_at)<Date.parse(current.created_at)))return false;
+ if(!Array.isArray(jobs)||!jobs.length)return run.status==='queued';
+ const known=new Set(['source','approval-test','policy','owner-approval','schema-readiness','schema','release','smoke','finalize','delivery-result','supersede']);
+ return jobs.every(j=>known.has(j.name)&&(!mutableJobs.has(j.name)||(['queued','waiting','pending'].includes(j.status)&&!(j.steps||[]).some(s=>['in_progress','completed'].includes(s.status))||j.conclusion==='skipped')));
+}
+export async function supersede(api,current){const rows=await api('/actions/workflows/staging-delivery-dispatch.yml/runs?per_page=100');let count=0;for(const run of rows.workflow_runs||[]){if(run.id===current.id||run.status==='completed')continue;const jobs=await api('/actions/runs/'+run.id+'/jobs?per_page=100');if(maySupersede(run,jobs.jobs,current)){await api('/actions/runs/'+run.id+'/cancel','POST');count++;}}return count;}
+if(process.argv[1]?.endsWith('/supersede.mjs')){try{const e=process.env;if(e.GITHUB_REPOSITORY!=='dubai717/ab-group-demo'||e.GITHUB_REF!=='refs/heads/main')throw Error();const api=async(path,method='GET')=>{const r=await fetch('https://api.github.com/repos/dubai717/ab-group-demo'+path,{method,headers:{authorization:'Bearer '+e.GH_TOKEN,accept:'application/vnd.github+json'},redirect:'error',signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error();return r.status===202||r.status===204?null:r.json();};const current=await api('/actions/runs/'+e.GITHUB_RUN_ID);console.log('RESULT: SUPERSEDED_SAFE_WAITING_DELIVERIES='+await supersede(api,current));}catch{console.log('RESULT: SUPERSESSION_CHECK_FAILED; NO_FORCE_CANCELLATION');process.exitCode=1;}}
