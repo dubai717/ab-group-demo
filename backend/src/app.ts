@@ -44,6 +44,7 @@ import {
   loadAreas,
   Areas,
   CompanyPolicy,
+  UserPolicy,
   BankPolicy,
   persistBank,
   persistCompany,
@@ -599,6 +600,7 @@ export async function build(options: Options) {
           if (!Object.hasOwn(input, k)) input[k] = privateData[k] || "";
       }
     }
+    if(!id){const fields=UserPolicy.fieldErrors(input,{passwordRequired:true});if(Object.keys(fields).length)throw Object.assign(new ApiError(422,fields.password?'weak':'invalid'),{fieldErrors:fields});}
     const saved = m.policy.update(s.user_id, id || null, input, [], {
       roleId: input.baseRole || "employee",
     });

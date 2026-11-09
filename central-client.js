@@ -78,7 +78,7 @@
   C.openCompany=async id=>{if(!await WorkspaceUI.leave())return;await api('companies/'+id);activeCompany=id;app.state.currentPage='companies';await readDocuments({companyId:id}).catch(()=>[]);CompanyDocuments.centralSelect(id);await load();};
   async function load(draw = true) {
     const b = await api("bootstrap");
-    if(C.actor?.id!==b.actor.id){globalThis.CenterForms?.clear();globalThis.AttachmentViewer?.close();globalThis.FinanceWorkbench?.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();globalThis.LedgerUI?.reset();globalThis.RegisterStore?.clear();globalThis.RegisterView?.clear();globalThis.FinancialTables?.clear();C.documents.clear();C.enrollment.clear();activeUser=activeCompany=activeBank=null;globalThis.CompanyDocuments?.centralSelect?.(null);globalThis.UserManagement?.centralSelect?.(null);}
+    if(C.actor?.id!==b.actor.id){C.hiddenUserId=null;globalThis.CenterForms?.clear();globalThis.AttachmentViewer?.close();globalThis.FinanceWorkbench?.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();globalThis.LedgerUI?.reset();globalThis.RegisterStore?.clear();globalThis.RegisterView?.clear();globalThis.FinancialTables?.clear();C.documents.clear();C.enrollment.clear();activeUser=activeCompany=activeBank=null;globalThis.CompanyDocuments?.centralSelect?.(null);globalThis.UserManagement?.centralSelect?.(null);}
     C.actor = b.actor;
     C.viewAs=b.viewAs||null;
     C.resetTestDatabaseAvailable=b.resetTestDatabaseAvailable===true;
@@ -258,6 +258,7 @@
     }
     const drawer=document.querySelector('.cd-profile[open]');if(drawer&&node.parentElement!==drawer)drawer.prepend(node);
     node.textContent = message;
+    C.bindUserReveal?.();
   }
   function error(e) {
     show(
@@ -285,34 +286,10 @@
     const canRemove=(!owner.companyId||CompanyDocuments.isEditing())&&(C.actor.roleId==='owner'||owner.companyId&&C.actor.permissions.includes('edit_company')||owner.bankAccountId&&C.actor.companyBankPermissions?.some(g=>g.companyId===bankCompany&&g.permissions.includes('manage_documents')));
     AttachmentViewer.mountActions(section,{items:rows,history:!!C.documentHistory,canRemove,id:d=>d.versionId,findButton:d=>section.querySelector('[data-central-download="'+CSS.escape(d.versionId)+'"]'),remove:d=>api('documents/'+d.versionId+'/withdraw','POST',{reason:'Confirmed removal from current attachments; retain history'},crypto.randomUUID()),reload:async value=>{C.documentHistory=value;await readDocuments(owner);render();}});
   }
+  C.bindUserReveal=()=>{if(!C.hiddenUserId||app.state.currentPage!=='users'||document.querySelector('#um-profile'))return;const host=document.getElementById('central-notice');if(!host||host.querySelector('[data-show-created-user]'))return;const button=document.createElement('button');button.type='button';button.className='ghost-btn';button.dataset.showCreatedUser='1';button.textContent=text('إظهار المستخدم الجديد','Show created user');button.onclick=()=>{const id=C.hiddenUserId;C.hiddenUserId=null;C.notice=text('تم إظهار المستخدم المحفوظ في السجل.','The saved user is now shown in the register.');UserManagement.reveal(id);};host.append(' ',button);};
+  function userSaveError(e,committed){const messages={enrollmentNotConfigured:text('خدمة إنشاء حسابات المصادقة غير مهيأة على الخادم؛ لم يُنشأ المستخدم.','Server authentication enrollment is not configured; no user was created.'),providerUnavailable:text('خدمة المصادقة غير متاحة حالياً. المدخلات باقية؛ أعد المحاولة.','Authentication service is temporarily unavailable. Inputs remain; retry.'),authRejected:text('رفضت خدمة المصادقة طلب إنشاء الحساب. راجع البريد ومتطلبات كلمة المرور أو إعداد الخدمة.','Authentication service rejected enrollment. Check email, password requirements or service configuration.'),weak:text('كلمة المرور لا تستوفي المتطلبات الموضحة.','Password does not meet the displayed requirements.'),mismatch:text('كلمتا المرور غير متطابقتين.','Passwords do not match.'),invalid:text('راجع الحقول المحددة.','Review the highlighted fields.'),duplicate:text('اسم المستخدم أو البريد مستخدم بالفعل؛ لم يُنشأ حساب آخر.','Username or email already exists; another account was not created.'),denied:text('لا تملك صلاحية إنشاء هذا المستخدم أو تعيينه لهذا النطاق.','You lack permission to create or assign this user in this scope.'),createdInputChanged:text('أُنشئ السجل بالقيم السابقة. أعد القيم السابقة لتأكيد استرجاعه، أو افتح سجله من القائمة لمراجعة التغييرات اللاحقة.','The original values were committed. Restore them to confirm readback, or open the record from the list to review later edits.'),verificationUnavailable:text('تعذر تأكيد استرجاع المستخدم؛ أعد المحاولة دون إنشاء نموذج جديد.','User readback could not be confirmed; retry without creating a new form.'),invalidId:text('راجع صيغة الهوية.','Check the identity format.'),cycle:text('المسؤول المباشر غير صالح أو يسبب حلقة في الهيكل الإداري.','Manager is invalid or creates a reporting cycle.'),departmentCompany:text('اختر إدارة تتبع شركة مرتبطة بالمستخدم.','Choose a department belonging to an assigned company.')};return (committed?text('حُفظ سجل المستخدم؛ لم تكتمل الخطوة التالية. ','User record was committed; a following step is incomplete. '):'')+(messages[e.message]||text('تعذر إكمال الحفظ بسبب استجابة الخادم أو خدمة المصادقة. المدخلات باقية؛ أعد المحاولة.','Server or authentication service could not complete the save. Inputs remain; retry.'));}
   C.bind = () => {
     document.querySelector(".demo-box")?.remove();
-    document
-      .querySelector(".um-login-setup legend")
-      ?.replaceChildren(
-        document.createTextNode(
-          text(
-            "إنشاء بيانات دخول اختبار عبر الخادم",
-            "Enroll test sign-in through server",
-          ),
-        ),
-      );
-    document
-      .querySelectorAll(".um-login-setup .muted,.um-login-setup .um-checkbox")
-      .forEach((n) => n.remove());
-    document
-      .querySelectorAll("#um-demoPassword,#um-demoConfirm")
-      .forEach((n) => {
-        n.disabled = false;
-        n.required = true;
-        n.closest(".form-group").querySelector("label").textContent =
-          n.id.endsWith("Confirm")
-            ? text("تأكيد كلمة المرور", "Confirm password")
-            : text(
-                "كلمة مرور حساب اختبار مركزي",
-                "Central test account password",
-              );
-      });
     const note = text(
       "وضع مركزي تجريبي: الحفظ عبر الخادم فقط، دون نقل بيانات المتصفح. المستندات قيد الفحص لا تُعرض قبل اعتمادها. خدمات الاستعادة والإرسال والمهام المركزية غير مفعلة في هذه المرحلة.",
       "Central test mode: server-confirmed saves only; browser data is not imported. Quarantined documents cannot be downloaded. Recovery, sending services and central tasks are not enabled in this phase.",
@@ -333,6 +310,7 @@
       banner.textContent = note;
     }
     if (C.notice) show(C.notice);
+    C.bindUserReveal();
     document.querySelectorAll('[data-action="quick-task"]').forEach((b) => {
       b.disabled = true;
       b.title = note;
@@ -502,47 +480,25 @@
       data.departmentIds = form.elements.departmentIds.disabled
         ? undefined
         : fd.getAll("departmentIds");
-      if (activeUser)
-        data.revision = app.state.users.find(
-          (u) => u.id === activeUser,
-        )?.revision;
-      else {
-        if (fd.get("demoPassword") !== fd.get("demoConfirm"))
-          throw Error("mismatch");
-        data.password = fd.get("demoPassword");
-      }
-      delete data.demoPassword;
-      delete data.demoConfirm;
-      const r = await api(
-        "users" + (activeUser ? "/" + activeUser : ""),
-        activeUser ? "PATCH" : "POST",
-        data,
-        idempotency(form),
-      );
-      activeUser = r.id;
-      if (r.enrollmentUploadToken)
-        C.enrollment.set(r.id, r.enrollmentUploadToken);
-      form.dataset.savedId = r.id;
+      const old=form.dataset.userId||null;
+      if(old)data.revision=Number(form.dataset.userRevision||app.state.users.find(u=>u.id===old)?.revision);
+      else{if(fd.get('demoPassword')!==fd.get('demoConfirm'))throw Error('mismatch');data.password=fd.get('demoPassword');}
+      delete data.demoPassword;delete data.demoConfirm;
+      const payload=JSON.stringify(data);
+      if(form._userResult&&form._userPayload!==payload)throw Error('createdInputChanged');
+      const r=form._userResult||await api('users'+(old?'/'+old:''),old?'PATCH':'POST',data,idempotency(form));
+      form._userResult=r;form._userPayload=payload;form.dataset.savedId=r.id;
+      if(r.enrollmentUploadToken)C.enrollment.set(r.id,r.enrollmentUploadToken);
       await load(false);
-      for (const slot of [
-        "photo",
-        "idFront",
-        "idBack",
-        "passport",
-        "contract",
-        "driving",
-      ]) {
-        const file = fd.get("file-" + slot);
-        if (file?.name)
-          await upload(
-            { userId: r.id },
-            file,
-            { category: slot },
-            idempotency(form, "file" + slot),
-          );
-      }
-      await readDocuments({ userId: r.id }).catch(() => []);
-      await load();
+      const verified=app.state.users.find(u=>u.id===r.id);
+      if(!verified||data.username!==undefined&&verified.username.toLowerCase()!==data.username.toLowerCase()||data.email!==undefined&&verified.email?.toLowerCase()!==data.email.toLowerCase()||!old&&verified.roleId!==(data.baseRole||'employee'))throw Error('verificationUnavailable');
+      for(const key of ['companyIds','departmentIds'])if(data[key]&&JSON.stringify([...data[key]].sort())!==JSON.stringify([...(verified[key]||[])].sort()))throw Error('verificationUnavailable');
+      for(const slot of ['photo','idFront','idBack','passport','contract','driving']){const file=fd.get('file-'+slot);if(file?.name)await upload({userId:r.id},file,{category:slot},idempotency(form,'file'+slot));}
+      if(old)await readDocuments({userId:r.id}).catch(()=>[]);
+      activeUser=old?r.id:null;UserManagement.centralSelect(activeUser);await load(false);render();
+      savedMessage=text('تم حفظ المستخدم والتحقق من سجله: ','Saved and verified user: ')+verified.username;
+      if(!old&&!UserManagement.visible(r.id)){C.hiddenUserId=r.id;savedMessage+=text(' — لا يظهر بسبب البحث أو فلاتر الأعمدة الحالية.',' — outside the current search or column filters.');}
+      if(!old){C.hiddenUserId=UserManagement.visible(r.id)?null:r.id;show(savedMessage);C.bindUserReveal();}
     } else if (kind === "um-grant") {
       const scope = String(fd.get("scope"));
       await api(
@@ -652,12 +608,16 @@
       C.notice='';document.getElementById('central-notice')?.remove();
       if(globalThis.FormValidation && !FormValidation.validate(form))return;
       form.dataset.centralBusy = "1";
+      const userForm=form.id==='um-profile',buttonText=button?.textContent;
+      if(userForm){form.inert=true;form.setAttribute('aria-busy','true');const progress=form.querySelector('[data-user-save-status]');progress.setAttribute('role','status');progress.textContent=text('جارٍ الحفظ…','Saving…');if(button)button.textContent=text('جارٍ الحفظ…','Saving…');}
       if (button) button.disabled = true;
       try {
         await saveForm(form);
       } catch (e) {
+        if(userForm){form.inert=false;form.removeAttribute('aria-busy');}
         unlockProfile(form);
         globalThis.FormValidation?.fromError(form,e);
+        if(form.id==='um-profile'){const message=userSaveError(e,!!form.dataset.savedId);const status=form.querySelector('[data-user-save-status]');if(status){status.textContent=message;status.setAttribute('role','alert');if(!form.querySelector('[aria-invalid]'))status.scrollIntoView({block:'center'});}show(message);return;}
         if (form.dataset.savedId)
           show(
             text(
@@ -669,6 +629,7 @@
       } finally {
         unlockProfile(form);
         delete form.dataset.centralBusy;
+        if(userForm){form.inert=false;form.removeAttribute('aria-busy');if(button?.isConnected)button.textContent=buttonText;}
         if (button?.isConnected) button.disabled = false;
       }
     },
@@ -679,6 +640,7 @@
     async (event) => {
       const b = event.target.closest("button");
       if (!b) return;
+      if(document.querySelector('#um-profile[data-central-busy]')&&(b.dataset.page||b.dataset.ws||['new','close'].includes(b.dataset.um)||b.dataset.action==='logout')){event.preventDefault();event.stopImmediatePropagation();return;}
       const action = b.dataset.action,
         bk = b.dataset.bk,
         um = b.dataset.um,
