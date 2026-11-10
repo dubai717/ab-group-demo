@@ -1,3 +1,4 @@
+import {registerPermissionAdmin} from './permission-admin.js';
 import {investorEvidenceRead,investorEvidenceUpload,recordInvestorEvidence,registerInvestorEvidence} from './investor-evidence.js';
 import {registerRecordLinks} from './record-links.js';
 import {registerInvestorRatingPolicy} from './investor-rating.js';
@@ -68,6 +69,7 @@ export interface Options {
     mime: string,
   ) => Promise<"clean" | "pending" | "rejected">;
   serveFrontend?: boolean;
+  demoBankingMode?: boolean;
   testUsersEnabled?: boolean;
   resetEnabled?: boolean;
   resetWorker?: ResetWorker;
@@ -239,6 +241,7 @@ export async function build(options: Options) {
         return result;
       },s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:undefined);
     };
+  registerPermissionAdmin(app,call,cipher);
   registerFinance(app,call,cipher);
   registerCustomers(app,call,cipher,options);
   registerCollectionFollowup(app,call,cipher);
@@ -1148,7 +1151,7 @@ export async function build(options: Options) {
       reply
         .type("application/javascript")
         .header("Cache-Control", "no-store")
-        .send("window.AB_CONFIG={central:true};"),
+        .send('window.AB_CONFIG='+JSON.stringify({central:true,demoBanking:options.demoBankingMode===true})+';'),
     );
     // Explicit public allowlist: never serve backend/, migrations, .env, .git or node_modules.
     // Only renderer assets from the pinned installed package are exposed; no arbitrary node_modules access.

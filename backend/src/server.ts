@@ -66,6 +66,7 @@ const app = await build({
   key: process.env.DATA_ENCRYPTION_KEY!,
   origin,
   secureCookies: !local,
+  demoBankingMode:local||process.env.APP_ENV==='staging',
   auth,
   objects,
   testUsersEnabled:testUsersEnvironment(process.env),
