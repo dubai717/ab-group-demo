@@ -205,7 +205,7 @@
     "reports-ui.js": "6c6b591ca8537c08539992c7579dee6851c5fd083b70d50319422bada14a586f",
     "runtime-config.js": "c7620ce7a24aadc0d789008b7b5d0d934201708ec40df2024d44a29ec19e8aca",
     "server.js": "1f682dd293a894275429b3f3b7afb4cb901e6b0827f524ba0fa1bb3f67a299d7",
-    "styles.css": "cab720f50dfd469b66898403013b4dc2ca327889bb16522103f75e50b9bd8850",
+    "styles.css": "2a5aff67db3e546c88801b026dd826f325bc30cfb7a0c569c711f2566a9b078c",
     "supabase/additive/014_followup_and_eos.sql": "9cbdbeb1af74513f7da94c39a1c701e7f71054825f830d0f8653e13ceb5f1a69",
     "supabase/additive/015_document_center.sql": "676a9d583bd4534ae37b16fd82a217276f803212df34f2b615e28843a9a435a3",
     "supabase/additive/016_marketing.sql": "cd9cd41cb18f0bb2d789f395233427fe963c863806a1f5cb8a956e054bc34405",

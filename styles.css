@@ -967,3 +967,5 @@ button.primary-btn,button.secondary-btn,button.ghost-btn{word-break:normal;overf
 .form-grid>button[type=submit],.ve-form>fieldset>button[type=submit]{min-inline-size:min(100%,9rem);justify-self:start}
 .record-action-row{display:flex;flex-wrap:wrap;align-items:center;gap:.65rem;grid-column:1/-1;margin-block:.65rem}
 .record-action-row button{margin:0;max-inline-size:100%}
+
+.section-head{flex-wrap:wrap;gap:.65rem}.section-head>h2{min-inline-size:0;overflow-wrap:break-word}
