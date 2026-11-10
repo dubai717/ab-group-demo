@@ -322,7 +322,7 @@
           text("حفظ المستندات على الخادم", "Save documents on server"),
         ),
       );
-    const userSections = document.querySelectorAll(".um-page > section");
+    const userSections = document.querySelectorAll(".um-page > section[data-audit-panel]");
     if (userSections.length) {
       const auditSection = userSections[userSections.length - 1];
       auditSection.querySelector("h2").textContent = text(

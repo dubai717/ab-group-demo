@@ -88,6 +88,14 @@ test('Collection attempts use existing tasks, invoice balances and delayed inter
             await f.req('POST',url,{outcome:'invented',phoneId:'fixture-phone',note:'Not configured'},422);
             assert.equal((await f.req('GET','/api/collections/tasks/'+created.id)).attempts.length,2);
         });
+        await t.test('saved attempts cannot be edited or removed through SQL or HTTP',async()=>{
+            const before=(await f.req('GET','/api/collections/tasks/'+created.id)).attempts;
+            await assert.rejects(f.admin.query('update ab.collection_attempts set outcome=$2 where id=$1',[first.id,'paid']));
+            await assert.rejects(f.admin.query('delete from ab.collection_attempts where id=$1',[first.id]));
+            await f.req('PATCH','/api/collections/tasks/'+created.id+'/attempts/'+first.id,{note:'Denied rewrite'},404);
+            await f.req('DELETE','/api/collections/tasks/'+created.id+'/attempts/'+first.id,undefined,404);
+            assert.deepEqual((await f.req('GET','/api/collections/tasks/'+created.id)).attempts,before);
+        });
         await t.test('another employee cannot read or record collection details without both scopes',async()=>{
             const u=await f.employee();await f.login(u.username,u.password);await f.req('GET','/api/collections/tasks/'+created.id,undefined,403);await f.req('POST','/api/collections/tasks/'+created.id+'/attempts',{outcome:'off',phoneId:'fixture-phone',note:'Denied'},403);await f.login();
         });

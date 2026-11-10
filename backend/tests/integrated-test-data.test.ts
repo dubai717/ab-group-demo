@@ -1,4 +1,6 @@
 import {test} from 'node:test';
+import {createRequire} from 'node:module';
+const BankPolicy=createRequire(import.meta.url)('../../bank-accounts.js');
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
@@ -9,7 +11,7 @@ import {transaction,security} from '../src/core.js';
 import {testDataSummary} from '../src/test-data-summary.js';
 import {TEST_DATA_KEY} from '../src/test-data-manifest.js';
 import {tenantKeys,fictionalIban,type DataManifest} from '../fixtures/test-data-store.js';
-test('TEST_DATA uses reserved fictional bank routing and distinct identifiers',()=>{assert.equal(fictionalIban(1).length,23);assert.equal(fictionalIban(1).slice(4,7),'000');assert.notEqual(fictionalIban(1),fictionalIban(2));});
+test('TEST_DATA uses reserved fictional bank routing and distinct identifiers',()=>{assert.equal(fictionalIban(1).length,23);assert.equal(fictionalIban(1).slice(4,7),'000');assert.notEqual(fictionalIban(1),fictionalIban(2));for(let n=1;n<=100;n++)assert.equal(BankPolicy.ibanError(fictionalIban(n)),'');});
 test('integrated TEST_DATA creates 5 companies, 30 customers, 50 vehicles with balanced linked finances and no duplication',async()=>{
  const f=await fixture('ab_backup_'+randomUUID().replaceAll('-',''));
  try{

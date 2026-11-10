@@ -58,7 +58,7 @@ const messages={ar:{relationshipManager:'بيانات مدير الحساب لد
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 messages.ar.inactiveCompany='الشركة غير نشطة؛ اختر شركة نشطة.';messages.en.inactiveCompany='Select an active company.';
 const t=k=>messages[getLocale()==='ar'?'ar':'en'][k]||k;
-function timestamp(value){const date=new Date(value);return Number.isNaN(date.getTime())?String(value||''):new Intl.DateTimeFormat(getLocale()==='ar'?'ar-AE':'en-AE',{timeZone:'Asia/Dubai',dateStyle:'short',timeStyle:'medium'}).format(date);}
+function timestamp(value){return WorkspaceUI.dateTime(value);}
 const named=row=>(getLocale()==='ar'?row.ar||row.arabicName:row.en||row.englishName)||row.en||row.ar||row.englishName||row.name||row.id;
 let bankEditing=false;let service,selected=null,notice='',filters={},draftFiles=[],previewUrl;
 function getService(){if(!service)service=createService({state:()=>app.state,actor:()=>getCanonicalActor(),persist:()=>saveState()});if(globalThis.ABCentral?.enabled)service.listDocuments=id=>globalThis.ABCentral.bankDocuments(id);return service;}
