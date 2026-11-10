@@ -960,3 +960,12 @@ button.primary-btn,button.secondary-btn,button.ghost-btn{white-space:normal;over
 .ve-form label,.record-form-dialog label{min-width:0;overflow-wrap:anywhere}
 @media(max-width:600px){.vehicle-status-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.ve-form .form-grid{grid-template-columns:minmax(0,1fr)}}
 .register-search button,.register-search-row button,[data-register-search] button{white-space:nowrap;overflow-wrap:normal}
+/* Keep action words together while allowing button rows to wrap. */
+button.primary-btn{min-inline-size:min(100%,9rem)}
+button.secondary-btn{min-inline-size:min(100%,6rem)}
+button.primary-btn,button.secondary-btn,button.ghost-btn{word-break:normal;overflow-wrap:normal}
+.form-grid>button[type=submit],.ve-form>fieldset>button[type=submit]{min-inline-size:min(100%,9rem);justify-self:start}
+.record-action-row{display:flex;flex-wrap:wrap;align-items:center;gap:.65rem;grid-column:1/-1;margin-block:.65rem}
+.record-action-row button{margin:0;max-inline-size:100%}
+
+.section-head{flex-wrap:wrap;gap:.65rem}.section-head>h2{min-inline-size:0;overflow-wrap:break-word}
