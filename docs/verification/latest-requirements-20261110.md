@@ -22,7 +22,9 @@ so current provider state is not independently asserted from that request.
 - Collection contacts: existing invoice-linked tasks, delayed reminders, immutable
   encrypted attempts and no balance change from a reported payment already
   implemented. Added explicit failed SQL UPDATE/DELETE and HTTP PATCH/DELETE
-  checks with unchanged history. Display localized outcomes and Dubai dates.
+  checks with unchanged history. Display localized outcomes and Dubai dates. Use the shared non-modal record
+  window so its sibling contact form remains interactive; browser coverage
+  records a real synthetic attempt and verifies no edit/delete controls.
 - Funding / PRO: existing approval-center adapter and authoritative funding
   decision, disbursement and receipt remain. Added explicit initial assignment
   to the canonical `vehicle_registration` task/source key; reuse existing
@@ -32,7 +34,7 @@ so current provider state is not independently asserted from that request.
   replacement task. Existing follow-up cannot duplicate this source key.
 - Buttons/labels: wrap action buttons and form labels at narrow widths; desktop,
   tablet and phone tested in Arabic and English.
-- Raw audit: ordinary bank/user pages no longer render raw tables; customer
+- Raw audit: ordinary bank/company/user pages no longer render raw tables; customer
   and vehicle activity shows event metadata without JSON snapshots or raw audit
   download controls. Server history, export endpoints and rights remain.
 - Employee dropdown: existing searchable actual-user dropdown and real read-only

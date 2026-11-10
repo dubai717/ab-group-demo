@@ -64,7 +64,7 @@
   function audit(actorId) { return events.filter(e=>e.actorId===actorId).map(e=>({...e})); }
   function auditHTML(actorId) {
     const rows=audit(actorId);
-    return `<details class="auth-audit"><summary>${text('audit')}</summary><p class="muted">${text('auditNote')}</p><div class="table-wrap"><table><thead><tr><th>${text('time')}</th><th>${text('event')}</th></tr></thead><tbody>${rows.map(e=>`<tr><td>${escape(new Intl.DateTimeFormat(typeof getLocale==='function'&&getLocale()==='ar'?'ar-AE':'en-AE',{dateStyle:'short',timeStyle:'medium',timeZone:'Asia/Dubai'}).format(new Date(e.at)))}</td><td>${text(e.type)}</td></tr>`).join('')||`<tr><td colspan="2">${text('empty')}</td></tr>`}</tbody></table></div></details>`;
+    return `<details class="auth-audit"><summary>${text('audit')}</summary><p class="muted">${text('auditNote')}</p><div class="table-wrap"><table><thead><tr><th>${text('time')}</th><th>${text('event')}</th></tr></thead><tbody>${rows.map(e=>`<tr><td>${escape(WorkspaceUI.dateTime(e.at))}</td><td>${text(e.type)}</td></tr>`).join('')||`<tr><td colspan="2">${text('empty')}</td></tr>`}</tbody></table></div></details>`;
   }
   function passwordField(id, label, autocomplete, disabled=false) {
     return `<div class="form-group"><label for="${id}">${text(label)}</label><input class="input" id="${id}" name="${id}" type="password" autocomplete="${autocomplete}" maxlength="${id==='auth-current'?'1024':'128'}" required ${disabled?'disabled':''} /></div>`;
