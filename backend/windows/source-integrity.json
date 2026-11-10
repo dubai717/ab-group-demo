@@ -205,7 +205,7 @@
     "reports-ui.js": "6c6b591ca8537c08539992c7579dee6851c5fd083b70d50319422bada14a586f",
     "runtime-config.js": "c7620ce7a24aadc0d789008b7b5d0d934201708ec40df2024d44a29ec19e8aca",
     "server.js": "1f682dd293a894275429b3f3b7afb4cb901e6b0827f524ba0fa1bb3f67a299d7",
-    "styles.css": "cc708d8fdded9e0a1b198938cc7a733c1914154e6b6ac23a2df48bfdda201b91",
+    "styles.css": "7d7aa4ec526d214f3b650cb88fb170dc771a86bc475691b026829570e15225f5",
     "supabase/additive/014_followup_and_eos.sql": "9cbdbeb1af74513f7da94c39a1c701e7f71054825f830d0f8653e13ceb5f1a69",
     "supabase/additive/015_document_center.sql": "676a9d583bd4534ae37b16fd82a217276f803212df34f2b615e28843a9a435a3",
     "supabase/additive/016_marketing.sql": "cd9cd41cb18f0bb2d789f395233427fe963c863806a1f5cb8a956e054bc34405",
@@ -226,7 +226,7 @@
     "supabase/proposed/013_personnel_tasks_performance.sql": "9cdf974b9a57cb5d9cde44458b3ecce6773803dbe975f354ecb93b673de8a45f",
     "user-management.js": "cb4714bdc3be300cd28759c69416cdcb843d7afaddaef3da200bfb5189275888",
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
-    "vehicles.js": "668882e5f66a7bf84f65ed71590e4b793c277960fe9222632684491598a43b43",
+    "vehicles.js": "52de09a5729e49d0879b0a64dd9ee06100c3781dbff714dc26735173af2df49b",
     "view-as-ui.js": "9359c7b986dfcedbdf67ac0f6fab2dad951a4e54b0be03ca4befaa9b60d5327d",
     "workspace-ui.js": "5c24f2e4bebdd75f1e80cfdc55baa3eba1fc31b2869f13dbdbf18e754c475c49"
   }

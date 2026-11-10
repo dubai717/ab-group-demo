@@ -48,8 +48,11 @@ so current provider state is not independently asserted from that request.
 
 Local verification of the candidate: 170 unit/controller cases and 17 targeted
 server cases passed; forms/customer, bank-IBAN, new status/PRO/audit and
-movement/View As independent Chromium suites passed. Build passed. Full server
-and exact GitHub source checks must finish before merge/publication is claimed.
+movement/View As independent Chromium suites passed. Build passed. All 329 server cases passed; three synthetic-data integration cases also passed
+with 100 IBANs checked through the production policy. Exact GitHub source checks
+must finish before merge/publication is claimed. The lifecycle browser caught a
+search-button wrapping regression; keeping search controls on one line fixed it
+and the complete independent lifecycle rerun passed.
 
 Delivery: PR #56 independently contains only ordinary bank raw-audit visibility
 and responsive CSS. Remaining candidate contains a new guarded task endpoint
