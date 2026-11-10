@@ -663,6 +663,7 @@ function renderUsers(user) {
 }
 
 function renderRoles() {
+  if(globalThis.ABCentral?.enabled&&getCurrentUser()?.roleId==='owner')return PermissionUI.render();
   return `
     <section class="content-panel">
       <div class="section-head"><h2>${localeText('roles')}</h2></div>
@@ -1184,6 +1185,7 @@ function bindGlobalEvents() {
   });
 
   UserManagement.bind();
+  globalThis.PermissionUI?.bind();
 
   AreaReference.bind();
   const companyForm = document.getElementById('company-form');

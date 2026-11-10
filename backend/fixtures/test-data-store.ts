@@ -5,14 +5,14 @@ import {createHash,randomUUID} from 'node:crypto';
 import {PoolClient} from 'pg';
 import {PDFDocument,StandardFonts} from 'pdf-lib';
 import {ApiError,requireOk,security,sha,ObjectStore} from '../src/core.js';
-import {model,persistCompany,persistBank,audit} from '../src/data.js';
+import {model,persistCompany,persistBank,audit,BankPolicy} from '../src/data.js';
 import {registerCustomers} from '../src/customers.js';
 import {registerVehicles} from '../src/vehicles.js';
 import {registerLedger} from '../src/ledger.js';
 import {registerPersonnel} from '../src/personnel.js';
 export {TEST_DATA_KEY,type DataManifest} from '../src/test-data-manifest.js';
 export const dayOffset=(day:string,n:number)=>new Date(Date.parse(day+'T00:00:00Z')+n*86400000).toISOString().slice(0,10);
-export function fictionalIban(n:number){const body='000'+String(n).padStart(16,'0'),rotated=body+'101400';let r=0;for(const c of rotated)r=(r*10+Number(c))%97;return 'AE'+String(98-r).padStart(2,'0')+body;}
+export function fictionalIban(n:number){return BankPolicy.syntheticIban(n);}
 export async function syntheticPdf(label:string){const d=await PDFDocument.create(),p=d.addPage([500,240]),f=await d.embedFont(StandardFonts.Helvetica);p.drawText('TEST_DATA - FICTIONAL DOCUMENT ONLY',{x:25,y:180,size:14,font:f});p.drawText(label.replace(/[^a-zA-Z0-9 _-]/g,' ').slice(0,75),{x:25,y:145,size:11,font:f});p.drawText('Not an identity, policy, contract or official evidence.',{x:25,y:110,size:10,font:f});return Buffer.from(await d.save());}
 const qi=(s:string)=>'"'+s.replaceAll('"','""')+'"';
 export async function tenantKeys(c:PoolClient,creationTransaction?:string){

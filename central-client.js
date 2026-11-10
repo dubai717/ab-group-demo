@@ -31,6 +31,7 @@
     );
   async function api(path, method = "GET", body, key) {
     if(C.viewAs&&!["GET","HEAD"].includes(method)&&!["view-as/start","view-as/stop","logout","central-reports/preview","central-reports/export","personnel/export","communication-templates/preview","communications/from-template/preview"].includes(path.split("?")[0]))throw Error("viewAsReadOnly");
+    const finish=globalThis.OperationUI?.begin(path,method);try{
     if (key) {
       const digest = new Uint8Array(
         await crypto.subtle.digest(
@@ -70,8 +71,10 @@
     const result=await r.json();
     if(!["GET","HEAD"].includes(method))globalThis.DashboardUI?.invalidate();
     return result;
+    }finally{finish?.();}
   }
   C.api=api;
+  C.openUser=async id=>{if(!await WorkspaceUI.leave())return;activeUser=id;app.state.currentPage='users';await readDocuments({userId:id}).catch(()=>[]);await load();};
   C.bankClosed=()=>{activeBank=null;};
   C.openBank=async id=>{if(!await WorkspaceUI.leave())return;await api('bank-accounts/'+id);activeBank=id;await readDocuments({bankAccountId:id}).catch(()=>[]);BankAccounts.centralSelect(id);FinanceWorkbench.select('accounts',false);app.state.currentPage='bankAccounts';await load();};
   C.companyClosed=()=>{activeCompany=null;};

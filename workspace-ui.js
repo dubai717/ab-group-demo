@@ -33,3 +33,16 @@
  addEventListener('beforeunload',event=>{if(['company-form','bk-account-form'].some(id=>RecordProfile.dirty(document.getElementById(id)))){event.preventDefault();event.returnValue='';}});
  root.WorkspaceUI={eventName,date,dateTime,displayDates,closeMenu,toolbar,group,placeholder,bind,enhance,esc,leave};
 })(globalThis);
+/* Delayed, non-blocking network feedback. Existing server guards and readback stay authoritative. */
+(function(root){'use strict';let pending=0,node=null,showTimer=null,lastControl=null,lastAt=0,message='',idleTimer=null;const leases=new Map(),t=(a,b)=>getLocale()==='ar'?a:b;
+ function text(path,method){return /view-as\/start/.test(path)?t('جارٍ فتح معاينة الموظف…','Opening employee preview…'):/view-as\/stop/.test(path)?t('جارٍ العودة إلى لوحة المالك…','Returning to owner dashboard…'):/decision|approve/.test(path)?t('جارٍ تنفيذ الموافقة…','Processing approval…'):/grants|permissions|revoke/.test(path)?t('جارٍ حفظ الصلاحيات…','Saving permissions…'):/preview|export/.test(path)?t('جارٍ تجهيز المعاينة…','Preparing preview…'):['GET','HEAD'].includes(method)?t('جارٍ تحميل البيانات…','Loading data…'):t('جارٍ الحفظ…','Saving…');}
+ function remember(event){const target=event.target,button=event.type==='submit'?target.querySelector('button[type=submit],button:not([type])'):target.closest?.('button');if(button&&leases.get(button)?.pending>0){event.preventDefault();event.stopImmediatePropagation();return;}lastControl=button;lastAt=Date.now();}
+ addEventListener('click',remember,true);addEventListener('submit',remember,true);
+ function show(){if(!pending)return;if(!node){node=document.createElement('div');node.id='operation-progress';node.className='operation-progress';node.setAttribute('role','status');node.setAttribute('aria-live','polite');node.innerHTML='<span class="operation-spinner" aria-hidden="true"></span><span data-operation-message></span>';document.body.append(node);}node.querySelector('[data-operation-message]').textContent=message;}
+ function release(button,lease){if(lease.pending)return;leases.delete(button);button.removeAttribute('aria-busy');if(lease.owns&&!button.form?.dataset.centralBusy&&!button.form?._saving)button.disabled=false;}
+ function begin(path,method){pending++;clearTimeout(idleTimer);const button=lastControl&&(Date.now()-lastAt<500||leases.has(lastControl))?lastControl:null;let lease=button?leases.get(button):null;
+ if(button){if(!lease){lease={pending:0,owns:!button.disabled,message:text(path,method),timer:null};leases.set(button,lease);}clearTimeout(lease.timer);lease.pending++;button.disabled=true;button.setAttribute('aria-busy','true');}message=lease?.message||text(path,method);if(!showTimer&&!node)showTimer=setTimeout(()=>{showTimer=null;show();},180);if(node)show();let done=false;
+ return ()=>{if(done)return;done=true;pending--;if(button){lease.pending--;lease.timer=setTimeout(()=>release(button,lease),160);}if(!pending){clearTimeout(showTimer);showTimer=null;idleTimer=setTimeout(()=>{if(!pending){node?.remove();node=null;}},120);}};
+ }
+ root.OperationUI={begin,active:()=>pending};
+})(globalThis);
