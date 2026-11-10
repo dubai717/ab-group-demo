@@ -175,7 +175,7 @@
     "backend/windows/verify-source.mjs": "45491066910763501854f22f7236849bf38c4d3f1d5bba1b9e4f726eca8a2343",
     "bank-accounts.js": "2d8b9e6c068635e7d58ee48cc0aa7978a2cc05e0c8ddc7b05f255676bbeb1852",
     "business-centers.js": "5c285fc98fa9039e660998c5f01c1d32fa26c0e43a7b5904adf52d9b65c2ddf8",
-    "center-forms.js": "b2d3680b9315ed40f49f5134536aa899822cc5559f9125e8fd146cfede1eff77",
+    "center-forms.js": "e7b57d08072944fcd4776124b1fdd64e7d55a7f5d3a5fb2388ecd823d6628a0c",
     "central-client.js": "fcf0c0b8f370750e84f6f197ad7c98cb8a5e3a5ea07ef6f713d1840cfd5e09c7",
     "collection-ui.js": "6c4a31ffb7d18866382325e758c08e4603e9d5045654e6ddc7bd46c773099ea3",
     "communications-ui.js": "70cd9365e6f443b46556e5a2f73e073889bab82414e7bf63dd9d81617e346d1b",
@@ -226,7 +226,7 @@
     "supabase/proposed/013_personnel_tasks_performance.sql": "9cdf974b9a57cb5d9cde44458b3ecce6773803dbe975f354ecb93b673de8a45f",
     "user-management.js": "cb4714bdc3be300cd28759c69416cdcb843d7afaddaef3da200bfb5189275888",
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
-    "vehicles.js": "52de09a5729e49d0879b0a64dd9ee06100c3781dbff714dc26735173af2df49b",
+    "vehicles.js": "eeea4b3ca5e16f6ffe11a54ee1653e79920c90e6b1b4bafc0e7001a17279c1a3",
     "view-as-ui.js": "9359c7b986dfcedbdf67ac0f6fab2dad951a4e54b0be03ca4befaa9b60d5327d",
     "workspace-ui.js": "5c24f2e4bebdd75f1e80cfdc55baa3eba1fc31b2869f13dbdbf18e754c475c49"
   }
