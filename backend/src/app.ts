@@ -1,3 +1,4 @@
+import {registerReviewedUserAccess} from './reviewed-user-access.js';
 import {registerPermissionAdmin} from './permission-admin.js';
 import {investorEvidenceRead,investorEvidenceUpload,recordInvestorEvidence,registerInvestorEvidence} from './investor-evidence.js';
 import {registerRecordLinks} from './record-links.js';
@@ -241,6 +242,7 @@ export async function build(options: Options) {
         return result;
       },s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:undefined);
     };
+  registerReviewedUserAccess(app,call,cipher);
   registerPermissionAdmin(app,call,cipher);
   registerFinance(app,call,cipher);
   registerCustomers(app,call,cipher,options);
