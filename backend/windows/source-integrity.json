@@ -205,7 +205,7 @@
     "reports-ui.js": "6c6b591ca8537c08539992c7579dee6851c5fd083b70d50319422bada14a586f",
     "runtime-config.js": "c7620ce7a24aadc0d789008b7b5d0d934201708ec40df2024d44a29ec19e8aca",
     "server.js": "1f682dd293a894275429b3f3b7afb4cb901e6b0827f524ba0fa1bb3f67a299d7",
-    "styles.css": "3ccd97a92ea7e9535679e11fe633bd66182647be6e45234f583adae782cfe384",
+    "styles.css": "314e23d822f813371765b47db735c359e7e9ef6272bdfd08b32fbd43b66dfba4",
     "supabase/additive/014_followup_and_eos.sql": "9cbdbeb1af74513f7da94c39a1c701e7f71054825f830d0f8653e13ceb5f1a69",
     "supabase/additive/015_document_center.sql": "676a9d583bd4534ae37b16fd82a217276f803212df34f2b615e28843a9a435a3",
     "supabase/additive/016_marketing.sql": "cd9cd41cb18f0bb2d789f395233427fe963c863806a1f5cb8a956e054bc34405",
@@ -227,7 +227,7 @@
     "user-management.js": "9cb400d7f9bf22f59143cdb5c184e2f77f5239a4a9b27159eb9f28ea441cc6bb",
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
     "vehicles.js": "e1f42c967c905c2d8e44797010e8cd33400b6ab77fcaa6a1c56fea8715ae8450",
-    "view-as-ui.js": "b74a5a04f69d4d6d748669ffbaf56ca18c0d1c6bbd040cb977f78f918f6785ba",
+    "view-as-ui.js": "112b5e574e29e94971fe8a06168d8ac5cddd0fb7fec18d2a8ba9db3ebd456aee",
     "workspace-ui.js": "507ac75651d0d5a5579a9f90e8837f3b990384bbc9a0f1a107fa02e71c06061e"
   }
 }

@@ -980,7 +980,7 @@ button.primary-btn,button.secondary-btn,button.ghost-btn{word-break:normal;overf
 .preview-picker{inline-size:min(100%,38rem);min-inline-size:0}
 #preview-picker{display:grid;gap:.55rem;padding:.7rem;border:1px solid var(--border,#e7cec4);border-radius:.7rem}
 #preview-picker select{max-inline-size:100%;min-inline-size:0}
-.screen-identity{margin:.3rem 0;font-weight:600}
+.screen-identity{margin:.3rem 0;font-weight:600;min-block-size:3rem;display:flex;align-items:center;flex-wrap:wrap;gap:.6rem}
 .bk-relationship-manager .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
 .bk-relationship-manager .form-grid>div{grid-column:auto;display:grid;grid-template-rows:minmax(3.2em,auto) auto;min-inline-size:0}
 .bk-relationship-manager label{line-height:1.5;overflow-wrap:normal;word-break:normal}
