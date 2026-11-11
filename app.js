@@ -531,7 +531,7 @@ function render() {
 
       <main class="main">
         <header class="topbar">
-          <h1>${AuthFlows.isSettings() ? AuthFlows.text('accountSettings') : pageTitle(app.state.currentPage)}</h1>
+          <div><h1>${AuthFlows.isSettings() ? AuthFlows.text('accountSettings') : pageTitle(app.state.currentPage)}</h1>${app.state.currentPage==='dashboard'&&(ABCentral.actor?.roleId==='owner'||ABCentral.viewAs)?ViewAsUI.identity():''}</div>
           <div class="user-controls">
             <button class="lang-switch" data-action="toggle-language">
               ${getLocale() === 'ar' ? 'English' : 'العربية'}
