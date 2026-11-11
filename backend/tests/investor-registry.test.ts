@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {businessCentersFixture} from './business-centers-fixture.js';
 import {security,transaction} from '../src/core.js';
+import {investorRegistryRestoreDrill} from './investor-registry-restore-drill.js';
 import {investorToday} from '../src/investor-registry.js';
 
 test('Review-only investor registry preserves existing data, freezes 50/100 fixed versions, and reuses real capital and collection records',async()=>{
@@ -11,6 +12,7 @@ test('Review-only investor registry preserves existing data, freezes 50/100 fixe
  const old=await f.req('POST','/api/investors/agreements',{investorId:oldProfile.id,companyId:f.co1,mode:'committed',currency:'AED',pledged:'500',registrationBps:1000,serviceBps:2000,feeBasis:'collected_gross',legalBasis:'Historical signed terms',documentVersionId:proof1});
  const before=(await f.admin.query('select id,payload_cipher from ab.investor_agreements order by id')).rows,users=(await f.admin.query('select id,role_id from ab.users order by id')).rows,grants=(await f.admin.query('select * from ab.role_permissions order by role_id,permission_id')).rows;
  await f.req('GET','/api/investor-registry/profiles',undefined,503);
+ await investorRegistryRestoreDrill(f,true);
  await f.admin.query(await readFile('docs/proposals/investor-registry-versions.review-only.sql','utf8'));
  assert.deepEqual((await f.admin.query('select id,payload_cipher from ab.investor_agreements order by id')).rows,before);assert.deepEqual((await f.admin.query('select id,role_id from ab.users order by id')).rows,users);assert.deepEqual((await f.admin.query('select * from ab.role_permissions order by role_id,permission_id')).rows,grants);
  const person={nameAr:'مستثمر مستقل',nameEn:'Independent investor',type:'individual',identityNumber:'SYN-IDENTITY-1',identityAuthority:'UAE',nationality:'AE',phone:'+971500000000',email:'synthetic@example.test',address:'Isolated test address',bankName:'Synthetic bank',accountHolder:'Independent investor',accountNumber:'SYN-ACCOUNT',iban:'ae07 0331 2345 6789 0123 456'};
@@ -57,5 +59,6 @@ test('Review-only investor registry preserves existing data, freezes 50/100 fixe
  await assert.rejects(transaction(f.runtime,f.org.tenant,f.org.user,c=>c.query('update ab.investor_funding_requests set agreement_id=$2 where id=$1',[f1.id,old.id])));
  assert.deepEqual((await f.admin.query('select * from ab.role_permissions order by role_id,permission_id')).rows,grants);
  const stranger=await f.employee();await f.login(stranger.username,stranger.password);await f.req('GET','/api/investor-registry/profiles/'+p.id,undefined,404);await f.req('POST','/api/investor-registry/profiles',person,403);
+ await investorRegistryRestoreDrill(f,false);
  }finally{await f.close();}
 });
