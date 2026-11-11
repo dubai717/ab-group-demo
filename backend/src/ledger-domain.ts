@@ -91,7 +91,7 @@ export async function invoice(c: any, cipher: any, m: any, s: any, d: any) {
  const it=await item(c,cipher,m,d.itemId,d.companyId);requireOk(it.data.invoice&&it.data.methods.includes(d.mode||'manual'),403,'denied');await open(c,d.companyId,d.issuedOn);
  requireOk(!(await c.query('select id from ab.finance_invoice_links where company_id=$1 and source_key=$2',[d.companyId,d.sourceKey])).rowCount,409,'duplicate');
  const id=randomUUID(),columns=d.contractingCompanyId?',contracting_company_id':'',placeholder=d.contractingCompanyId?',$13':'';
- await c.query("insert into ab.vehicle_invoices(id,tenant_id,company_id,customer_id,vehicle_id,invoice_number,kind,source_key,due_on,amount,currency,payload_cipher,created_by"+columns+")values($1,$2,$3,$4,$5,$6,'financial',$7,$8,$9,$10,$11,$12"+placeholder+")",[id,s.tenant_id,d.companyId,d.customerId||null,d.vehicleId||null,await number(c,s.tenant_id,'invoice'),'financial:'+d.sourceKey,d.dueOn,d.amount,d.currency,cipher.seal({itemId:d.itemId,description:d.description||'',issuedOn:d.issuedOn,source:d.mode||'manual'}),s.user_id,...(d.contractingCompanyId?[d.contractingCompanyId]:[])]);
+ await c.query("insert into ab.vehicle_invoices(id,tenant_id,company_id,customer_id,vehicle_id,invoice_number,kind,source_key,due_on,amount,currency,payload_cipher,created_by"+columns+")values($1,$2,$3,$4,$5,$6,'financial',$7,$8,$9,$10,$11,$12"+placeholder+")",[id,s.tenant_id,d.companyId,d.customerId||null,d.vehicleId||null,await number(c,s.tenant_id,'invoice'),'financial:'+d.sourceKey,d.dueOn,d.amount,d.currency,cipher.seal({itemId:d.itemId,description:d.description||'',issuedOn:d.issuedOn,source:d.mode||'manual',...(d.contractVehicleId?{contractVehicleId:d.contractVehicleId,contractId:d.contractId}: {})}),s.user_id,...(d.contractingCompanyId?[d.contractingCompanyId]:[])]);
  await linkInvoice(c,cipher,m,s,id,it,d.issuedOn,d.sourceKey);return {id};
 }
 export async function linkInvoice(c: any, cipher: any, m: any, s: any, id: string, it: any, date: string, key: string) {
@@ -140,10 +140,11 @@ export async function bankPosting(c: any, cipher: any, m: any, s: any, d: any) {
     await event(c, cipher, s, d.companyId, id, 'bank_posted', null, { ...d, lines: rows });
     return id;
 }
-export async function allocateReceipt(c: any, s: any, r: any) {
+export async function allocateReceipt(c: any, s: any, r: any, cipher: any) {
     let left = L.units(r.amount);
+    const target=(r.payload_cipher?cipher.open(r.payload_cipher):{}).targetInvoiceId;
     const bills = await invoices(c, { companyId: r.company_id, customerId: r.customer_id, contractingCompanyId:r.contracting_company_id, vehicleId: r.vehicle_id, currency: r.currency });
-    for (const b of bills.filter((b: any) => b.item_id === r.item_id && (b.contracting_company_id||null)===(r.contracting_company_id||null) && b.customer_id===r.customer_id && b.vehicle_id === r.vehicle_id && L.units(b.outstanding) > 0n)) {
+    for (const b of bills.filter((b: any) => (!target||b.id===target) && b.item_id === r.item_id && (b.contracting_company_id||null)===(r.contracting_company_id||null) && b.customer_id===r.customer_id && b.vehicle_id === r.vehicle_id && L.units(b.outstanding) > 0n)) {
         const take = L.units(b.outstanding) < left ? L.units(b.outstanding) : left;
         if (!take)
             break;
@@ -154,7 +155,7 @@ export async function allocateReceipt(c: any, s: any, r: any) {
 }
 export async function postReceipt(c: any, cipher: any, m: any, s: any, r: any, method: string, date: string) {
     const it = await item(c, cipher, m, r.item_id, r.company_id, true), cfg = await config(c, cipher, r.company_id), debit = await chart(c, r.company_id, r.currency, method === 'cash' ? cfg.custodyAccountId : cfg.chequeTransitAccountId, 'asset'), ar = await resolve(c, r.company_id, r.currency, it.data.receivableId), credit = await chart(c, r.company_id, r.currency, cfg.customerCreditAccountId, 'liability');
-    const extra = await allocateReceipt(c, s, r), settled = L.units(r.amount) - extra, lines = [line(debit, L.units(r.amount))];
+    const extra = await allocateReceipt(c, s, r, cipher), settled = L.units(r.amount) - extra, lines = [line(debit, L.units(r.amount))];
     if (settled)
         lines.push(line(ar, -settled));
     if (extra)

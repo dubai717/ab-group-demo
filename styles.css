@@ -975,3 +975,14 @@ button.primary-btn,button.secondary-btn,button.ghost-btn{word-break:normal;overf
 .permission-action-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));gap:10px;padding-block:10px}.permission-action-grid label{display:flex;align-items:flex-start;gap:8px;min-width:0}#permission-admin>label{display:block;margin-block:12px}#permission-admin details{margin-block:14px}
 
 .section-head{flex-wrap:wrap;gap:.65rem}.section-head>h2{min-inline-size:0;overflow-wrap:break-word}
+
+/* Stable preview controls and aligned bank relationship fields. */
+.preview-picker{inline-size:min(100%,38rem);min-inline-size:0}
+#preview-picker{display:grid;gap:.55rem;padding:.7rem;border:1px solid var(--border,#e7cec4);border-radius:.7rem}
+#preview-picker select{max-inline-size:100%;min-inline-size:0}
+.screen-identity{margin:.3rem 0;font-weight:600}
+.bk-relationship-manager .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+.bk-relationship-manager .form-grid>div{grid-column:auto;display:grid;grid-template-rows:minmax(3.2em,auto) auto;min-inline-size:0}
+.bk-relationship-manager label{line-height:1.5;overflow-wrap:normal;word-break:normal}
+.bk-relationship-manager .form-grid>div:last-child{grid-column:1/-1}
+@media(max-width:480px){.bk-relationship-manager .form-grid{grid-template-columns:minmax(0,1fr)}.bk-relationship-manager .form-grid>div{grid-template-rows:auto auto}}
