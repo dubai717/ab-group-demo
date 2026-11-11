@@ -144,7 +144,7 @@
     "backend/tests/approval-center.test.ts": "7a66d0999c24c814d6d85ad4d8e760351703d707dfb86c1dafca7a8475f4aa0d",
     "backend/tests/business-centers-fixture.ts": "40ac754ad60e7abdded201ef57380576194ae79111f0037f27945808f228c536",
     "backend/tests/business-centers-release.test.ts": "c6325d7c08171ca45af2fe3f156b72c34c66183e814f4a5e4b1e233187b679bf",
-    "backend/tests/business-centers.browser.cjs": "372f61ecf27ef033cd0e8bdb283870482da1379bf4809ceabaa4d1b47793facb",
+    "backend/tests/business-centers.browser.cjs": "3a0e409efe3194761ad78f61247fec6e06199a8c124d89a9dd739de1f574006c",
     "backend/tests/business-followup.test.ts": "2e3a78e59eabce005f4336c9cdedf3fad0f25eb24b23743d0ece3746b39a474f",
     "backend/tests/central-reports.test.ts": "1af91c70a8bd523d2ed41ee15ba1db9302de1ce4facac567811c008d5c2d1e96",
     "backend/tests/communications.test.ts": "a5a831403094391c91a0beec3b976b82d69b3f75e49382e8043c3d348487f243",
