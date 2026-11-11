@@ -1,3 +1,4 @@
+import {investorRegistryDocumentRead} from './investor-registry.js';
 import {registerPermissionAdmin} from './permission-admin.js';
 import {investorEvidenceRead,investorEvidenceUpload,recordInvestorEvidence,registerInvestorEvidence} from './investor-evidence.js';
 import {registerRecordLinks} from './record-links.js';
@@ -1099,7 +1100,7 @@ export async function build(options: Options) {
       return { id: documentId, versionId, version, scanStatus: scan };
     }),
   );
-  app.post('/api/documents/:versionId/withdraw',call(async(c,m,s,req)=>{const body=z.object({reason:z.string().trim().min(1).max(2000)}).strict().parse(req.body);const row=(await c.query('select d.* from ab.documents d join ab.document_versions v on v.document_id=d.id where v.id=$1',[uuid(req.params.versionId)])).rows[0];requireOk(row,404,'notFound');if(row.category==='investorEvidence')row.investor_evidence=await investorEvidenceRead(c,m,row.id);documentRight(m,row,true);return withdrawAttachment(c,s.tenant_id,s.user_id,'document',row.id,body.reason);}));
+  app.post('/api/documents/:versionId/withdraw',call(async(c,m,s,req)=>{const body=z.object({reason:z.string().trim().min(1).max(2000)}).strict().parse(req.body);const row=(await c.query('select d.* from ab.documents d join ab.document_versions v on v.document_id=d.id where v.id=$1',[uuid(req.params.versionId)])).rows[0];requireOk(row,404,'notFound');row.investor_registry=await investorRegistryDocumentRead(c,m,row.id);if(row.category==='investorEvidence')row.investor_evidence=await investorEvidenceRead(c,m,row.id);documentRight(m,row,true);return withdrawAttachment(c,s.tenant_id,s.user_id,'document',row.id,body.reason);}));
   app.get("/api/documents/:versionId/file", async (req, reply) => {
     const s = await session(req);
     const result = await transaction(
@@ -1115,7 +1116,7 @@ export async function build(options: Options) {
             )
           ).rows[0];
         requireOk(row, 404, "notFound");
-        if(row.category==='investorEvidence')row.investor_evidence=await investorEvidenceRead(c,m,row.id);
+        row.investor_registry=await investorRegistryDocumentRead(c,m,row.id);if(row.category==='investorEvidence')row.investor_evidence=await investorEvidenceRead(c,m,row.id);
         documentRight(m, row, false);
         requireOk(row.scan_status === "clean", 423, "fileQuarantined");
         const encrypted = await objects.get(row.storage_key),
@@ -1192,6 +1193,7 @@ export async function build(options: Options) {
       "marketing-ui.js",
       "contracting-companies-ui.js",
       "investors-ui.js",
+      "investor-registry-ui.js",
       "workspace-ui.js",
       "floating-records.js",
       "data/uae-areas.js",
