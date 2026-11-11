@@ -226,7 +226,7 @@
     "supabase/proposed/013_personnel_tasks_performance.sql": "9cdf974b9a57cb5d9cde44458b3ecce6773803dbe975f354ecb93b673de8a45f",
     "user-management.js": "9cb400d7f9bf22f59143cdb5c184e2f77f5239a4a9b27159eb9f28ea441cc6bb",
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
-    "vehicles.js": "75043191582a51b9abe61847fb307f9194622fc4280b746e69313269c61d3449",
+    "vehicles.js": "e1f42c967c905c2d8e44797010e8cd33400b6ab77fcaa6a1c56fea8715ae8450",
     "view-as-ui.js": "b74a5a04f69d4d6d748669ffbaf56ca18c0d1c6bbd040cb977f78f918f6785ba",
     "workspace-ui.js": "507ac75651d0d5a5579a9f90e8837f3b990384bbc9a0f1a107fa02e71c06061e"
   }
