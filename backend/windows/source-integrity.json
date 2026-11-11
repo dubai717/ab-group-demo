@@ -32,10 +32,10 @@
     "backend/deploy/backup-staging.ts": "2d27e2da8d3751f1988821a9279b62d102b9311f7f1316d06da337d9f1b7d0ea",
     "backend/deploy/build.mjs": "0527d6a504c0c56cf681918f7988e6f2910d56dba14399da00ce0b4a162e6e24",
     "backend/deploy/business-centers-catalog.d.mts": "b16340fb86e6aa62a85999de8ffd739408bf139d9dd1403f1154cf8e4023d7dd",
-    "backend/deploy/business-centers-catalog.mjs": "4312999cd4572d39de38b1136bb0df589e0b9ebe7c36a01e113a7fbb8236b420",
-    "backend/deploy/business-centers-release-plan.json": "d03e1fee936d30a3cfc177f0345eb4c63e37a6cc27f6d14e26bd22f1ef7318a5",
-    "backend/deploy/business-centers-release.ts": "04b362290864535824186ee810c32ebca1686e49acedd871688dec81e12ce6c5",
-    "backend/deploy/diagnose-source-drift.ts": "99873ec032594bb45b8832b2855fe6b72ac738ae9e8fd94a7ff213b9703c6a08",
+    "backend/deploy/business-centers-catalog.mjs": "bbef33cfed5cba807e67d1084e5a1b51a1274faa169d21ce37c6b743d8fdabac",
+    "backend/deploy/business-centers-release-plan.json": "43460a6500d3084cf7a62f39635a5c814c102cbc6f38e2f324f243223a45e89a",
+    "backend/deploy/business-centers-release.ts": "d856c140b88ff3a3efd5f2e2b8a38eb41d703c932e419512ec3dcbcb47030038",
+    "backend/deploy/diagnose-source-drift.ts": "0b6e8283cde7dddfeebfbca953d28bb697893c2a725bb959f9c19986d9e62cbc",
     "backend/deploy/drift-settings.ts": "c70e64846d48ecb365b98f30a5f11762b341fbe4cc9ba9be9531840da3b26b94",
     "backend/deploy/financial-release-plan.json": "2a7481ffdd01ba6bfb499cfefcfcd87dd6e8509472baf13d0a3d488bc815d525",
     "backend/deploy/financial-release.ts": "41f5f43641a834def837937644974668f0413611a054f8a1a0e7bc5dbee8d0ed",
@@ -51,7 +51,7 @@
     "backend/deploy/v2/change-risk.mjs": "d0ec82d133d6a631a6537939df0e3815bbaa7d39714f7191550ae9813644f278",
     "backend/deploy/v2/context.d.mts": "4f0ef642bf5d34d1ffc39468b784f9c62dde87f38afc7da53cfe0ceccd03e67d",
     "backend/deploy/v2/context.mjs": "274d8d362d45032af544e361359d547b801dbaab3a4c5298093970788255e547",
-    "backend/deploy/v2/policy.test.mjs": "c87635c98540628d5593204fe8d95973c52c47fcf3581a6738800004cd0403fa",
+    "backend/deploy/v2/policy.test.mjs": "97e3b73bbb123982c29035843a852bdebe82323180a3d84b65043c10ce78e1d9",
     "backend/deploy/v2/preflight.mjs": "d87856436b47e9ea430340be57382e6a9bd266dd9c214502d648ea31d8083a74",
     "backend/deploy/v2/staging-delivery-dispatch.yml.example": "a9ee684d59110e74c5abe0228b48e9fcb087b5b884b6fe799919b834a74dcd65",
     "backend/deploy/vehicle-readiness.ts": "9dbf628f5930b267d54b0b5774363509e1f03c956b0f385f3e0d4e5aad5ec408",
@@ -145,7 +145,7 @@
     "backend/src/view-as.ts": "a7492754d33fe43987b37b02b3d08f6d4867d28b0a9b2f32da2c9e0c1f3f4843",
     "backend/tests/approval-center.test.ts": "7a66d0999c24c814d6d85ad4d8e760351703d707dfb86c1dafca7a8475f4aa0d",
     "backend/tests/business-centers-fixture.ts": "40ac754ad60e7abdded201ef57380576194ae79111f0037f27945808f228c536",
-    "backend/tests/business-centers-release.test.ts": "5b1bc32d5a8f2f81f5b5a363553deefc68d336005f6dcdce7dddd17a505e0685",
+    "backend/tests/business-centers-release.test.ts": "e959c1538e0891dcc673f358fd8f133bd05d3bce1f1581807cd5799e52a8f7f8",
     "backend/tests/business-centers.browser.cjs": "4753e85c011bfd600e1aef205a5b943acf25ea6d7f81a62e81811c19699fa5ab",
     "backend/tests/business-followup.test.ts": "925e705820f640c6390784503d7173a847de555544ad7a9b44537d18f5b5a69e",
     "backend/tests/central-reports.test.ts": "1af91c70a8bd523d2ed41ee15ba1db9302de1ce4facac567811c008d5c2d1e96",
@@ -233,6 +233,8 @@
     "view-as-ui.js": "406841beae070bd16c8be952d5b2abcd05e41a2d353a68a1bcae37b5ec47cb03",
     "workspace-ui.js": "af607edf9d07b45a6e276a8e7477330dd751a36899a9981c9ba2b60ddfcc2ed3",
     "backend/deploy/access-continuity.ts": "276e8178b29326e4a20a77455aecc21dfae91010b52e899fe66cd5c732d7571b",
-    "backend/deploy/schema-readiness.ts": "12f27b4fdd97fc4ec3e31575ab131b0eeb63f881be4025abe06e19b72f4ad940"
+    "backend/deploy/schema-readiness.ts": "12f27b4fdd97fc4ec3e31575ab131b0eeb63f881be4025abe06e19b72f4ad940",
+    "backend/deploy/investor-schema-preservation.ts": "0a053cdf880a720ca69f65d7ee77ad28014f9ea4bccda8e612097f81e1fe06f2",
+    "supabase/additive/026_investor_registry_versions.sql": "5d3a575fb2261183e206f066318680d1d5217866e30999e33943eb3424b451e7"
   }
 }

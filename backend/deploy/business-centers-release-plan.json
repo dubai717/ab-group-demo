@@ -118,6 +118,24 @@
       "path": "supabase/additive/025_direct_contracting_contracts.sql",
       "sha256": "0a22455cd30389771fae699937b634695f1bc89c7683842da19bb4a574247d87",
       "tables": []
+    },
+    {
+      "name": "026_investor_registry_versions.sql",
+      "path": "supabase/additive/026_investor_registry_versions.sql",
+      "sha256": "5d3a575fb2261183e206f066318680d1d5217866e30999e33943eb3424b451e7",
+      "tables": [
+        "investor_profile_versions",
+        "investor_identity_links",
+        "investor_agreement_series",
+        "investor_agreement_versions",
+        "investor_version_approvals",
+        "investor_funding_versions",
+        "investor_profile_documents",
+        "investor_principal_releases",
+        "investor_principal_release_reversals",
+        "investor_registration_sources",
+        "investor_financing_settlements"
+      ]
     }
   ]
 }

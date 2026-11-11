@@ -1,6 +1,7 @@
 import {accessWitness,assertAccessContinuity} from './access-continuity.js';
 import {sourceTableFingerprints,sourceDifference} from './source-fingerprint.js';
 // Exact reviewed SQL only. Every change is transactional; original rows and grants are compared.
+import {reviewedInvestorPreservation} from './investor-schema-preservation.js';
 import type {Pool,PoolClient} from 'pg';
 import {manifest} from './backup-restore-drill.js';
 import {preserveSnapshot,assertPreserved} from './preserved-staging-release.js';
@@ -23,7 +24,7 @@ async function guardSnapshot(c:PoolClient){
 async function checkGuard(c:PoolClient,before:Awaited<ReturnType<typeof guardSnapshot>>,pending:string[]){
  const after=await guardSnapshot(c),columnMap=new Map(after.columns.map(x=>[x.s+'.'+x.t+'.'+x.n,x])),aclSet=new Set(after.columnAcl.map(x=>JSON.stringify(x)));
  for(const key of ['roles','members','schemaAcl']as const)need(JSON.stringify(before[key])===JSON.stringify(after[key]),'BUSINESS_EXISTING_SECURITY_CHANGED');
- for(const old of before.columns){const actual=columnMap.get(old.s+'.'+old.t+'.'+old.n);need(actual,'BUSINESS_COLUMN_LOST');const relaxed=pending.includes('023')&&['vehicle_invoices','finance_receipt_batches'].includes(old.t)&&old.n==='customer_id'||pending.includes('025')&&old.t==='marketing_contracts'&&old.n==='prospect_id';need(JSON.stringify(actual)===JSON.stringify(relaxed?{...old,required:false}:old),'BUSINESS_COLUMN_CHANGED');}
+ for(const old of before.columns){const actual=columnMap.get(old.s+'.'+old.t+'.'+old.n);need(actual,'BUSINESS_COLUMN_LOST');const relaxed=pending.includes('023')&&['vehicle_invoices','finance_receipt_batches'].includes(old.t)&&old.n==='customer_id'||pending.includes('025')&&old.t==='marketing_contracts'&&old.n==='prospect_id'||pending.includes('026')&&old.t==='investor_profiles'&&old.n==='user_id';need(JSON.stringify(actual)===JSON.stringify(relaxed?{...old,required:false}:old),'BUSINESS_COLUMN_CHANGED');}
  for(const old of before.columnAcl)need(aclSet.has(JSON.stringify(old)),'BUSINESS_COLUMN_GRANT_LOST');
  const oldColumns=new Set(before.columns.map(x=>x.t+'.'+x.n));need(after.columnAcl.filter(x=>oldColumns.has(x.table_name+'.'+x.column_name)).length===before.columnAcl.length,'BUSINESS_COLUMN_GRANT_CHANGED');
  for(const kind of ['constraints','policies','triggers']as const){const values=new Set(after.structure[kind].map((x:any)=>JSON.stringify(x)));for(const old of before.structure[kind])need(values.has(JSON.stringify(old)),'BUSINESS_ORIGINAL_'+kind.toUpperCase()+'_CHANGED');}
@@ -57,7 +58,7 @@ export async function applyBusinessCenters(pool:Pool,backupContext:any,options:{
  phase='CAPTURE_PRE_MIGRATION';const before=await preserveSnapshot(c),guard=await guardSnapshot(c);await integrity(c);
  const owner=await runtimeOwner(c);if(options.runtimePool){phase='REAL_RUNTIME_BEFORE_MIGRATION';await actualRuntimeReads(options.runtimePool,owner,[]);}
  for(const m of pending){phase='APPLY_'+m.name.slice(0,3);await c.query(m.sql);await c.query('insert into public.ab_schema_migrations(name,sha256)values($1,$2)',[m.name,m.sha256]);}
- phase='VERIFY_MIGRATED_STATE';await c.query('SET CONSTRAINTS ALL IMMEDIATE');await assertPreserved(c,before);await checkGuard(c,guard,pending.map(m=>m.name.slice(0,3)));await integrity(c);
+ phase='VERIFY_MIGRATED_STATE';await c.query('SET CONSTRAINTS ALL IMMEDIATE');await assertPreserved(c,await reviewedInvestorPreservation(c,before,pending.map(m=>m.name.slice(0,3))));await checkGuard(c,guard,pending.map(m=>m.name.slice(0,3)));await integrity(c);
  if(options.runtimePool){need(!options.dryRun&&options.rehearsed===true,'BUSINESS_ISOLATED_RUNTIME_REHEARSAL_REQUIRED');const rights=(await c.query("select bool_and(has_table_privilege('ab_runtime','ab.'||t,'SELECT')) ok from unnest($1::text[])t",[plan.flatMap(m=>m.tables)])).rows[0];need(rights?.ok,'BUSINESS_RUNTIME_NEW_TABLE_ACCESS');}else{phase='ISOLATED_RUNTIME_IMPERSONATION';await runtimeReads(c,plan.flatMap(m=>m.tables));}
  phase='COMMIT_VERIFIED_SCHEMA';await c.query(options.dryRun?'ROLLBACK':'COMMIT');committed=!options.dryRun;
  // Hosted operator is NOT granted SET ROLE. New schema cannot be read by a
