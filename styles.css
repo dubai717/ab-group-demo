@@ -993,3 +993,13 @@ button.primary-btn,button.secondary-btn,button.ghost-btn{word-break:normal;overf
 #investor-center .stats-grid .stat-card strong{font-size:.95rem;line-height:1.5;overflow-wrap:anywhere}
 #investor-center .stats-grid .stat-card span{font-size:clamp(1.15rem,2.2vw,1.75rem);overflow-wrap:anywhere;line-height:1.4}
 #investor-center .register-search-row{flex-wrap:wrap;gap:.6rem}
+
+/* Independent investor profile: preserve readable names, bank details and balances. */
+#investor-registry{min-inline-size:0}
+#investor-registry .record-details{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:1rem}
+#investor-registry .record-detail-field{min-inline-size:0}
+#investor-registry dd{overflow-wrap:anywhere;margin-inline:0}
+#investor-registry .stats-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr))}
+#investor-registry .stat-card{min-inline-size:0;gap:.6rem}
+#investor-registry .stat-card strong{font-size:.95rem;line-height:1.5;overflow-wrap:anywhere}
+#investor-registry .stat-card span{font-size:clamp(1.1rem,2vw,1.65rem);overflow-wrap:anywhere;line-height:1.4}
