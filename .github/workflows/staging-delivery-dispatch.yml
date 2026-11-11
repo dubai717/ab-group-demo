@@ -49,7 +49,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: 604a500d34e906770a983552ce6b90f97f668494
+          ref: 224a6ea515f7c070b9072305e679a41b23e12430
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -112,7 +112,7 @@ jobs:
           NODE
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: 604a500d34e906770a983552ce6b90f97f668494
+          ref: 224a6ea515f7c070b9072305e679a41b23e12430
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -198,7 +198,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: 604a500d34e906770a983552ce6b90f97f668494
+          ref: 224a6ea515f7c070b9072305e679a41b23e12430
           fetch-depth: 0
           persist-credentials: false
       - id: trigger
@@ -243,7 +243,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: 604a500d34e906770a983552ce6b90f97f668494
+          ref: 224a6ea515f7c070b9072305e679a41b23e12430
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -354,7 +354,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: 604a500d34e906770a983552ce6b90f97f668494
+          ref: 224a6ea515f7c070b9072305e679a41b23e12430
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
@@ -382,7 +382,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: 604a500d34e906770a983552ce6b90f97f668494
+          ref: 224a6ea515f7c070b9072305e679a41b23e12430
           persist-credentials: false
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
@@ -416,4 +416,4 @@ on:
           - approval-test
 env:
   AB_CONTROLLER_VERIFIED: protected-v2
-  AB_CONTROLLER_REF: 604a500d34e906770a983552ce6b90f97f668494
+  AB_CONTROLLER_REF: 224a6ea515f7c070b9072305e679a41b23e12430
