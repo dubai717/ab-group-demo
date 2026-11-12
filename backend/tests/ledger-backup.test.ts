@@ -1,3 +1,4 @@
+import {assertEncryptedBackupEnvelope} from './backup-envelope-assertions.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -16,7 +17,7 @@ test('financial backup restores journals, invoices, allocations, custody, privat
     const docker = (args: string[], input?: Buffer) => execFileSync('docker', ['--host=unix:///var/run/docker.sock', ...args], { env, stdio: ['pipe', 'pipe', 'pipe'], input });
     const dump = docker(['exec', 'ab-postgres-foundation', 'pg_dump', '-U', 'postgres', '-d', f.sourceDatabase, '-Fc', '--no-owner']);
     const key = randomBytes(32).toString('base64'), sealed = archive(dump, new Map(f.objects.rows), key);
-    assert(!sealed.includes(Buffer.from('PGDMP')));
+    assertEncryptedBackupEnvelope(sealed,key,dump);
     assert.throws(() => restoreArchive(sealed, randomBytes(32).toString('base64')));
     const restored = restoreArchive(sealed, key), name = 'ab_restore_' + randomUUID().replaceAll('-', '');
     docker(['exec', 'ab-postgres-foundation', 'createdb', '-U', 'postgres', name]);
