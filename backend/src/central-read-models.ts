@@ -29,11 +29,25 @@ export const datasetColumns:Record<string,string[]>={
 };
 export const numericColumns=new Set(['amount','paid','outstanding']);
 const columnDate=(v:any)=>v instanceof Date?v.toISOString().slice(0,10):String(v||'').slice(0,10);
-export async function centralDataset(c:any,m:any,cipher:any,source:string){
+export function centralDatasetAccess(m:any,source:string,rows:any[]=[],companyId?:string){
+ if(m.actor.roleId==='owner')return true;
+ const any=(fn:any)=>m.state.companies.some((co:any)=>(!companyId||co.id===companyId)&&fn(co.id));
+ if(source==='companies')return m.company.canRead();
+ if(source==='banks')return any((co:string)=>m.bank.can('view',co));
+ if(source==='customers')return any((co:string)=>customerCan(m,'view',co));
+ if(source==='vehicles')return any((co:string)=>vehicleRight(m,'view',co));
+ if(source==='invoices')return any((co:string)=>financeRight(m,'ledger_view',co));
+ if(source==='employees')return rows.length>0||any((co:string)=>hrRight(m,'view',co));
+ if(source==='tasks')return rows.length>0||m.actor.permissions.includes('view_tasks')||any((co:string)=>hrRight(m,'task_manage',co)||taskRight(m,'assign',co));
+ if(source==='marketing')return any((co:string)=>marketingAllowed(m,co));
+ if(source==='investments')return m.actor.roleId==='investor'||any((co:string)=>investorManager(m,co));
+ return false;
+}
+export async function centralDataset(c:any,m:any,cipher:any,source:string,context:any={}){
  datasetNames.parse(source);let out:any[]=[];
  const companyName=(id:string)=>{const r=m.state.companies.find((co:any)=>co.id===id);return r?.englishName||r?.arabicName||'';};
- const exists=async(table:string)=>!!(await c.query('select to_regclass($1) ok',['ab.'+table])).rows[0].ok;
- const rows=async(table:string)=>{const r=(await c.query('select * from ab.'+table+' limit 20001')).rows;requireOk(r.length<=20000,422,'registerTooLarge');return r;};
+ const exists=async(table:string)=>context.tables?context.tables.has(table):!!(await c.query('select to_regclass($1) ok',['ab.'+table])).rows[0].ok;
+ const rows=async(table:string)=>{if(context.rows?.has(table))return context.rows.get(table);const r=(await c.query('select * from ab.'+table+' limit 20001')).rows;requireOk(r.length<=20000,422,'registerTooLarge');context.rows?.set(table,r);return r;};
  if(source==='companies'){out=m.company.canRead()?m.state.companies.map((r:any)=>({id:r.id,companyId:r.id,nameAr:r.arabicName,nameEn:r.englishName,status:r.status,emirate:r.emirate})):[];}
  if(source==='contractingCompanies'&&await exists('contracting_companies'))for(const r of await rows('contracting_companies'))if(contractingRight(m,'view',r.company_id)){const p=cipher.open(r.payload_cipher);out.push({id:r.id,companyId:r.company_id,nameAr:p.nameAr,nameEn:p.nameEn,licenseNumber:p.licenseNumber,relationship:p.relationship,status:r.status});}
  if(source==='banks')out=m.bank.list().map((r:any)=>({id:r.id,companyId:r.companyId,accountName:r.accountName,bankId:r.bankId,currency:r.currency,status:r.status}));
