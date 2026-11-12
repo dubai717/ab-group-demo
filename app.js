@@ -537,7 +537,7 @@ function render() {
               ${getLocale() === 'ar' ? 'English' : 'العربية'}
             </button>
             <details class="account-menu">
-              <summary class="user-pill">
+              <summary class="user-pill" title="${AuthFlows.escape(currentUser.fullName)}">
                 <span class="avatar">${AuthFlows.escape(currentUser.fullName.slice(0,1).toUpperCase())}</span>
                 <span><span>${AuthFlows.escape(currentUser.fullName)}</span><span class="muted account-role">${getRoleName(currentUser.roleId)}</span></span>
               </summary>
