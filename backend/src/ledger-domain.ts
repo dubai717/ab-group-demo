@@ -1,3 +1,5 @@
+import {monthlyReady} from './investor-monthly-domain.js';
+import {classifyMonthlyInvoice,monthlyReceiptCredits} from './investor-monthly-posting.js';
 import {contractingParty,exactFinancialParty} from './contracting-access.js';
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
@@ -75,7 +77,7 @@ export async function evidence(c: any, m: any, co: string, id: string, clean = t
     return r;
 }
 export async function balance(c: any, account: string) { return L.units((await c.query("select coalesce(sum(e.debit-e.credit),0)::text amount from ab.finance_entries e left join ab.finance_operations o on o.id=e.operation_id left join ab.finance_journals j on j.id=e.journal_id where e.chart_id=$1 and(o.status='Approved'or j.status='Posted')", [account])).rows[0].amount); }
-export async function invoices(c: any, q: any) { const rows = (await c.query(`select i.*,l.item_id,l.issued_on,l.source_key financial_source,it.name_ar,it.name_en,it.priority,ab.financial_allocation_total(i.id)::text paid,coalesce((select sum(a.amount)from ab.vehicle_invoice_adjustments a where a.invoice_id=i.id and a.kind<>'writeoff'),0)::text credited,coalesce((select sum(a.amount)from ab.vehicle_invoice_adjustments a where a.invoice_id=i.id and a.kind='writeoff'),0)::text written_off from ab.vehicle_invoices i join ab.finance_invoice_links l on l.invoice_id=i.id join ab.finance_items it on it.id=l.item_id where i.company_id=$1 and($2::uuid is null or i.customer_id=$2)and($3::uuid is null or i.vehicle_id=$3)and($4::text is null or i.currency=$4)and($5::text is null or to_jsonb(i)->>'contracting_company_id'=$5) order by it.priority,i.due_on,i.invoice_number`, [q.companyId, q.customerId || null, q.vehicleId || null, q.currency || null,q.contractingCompanyId||null])).rows; return rows.map((r: any) => { const legal = L.units(r.amount) - L.units(r.paid) - L.units(r.credited), book = legal - L.units(r.written_off); return { ...r, amount: L.money(L.units(r.amount)), paid: L.money(L.units(r.paid)), outstanding: L.money(legal), bookOutstanding: L.money(book > 0n ? book : 0n), status: legal === 0n ? (L.units(r.credited) === L.units(r.amount) ? 'Corrected' : 'Paid') : L.units(r.paid) > 0n ? 'Partial' : 'Unpaid', dueOn: r.due_on.toISOString().slice(0, 10), invoiceNumber: String(r.invoice_number), payload_cipher: undefined }; }); }
+export async function invoices(c: any, q: any) { const rows = (await c.query(`select i.*,l.item_id,l.issued_on,l.source_key financial_source,it.name_ar,it.name_en,it.priority,ab.financial_allocation_total(i.id)::text paid,coalesce((select sum(a.amount)from ab.vehicle_invoice_adjustments a where a.invoice_id=i.id and a.kind<>'writeoff'),0)::text credited,coalesce((select sum(a.amount)from ab.vehicle_invoice_adjustments a where a.invoice_id=i.id and a.kind='writeoff'),0)::text written_off from ab.vehicle_invoices i join ab.finance_invoice_links l on l.invoice_id=i.id join ab.finance_items it on it.id=l.item_id where i.company_id=$1 and($2::uuid is null or i.customer_id=$2)and($3::uuid is null or i.vehicle_id=$3)and($4::text is null or i.currency=$4)and($5::text is null or to_jsonb(i)->>'contracting_company_id'=$5) order by it.priority,i.due_on,i.invoice_number`, [q.companyId, q.customerId || null, q.vehicleId || null, q.currency || null,q.contractingCompanyId||null])).rows; const managed=await monthlyReady(c)?new Set((await c.query('select invoice_id from ab.investor_monthly_invoice_classifications where invoice_id=any($1::uuid[])',[rows.map((r:any)=>r.id)])).rows.map((r:any)=>r.invoice_id)):new Set(); return rows.map((r: any) => { const legal = L.units(r.amount) - L.units(r.paid) - L.units(r.credited), book = legal - L.units(r.written_off); return { ...r,...(managed.has(r.id)?{ownedBy:'investor',companyAsset:false}:{}), amount: L.money(L.units(r.amount)), paid: L.money(L.units(r.paid)), outstanding: L.money(legal), bookOutstanding: L.money(book > 0n ? book : 0n), status: legal === 0n ? (L.units(r.credited) === L.units(r.amount) ? 'Corrected' : 'Paid') : L.units(r.paid) > 0n ? 'Partial' : 'Unpaid', dueOn: r.due_on.toISOString().slice(0, 10), invoiceNumber: String(r.invoice_number), payload_cipher: undefined }; }); }
 export async function customer(c: any, m: any, id: string, co: string, vehicle?: string) {
     const r = (await c.query('select * from ab.customers where id=$1', [id])).rows[0];
     requireOk(r && r.status === 'Active' && customerCan(m, 'view', r.company_id), 403, 'denied');
@@ -98,6 +100,7 @@ export async function linkInvoice(c: any, cipher: any, m: any, s: any, id: strin
     const i = (await c.query('select * from ab.vehicle_invoices where id=$1', [id])).rows[0];
     requireOk(i, 404, 'notFound');
     await c.query('insert into ab.finance_invoice_links(id,tenant_id,company_id,invoice_id,item_id,issued_on,source_key,created_by)values($1,$2,$3,$4,$5,$6,$7,$8)', [randomUUID(), s.tenant_id, i.company_id, id, it.id, date, key, s.user_id]);
+    if(await classifyMonthlyInvoice(c,cipher,m,s,i,it))return id;
     const ar = await resolve(c, i.company_id, i.currency, it.data.receivableId), income = await resolve(c, i.company_id, i.currency, it.data.revenueId);
     requireOk(ar.kind === 'asset' && ['income', 'liability'].includes(income.kind), 422, 'accountMappingRequired');
     const rate = L.units(it.data.taxRate || '0'), tax = rate ? (L.units(i.amount) * rate + (100000n + rate) / 2n) / (100000n + rate) : 0n, lines = [line(ar, L.units(i.amount)), line(income, -(L.units(i.amount) - tax))];
@@ -155,12 +158,12 @@ export async function allocateReceipt(c: any, s: any, r: any, cipher: any) {
 }
 export async function postReceipt(c: any, cipher: any, m: any, s: any, r: any, method: string, date: string) {
     const it = await item(c, cipher, m, r.item_id, r.company_id, true), cfg = await config(c, cipher, r.company_id), debit = await chart(c, r.company_id, r.currency, method === 'cash' ? cfg.custodyAccountId : cfg.chequeTransitAccountId, 'asset'), ar = await resolve(c, r.company_id, r.currency, it.data.receivableId), credit = await chart(c, r.company_id, r.currency, cfg.customerCreditAccountId, 'liability');
-    const extra = await allocateReceipt(c, s, r, cipher), settled = L.units(r.amount) - extra, lines = [line(debit, L.units(r.amount))];
-    if (settled)
-        lines.push(line(ar, -settled));
+    const extra = await allocateReceipt(c, s, r, cipher), settled = L.units(r.amount) - extra, routed=await monthlyReceiptCredits(c,cipher,r),lines = [line(debit, L.units(r.amount)),...routed.credits];requireOk(routed.gross<=settled,409,'monthlyReceiptAllocationMismatch');
+    if (settled>routed.gross)
+        lines.push(line(ar, -(settled-routed.gross)));
     if (extra)
         lines.push(line(credit, -extra));
-    await journal(c, cipher, s, r.company_id, date, r.currency, 'receipt:' + r.id, lines, { receiptId: r.id, excess: L.money(extra), method });
+    await journal(c, cipher, s, r.company_id, date, r.currency, 'receipt:' + r.id, lines, { receiptId: r.id, excess: L.money(extra), method,...(routed.gross?{monthlyAgencyRouting:routed.snapshots}:{}) });
     return extra;
 }
 

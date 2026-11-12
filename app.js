@@ -480,6 +480,7 @@ function getSidebarItems(user) {
 }
 
 function render() {
+  globalThis.InvestorMonthlyUI?.sync();
   if (['testData','testUsers','test-data','test-users'].includes(app.state.currentPage)) app.state.currentPage = 'dashboard';
   if(globalThis.ABCentral?.enabled&&!globalThis.ABCentral.ready){globalThis.ABCentral.loading();return;}
   const currentUser = getCurrentUser();
