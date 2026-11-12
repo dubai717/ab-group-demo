@@ -1015,4 +1015,3 @@ button.primary-btn,button.secondary-btn,button.ghost-btn{word-break:normal;overf
 @keyframes investor-upload-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.investor-document-card[data-busy=true] [role=status]::before{animation:none;}}
 
-dialog.investor-profile-form{z-index:20000!important;}
