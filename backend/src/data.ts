@@ -26,14 +26,23 @@ export async function audit(
   );
 }
 export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
-  const roles = (await c.query("select data from ab.roles")).rows.map(
+  // One simple-protocol packet, on this caller's existing transaction and RLS context.
+  // Statements and transformations are unchanged; no actor input is interpolated,
+  // no parallel clients or cross-request/user cache are introduced.
+  const reads = await c.query([
+    "select data from ab.roles",
+    "select c.*,l.id license_id,l.number,l.authority,l.issued_on::text,l.expires_on::text from ab.companies c left join ab.company_licenses l on l.company_id=c.id and l.is_primary",
+    "select u.*,coalesce((select jsonb_agg(company_id) from ab.user_companies m where m.user_id=u.id and m.active),'[]') company_ids,coalesce((select jsonb_agg(department_id) from ab.user_departments m where m.user_id=u.id and m.active),'[]') department_ids from ab.users u",
+    "select * from ab.departments",
+    "select * from ab.permission_grants where revoked_at is null",
+    "select * from ab.bank_references",
+    "select * from ab.bank_accounts",
+  ].join(';\n')) as unknown as { rows: any[] }[];
+  requireOk(Array.isArray(reads) && reads.length === 7 && reads.every(r => Array.isArray(r.rows)), 502, 'modelReadIncomplete');
+  const roles = reads[0].rows.map(
     (r) => r.data,
   );
-  const companies = (
-    await c.query(
-      `select c.*,l.id license_id,l.number,l.authority,l.issued_on::text,l.expires_on::text from ab.companies c left join ab.company_licenses l on l.company_id=c.id and l.is_primary`,
-    )
-  ).rows.map((r) => ({
+  const companies = reads[1].rows.map((r) => ({
     ...r.data,
     id: r.id,
     licenseId: r.license_id,
@@ -44,11 +53,7 @@ export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
     revision: r.revision,
     createdAt: r.created_at.toISOString(),
   }));
-  const users = (
-    await c.query(
-      `select u.*,coalesce((select jsonb_agg(company_id) from ab.user_companies m where m.user_id=u.id and m.active),'[]') company_ids,coalesce((select jsonb_agg(department_id) from ab.user_departments m where m.user_id=u.id and m.active),'[]') department_ids from ab.users u`,
-    )
-  ).rows.map((r) => ({
+  const users = reads[2].rows.map((r) => ({
     ...r.data,
     ...(r.private_cipher ? cipher.open(r.private_cipher) : {}),
     id: r.id,
@@ -62,7 +67,7 @@ export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
     departmentId: r.department_ids[0] || "",
     revision: r.revision,
   }));
-  const departments = (await c.query("select * from ab.departments")).rows.map(
+  const departments = reads[3].rows.map(
     (r) => ({
       id: r.id,
       name: r.name,
@@ -70,9 +75,7 @@ export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
       managerId: r.manager_id,
     }),
   );
-  const grants = (
-    await c.query("select * from ab.permission_grants where revoked_at is null")
-  ).rows;
+  const grants = reads[4].rows;
   let nextGrants: any[] | undefined;
   const initialGrants = grants.map((r) => ({
     userId: r.user_id,
@@ -114,16 +117,14 @@ export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
       permissions: policy.bankPermissions(user.id, co.id),
     })),
   };
-  const references = (await c.query("select * from ab.bank_references")).rows;
+  const references = reads[5].rows;
   state.bankReference = references
     .filter((r) => r.kind === "bank")
     .map((r) => ({ ...r.data, id: r.id }));
   state.bankAccountPurposes = references
     .filter((r) => r.kind === "purpose")
     .map((r) => ({ ...r.data, id: r.id }));
-  state.bankAccounts = (
-    await c.query("select * from ab.bank_accounts")
-  ).rows.map((r) => ({
+  state.bankAccounts = reads[6].rows.map((r) => ({
     ...cipher.open(r.payload_cipher),
     id: r.id,
     companyId: r.company_id,

@@ -98,7 +98,7 @@
     "backend/src/customer-spreadsheet.ts": "03bb3a433307f2e7cd76d7bab28645f7a82b6a2a319c5d7a551c7e7ed78b3197",
     "backend/src/customers.ts": "a76488bfdbbf0960026c5c04c39997a6cfd6429e4fe2ffed0175917659d0e879",
     "backend/src/dashboard-financial.ts": "a1f694b8cd4d48e866c83c9bffdf2bb55af81cf8f34fdc81bc871b445db863e9",
-    "backend/src/data.ts": "6b301e9128cfa48d26f17916d077b96d232936f0a019a1b6bb1c1fdee63bb6ce",
+    "backend/src/data.ts": "aa392868f11115b49844cf13c0a7d09ccd456cfd48a31b2a7a80716e4c7efd10",
     "backend/src/database.ts": "7b82d290feb2ee440437d82006367c47000b4f558d874c810662b4f7a02be2df",
     "backend/src/document-access.ts": "931949896692780ae69ed7428c248090d4794faf4ca8a847b448e3c80c60a1a2",
     "backend/src/document-center.ts": "336555f30c37ee5465e9c8f1bd5acb9dbb0b9521ed3d3d338204681baaad2874",
@@ -224,7 +224,7 @@
     "supabase/proposed/011_vehicles.sql": "870b3c699a964cd0cbeed9f3ca5696c1cfeb4fc6e576991e3df43f0b3937d00b",
     "supabase/proposed/012_financial_management.sql": "717d6279420c1e79b7752ec2f0571ebfb559e24613828b5319a62f92808bbd24",
     "supabase/proposed/013_personnel_tasks_performance.sql": "9cdf974b9a57cb5d9cde44458b3ecce6773803dbe975f354ecb93b673de8a45f",
-    "user-management.js": "7c053045a8f789edf69a76c3884bb8ee49c8056f23921b9a771e723d109e24e0",
+    "user-management.js": "1b82d02de64f18bf0b013ca8c23181274d0b7d9583023433fb284637ff998304",
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
     "vehicles.js": "7997c77e346b5d30d6daebae48bdd3e66aa9088ea86293f988a6c77a38f84160",
     "view-as-ui.js": "3a2fff3355c00cd772cd29ddf7ddc250aedbb5f43b2fd1271f87467457ae8ee1",
@@ -258,6 +258,8 @@
     "backend/tests/dashboard-controls.test.ts": "1e4b26132b45055234f0063870553899444bd25848b0fe6177278c9defbbd509",
     "backend/tests/dashboard-controls.browser.cjs": "2652834facc95e20b2d76aa34686f1bdf390864e80ca718a060e4a9b9c74359c",
     "backend/tests/dashboard-performance.mts": "fc28e093d527619d913f091d593c237d6d77a082d482d5820569895204a1868c",
-    "docs/verification/dashboard-scope-performance-20261112.md": "647d877d0f6152f096f9ac94a6370a0c48d8f604697589b97795eb6be38da688"
+    "docs/verification/dashboard-scope-performance-20261112.md": "647d877d0f6152f096f9ac94a6370a0c48d8f604697589b97795eb6be38da688",
+    "backend/tests/model-read-batching.test.ts": "e63c9ab07b2fc6045616013d0ed999f4c8325ad936ffd8845f8f24f9fc32df85",
+    "docs/verification/model-read-performance-20261112.md": "965e2d2e0aa01f35c4250d747aeeba5b163e385c1a238f67500118b3989ebfe5"
   }
 }
