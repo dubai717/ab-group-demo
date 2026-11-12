@@ -43,8 +43,8 @@ export function registerInvestorMonthly(app:any,call:any,cipher:any){
  const proof=(await c.query("select v.id from ab.document_versions v join ab.documents d on d.id=v.document_id where v.id=$1 and d.company_id=$2 and v.scan_status='clean'and v.mime in('application/pdf','image/png','image/jpeg')and not exists(select 1 from ab.audit_events a where a.entity_type='document'and a.entity_id=d.id::text and a.action='attachment_withdrawn')",[d.documentVersionId,d.companyId])).rows[0];requireOk(proof,422,'cleanInvestorDocumentRequired');
  const key=randomUUID();await c.query("insert into ab.investor_monthly_configurations(id,tenant_id,company_id,currency,capital_chart_id,payable_chart_id,fee_income_chart_id,payout_item_id,document_version_id,accounting_basis,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9,'gross_agency_on_collection',$10)",[key,s.tenant_id,d.companyId,d.currency,d.capitalChartId,d.payableChartId,d.feeIncomeChartId,d.payoutItemId,d.documentVersionId,s.user_id]);await event(c,cipher,s,d.companyId,key,'agency_accounting_configured',null,{...d,noHistoricalReclassification:true});return {id:key,saved:true,historicalDataChanged:false};
  }));
- app.get('/api/investor-monthly/overview',route(async(c:any,m:any,_s:any,r:any)=>{
- const q=z.object({companyId:id,currency:z.string().regex(/^[A-Z]{3}$/),period:z.string().regex(/^\d{4}-\d{2}$/),investorId:id.optional()}).strict().parse(r.query);company(m,q.companyId);monthBounds(q.period);
+ async function buildOverview(c:any,m:any,q:any){
+ company(m,q.companyId);monthBounds(q.period);
  const investors=(await c.query('select distinct p.id,p.payload_cipher from ab.investor_profiles p join ab.investor_monthly_versions mv on mv.investor_id=p.id where mv.company_id=$1 and mv.currency=$2 and($3::uuid is null or p.id=$3)',[q.companyId,q.currency,q.investorId||null])).rows;
  const metrics:any[]=Array.from({length:8},(_,n)=>({id:['collector_custody','deposit_pending','bank_ready','registration_shares','pending_settlements','approved_vouchers','uncleared_cheques','managed_responsibility'][n],amount:0n,rows:[]}));
  const add=(n:number,row:any,amount:bigint)=>{if(amount<=0n)return;metrics[n].amount+=amount;metrics[n].rows.push({...row,amount:V.money(amount),currency:q.currency});};
@@ -61,6 +61,13 @@ export function registerInvestorMonthly(app:any,call:any,cipher:any){
  for(const record of records){const row={settlementId:record.id,investorId:person.id,investorName:name,period:record.period,stage:record.status,voucherId:record.voucher_id,chequeNumber:record.cheque_number};if(['Draft','Reviewed'].includes(record.status))add(4,row,V.units(record.amount));if(record.voucher_status==='Approved')add(5,row,V.units(record.amount));if(record.cheque_number&&record.cheque_status!=='Collected'&&record.cheque_status!=='Cancelled')add(6,row,V.units(record.amount));}
  }
  return {companyId:q.companyId,currency:q.currency,period:q.period,metrics:metrics.map(metric=>({...metric,amount:V.money(metric.amount),count:metric.rows.length})),overlappingStages:true,companyGuarantee:false};
+ }
+ const overviewQuery=z.object({companyId:id,currency:z.string().regex(/^[A-Z]{3}$/),period:z.string().regex(/^\d{4}-\d{2}$/),investorId:id.optional()}).strict();
+ app.get('/api/investor-monthly/overview',route(async(c:any,m:any,_s:any,r:any)=>buildOverview(c,m,overviewQuery.parse(r.query))));
+ app.get('/api/investor-monthly/group-overview',route(async(c:any,m:any,_s:any,r:any)=>{
+ const q=overviewQuery.omit({companyId:true}).parse(r.query);monthBounds(q.period);const companies:any[]=[];let managed=0n,ready=0n;
+ for(const co of m.state.companies){const overview=await buildOverview(c,m,{...q,companyId:co.id}),amount=overview.metrics.find((v:any)=>v.id==='managed_responsibility').amount,eligible=overview.metrics.find((v:any)=>v.id==='bank_ready').amount;managed+=V.units(amount);ready+=V.units(eligible);companies.push({companyId:co.id,companyNameAr:co.arabicName,companyNameEn:co.englishName,currency:q.currency,managedAmount:amount,readyAmount:eligible});}
+ return {...q,companies,managedAmount:V.money(managed),readyAmount:V.money(ready),crossCompanyPayout:false,companyGuarantee:false};
  }));
  app.get('/api/investor-monthly/invoice-setup',route(async(c:any,m:any,_s:any,r:any)=>{
  const q=z.object({companyId:id,currency:z.string().regex(/^[A-Z]{3}$/),investorId:id.optional()}).strict().parse(r.query);company(m,q.companyId);

@@ -253,9 +253,9 @@
     "backend/tests/investor-monthly-schema.test.ts": "818feeb2e6b2496b4690041896ec251927afe856398434e1b2ed4d00054d1041",
     "backend/tests/investor-monthly-sources.test.ts": "775ebfbea28a2db116c2ccf0a883990c815b2b97d996a7a83d8cd0bc6a5e723f",
     "docs/proposals/investor-monthly-settlements-status.md": "c6a53a834ef0bd55231822dc9748fdd243de0c5d8473b8d65610a2f5cba9b53f",
-    "backend/src/investor-monthly.ts": "562549ea68225eb91dc4ef1390674292db56f65ced51f9f6f0b276adf1c704b5",
+    "backend/src/investor-monthly.ts": "79fca2083486589dc50489c7a4425932c927abdcbfb07d1a244a7c93f1a1d88e",
     "backend/src/investor-monthly-source-loader.ts": "98a37a114e3ce4a9586957a0654fec2257dd2b5230c83245641700b80d32cc65",
-    "backend/tests/investor-monthly-collection.test.ts": "a1476316bf423eef65fccd2ee5a2e642143e2f65bf54419d41c51df72a261d4f",
+    "backend/tests/investor-monthly-collection.test.ts": "43f1d1a02c7a8dbeeb54fdab15bcc31534198bd27b7777f0e5211e641df472f6",
     "backend/src/permission-admin.ts": "e40d9a2a84dae485f4e43a6032756f85f6a27f5848f1159ce84ff7fe54d66b12",
     "backend/tests/dashboard-workspace.browser.cjs": "e162ab59bf7bac5e15f67ade7d43c6e412c6fa26bf768c216f95778d4cf67694",
     "backend/tests/serve-forms-fixture.ts": "dc42340b4c13a07ed4ef3ebd738511efa28eb976a7d569f74ff0fdc9b6e00ba2",
@@ -271,9 +271,9 @@
     "backend/tests/investor-monthly-preservation.test.ts": "2c52e8083bda7e48b9e6ff77db3ac76343e5a361fb23ff2738e801c3dd2c3967",
     "backend/tests/investor-monthly-reports.test.ts": "ff926bef9b01dec13504ffbacfb56a9e68235b93b2f2a9ef5a7ffabe37da057c",
     "backend/tests/investor-monthly-suite.browser.cjs": "f3e0a85aaca4c44b3e9133d9781a78539dd6725323515b2a75f0d42494d6873a",
-    "backend/tests/investor-monthly.browser.cjs": "c6944230fb64f32f305d7d460f909465bc570487661615393cc90dd5504489bf",
+    "backend/tests/investor-monthly.browser.cjs": "5d7f95b1c2c009f7da9976144b0c1f7ac5d05c811b4e4e12bbad90c28651d579",
     "backend/tests/serve-investor-monthly-fixture.ts": "e531e70724bee1e80e3d41342a4a8a0509f35d154a6d9eadbfe2b555364e4d99",
-    "docs/proposals/investor-agency-028-review.md": "61618a06e471caf16050e02c9d41785a79ca51ae61b20baad05f9df5ae82c679",
-    "investor-monthly-ui.js": "5e18cbe054ea1606c0f37a7aac9bdbb1961ee0c371f28ea1cf037aaacf2bb339"
+    "docs/proposals/investor-agency-028-review.md": "782703c06e0ede34e5bd0af2f5b8f6a7956fe00d3988a3186bae53ffb16d6191",
+    "investor-monthly-ui.js": "9e4cd6ee92281d12fe7e98de2bcea200fc32d15a82380e4ad84b2935aa1eab88"
   }
 }
