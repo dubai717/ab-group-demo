@@ -1014,5 +1014,3 @@ button.primary-btn,button.secondary-btn,button.ghost-btn{word-break:normal;overf
 .investor-document-card[data-busy=true] [role=status]::before{content:'◌';display:inline-block;margin-inline-end:.4rem;animation:investor-upload-spin 1s linear infinite;}
 @keyframes investor-upload-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.investor-document-card[data-busy=true] [role=status]::before{animation:none;}}
-
-dialog.investor-profile-form{z-index:20000!important;}
