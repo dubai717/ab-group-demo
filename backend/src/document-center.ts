@@ -1,3 +1,4 @@
+import {investorRegistryDocumentRead} from './investor-registry.js';
 import {investorEvidenceRead} from './investor-evidence.js';
 import { documentSearchTokens,normalizeDocumentText,indexDocumentText } from './document-text.js';
 import { randomUUID } from 'node:crypto';
@@ -19,7 +20,7 @@ export function registerDocumentCenter(app:any,call:any,cipher:any,options:any){
         if(source==='vehicle'){requireOk(vehicleRight(m,'documents',r.company_id));return;}
         if(r.employee_id){const e=await employee(c,m,r.employee_id);requireOk(hrRight(m,write?'document_update':'documents',e.company_id)||e.user_id===m.actor.id);return;}
         if(r.personnel_library_id){const l=(await c.query('select * from ab.hr_library where id=$1',[r.personnel_library_id])).rows[0];requireOk(l,404,'notFound');requireOk(hrRight(m,write?'library_manage':'library_download',l.company_id));const p=cipher.open(l.payload_cipher);requireOk(write||m.actor.roleId==='owner'||!p.readerIds?.length||p.readerIds.includes(m.actor.id));return;}
-        if(r.category==='investorEvidence')r.investor_evidence=await investorEvidenceRead(c,m,r.id);documentRight(m,r,write);
+        r.investor_registry=await investorRegistryDocumentRead(c,m,r.id);if(r.category==='investorEvidence')r.investor_evidence=await investorEvidenceRead(c,m,r.id);documentRight(m,r,write);
     }
     async function original(c:any,m:any,source:string,id:string,write=false){
         const table=source==='document'?'documents':source==='customer'?'customer_files':'vehicle_files';

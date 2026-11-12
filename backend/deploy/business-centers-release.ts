@@ -1,4 +1,5 @@
 // Exact reviewed SQL only. Every change is transactional; original rows and grants are compared.
+import {reviewedInvestorPreservation} from './investor-schema-preservation.js';
 import type {Pool,PoolClient} from 'pg';
 import {manifest} from './backup-restore-drill.js';
 import {preserveSnapshot,assertPreserved} from './preserved-staging-release.js';
@@ -21,10 +22,10 @@ async function guardSnapshot(c:PoolClient){
 async function checkGuard(c:PoolClient,before:Awaited<ReturnType<typeof guardSnapshot>>,pending:string[]){
  const after=await guardSnapshot(c),columnMap=new Map(after.columns.map(x=>[x.s+'.'+x.t+'.'+x.n,x])),aclSet=new Set(after.columnAcl.map(x=>JSON.stringify(x)));
  for(const key of ['roles','members','schemaAcl']as const)need(JSON.stringify(before[key])===JSON.stringify(after[key]),'BUSINESS_EXISTING_SECURITY_CHANGED');
- for(const old of before.columns){const actual=columnMap.get(old.s+'.'+old.t+'.'+old.n);need(actual,'BUSINESS_COLUMN_LOST');const relaxed=pending.includes('023')&&['vehicle_invoices','finance_receipt_batches'].includes(old.t)&&old.n==='customer_id'||pending.includes('025')&&old.t==='marketing_contracts'&&old.n==='prospect_id';need(JSON.stringify(actual)===JSON.stringify(relaxed?{...old,required:false}:old),'BUSINESS_COLUMN_CHANGED');}
+ for(const old of before.columns){const actual=columnMap.get(old.s+'.'+old.t+'.'+old.n);need(actual,'BUSINESS_COLUMN_LOST');const relaxed=pending.includes('023')&&['vehicle_invoices','finance_receipt_batches'].includes(old.t)&&old.n==='customer_id'||pending.includes('025')&&old.t==='marketing_contracts'&&old.n==='prospect_id'||pending.includes('026')&&old.t==='investor_profiles'&&old.n==='user_id';need(JSON.stringify(actual)===JSON.stringify(relaxed?{...old,required:false}:old),'BUSINESS_COLUMN_CHANGED');}
  for(const old of before.columnAcl)need(aclSet.has(JSON.stringify(old)),'BUSINESS_COLUMN_GRANT_LOST');
  const oldColumns=new Set(before.columns.map(x=>x.t+'.'+x.n));need(after.columnAcl.filter(x=>oldColumns.has(x.table_name+'.'+x.column_name)).length===before.columnAcl.length,'BUSINESS_COLUMN_GRANT_CHANGED');
- for(const kind of ['constraints','policies','triggers']as const){const values=new Set(after.structure[kind].map((x:any)=>JSON.stringify(x)));for(const old of before.structure[kind])need(values.has(JSON.stringify(old)),'BUSINESS_ORIGINAL_'+kind.toUpperCase()+'_CHANGED');}
+ for(const kind of ['constraints','policies','triggers']as const){const values=new Set(after.structure[kind].map((x:any)=>JSON.stringify(x)));for(const old of before.structure[kind]){if(kind==='triggers'&&pending.includes('027')&&old.s==='ab'&&old.t==='investor_profiles'&&old.n==='immutable_history'){const original='CREATE TRIGGER immutable_history BEFORE DELETE OR UPDATE ON ab.investor_profiles FOR EACH ROW EXECUTE FUNCTION ab.vehicle_immutable()';need(old.d===original&&old.e==='O','INVESTOR_ORIGINAL_PROFILE_TRIGGER_CHANGED');need(values.has(JSON.stringify({...old,d:original.replace('ab.vehicle_immutable()','ab.investor_profile_link_guard()')})),'INVESTOR_LINK_TRIGGER_NOT_REVIEWED');}else need(values.has(JSON.stringify(old)),'BUSINESS_ORIGINAL_'+kind.toUpperCase()+'_CHANGED');}}
  for(const t of before.structure.rows){const now=after.structure.rows.find((x:any)=>x.s===t.s&&x.t===t.t);need(now&&now.r===t.r&&now.f===t.f,'BUSINESS_ORIGINAL_RLS_CHANGED');if(['auth','storage'].includes(t.s))need(now.n===t.n&&now.h===t.h,'BUSINESS_AUTH_OR_STORAGE_CHANGED');}
 }
 async function runtimeReads(c:PoolClient,tables:string[]){
@@ -47,7 +48,7 @@ export async function applyBusinessCenters(pool:Pool,backupContext:any,options:{
  for(const t of backupContext.manifest.rows.filter((r:any)=>r.s==='ab')){const now=(await c.query(`select count(*)::text n,md5(coalesce(string_agg(md5(row_to_json(x)::text),'' order by md5(row_to_json(x)::text)),'')) h from ab.${qi(t.t)} x`)).rows[0];need(now.n===t.n&&now.h===t.h,'BUSINESS_SOURCE_CHANGED_SINCE_BACKUP');}
  const before=await preserveSnapshot(c),guard=await guardSnapshot(c);await integrity(c);
  for(const m of pending){await c.query(m.sql);await c.query('insert into public.ab_schema_migrations(name,sha256)values($1,$2)',[m.name,m.sha256]);}
- await c.query('SET CONSTRAINTS ALL IMMEDIATE');await assertPreserved(c,before);await checkGuard(c,guard,pending.map(m=>m.name.slice(0,3)));await integrity(c);await runtimeReads(c,plan.flatMap(m=>m.tables));
+ await c.query('SET CONSTRAINTS ALL IMMEDIATE');await assertPreserved(c,await reviewedInvestorPreservation(c,before,pending.map(m=>m.name.slice(0,3))));await checkGuard(c,guard,pending.map(m=>m.name.slice(0,3)));await integrity(c);await runtimeReads(c,plan.flatMap(m=>m.tables));
  await c.query(options.dryRun?'ROLLBACK':'COMMIT');return {applied:pending.length};
  }catch(error){await c.query('ROLLBACK').catch(()=>{});throw error;}finally{c.release();}
 }

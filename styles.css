@@ -968,10 +968,69 @@ button.primary-btn,button.secondary-btn,button.ghost-btn{word-break:normal;overf
 .record-action-row{display:flex;flex-wrap:wrap;align-items:center;gap:.65rem;grid-column:1/-1;margin-block:.65rem}
 .record-action-row button{margin:0;max-inline-size:100%}
 
-.preview-picker{position:relative;min-inline-size:min(100%,22rem);max-inline-size:100%}.preview-picker details{border:1px solid var(--border,#dfc9bb);border-radius:12px;padding:10px}.preview-picker summary{cursor:pointer}.preview-picker select{inline-size:100%;min-block-size:13rem}.preview-picker input{margin-block:10px}.preview-picker p{margin:.5rem 0}.preview-picker button{margin-block-start:.6rem}
+.preview-picker{position:relative;min-inline-size:min(100%,22rem);max-inline-size:100%}.preview-picker details{border:1px solid var(--border,#dfc9bb);border-radius:12px;padding:10px}.preview-picker summary{cursor:pointer}.preview-picker select{inline-size:100%;min-block-size:2.75rem;block-size:2.75rem}.preview-picker input{margin-block:10px}.preview-picker p{margin:.5rem 0}.preview-picker button{margin-block-start:.6rem}
 .operation-progress{position:fixed;inset-inline-end:18px;bottom:18px;z-index:100000;display:flex;align-items:center;gap:10px;max-inline-size:calc(100vw - 36px);padding:12px 16px;border:1px solid #dec9bd;border-radius:12px;background:#fff9f3;color:#4b2014;box-shadow:0 6px 24px #3c1a1726;pointer-events:none;font:600 14px/1.6 Cairo,sans-serif}
 .operation-spinner{display:inline-block;inline-size:22px;block-size:22px;flex-shrink:0;border:3px solid #e5d2c4;border-top-color:#7c291e;border-radius:50%;animation:ab-operation-spin .75s linear infinite}@keyframes ab-operation-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.operation-spinner{animation-duration:1.8s}}
 .permission-action-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));gap:10px;padding-block:10px}.permission-action-grid label{display:flex;align-items:flex-start;gap:8px;min-width:0}#permission-admin>label{display:block;margin-block:12px}#permission-admin details{margin-block:14px}
 
 .section-head{flex-wrap:wrap;gap:.65rem}.section-head>h2{min-inline-size:0;overflow-wrap:break-word}
+
+/* Stable preview controls and aligned bank relationship fields. */
+.preview-picker{inline-size:min(100%,38rem);min-inline-size:0}
+#preview-picker{display:grid;gap:.55rem;padding:.7rem;border:1px solid var(--border,#e7cec4);border-radius:.7rem}
+#preview-picker select{max-inline-size:100%;min-inline-size:0}
+.screen-identity{margin:.3rem 0;font-weight:600;min-block-size:3rem;display:flex;align-items:center;flex-wrap:wrap;gap:.6rem}
+.bk-relationship-manager .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+.bk-relationship-manager .form-grid>div{grid-column:auto;display:grid;grid-template-rows:minmax(3.2em,auto) auto;min-inline-size:0}
+.bk-relationship-manager label{line-height:1.5;overflow-wrap:normal;word-break:normal}
+.bk-relationship-manager .form-grid>div:last-child{grid-column:1/-1}
+@media(max-width:480px){.bk-relationship-manager .form-grid{grid-template-columns:minmax(0,1fr)}.bk-relationship-manager .form-grid>div{grid-template-rows:auto auto}}
+
+/* Keep investor capital summaries readable in both languages and narrow views. */
+#investor-center .stats-grid{align-items:stretch;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr))}
+#investor-center .stats-grid .stat-card{min-inline-size:0;display:flex;flex-direction:column;gap:.65rem;justify-content:space-between}
+#investor-center .stats-grid .stat-card strong{font-size:.95rem;line-height:1.5;overflow-wrap:anywhere}
+#investor-center .stats-grid .stat-card span{font-size:clamp(1.15rem,2.2vw,1.75rem);overflow-wrap:anywhere;line-height:1.4}
+#investor-center .register-search-row{flex-wrap:wrap;gap:.6rem}
+
+/* Independent investor profile: preserve readable names, bank details and balances. */
+#investor-registry{min-inline-size:0}
+#investor-registry .record-details{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:1rem}
+#investor-registry .record-detail-field{min-inline-size:0}
+#investor-registry dd{overflow-wrap:anywhere;margin-inline:0}
+#investor-registry .stats-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr))}
+#investor-registry .stat-card{min-inline-size:0;gap:.6rem}
+#investor-registry .stat-card strong{font-size:.95rem;line-height:1.5;overflow-wrap:anywhere}
+#investor-registry .stat-card span{font-size:clamp(1.1rem,2vw,1.65rem);overflow-wrap:anywhere;line-height:1.4}
+
+/* Investor attachments use the original private storage and shared preview. */
+.investor-document-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:1rem;margin-block:1rem;}
+.investor-document-card{border:1px solid var(--line);border-radius:12px;padding:1rem;display:flex;flex-direction:column;gap:.6rem;min-width:0;overflow-wrap:anywhere;}
+.investor-document-thumbnail,.investor-pdf-icon{height:140px;display:flex;align-items:center;justify-content:center;background:var(--panel);font-weight:700;font-size:2rem;}
+.investor-document-thumbnail canvas{max-block-size:140px;max-inline-size:100%;object-fit:contain}.investor-document-thumbnail[role=button]{cursor:pointer}.investor-document-thumbnail[aria-busy=true]::after{content:"◌";font-size:1rem;margin-inline:.5rem;animation:investor-upload-spin 1s linear infinite}.investor-document-thumbnail img,.investor-document-card>img{height:140px;width:100%;object-fit:contain;}
+.investor-profile-window .record-details{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));}
+.investor-profile-window .record-detail-field{display:block;min-width:0;}
+.investor-document-card[data-busy=true] [role=status]::before{content:'◌';display:inline-block;margin-inline-end:.4rem;animation:investor-upload-spin 1s linear infinite;}
+@keyframes investor-upload-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.investor-document-card[data-busy=true] [role=status]::before{animation:none;}}
+
+/* Daily owner permission planning: existing grants and plan/confirm API. */
+.permission-target-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:.8rem;align-items:end}
+.permission-target-grid label,.permission-list-panel>label{display:grid;gap:.4rem;min-inline-size:0}
+.permission-selected-summary{display:flex;gap:.7rem;flex-wrap:wrap;padding:1rem;margin-block:1rem;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.permission-scope-row{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-block:1rem}.permission-scope-row label{flex:1 1 260px;min-width:0}.permission-scope-row p{flex:2 1 250px}
+.permission-dual-list{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:1rem;align-items:stretch}
+.permission-list-panel{border:1px solid var(--line);border-radius:12px;padding:1rem;min-width:0}.permission-list-panel h3{margin-block-start:0}
+.permission-list-scroll{block-size:24rem;overflow:auto;overscroll-behavior:contain;padding:.3rem}.permission-list-scroll fieldset{margin-block:.5rem;border:0;padding:.2rem}.permission-list-scroll legend{font-weight:700;padding-block:.5rem}
+.permission-list-item{display:flex;align-items:flex-start;gap:.7rem;padding:.6rem;border-radius:6px;cursor:pointer}.permission-list-item input{flex:0 0 auto;margin-block-start:.3rem}.permission-list-item span{min-width:0;overflow-wrap:anywhere}.permission-list-item strong{font-weight:500;font-size:1rem;line-height:1.7}.permission-list-item small{display:block;color:var(--muted)}
+.permission-inherited{background:var(--panel);border:1px dashed var(--line);cursor:default}.permission-transfer-buttons{display:flex;flex-direction:column;justify-content:center;gap:.8rem}.permission-transfer-buttons button{white-space:nowrap;min-block-size:44px}.permission-advanced{margin-block:1.2rem;padding:1rem;border:1px solid var(--line);border-radius:10px}
+@media(max-width:720px){.permission-dual-list{grid-template-columns:minmax(0,1fr)}.permission-transfer-buttons{flex-direction:row;flex-wrap:wrap}.permission-list-scroll{block-size:19rem}.permission-transfer-buttons button{white-space:normal}.permission-target-grid{grid-template-columns:minmax(0,1fr)}}
+/* Explicit content box keeps 16px names readable inside the 46px employee choice. */
+#preview-picker{position:relative}#dashboard-as.preview-user-combobox{display:flex;align-items:center;justify-content:space-between;gap:.8rem;block-size:46px;min-block-size:46px;padding:8px 12px;margin:0;line-height:1.5;text-align:start;font-size:1rem}
+#dashboard-as [data-preview-selected]{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#dashboard-as>span:last-child{flex:0 0 auto}
+.preview-user-popup{max-block-size:20rem;overflow:auto;overscroll-behavior:contain;position:relative;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:.4rem;z-index:5}.preview-user-popup[hidden]{display:none}.preview-user-popup button[role=option]{display:grid;gap:.3rem;text-align:start;inline-size:100%;padding:.8rem;margin:0;border:0;background:transparent;color:inherit;white-space:normal;overflow-wrap:anywhere;line-height:1.6;min-block-size:48px}.preview-user-popup button[aria-selected=true]{background:var(--primary-soft)}.preview-user-popup button:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}.preview-user-popup span{font-size:.9rem;color:var(--muted)}[data-preview-selected-details]{overflow-wrap:anywhere;line-height:1.7}
+@media(max-width:720px){.permission-transfer-buttons span[aria-hidden]{display:inline-block;transform:rotate(90deg)}body[dir=rtl] .permission-transfer-buttons span[aria-hidden]{transform:rotate(-90deg)}}
+/* Long preview identities stay readable without squeezing language controls. */
+.topbar>div:first-child{min-inline-size:0;flex:1 1 20rem}.user-controls{min-inline-size:0;max-inline-size:100%;flex:0 1 28rem}.lang-switch{flex:0 0 auto;min-inline-size:4rem;white-space:nowrap}.account-menu{min-inline-size:0;max-inline-size:24rem}.user-pill{max-inline-size:100%}.user-pill>.avatar{flex:0 0 auto}.user-pill>span:last-child{min-inline-size:0}.user-pill>span:last-child>span:first-child{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.screen-identity{min-block-size:7rem}
+@media(max-width:720px){.topbar>div:first-child,.user-controls{flex-basis:100%}.screen-identity{min-block-size:10rem}.user-controls .account-menu{flex:1 1 auto}}

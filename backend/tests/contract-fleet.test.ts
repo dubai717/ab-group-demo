@@ -1,0 +1,41 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {personnelFixture} from './personnel-fixture.js';
+test('Fleet work contract reserves actual vehicles and keeps each vehicle invoice and collection independent',async()=>{
+ const f=await personnelFixture();try{
+ for(const n of ['016_marketing','022_contracting_companies','023_contracting_financial_party','025_direct_contracting_contracts'])await f.admin.query(await readFile('supabase/additive/'+n+'.sql','utf8'));
+ const party=await f.req('POST','/api/contracting-companies',{companyId:f.co1,nameAr:'طرف تشغيل اختبار',nameEn:'Isolated vehicle work party',licenseNumber:'FLEET-TEST',licenseAuthority:'Synthetic'});
+ const vehicle=async(type:string)=>{const r=await f.request({financeType:'cash',expectedFunding:'0',vehicleType:type});return (await f.register(r.id,{vehicleType:type})).id;};
+ const v1=await vehicle('Bus'),v2=await vehicle('Truck'),proof=await f.proof();
+ const input={contractingCompanyId:party.id,title:'Three and one half tonne work',kind:'customer',startsOn:'2026-01-01',endsOn:'2026-12-31',period:'month',value:'300',currency:'AED',paymentSchedule:[{dueOn:'2026-01-01',amount:'300'}],prices:[],documentVersionId:proof};
+ const contract=await f.req('POST','/api/marketing/contracts',input),path='/api/marketing/contracts/'+contract.id;
+ const fleet=[{vehicleId:v1,type:'Bus',seats:26,rate:'10',value:'100',notes:'Bus details'},{vehicleId:v2,type:'Truck',capacityTonnes:'1.5',rate:'20',value:'200',notes:'Truck details'}];
+ const grants=(await f.admin.query('select * from ab.permission_grants order by id')).rows;
+ await f.req('POST',path+'/fleet',{revision:1,vehicles:[fleet[0],fleet[0]]},422);
+ await f.req('POST',path+'/fleet',{revision:1,vehicles:fleet});
+ assert.equal((await f.req('GET',path+'/fleet')).vehicles[0].seats,26);
+ assert.equal((await f.admin.query('select count(*)::int n from ab.marketing_allocations where contract_id=$1',[contract.id])).rows[0].n,0);
+ await f.req('POST',path+'/state',{revision:2,state:'Active',reason:'Explicit signed activation'});
+ assert.equal((await f.admin.query('select count(*)::int n from ab.marketing_allocations where contract_id=$1',[contract.id])).rows[0].n,2);
+ await f.req('POST',path+'/fleet',{revision:3,vehicles:fleet},409);
+ const other=await f.req('POST','/api/marketing/contracts',{...input,title:'Overlapping work'});
+ assert((await f.req('GET','/api/marketing/contracts/'+other.id+'/fleet')).options.every((x:any)=>!x.available));
+ await f.req('POST','/api/marketing/contracts/'+other.id+'/fleet',{revision:1,vehicles:fleet},409);
+ const daily=await f.req('POST','/api/marketing/contracts',{...input,period:'day',title:'Separate daily contract'});
+ await f.req('POST','/api/marketing/contracts/'+daily.id+'/fleet',{revision:1,vehicles:fleet},422);
+ const billInput={itemId:f.items.loan,amount:'100',issuedOn:f.date,dueOn:f.date,sourceKey:'one',description:'Vehicle one bill'};
+ await f.req('POST',path+'/invoices',billInput,422);
+ const b1=await f.req('POST',path+'/invoices',{...billInput,vehicleId:v1});
+ await f.req('POST',path+'/invoices',{...billInput,vehicleId:v1,sourceKey:'over-limit',amount:'1'},422);
+ const b2=await f.req('POST',path+'/invoices',{...billInput,vehicleId:v2,amount:'200',sourceKey:'two'});
+ const finance=await f.req('GET','/api/contracting-companies/'+party.id+'/finance');assert.equal(finance.contracts[0].id,contract.id);assert.equal(finance.invoices.find((x:any)=>x.id===b2.invoiceId).contractVehicleId,v2);
+ const collection={companyId:f.co1,contractingCompanyId:party.id,targetInvoiceId:b2.invoiceId,currency:'AED',receivedOn:f.date,method:'cash',mode:'manual',amount:'150',items:[{itemId:f.items.loan,amount:'150'}]};
+ await f.req('POST','/api/ledger/collections',{...collection,targetInvoiceId:crypto.randomUUID()},422);
+ await f.req('POST','/api/ledger/collections',{...collection,targetInvoiceId:undefined},422);const dedup=crypto.randomUUID();await f.req('POST','/api/ledger/collections',collection,200,dedup);await f.req('POST','/api/ledger/collections',collection,200,dedup);
+ const paid=await f.req('GET','/api/contracting-companies/'+party.id+'/finance');assert.equal(paid.invoices.find((x:any)=>x.id===b1.invoiceId).paid,'0.000');assert.equal(paid.invoices.find((x:any)=>x.id===b2.invoiceId).paid,'150.000');
+ const bank=await f.bank();const cheque=await f.req('POST','/api/ledger/collections',{...collection,targetInvoiceId:b1.invoiceId,method:'cheque',amount:'25',items:[{itemId:f.items.loan,amount:'25'}],cheque:{bankAccountId:bank.id,number:'SYN-FLEET-CHEQUE',beneficiary:'Synthetic work company',issuedOn:f.date,dueOn:f.date}});assert.equal(cheque.receipts[0].state,'Pending');let chequeRead=await f.req('GET','/api/contracting-companies/'+party.id+'/finance');assert.equal(chequeRead.invoices.find((x:any)=>x.id===b1.invoiceId).paid,'0.000');await f.req('POST','/api/ledger/cheques/'+cheque.chequeId+'/resolve',{outcome:'Collected',effectiveOn:f.date,bankConfirmation:'Synthetic bank confirmation',reason:'Isolated clearing test'});chequeRead=await f.req('GET','/api/contracting-companies/'+party.id+'/finance');assert.equal(chequeRead.invoices.find((x:any)=>x.id===b1.invoiceId).paid,'25.000');assert.equal(chequeRead.invoices.find((x:any)=>x.id===b2.invoiceId).paid,'150.000');
+ assert.deepEqual((await f.admin.query('select * from ab.permission_grants order by id')).rows,grants);
+ const worker=await f.employee();await f.login(worker.username,worker.password);await f.req('GET',path+'/fleet',undefined,404);await f.req('POST',path+'/fleet',{revision:3,vehicles:fleet},404);
+ }finally{await f.close();}
+});

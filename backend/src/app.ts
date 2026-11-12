@@ -1,4 +1,5 @@
 import {registerReviewedUserAccess} from './reviewed-user-access.js';
+import {investorProfileLock,investorRegistryDocumentRead} from './investor-registry.js';
 import {registerPermissionAdmin} from './permission-admin.js';
 import {investorEvidenceRead,investorEvidenceUpload,recordInvestorEvidence,registerInvestorEvidence} from './investor-evidence.js';
 import {registerRecordLinks} from './record-links.js';
@@ -843,6 +844,7 @@ export async function build(options: Options) {
           bankAccountId: z.uuid().optional(),
           userId: z.uuid().optional(),
           investorAgreementId:z.uuid().optional(),
+          investorProfileId:z.uuid().optional(),
           category: z.enum([
             "original",
             "annex",
@@ -993,6 +995,13 @@ export async function build(options: Options) {
                   file.subarray(8, 12).toString() === "WEBP"
                 : file[0] === 80 && file[1] === 75;
       requireOk(signature, 422, "invalidFile");
+      if(d.investorProfileId){
+        requireOk(m.actor.roleId==='owner'&&owner.user_id===s.user_id&&!d.parentId&&!d.parentVersionId&&!d.investorAgreementId,403,'investorDocumentOwnerRequired');
+        requireOk((await c.query('select id from ab.investor_profiles where id=$1',[d.investorProfileId])).rowCount,404,'notFound');
+        await investorProfileLock(c,d.investorProfileId);
+        const same=(await c.query("select v.document_id id,v.id version_id,v.version,v.scan_status from ab.audit_events a join ab.document_versions v on v.document_id::text=a.entity_id where a.entity_type='document' and a.action='investor_profile_uploaded' and a.fields @> $1::text[] order by v.created_at limit 1",[['profile:'+d.investorProfileId,'sha256:'+sha(file)]])).rows[0];
+        if(same)return {id:same.id,versionId:same.version_id,version:same.version,scanStatus:same.scan_status,duplicate:true};
+      }
       let parent: any;
       if (d.parentId) {
         parent = (
@@ -1096,12 +1105,13 @@ export async function build(options: Options) {
         documentId,
         ["version", String(version), d.category],
       );
+      if(d.investorProfileId)await audit(c,s.tenant_id,s.user_id,'investor_profile_uploaded','document',documentId,['profile:'+d.investorProfileId,'sha256:'+sha(file)]);
       if(investorEvidence)await recordInvestorEvidence(c,m,s,cipher,investorEvidence,documentId,versionId);
       await indexDocumentText(c,cipher,s,'version_id',versionId,file,d.mime,scan);
       return { id: documentId, versionId, version, scanStatus: scan };
     }),
   );
-  app.post('/api/documents/:versionId/withdraw',call(async(c,m,s,req)=>{const body=z.object({reason:z.string().trim().min(1).max(2000)}).strict().parse(req.body);const row=(await c.query('select d.* from ab.documents d join ab.document_versions v on v.document_id=d.id where v.id=$1',[uuid(req.params.versionId)])).rows[0];requireOk(row,404,'notFound');if(row.category==='investorEvidence')row.investor_evidence=await investorEvidenceRead(c,m,row.id);documentRight(m,row,true);return withdrawAttachment(c,s.tenant_id,s.user_id,'document',row.id,body.reason);}));
+  app.post('/api/documents/:versionId/withdraw',call(async(c,m,s,req)=>{const body=z.object({reason:z.string().trim().min(1).max(2000)}).strict().parse(req.body);const row=(await c.query('select d.* from ab.documents d join ab.document_versions v on v.document_id=d.id where v.id=$1',[uuid(req.params.versionId)])).rows[0];requireOk(row,404,'notFound');row.investor_registry=await investorRegistryDocumentRead(c,m,row.id);if(row.category==='investorEvidence')row.investor_evidence=await investorEvidenceRead(c,m,row.id);documentRight(m,row,true);return withdrawAttachment(c,s.tenant_id,s.user_id,'document',row.id,body.reason);}));
   app.get("/api/documents/:versionId/file", async (req, reply) => {
     const s = await session(req);
     const result = await transaction(
@@ -1117,7 +1127,7 @@ export async function build(options: Options) {
             )
           ).rows[0];
         requireOk(row, 404, "notFound");
-        if(row.category==='investorEvidence')row.investor_evidence=await investorEvidenceRead(c,m,row.id);
+        row.investor_registry=await investorRegistryDocumentRead(c,m,row.id);if(row.category==='investorEvidence')row.investor_evidence=await investorEvidenceRead(c,m,row.id);
         documentRight(m, row, false);
         requireOk(row.scan_status === "clean", 423, "fileQuarantined");
         const encrypted = await objects.get(row.storage_key),
@@ -1137,6 +1147,19 @@ export async function build(options: Options) {
         return { bytes, row };
       },s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:undefined,
     );
+    // Authorization, scan status and integrity are checked before every byte-range response.
+    reply.header('Cache-Control','private, no-store').header('Accept-Ranges','bytes');
+    let bytes=result.bytes;
+    const range=req.headers.range;
+    if(range){
+      const match=/^bytes=(\d+)-(\d*)$/.exec(range);
+      const start=match?Number(match[1]):-1,end=match&&match[2]?Number(match[2]):bytes.length-1;
+      if(!match||!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||start>=bytes.length||end<start)return reply.code(416).header('Content-Range','bytes */'+bytes.length).send();
+      const last=Math.min(end,bytes.length-1);
+      reply.code(206).header('Content-Range',`bytes ${start}-${last}/${bytes.length}`);
+      bytes=bytes.subarray(start,last+1);
+    }
+    reply.header('Content-Length',bytes.length);
     reply
       .header("Content-Security-Policy", "sandbox; default-src 'none'")
       .header("Content-Type", result.row.mime)
@@ -1145,7 +1168,7 @@ export async function build(options: Options) {
         "attachment; filename*=UTF-8''" +
           encodeURIComponent(result.row.original_name),
       )
-      .send(result.bytes);
+      .send(bytes);
   });
   if (options.serveFrontend !== false) {
     const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -1194,6 +1217,7 @@ export async function build(options: Options) {
       "marketing-ui.js",
       "contracting-companies-ui.js",
       "investors-ui.js",
+      "investor-registry-ui.js",
       "workspace-ui.js",
       "floating-records.js",
       "data/uae-areas.js",

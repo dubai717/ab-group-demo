@@ -1,3 +1,4 @@
+import {assertEncryptedBackupEnvelope} from './backup-envelope-assertions.js';
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
@@ -221,7 +222,7 @@ test("backup/restore: new database, encrypted file objects, IDs, links, policies
     ]);
     const backupKey = randomBytes(32).toString("base64"),
       sealed = archive(dumpBytes, objectSnapshot, backupKey);
-    assert(!sealed.includes(Buffer.from("PGDMP")));
+    assertEncryptedBackupEnvelope(sealed,backupKey,dumpBytes);
     assert.throws(() =>
       restoreArchive(sealed, randomBytes(32).toString("base64")),
     );

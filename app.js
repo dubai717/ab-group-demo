@@ -531,13 +531,13 @@ function render() {
 
       <main class="main">
         <header class="topbar">
-          <h1>${AuthFlows.isSettings() ? AuthFlows.text('accountSettings') : pageTitle(app.state.currentPage)}</h1>
+          <div><h1>${AuthFlows.isSettings() ? AuthFlows.text('accountSettings') : pageTitle(app.state.currentPage)}</h1>${app.state.currentPage==='dashboard'&&(ABCentral.actor?.roleId==='owner'||ABCentral.viewAs)?ViewAsUI.identity():''}</div>
           <div class="user-controls">
             <button class="lang-switch" data-action="toggle-language">
               ${getLocale() === 'ar' ? 'English' : 'العربية'}
             </button>
             <details class="account-menu">
-              <summary class="user-pill">
+              <summary class="user-pill" title="${AuthFlows.escape(currentUser.fullName)}">
                 <span class="avatar">${AuthFlows.escape(currentUser.fullName.slice(0,1).toUpperCase())}</span>
                 <span><span>${AuthFlows.escape(currentUser.fullName)}</span><span class="muted account-role">${getRoleName(currentUser.roleId)}</span></span>
               </summary>
