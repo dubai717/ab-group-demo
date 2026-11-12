@@ -229,7 +229,7 @@
     "vehicles.js": "7997c77e346b5d30d6daebae48bdd3e66aa9088ea86293f988a6c77a38f84160",
     "view-as-ui.js": "3ecbf68bcac2b6ad5751e5cde97902280530c76a34ae543b7b95a07fde0aa7f0",
     "workspace-ui.js": "507ac75651d0d5a5579a9f90e8837f3b990384bbc9a0f1a107fa02e71c06061e",
-    "investor-registry-ui.js": "9a82666c863fb0d7a83ca3ab3ac21319cf9677156a165119193b89732351ec1b",
+    "investor-registry-ui.js": "b966bfe23977115171572d39cc1df195baa5dfbd6529e8bb9ae2e9766fba6842",
     "backend/src/investor-registry.ts": "f7511d9dac017b6aa0d38cb44e33a80ac428479bd9e0e89aacbf02b74b05610f",
     "backend/deploy/investor-schema-preservation.ts": "0a053cdf880a720ca69f65d7ee77ad28014f9ea4bccda8e612097f81e1fe06f2",
     "supabase/additive/026_investor_registry_versions.sql": "5d3a575fb2261183e206f066318680d1d5217866e30999e33943eb3424b451e7",
