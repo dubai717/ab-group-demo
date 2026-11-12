@@ -1,5 +1,5 @@
 import {monthlyTransferReceipt} from './investor-monthly-posting.js';
-import {monthlyFunding} from './investor-monthly-domain.js';
+import {monthlyFunding,monthlyReady} from './investor-monthly-domain.js';
 import {contractingParty,contractingRight,exactFinancialParty} from './contracting-access.js';
 import { assertInvestorPayoutEligible,notifyInvestorCheque } from './investors.js';
 import {registerArgs,filterRegister,registerResponse} from './register-query.js';
@@ -748,7 +748,8 @@ export function registerLedger(app: any, call: any, cipher: any) {
         await count('missingCustomerInvoices', 'select count(*)n from ab.finance_card_splits s join ab.finance_card_charges ch on ch.id=s.charge_id where s.company_id=$1 and ch.paid_on<$2 and s.customer_id is not null and s.invoice_id is null', [co, until]);
         await count('unsettledIntercompany', "select count(*)n from ab.finance_intercompany x join ab.finance_vouchers v on v.id=x.voucher_id where(x.company_id=$1 or x.to_company_id=$1)and v.issued_on<$2 and x.state<>'Deposited'", [co, until]);
         await count('unreconciledCards', "select count(*)n from ab.finance_cards ca where ca.company_id=$1 and ca.active and exists(select 1 from ab.finance_card_charges ch where ch.card_id=ca.id and ch.paid_on>=$2 and ch.paid_on<$3)and not exists(select 1 from ab.finance_statements st where st.card_id=ca.id and st.status='Approved'and st.period_from<=$2 and st.period_to>=($3::date-1))", [co, month, until]);
-        await count('unpostedInvoiceAdjustments', "select count(*)n from ab.vehicle_invoice_adjustments a join ab.finance_invoice_links l on l.invoice_id=a.invoice_id where a.company_id=$1 and a.created_at::date<$2 and not exists(select 1 from ab.finance_journals j where j.company_id=a.company_id and j.status='Posted'and j.source_key='credit:'||a.id::text)", [co, until]);
+        const agencyAdjustments=await monthlyReady(c)?' and not exists(select 1 from ab.investor_monthly_invoice_classifications mc where mc.invoice_id=a.invoice_id)':'';
+        await count('unpostedInvoiceAdjustments', "select count(*)n from ab.vehicle_invoice_adjustments a join ab.finance_invoice_links l on l.invoice_id=a.invoice_id where a.company_id=$1 and a.created_at::date<$2 and not exists(select 1 from ab.finance_journals j where j.company_id=a.company_id and j.status='Posted'and j.source_key='credit:'||a.id::text)"+agencyAdjustments, [co, until]);
         await count('unclassifiedInvoices', "select count(*)n from ab.vehicle_invoices i where i.company_id=$1 and i.created_at::date<$2 and not exists(select 1 from ab.finance_invoice_links l where l.invoice_id=i.id)", [co, until]);
         return { companyId: co, month, problems, canClose: Object.keys(problems).length === 0 };
     }
@@ -855,7 +856,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
         else if (q.kind === 'receivables') {
             for (const co of selected)
                 rows.push(...(await invoices(c, { companyId: co, currency: q.currency })).filter((r: any) => (!q.itemId || r.item_id === q.itemId) && r.dueOn <= q.to).map((r: any) => ({ ...r, overdue: r.dueOn < today() ? r.outstanding : '0.000', ageDays: Math.max(0, Math.floor((Date.now() - new Date(r.dueOn).getTime()) / 86400000)) })));
-            scope = 'classified invoice balances; pending cheques are not payments';
+            if(rows.some((r:any)=>r.ownedBy==='investor')){rows=rows.map((r:any)=>({ownership:r.ownedBy==='investor'?'investor_managed_right':'company_receivable',...r}));scope='operational invoice balances; investor_managed_right is an investor-owned subledger right, not a company asset; pending cheques are not payments';}else scope = 'classified invoice balances; pending cheques are not payments';
         }
         else if (q.kind === 'collections') {
             const rs = (await c.query("select r.*,j.effective_on cleared_on,jr.effective_on returned_on from ab.finance_receipts r left join ab.finance_journals j on j.source_key='receipt:'||r.id::text and j.company_id=r.company_id and j.status='Posted'left join ab.finance_journals jr on jr.reversal_of=j.id and jr.status='Posted'where r.company_id=any($1::uuid[])and r.item_id is not null and r.kind<>'credit'and($2::uuid is null or r.created_by=$2)and($3::uuid is null or r.item_id=$3)", [selected, q.employeeId || null, q.itemId || null])).rows;
@@ -920,7 +921,8 @@ export function registerLedger(app: any, call: any, cipher: any) {
             }
         if(q.full!=='true')rows = rows.slice(q.page * 200, (q.page + 1) * 200);
         const coverage = (await c.query('select count(*)n from ab.vehicle_invoices i where company_id=any($1::uuid[])and not exists(select 1 from ab.finance_invoice_links l where l.invoice_id=i.id)', [selected])).rows[0].n;
-        const unpostedAdjustments = Number((await c.query("select count(*)n from ab.vehicle_invoice_adjustments a join ab.finance_invoice_links l on l.invoice_id=a.invoice_id where a.company_id=any($1::uuid[])and not exists(select 1 from ab.finance_journals j where j.company_id=a.company_id and j.status='Posted'and j.source_key='credit:'||a.id::text)", [selected])).rows[0].n);
+        const agencyAdjustments=await monthlyReady(c)?' and not exists(select 1 from ab.investor_monthly_invoice_classifications mc where mc.invoice_id=a.invoice_id)':'';
+        const unpostedAdjustments = Number((await c.query("select count(*)n from ab.vehicle_invoice_adjustments a join ab.finance_invoice_links l on l.invoice_id=a.invoice_id where a.company_id=any($1::uuid[])and not exists(select 1 from ab.finance_journals j where j.company_id=a.company_id and j.status='Posted'and j.source_key='credit:'||a.id::text)"+agencyAdjustments, [selected])).rows[0].n);
         const profitByCurrency: Record<string, string> = {};
         if (q.kind === 'profit')
             for (const [cur, net] of Object.entries(totals))

@@ -13,9 +13,11 @@ export async function classifyMonthlyInvoice(c:any,cipher:any,m:any,s:any,i:any,
 }
 export async function monthlyReceiptCredits(c:any,cipher:any,r:any){
  if(!r.vehicle_id||!await monthlyReady(c))return {gross:0n,credits:[] as any[],snapshots:[] as any[]};
+ // New agency money cannot silently become customer credit because an operational invoice was never configured.
+ for(const invoice of(await c.query("select id,kind,amount from ab.vehicle_invoices where vehicle_id=$1 and kind in('finance','admin')",[r.vehicle_id])).rows){const ctx=await monthlyFunding(c,cipher,invoice.id);if(ctx&&(invoice.kind==='finance'||V.units(invoice.amount)===V.units(ctx.terms.registrationBaseFee)))requireOk(ctx.classified,409,'monthlyInvoiceClassificationRequired');}
  const allocations=(await c.query('select x.*,i.kind,i.amount invoice_amount from ab.vehicle_allocations x join ab.vehicle_invoices i on i.id=x.invoice_id where x.receipt_id=$1 and not exists(select 1 from ab.finance_allocation_reversals rev where rev.allocation_id=x.id)order by x.created_at,x.id',[r.id])).rows;
  let gross=0n;const credits:any[]=[],snapshots:any[]=[];const {chart,line}=await import('./ledger-domain.js');
- for(const a of allocations){if(!['finance','admin'].includes(a.kind))continue;const ctx=await monthlyFunding(c,cipher,a.invoice_id);if(!ctx)continue;requireOk(ctx.classified,409,'monthlyInvoiceClassificationRequired');
+ for(const a of allocations){if(!['finance','admin'].includes(a.kind))continue;const ctx=await monthlyFunding(c,cipher,a.invoice_id);if(!ctx||a.kind==='admin'&&V.units(a.invoice_amount)!==V.units(ctx.terms.registrationBaseFee))continue;requireOk(ctx.classified,409,'monthlyInvoiceClassificationRequired');
   if(a.kind==='admin')requireOk(ctx.row.registration_source===true,409,'monthlyRegistrationSourceRequired');
   const prior=(await c.query(`select coalesce(sum(x.amount),0)::text amount from ab.vehicle_allocations x join ab.finance_receipts previous on previous.id=x.receipt_id where x.invoice_id=$1 and not exists(select 1 from ab.finance_allocation_reversals rev where rev.allocation_id=x.id)and(previous.receipt_number,x.id)<($2::bigint,$3::uuid)`,[a.invoice_id,r.receipt_number,a.id])).rows[0].amount;
   const amount=V.units(a.amount),investor=monthlyAmount(a.kind,amount,V.units(prior),ctx.terms),company=amount-investor;gross+=amount;

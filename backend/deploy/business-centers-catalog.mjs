@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 const need=(ok,code)=>{if(!ok)throw Error(code);};
 export function businessCatalog(root='.'){
  const plan=JSON.parse(readFileSync('backend/deploy/business-centers-release-plan.json','utf8'));
- need(plan.format==='AB-REVIEWED-BUSINESS-SQL-1'&&plan.migrations?.length===14,'BUSINESS_CATALOG_FORMAT');
+ need(plan.format==='AB-REVIEWED-BUSINESS-SQL-1'&&plan.migrations?.length===15,'BUSINESS_CATALOG_FORMAT');
  return plan.migrations.map((m,i)=>{
   need(m.name===m.path.split('/').at(-1)&&m.path==='supabase/additive/'+m.name&&/^0\d\d_[a-z_]+\.sql$/.test(m.name)&&Number(m.name.slice(0,3))===14+i&&/^[a-f0-9]{64}$/.test(m.sha256),'BUSINESS_CATALOG_SEQUENCE');
   const sql=readFileSync(root+'/'+m.path,'utf8');need(createHash('sha256').update(sql).digest('hex')===m.sha256,'BUSINESS_SQL_HASH');

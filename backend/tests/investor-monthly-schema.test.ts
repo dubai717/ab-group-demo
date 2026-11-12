@@ -15,7 +15,7 @@ test('Review-only monthly structures roll back atomically, preserve all old data
  const snapshot=async()=>{const result:any={};for(const name of names)result[name]=(await f.admin.query('select to_jsonb(x) row from ab.'+name+' x order by to_jsonb(x)::text')).rows;return result;};
  const before=await snapshot(),funcs=(await f.admin.query("select oid,pg_get_functiondef(oid) definition from pg_proc where pronamespace='ab'::regnamespace order by oid")).rows;
  assert.equal(await transaction(f.runtime,f.org.tenant,f.org.user,c=>monthlyReady(c)),false);
- const sql=await readFile('docs/proposals/028_investor_monthly_settlements.review-only.sql','utf8');
+ const sql=await readFile('supabase/additive/028_investor_monthly_settlements.sql','utf8');
  await f.admin.query('BEGIN');await f.admin.query(sql);await assert.rejects(f.admin.query('select 1/0'));await f.admin.query('ROLLBACK');assert.equal((await f.admin.query("select to_regclass('ab.investor_monthly_settlements') id")).rows[0].id,null);assert.deepEqual(await snapshot(),before);
  await f.admin.query('BEGIN');try{await f.admin.query(sql);await f.admin.query('COMMIT');}catch(error){await f.admin.query('ROLLBACK');throw error;}
  assert.equal(await transaction(f.runtime,f.org.tenant,f.org.user,c=>monthlyReady(c)),true);assert.deepEqual(await snapshot(),before);
@@ -24,7 +24,7 @@ test('Review-only monthly structures roll back atomically, preserve all old data
  const insert='insert into ab.investor_monthly_configurations(id,tenant_id,company_id,currency,capital_chart_id,payable_chart_id,fee_income_chart_id,payout_item_id,document_version_id,accounting_basis,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9,\'gross_agency_on_collection\',$10)';
  await transaction(f.runtime,f.org.tenant,f.org.user,c=>c.query(insert,values));
  assert.equal((await f.runtime.query('select * from ab.investor_monthly_configurations')).rowCount,0);
- const worker=await f.employee();await assert.rejects(transaction(f.runtime,f.org.tenant,worker.id,c=>c.query(insert,[randomUUID(),...values.slice(1,-1),worker.id])),(e:any)=>e.code==='42501');
+ const worker=await f.employee();await assert.rejects(transaction(f.runtime,f.org.tenant,worker.id,c=>c.query('select ab.investor_monthly_agreement_payouts($1)',[randomUUID()])),(e:any)=>e.code==='42501');await assert.rejects(transaction(f.runtime,f.org.tenant,worker.id,c=>c.query(insert,[randomUUID(),...values.slice(1,-1),worker.id])),(e:any)=>e.code==='42501');
  // The review-only classifier reuses live permission rows; it cannot expand a company's scope.
  const right=async(actor:string,company:string)=>(await transaction(f.runtime,f.org.tenant,actor,c=>c.query("select ab.investor_monthly_existing_right($1,ARRAY['ledger_collect']) ok",[company]))).rows[0].ok;
  assert.equal(await right(f.org.user,f.co1),true);assert.equal(await right(worker.id,f.co1),false);

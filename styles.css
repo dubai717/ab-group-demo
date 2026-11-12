@@ -1034,3 +1034,13 @@ button.primary-btn,button.secondary-btn,button.ghost-btn{word-break:normal;overf
 /* Long preview identities stay readable without squeezing language controls. */
 .topbar>div:first-child{min-inline-size:0;flex:1 1 20rem}.user-controls{min-inline-size:0;max-inline-size:100%;flex:0 1 28rem}.lang-switch{flex:0 0 auto;min-inline-size:4rem;white-space:nowrap}.account-menu{min-inline-size:0;max-inline-size:24rem}.user-pill{max-inline-size:100%}.user-pill>.avatar{flex:0 0 auto}.user-pill>span:last-child{min-inline-size:0}.user-pill>span:last-child>span:first-child{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.screen-identity{min-block-size:7rem}
 @media(max-width:720px){.topbar>div:first-child,.user-controls{flex-basis:100%}.screen-identity{min-block-size:10rem}.user-controls .account-menu{flex:1 1 auto}}
+
+/* Investor agency workflow: readable bilingual controls and bounded responsive details. */
+.monthly-window{width:min(1280px,calc(100vw - 2rem));max-width:calc(100vw - 2rem);max-height:90vh;overflow:auto;resize:both;padding:1rem}
+.monthly-window .record-action-row{display:flex;flex-wrap:wrap;gap:.5rem}.monthly-window button{white-space:normal;word-break:normal;min-height:44px;min-width:7rem}.monthly-metrics .stat-card{text-align:start;display:flex;flex-direction:column;gap:.7rem}.monthly-metrics .stat-card strong{font-size:.95rem}.monthly-loading:before{content:"";display:inline-block;width:1rem;height:1rem;margin-inline-end:.5rem;border:2px solid currentColor;border-inline-end-color:transparent;border-radius:50%;animation:monthly-spin .8s linear infinite}@keyframes monthly-spin{to{transform:rotate(360deg)}}
+@media(max-width:600px){.monthly-window{width:calc(100vw - 1rem);max-width:calc(100vw - 1rem);min-width:0;padding:.75rem}.monthly-window .form-grid{grid-template-columns:1fr}.monthly-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.monthly-window .record-window-header{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){.monthly-loading:before{animation:none}}
+
+dialog.monthly-window.record-floating{min-width:0;max-width:calc(100vw - 1rem)}.monthly-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}@media(max-width:1100px){.monthly-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.monthly-window .record-window-bar button{min-width:44px;min-height:36px;width:44px}

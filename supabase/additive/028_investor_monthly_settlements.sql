@@ -55,6 +55,7 @@ BEGIN
   IF NOT EXISTS(SELECT 1 FROM ab.investor_agreement_versions v JOIN ab.investor_agreement_series s ON s.id=v.series_id AND s.tenant_id=v.tenant_id WHERE v.id=NEW.version_id AND v.tenant_id=NEW.tenant_id AND v.created_at=transaction_timestamp()AND v.created_by=NEW.created_by AND s.company_id=NEW.company_id AND s.investor_id=NEW.investor_id AND s.currency=NEW.currency)THEN RAISE EXCEPTION 'monthly_new_version_only' USING ERRCODE='23514';END IF;
  END IF;
  IF TG_TABLE_NAME='investor_monthly_configurations'THEN
+  IF EXISTS(SELECT 1 FROM ab.finance_entries e WHERE e.tenant_id=NEW.tenant_id AND e.chart_id IN(NEW.capital_chart_id,NEW.payable_chart_id))THEN RAISE EXCEPTION 'monthly_new_control_accounts_required' USING ERRCODE='23514';END IF;
   IF NOT EXISTS(SELECT 1 FROM ab.finance_chart WHERE id=NEW.capital_chart_id AND tenant_id=NEW.tenant_id AND company_id=NEW.company_id AND currency=NEW.currency AND kind='liability')OR NOT EXISTS(SELECT 1 FROM ab.finance_chart WHERE id=NEW.payable_chart_id AND tenant_id=NEW.tenant_id AND company_id=NEW.company_id AND currency=NEW.currency AND kind='liability')OR NOT EXISTS(SELECT 1 FROM ab.finance_chart WHERE id=NEW.fee_income_chart_id AND tenant_id=NEW.tenant_id AND company_id=NEW.company_id AND currency=NEW.currency AND kind='income')THEN RAISE EXCEPTION 'monthly_accounts_invalid' USING ERRCODE='23514';END IF;
   IF NOT EXISTS(SELECT 1 FROM ab.document_versions v JOIN ab.documents d ON d.id=v.document_id AND d.tenant_id=v.tenant_id WHERE v.id=NEW.document_version_id AND v.tenant_id=NEW.tenant_id AND d.company_id=NEW.company_id AND v.scan_status='clean'AND NOT EXISTS(SELECT 1 FROM ab.audit_events a WHERE a.tenant_id=NEW.tenant_id AND a.entity_type='document'AND a.entity_id=d.id::text AND a.action='attachment_withdrawn'))THEN RAISE EXCEPTION 'monthly_policy_document_required' USING ERRCODE='23514';END IF;
  END IF;RETURN NEW;
@@ -161,3 +162,18 @@ REVOKE ALL ON FUNCTION ab.investor_monthly_existing_right(uuid,text[]),ab.invest
 GRANT EXECUTE ON FUNCTION ab.investor_monthly_existing_right(uuid,text[]),ab.investor_monthly_invoice_context(uuid,boolean)TO ab_runtime;
 CREATE FUNCTION ab.investor_monthly_schema_version()RETURNS text LANGUAGE sql IMMUTABLE AS $$SELECT 'INVESTOR-MONTHLY-REVIEW-1'::text$$;
 REVOKE ALL ON FUNCTION ab.investor_monthly_schema_version()FROM PUBLIC;GRANT EXECUTE ON FUNCTION ab.investor_monthly_schema_version()TO ab_runtime;
+-- Sanitized per-agreement attribution reuses existing investor/manager read rights, without granting
+-- direct access to private monthly snapshots or permitting any write outside the owner workflow.
+CREATE FUNCTION ab.investor_monthly_agreement_payouts(target uuid)RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,ab AS $$
+DECLARE a record;result jsonb;
+BEGIN
+ SELECT g.*,p.user_id INTO a FROM ab.investor_agreements g JOIN ab.investor_profiles p ON p.id=g.investor_id AND p.tenant_id=g.tenant_id WHERE g.id=target AND g.tenant_id=ab.tenant();
+ IF NOT FOUND OR NOT ab.hr_actor_allowed()OR NOT(ab.investor_registry_owner()OR(EXISTS(SELECT 1 FROM ab.users manager WHERE manager.id=nullif(current_setting('ab.actor',true),'')::uuid AND manager.tenant_id=ab.tenant()AND manager.role_id<>'investor')AND ab.investor_monthly_existing_right(a.company_id,ARRAY['view_investors']))OR EXISTS(SELECT 1 FROM ab.users u WHERE u.id=nullif(current_setting('ab.actor',true),'')::uuid AND u.tenant_id=ab.tenant()AND u.id=a.user_id AND u.role_id='investor'AND u.status='Active'))THEN RAISE EXCEPTION 'monthly_summary_scope_denied' USING ERRCODE='42501';END IF;
+ SELECT coalesce(jsonb_agg(x.data ORDER BY x.created_at),'[]'::jsonb)INTO result FROM(
+ SELECT s.created_at,jsonb_build_object('id',s.id,'kind','monthly_settlement','voucherId',s.voucher_id,'status',s.status,'voucherStatus',v.status,'number',v.number::text,'amount',sum(l.amount)::text,'companyVoucherAmount',s.amount::text,'currency',s.currency,'issuedOn',coalesce(v.issued_on,s.created_at::date)::text,'chequeId',ch.id,'chequeNumber',ch.number,'chequeDate',ch.due_on::text,'chequeStatus',ch.status,'bankConfirmedPaid',s.status='Paid')data
+ FROM ab.investor_monthly_settlements s JOIN ab.investor_monthly_lines l ON l.settlement_id=s.id AND l.tenant_id=s.tenant_id JOIN ab.investor_funding_requests f ON f.id=l.funding_id AND f.tenant_id=l.tenant_id LEFT JOIN ab.finance_vouchers v ON v.id=s.voucher_id AND v.tenant_id=s.tenant_id LEFT JOIN ab.finance_cheques ch ON ch.id=v.cheque_id AND ch.tenant_id=v.tenant_id
+ WHERE s.tenant_id=ab.tenant()AND f.agreement_id=target AND s.company_id=a.company_id AND s.investor_id=a.investor_id AND s.currency=a.currency GROUP BY s.id,v.id,ch.id
+ )x;RETURN result;
+END$$;
+REVOKE ALL ON FUNCTION ab.investor_monthly_agreement_payouts(uuid)FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION ab.investor_monthly_agreement_payouts(uuid)TO ab_runtime;

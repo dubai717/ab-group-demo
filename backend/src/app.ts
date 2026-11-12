@@ -1216,6 +1216,7 @@ export async function build(options: Options) {
       "contracting-companies-ui.js",
       "investors-ui.js",
       "investor-registry-ui.js",
+      "investor-monthly-ui.js",
       "workspace-ui.js",
       "floating-records.js",
       "data/uae-areas.js",

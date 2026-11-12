@@ -20,13 +20,13 @@ export async function loadMonthlySources(c:any,cipher:any,query:{companyId:strin
  requireOk(target.length<=20000,422,'monthlySourceRangeTooLarge');const receipts=target.map((r:any)=>r.receipt_id);
  if(!receipts.length)return {...evaluateMonthlySources({...query,allocations:[],bankParts:[],claims:[]}),details:{}};
  const rows=(await c.query(`select x.*,i.kind,i.amount invoice_amount,i.due_on,i.invoice_number,r.amount receipt_amount,r.kind receipt_kind,r.payment_state,r.received_on,r.receipt_number,r.currency receipt_currency,r.reference receipt_reference,r.batch_id,r.deposit_operation_id,
- v.id vehicle_id,v.file_number,v.payload_cipher vehicle_cipher,f.id funding_id,f.terms_cipher,fv.version_id,mv.investor_id,mv.configuration_id,ic.id classification_id,
+ vr.request_number,customer.file_number customer_file_number,v.id vehicle_id,v.file_number,v.payload_cipher vehicle_cipher,f.id funding_id,f.terms_cipher,fv.version_id,mv.investor_id,mv.configuration_id,ic.id classification_id,
  exists(select 1 from ab.finance_allocation_reversals rev where rev.allocation_id=x.id) reversed,
  exists(select 1 from ab.investor_registration_sources src where src.funding_id=f.id and src.invoice_id=i.id) registration_source,
  j.payload_cipher collection_snapshot
  from ab.vehicle_allocations x join ab.vehicle_invoices i on i.id=x.invoice_id
  join ab.finance_receipts r on r.id=x.receipt_id
- left join ab.vehicles v on v.id=i.vehicle_id left join ab.investor_funding_requests f on f.request_id=v.request_id
+ left join ab.vehicles v on v.id=i.vehicle_id left join ab.vehicle_requests vr on vr.id=v.request_id left join ab.customers customer on customer.id=i.customer_id left join ab.investor_funding_requests f on f.request_id=v.request_id
  left join ab.investor_funding_versions fv on fv.funding_id=f.id left join ab.investor_monthly_versions mv on mv.version_id=fv.version_id
  left join ab.investor_monthly_invoice_classifications ic on ic.invoice_id=i.id
  left join lateral(select payload_cipher from ab.finance_journals where status='Posted'and(source_key='receipt:'||r.id::text or source_key='monthly-transfer-receipt:'||r.id::text)order by created_at limit 1)j on true
@@ -45,7 +45,7 @@ export async function loadMonthlySources(c:any,cipher:any,query:{companyId:strin
    kind=row.kind==='finance'?'installment':'registration_share';offset=V.units(snapshot.registrationOffset||'0');base=V.units(terms.registrationBaseFee);share=V.units(terms.registrationShareAmount);
   }
   allocations.push({id:row.id,receiptId:row.receipt_id,fundingId:row.funding_id||'',versionId:row.version_id||'',companyId:row.company_id,currency:row.receipt_currency,kind,amount:V.units(row.amount),receivedOn:isoDay(row.received_on),registrationOffset:offset,registrationBase:base,registrationShare:share,reversed:row.reversed||row.payment_state!=='Cleared'});
-  const vehicle=row.vehicle_cipher?cipher.open(row.vehicle_cipher):{};details[row.id]={invoiceId:row.invoice_id,invoiceNumber:String(row.invoice_number),receiptReference:row.receipt_reference,receiptNumber:String(row.receipt_number),vehicleId:row.vehicle_id,fileNumber:row.file_number?String(row.file_number):null,plate:vehicle.plate||'',receivedOn:isoDay(row.received_on)};
+  const vehicle=row.vehicle_cipher?cipher.open(row.vehicle_cipher):{};details[row.id]={customerNumber:row.customer_file_number?String(row.customer_file_number):'',fundingNumber:row.request_number?String(row.request_number):'',agreementNumber:frozen?.agreementNumber||'',versionLabel:(frozen?.agreementNumber||'')+' / '+(frozen?.agreementVersion||''),invoiceId:row.invoice_id,invoiceNumber:String(row.invoice_number),receiptReference:row.receipt_reference,receiptNumber:String(row.receipt_number),vehicleId:row.vehicle_id,fileNumber:row.file_number?String(row.file_number):null,plate:vehicle.plate||'',receivedOn:isoDay(row.received_on)};
  }
  // Excess is a customer-credit hole. It must not be reassigned to a later invoice or counted again.
  for(const [receiptId,row]of receiptRows){const total=allocations.filter(a=>a.receiptId===receiptId).reduce((sum,a)=>sum+a.amount,0n),excess=V.units(row.receipt_amount)-total;requireOk(excess>=0n,409,'monthlyReceiptAllocationMismatch');if(excess)allocations.push({id:'excess:'+receiptId,receiptId,fundingId:'',versionId:'',companyId:query.companyId,currency:query.currency,kind:'other',amount:excess,receivedOn:isoDay(row.received_on)});}
@@ -63,6 +63,8 @@ export async function loadMonthlySources(c:any,cipher:any,query:{companyId:strin
  left join ab.finance_statement_lines sl on sl.entry_id=e.id left join ab.finance_statements st on st.id=sl.statement_id and st.bank_account_id=e.bank_account_id
  order by t.created_at,t.trace_id`,[receipts])).rows;
  const bankParts:MonthlyBankPart[]=bankRows.map((b:any)=>({id:b.trace_id,receiptId:b.receipt_id,companyId:b.company_id||query.companyId,currency:b.currency||query.currency,amount:V.units(b.amount),entryId:b.entry_id,bankAccountId:b.bank_account_id,operationApproved:b.operation_status==='Approved'&&b.operation_kind==='receipt'&&isoDay(b.operation_on)<=cutoff,depositConfirmed:b.confirmed,statementApproved:b.statement_status==='Approved',statementAmountMatches:b.statement_amount!==null&&b.bank_debit!==null&&V.units(b.statement_amount)===V.units(b.bank_debit)&&isoDay(b.statement_on)===isoDay(b.operation_on),confirmedOn:b.confirmed_on?isoDay(b.confirmed_on):undefined}));
+ const held=(await c.query("select cm.receipt_id,cm.holder_id,r.holder_id collector_id,sum(cm.amount)::text amount from ab.finance_custody_moves cm join ab.finance_receipts r on r.id=cm.receipt_id where cm.receipt_id=any($1::uuid[])and r.kind='cash'group by cm.receipt_id,cm.holder_id,r.holder_id having sum(cm.amount)>0 order by cm.receipt_id,cm.holder_id",[receipts])).rows;
+ for(const h of held)bankParts.push({id:'held:'+h.receipt_id+':'+h.holder_id,receiptId:h.receipt_id,companyId:query.companyId,currency:query.currency,amount:V.units(h.amount),operationApproved:false,depositConfirmed:false,statementApproved:false,statementAmountMatches:false,holderId:h.holder_id,custodyStage:h.holder_id===h.collector_id?'collector':'cashier'});
  const claims=(await c.query(`select l.allocation_id,l.bank_entry_id,l.kind,s.status from ab.investor_monthly_lines l join ab.investor_monthly_settlements s on s.id=l.settlement_id where l.receipt_id=any($1::uuid[])and not l.released`,[receipts])).rows.map((r:any)=>({key:[r.allocation_id,r.bank_entry_id,r.kind].join(':'),status:r.status}));
  return {...evaluateMonthlySources({...query,allocations,bankParts,claims}),details};
 }

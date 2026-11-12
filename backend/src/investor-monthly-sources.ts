@@ -2,9 +2,9 @@ import {requireOk} from './core.js';
 import {monthBounds,intersectFunds,registrationSlice} from './investor-monthly-domain.js';
 
 export type MonthlyAllocation={id:string;receiptId:string;fundingId:string;versionId:string;companyId:string;currency:string;kind:'installment'|'registration_share'|'other';amount:bigint;receivedOn:string;registrationOffset?:bigint;registrationBase?:bigint;registrationShare?:bigint;reversed?:boolean};
-export type MonthlyBankPart={id:string;receiptId:string;companyId:string;currency:string;amount:bigint;entryId?:string;bankAccountId?:string;operationApproved:boolean;depositConfirmed:boolean;statementApproved:boolean;statementAmountMatches:boolean;confirmedOn?:string};
+export type MonthlyBankPart={id:string;receiptId:string;companyId:string;currency:string;amount:bigint;entryId?:string;bankAccountId?:string;operationApproved:boolean;depositConfirmed:boolean;statementApproved:boolean;statementAmountMatches:boolean;confirmedOn?:string;holderId?:string;custodyStage?:string};
 export type MonthlyClaim={key:string;status:'Draft'|'Reviewed'|'Approved'|'Paid'|'Cancelled'};
-export type MonthlyCandidate={key:string;allocationId:string;receiptId:string;fundingId:string;versionId:string;bankEntryId:string|null;kind:string;sourceAmount:bigint;amount:bigint;originalReceivedOn:string;carriedForward:boolean;reason:string|null};
+export type MonthlyCandidate={key:string;allocationId:string;receiptId:string;fundingId:string;versionId:string;bankEntryId:string|null;kind:string;sourceAmount:bigint;amount:bigint;originalReceivedOn:string;carriedForward:boolean;reason:string|null;holderId?:string};
 
 // Inputs must be loaded in their persisted receipt/allocation/deposit order, including reversals and
 // unconfirmed bank portions. Removing a hole would assign another vehicle's money to an investor.
@@ -30,11 +30,11 @@ export function evaluateMonthlySources(input:{companyId:string;currency:string;p
    const claim=claims.get(key);let reason:string|null=null;
    if(a.reversed)reason='collection_reversed';
    else if(claim)reason=claim.status==='Paid'?'previously_paid':'reserved_in_settlement';
-   else if(!b.entryId||!b.bankAccountId)reason='held_in_custody';
+   else if(!b.entryId||!b.bankAccountId)reason=b.custodyStage==='cashier'?'awaiting_deposit':'held_in_custody';
    else if(!b.operationApproved||!b.depositConfirmed)reason='deposit_pending';
    else if(!b.statementApproved||!b.statementAmountMatches||!b.confirmedOn)reason='bank_reconciliation_pending';
    else if(b.confirmedOn>to)reason='bank_confirmation_after_period';
-   const candidate={key,allocationId:a.id,receiptId:a.receiptId,fundingId:a.fundingId,versionId:a.versionId,bankEntryId:b.entryId||null,kind:a.kind,sourceAmount:slice.amount,amount,originalReceivedOn:a.receivedOn,carriedForward:a.receivedOn<from,reason};
+   const candidate={key,allocationId:a.id,receiptId:a.receiptId,fundingId:a.fundingId,versionId:a.versionId,bankEntryId:b.entryId||null,kind:a.kind,sourceAmount:slice.amount,amount,originalReceivedOn:a.receivedOn,carriedForward:a.receivedOn<from,reason,holderId:b.holderId};
    (reason?excluded:eligible).push(candidate);
   }
  }
