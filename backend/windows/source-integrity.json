@@ -109,9 +109,9 @@
     "backend/src/investment-policy.ts": "f7539a78c258caef0d9b832957568bb6d3cbb098192d6def02577ebea385833c",
     "backend/src/investor-evidence.ts": "465d754ee61ea20c96cf50e4cb80fc83da09760372b363264cc17bf948976c4f",
     "backend/src/investor-rating.ts": "e5f82bcd963c77ebde54e8aa61ae53e5425aed640f8a30766fdedf366b95365f",
-    "backend/src/investors.ts": "dc59d4134df4ef76a4f26a2cb458a948fa42edcb1c8d4abb9db3724e9f6739a9",
-    "backend/src/ledger-domain.ts": "c6a325dd89d15d1131f284b234d821cc2db230a41cc7144829866201e1e7fff0",
-    "backend/src/ledger.ts": "d8ba573829f5ac3b501c7118ee6323f62b8f58ad5340d27fb3a6aedb37725ded",
+    "backend/src/investors.ts": "fde91849ed12a4b0b1031bb3f24195bd56a5a591bd1cafaf11fc376451623640",
+    "backend/src/ledger-domain.ts": "2a42b94c305d6e2d584e2963f75f3fb9beb5ccc2e35269404600aacebbb6e813",
+    "backend/src/ledger.ts": "d570e53649b8a21c25855b530454ad63ba3ec48a91ecc6172087a2c7be8360cc",
     "backend/src/marketing.ts": "5bc88a0c228f1259dbcc29d1d158de05855024a31eef02f9bc829ad70f1e7801",
     "backend/src/migrate.ts": "dda13588de08527806f35ce401c8121c4dada98075c25a74adeaf1d4a88f2539",
     "backend/src/personnel-documents.ts": "2d38a94e511310e68fd3a736ef85c5eaadcd2d9d92c4441ff41f1cad24e3493f",
@@ -245,6 +245,14 @@
     "backend/tests/backup.test.ts": "b386d2127a4b330451425362406c321ac506c542aafee923b9cf97bb3936b45e",
     "backend/tests/ledger-backup.test.ts": "7c251554d1d8b10cb948ef1bfcdd80e192a4a066ec6a34126e859bab13758d68",
     "backend/tests/vehicle-backup.test.ts": "9252ea115608639ae524c1859a47bd5b718a53e613047fc476c150fc0d1e61e2",
-    "backend/tests/investor-registry-restore-drill.ts": "6d55a84e215644743873cb75908137ea9b1c4d787523ff9243f07709a6e1b067"
+    "backend/tests/investor-registry-restore-drill.ts": "6d55a84e215644743873cb75908137ea9b1c4d787523ff9243f07709a6e1b067",
+    "backend/src/investor-monthly-domain.ts": "3f8ca931e3fe7828ad6b791b34021629ddadbc59b9918a5c21769069d71f4a57",
+    "backend/src/investor-monthly-posting.ts": "77c2d5130ac753a1802bbe57cbc9cf0f2826ece17c840ef96379316d8973697d",
+    "backend/src/investor-monthly-sources.ts": "15d8b73ff3f19540d64dd07cfcbffa4bf4f6276ae974abfb24bf2fca6cadde11",
+    "backend/tests/investor-monthly-domain.test.ts": "0ef404fe07821388fa51bc0e5694c264c4dcf9d0fea53d361784c3016c8b8eec",
+    "backend/tests/investor-monthly-schema.test.ts": "b477f477decb4913ada75dfe7037d99fb6383eb97d1ea31e9d1ede00e7ede56a",
+    "backend/tests/investor-monthly-sources.test.ts": "775ebfbea28a2db116c2ccf0a883990c815b2b97d996a7a83d8cd0bc6a5e723f",
+    "docs/proposals/028_investor_monthly_settlements.review-only.sql": "dd7c0ff021adf5bd689e0afb5dbf51977d750f1b0e5adc1f729dba13ec0ef6cc",
+    "docs/proposals/investor-monthly-settlements-status.md": "4fee8de8f58d9b49f844c253553526e1484b9440dcd1824bb0233ec88e0a9abb"
   }
 }

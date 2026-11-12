@@ -1,3 +1,5 @@
+import {monthlyTransferReceipt} from './investor-monthly-posting.js';
+import {monthlyFunding} from './investor-monthly-domain.js';
 import {contractingParty,contractingRight,exactFinancialParty} from './contracting-access.js';
 import { assertInvestorPayoutEligible,notifyInvestorCheque } from './investors.js';
 import {registerArgs,filterRegister,registerResponse} from './register-query.js';
@@ -176,6 +178,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
         await open(c, i.company_id, d.effectiveOn);
         const it = await item(c, cipher, m, i.item_id, i.company_id, true), ar = await resolve(c, i.company_id, i.currency, it.data.receivableId), income = await resolve(c, i.company_id, i.currency, it.data.revenueId), key = randomUUID();
         await c.query("insert into ab.vehicle_invoice_adjustments(id,tenant_id,company_id,invoice_id,kind,amount,payload_cipher,created_by)values($1,$2,$3,$4,'waiver',$5,$6,$7)", [key, s.tenant_id, i.company_id, i.id, d.amount, cipher.seal(d), s.user_id]);
+        if((await monthlyFunding(c,cipher,i.id))?.classified){await event(c,cipher,s,i.company_id,i.id,'monthly_agency_invoice_corrected',null,{adjustmentId:key,...d,ledgerReposted:false});return {id:key};}
         const rate = L.units(it.data.taxRate || '0'), originalTax = rate ? (L.units(i.amount) * rate + (100000n + rate) / 2n) / (100000n + rate) : 0n;
         const previous = (await c.query("select a.amount,j.payload_cipher from ab.vehicle_invoice_adjustments a left join ab.finance_journals j on j.source_key='credit:'||a.id::text and j.company_id=a.company_id and j.status='Posted'where a.invoice_id=$1 and a.id<>$2 and a.kind<>'writeoff'", [i.id, key])).rows;
         requireOk(previous.every((r: any) => !!r.payload_cipher), 409, 'priorAdjustmentAccountingReviewRequired');
@@ -258,6 +261,7 @@ export function registerLedger(app: any, call: any, cipher: any) {
             }
             if (d.method === 'transfer') { // The approved bank operation already owns its ONE journal. Allocate without reposting.
                 const allocated = await allocateReceipt(c, s, r, cipher);
+                await monthlyTransferReceipt(c,cipher,m,s,r,it,d.receivedOn);
                 const itar = await resolve(c, d.companyId, d.currency, it.data.receivableId);
                 requireOk(transfer.counterpart_id === itar.id, 422, 'transferCounterpartMismatch');
                 if (allocated) {

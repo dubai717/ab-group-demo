@@ -1,3 +1,4 @@
+import {classifyMonthlyInvoice,monthlyReceiptCredits} from './investor-monthly-posting.js';
 import {contractingParty,exactFinancialParty} from './contracting-access.js';
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
@@ -98,6 +99,7 @@ export async function linkInvoice(c: any, cipher: any, m: any, s: any, id: strin
     const i = (await c.query('select * from ab.vehicle_invoices where id=$1', [id])).rows[0];
     requireOk(i, 404, 'notFound');
     await c.query('insert into ab.finance_invoice_links(id,tenant_id,company_id,invoice_id,item_id,issued_on,source_key,created_by)values($1,$2,$3,$4,$5,$6,$7,$8)', [randomUUID(), s.tenant_id, i.company_id, id, it.id, date, key, s.user_id]);
+    if(await classifyMonthlyInvoice(c,cipher,m,s,i,it))return id;
     const ar = await resolve(c, i.company_id, i.currency, it.data.receivableId), income = await resolve(c, i.company_id, i.currency, it.data.revenueId);
     requireOk(ar.kind === 'asset' && ['income', 'liability'].includes(income.kind), 422, 'accountMappingRequired');
     const rate = L.units(it.data.taxRate || '0'), tax = rate ? (L.units(i.amount) * rate + (100000n + rate) / 2n) / (100000n + rate) : 0n, lines = [line(ar, L.units(i.amount)), line(income, -(L.units(i.amount) - tax))];
@@ -155,12 +157,12 @@ export async function allocateReceipt(c: any, s: any, r: any, cipher: any) {
 }
 export async function postReceipt(c: any, cipher: any, m: any, s: any, r: any, method: string, date: string) {
     const it = await item(c, cipher, m, r.item_id, r.company_id, true), cfg = await config(c, cipher, r.company_id), debit = await chart(c, r.company_id, r.currency, method === 'cash' ? cfg.custodyAccountId : cfg.chequeTransitAccountId, 'asset'), ar = await resolve(c, r.company_id, r.currency, it.data.receivableId), credit = await chart(c, r.company_id, r.currency, cfg.customerCreditAccountId, 'liability');
-    const extra = await allocateReceipt(c, s, r, cipher), settled = L.units(r.amount) - extra, lines = [line(debit, L.units(r.amount))];
-    if (settled)
-        lines.push(line(ar, -settled));
+    const extra = await allocateReceipt(c, s, r, cipher), settled = L.units(r.amount) - extra, routed=await monthlyReceiptCredits(c,cipher,r),lines = [line(debit, L.units(r.amount)),...routed.credits];requireOk(routed.gross<=settled,409,'monthlyReceiptAllocationMismatch');
+    if (settled>routed.gross)
+        lines.push(line(ar, -(settled-routed.gross)));
     if (extra)
         lines.push(line(credit, -extra));
-    await journal(c, cipher, s, r.company_id, date, r.currency, 'receipt:' + r.id, lines, { receiptId: r.id, excess: L.money(extra), method });
+    await journal(c, cipher, s, r.company_id, date, r.currency, 'receipt:' + r.id, lines, { receiptId: r.id, excess: L.money(extra), method,...(routed.gross?{monthlyAgencyRouting:routed.snapshots}:{}) });
     return extra;
 }
 

@@ -1,3 +1,4 @@
+import {assertMonthlyFundingDisbursement} from './investor-monthly-posting.js';
 import {approvedInvestorBank,registerInvestorRegistry,investorRegistryReady,investorSeries,investorRecycledPrincipal,investorReleasedForFunding,investorFixedRegistrationShare,registryFundingSnapshot,recordInvestorFundingVersion,investorCurrentVersionInfo,investorProfileData,investorCapitalMovements} from './investor-registry.js';
 import {investorRating} from './investor-rating.js';
 import {splitInvestorCollections} from './investment-policy.js';
@@ -15,6 +16,7 @@ export async function investorFundingGuard(c:any,cipher:any,request:any,disburse
  const r=(await c.query('select f.*,a.state agreement_state from ab.investor_funding_requests f join ab.investor_agreements a on a.id=f.agreement_id where f.request_id=$1 for update of f,a',[request.id])).rows[0];
  requireOk(r&&r.state==='Accepted'&&r.financing_state==='Active'&&r.agreement_state==='Active',409,'investorFundingAcceptanceRequired');
  requireOk(disbursement?.method!=='cash'&&disbursement?.paymentOperationId,409,'investorPostedDisbursementRequired');
+ await assertMonthlyFundingDisbursement(c,cipher,r,disbursement);
  const cash=await capital(c,r.agreement_id);requireOk(cash.received+cash.recycled-cash.spent-cash.withdrawn>=V.units(r.amount),409,'investorActualFundsRequired');
 }
 async function capital(c:any,agreement:string){
