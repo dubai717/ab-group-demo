@@ -78,7 +78,7 @@
     "backend/reset/schema-preflight.ts": "4a0c2ce3acad6222c43f7c4e5a0555e2dea5fd3876deada2d39fd8ffe683863a",
     "backend/reset/schema.ts": "6ffe5dddd83cbb103ea7c1ed6971659909cfb9189817f4a9d20af90bf8914729",
     "backend/reset/settings-policy.ts": "f6b4969be0fdc11293f1ec1189f01b365e561ab7c4ef6332827fc6d0714ca9cc",
-    "backend/src/app.ts": "7b345afac34ad2af76f8e44b97d63734f798dd11b182c1bfe4afb03608aeefa0",
+    "backend/src/app.ts": "2f71223fdca7c4f810c16ed520e5cd7623b86931f064fa8ddcbd6736f61dee69",
     "backend/src/approval-center.ts": "080fcfd9a75067a289c9e36ffc8f26673ceb20f492a78f5941a88b390757eccc",
     "backend/src/attachment-history.ts": "fce3aa6b9903c221243660402397fc6a5c1a5a417fedccdbc02804b6960cbd1a",
     "backend/src/backup.ts": "9785cdd47847546cdcf38271f723e07379a433f40c9e033080c250ab2d3e4048",
@@ -229,11 +229,11 @@
     "vehicles.js": "7997c77e346b5d30d6daebae48bdd3e66aa9088ea86293f988a6c77a38f84160",
     "view-as-ui.js": "3ecbf68bcac2b6ad5751e5cde97902280530c76a34ae543b7b95a07fde0aa7f0",
     "workspace-ui.js": "507ac75651d0d5a5579a9f90e8837f3b990384bbc9a0f1a107fa02e71c06061e",
-    "investor-registry-ui.js": "c6dd13cbdb9289e57793e1912f279d1c7411fbb110ec547e742c2b7861e4c9c7",
-    "backend/src/investor-registry.ts": "b18c429d9c3e8c29969cd181477c812a818dc265bd3f8c3411553875b259698b",
+    "investor-registry-ui.js": "c3e2bb288cba79b0981e4ab69193541fa08fc401c3cfb7513a26b0aa1574f97e",
+    "backend/src/investor-registry.ts": "5be90276b921840d45573fdf7dc34ad8fc84b9a76276e3447c17f4aebf58558d",
     "backend/deploy/investor-schema-preservation.ts": "0a053cdf880a720ca69f65d7ee77ad28014f9ea4bccda8e612097f81e1fe06f2",
     "supabase/additive/026_investor_registry_versions.sql": "5d3a575fb2261183e206f066318680d1d5217866e30999e33943eb3424b451e7",
     "supabase/additive/027_investor_electronic_access.sql": "1af1b0403b3ccd9a47bd8ccc235db28e7a80078102c01becd16f85784213b4d8",
-    "backend/tests/investor-profile-documents.test.ts": "f830e6b945d15efc3735eeff81ac98c764ea63137fdc6727684368bdde58332c"
+    "backend/tests/investor-profile-documents.test.ts": "20f6be028236c624c4cec4c6d1b344db4079e79de71013e6f18ab5147ed03bb6"
   }
 }

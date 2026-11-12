@@ -17,11 +17,11 @@ test('Investor profile documents, optional bank approval and existing-login link
  await f.admin.query(await readFile('supabase/additive/027_investor_electronic_access.sql','utf8'));
  const users=await f.admin.query('select id,role_id,status from ab.users order by id');
  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aF9sAAAAASUVORK5CYII=','base64');
- const doc=async(name:string,bytes:Buffer,mime='image/png',status=200)=>f.req('POST','/api/documents',{userId:f.org.user,category:'contract',title:name,date:f.date,name,mime,base64:bytes.toString('base64')},status);
+ const doc=async(name:string,bytes:Buffer,mime='image/png',status=200)=>f.req('POST','/api/documents',{userId:f.org.user,investorProfileId:p.id,category:'contract',title:name,date:f.date,name,mime,base64:bytes.toString('base64')},status);
  const a=await doc('front.png',png),b=await doc('passport.pdf',Buffer.from('%PDF-1.4 synthetic passport'),'application/pdf');
  const link={versionId:a.versionId,kind:'identity',classification:'idFront'},key=crypto.randomUUID();await f.req('POST',url+'/documents',link,200,key);await f.req('POST',url+'/documents',link,200,key);await f.req('POST',url+'/documents',link,409);
  await f.req('POST',url+'/documents',{versionId:b.versionId,kind:'other',classification:'passport'});
- const dup=await doc('different-name.png',png);await f.req('POST',url+'/documents',{...link,versionId:dup.versionId},409);
+ const storedBeforeDuplicate=f.objects.rows.size;const dup=await doc('different-name.png',png);assert.equal(dup.versionId,a.versionId);assert.equal(f.objects.rows.size,storedBeforeDuplicate);await f.req('POST',url+'/documents',{...link,versionId:dup.versionId},409);
  await doc('bad.txt',Buffer.from('not supported'),'text/plain',422);
  d=await f.req('GET',url);assert.equal(d.documents.length,2);assert.equal(d.documents.find((x:any)=>x.version_id===b.versionId).classification,'passport');assert(d.documents.every((x:any)=>x.sha256&&x.canRemove));
  const count=f.objects.rows.size;await f.req('POST',url+'/documents/'+a.versionId+'/withdraw',{reason:'Owner archives duplicate source; retain original',confirm:true});assert.equal(f.objects.rows.size,count);assert((await f.req('GET',url)).documents.find((x:any)=>x.version_id===a.versionId).withdrawn);
