@@ -1,3 +1,4 @@
+import {assertEncryptedBackupEnvelope} from './backup-envelope-assertions.js';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {randomBytes,randomUUID} from 'node:crypto';
@@ -18,7 +19,7 @@ export async function investorRegistryRestoreDrill(f:any,upgrade:boolean){
  const snapshot=async(pool:Pool)=>{const rows:any={};for(const t of tables)rows[t]=(await pool.query('select to_jsonb(x) row from (select '+columns[t]+' from ab.'+t+') x order by to_jsonb(x)::text')).rows;return rows;};
  const before=await snapshot(f.admin),dump=docker(['exec','ab-postgres-foundation','pg_dump','-U','postgres','-d',f.sourceDatabase,'-Fc','--no-owner']);
  const key=randomBytes(32).toString('base64'),sealed=archive(dump,new Map(f.objects.rows),key);
- assert(!sealed.includes(Buffer.from('PGDMP')));
+ assertEncryptedBackupEnvelope(sealed,key,dump);
  assert.throws(()=>restoreArchive(sealed,randomBytes(32).toString('base64')));
  const corrupt=Buffer.from(sealed);corrupt[corrupt.length-12]^=1;assert.throws(()=>restoreArchive(corrupt,key));
  const restored=restoreArchive(sealed,key);

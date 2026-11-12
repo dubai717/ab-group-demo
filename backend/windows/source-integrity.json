@@ -238,7 +238,13 @@
     "backend/tests/investor-usability.test.ts": "a7e8f7f1c909fefcdad0e2fa53acd843dc7d912306a9d359ee9d18d9a7167f7b",
     "backend/tests/investor-performance.mts": "75ae78b80a71aee267b7bf7e3e45a262c97b4c09fa004e067fc9964624485b5c",
     "backend/tests/investor-navigation-performance.cjs": "2ddb69ca644cf985f89563b0035a59963938e84c9fc32ad2173d8221f1f722be",
-    "docs/releases/investor-usability-performance.md": "c139e09ff24d2004581bd0e78ac65bc51c74fa9edcad725f1c50e4afe164ee3f",
-    "backend/tests/investor-registry.browser.cjs": "8769dda4b710fe092d87b5d5d38d962b275c39e0a0d096b9003be5840d33f5ab"
+    "docs/releases/investor-usability-performance.md": "09e14e27eb72479ddbc404b3e5d3e89478091210ba6036b08795ffe94cceaf8f",
+    "backend/tests/investor-registry.browser.cjs": "8769dda4b710fe092d87b5d5d38d962b275c39e0a0d096b9003be5840d33f5ab",
+    "backend/tests/backup-envelope-assertions.ts": "5b5f109ad0e0d08b85493e119337020f10868a153acf28c77cd436d9da503d02",
+    "backend/tests/backup-envelope.test.ts": "f1fa34677e6198407427542ba10b0a7e9d69a821b2cd6fd7c4e7cf2ac62341a9",
+    "backend/tests/backup.test.ts": "b386d2127a4b330451425362406c321ac506c542aafee923b9cf97bb3936b45e",
+    "backend/tests/ledger-backup.test.ts": "7c251554d1d8b10cb948ef1bfcdd80e192a4a066ec6a34126e859bab13758d68",
+    "backend/tests/vehicle-backup.test.ts": "9252ea115608639ae524c1859a47bd5b718a53e613047fc476c150fc0d1e61e2",
+    "backend/tests/investor-registry-restore-drill.ts": "6d55a84e215644743873cb75908137ea9b1c4d787523ff9243f07709a6e1b067"
   }
 }
