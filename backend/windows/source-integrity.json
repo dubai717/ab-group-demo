@@ -98,7 +98,7 @@
     "backend/src/customer-spreadsheet.ts": "03bb3a433307f2e7cd76d7bab28645f7a82b6a2a319c5d7a551c7e7ed78b3197",
     "backend/src/customers.ts": "a76488bfdbbf0960026c5c04c39997a6cfd6429e4fe2ffed0175917659d0e879",
     "backend/src/dashboard-financial.ts": "a1f694b8cd4d48e866c83c9bffdf2bb55af81cf8f34fdc81bc871b445db863e9",
-    "backend/src/data.ts": "6b301e9128cfa48d26f17916d077b96d232936f0a019a1b6bb1c1fdee63bb6ce",
+    "backend/src/data.ts": "aa392868f11115b49844cf13c0a7d09ccd456cfd48a31b2a7a80716e4c7efd10",
     "backend/src/database.ts": "7b82d290feb2ee440437d82006367c47000b4f558d874c810662b4f7a02be2df",
     "backend/src/document-access.ts": "931949896692780ae69ed7428c248090d4794faf4ca8a847b448e3c80c60a1a2",
     "backend/src/document-center.ts": "336555f30c37ee5465e9c8f1bd5acb9dbb0b9521ed3d3d338204681baaad2874",
@@ -265,6 +265,8 @@
     "backend/tests/serve-permission-template-fixture.ts": "9eea5a7e63b2a59649dc0a529d4a3990b2b1e728f37305e4b94a9cc62faa411f",
     "backend/tests/permission-template-suite.browser.cjs": "ec43262766255f00989988535a2068a641737edf06981afd46a1cd149ea0244b",
     "backend/tests/permission-template.browser.cjs": "b81f85e3d3d1b61d691c5b666f46c0867599c9230c4506926f8fc8f3fb622e1a",
-    "permission-template-ui.js": "14a1c15c5741c00d863998c07faa8579acf3df5d482462097d9c9cbe7b0e6ec3"
+    "permission-template-ui.js": "14a1c15c5741c00d863998c07faa8579acf3df5d482462097d9c9cbe7b0e6ec3",
+    "backend/tests/model-read-batching.test.ts": "e63c9ab07b2fc6045616013d0ed999f4c8325ad936ffd8845f8f24f9fc32df85",
+    "docs/verification/model-read-performance-20261112.md": "965e2d2e0aa01f35c4250d747aeeba5b163e385c1a238f67500118b3989ebfe5"
   }
 }
