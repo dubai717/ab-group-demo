@@ -136,6 +136,12 @@
         "investor_registration_sources",
         "investor_financing_settlements"
       ]
+    },
+    {
+      "name": "027_investor_electronic_access.sql",
+      "path": "supabase/additive/027_investor_electronic_access.sql",
+      "sha256": "1af1b0403b3ccd9a47bd8ccc235db28e7a80078102c01becd16f85784213b4d8",
+      "tables": []
     }
   ]
 }

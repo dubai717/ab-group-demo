@@ -1,4 +1,4 @@
-import {investorRegistryDocumentRead} from './investor-registry.js';
+import {investorProfileLock,investorRegistryDocumentRead} from './investor-registry.js';
 import {registerPermissionAdmin} from './permission-admin.js';
 import {investorEvidenceRead,investorEvidenceUpload,recordInvestorEvidence,registerInvestorEvidence} from './investor-evidence.js';
 import {registerRecordLinks} from './record-links.js';
@@ -842,6 +842,7 @@ export async function build(options: Options) {
           bankAccountId: z.uuid().optional(),
           userId: z.uuid().optional(),
           investorAgreementId:z.uuid().optional(),
+          investorProfileId:z.uuid().optional(),
           category: z.enum([
             "original",
             "annex",
@@ -992,6 +993,13 @@ export async function build(options: Options) {
                   file.subarray(8, 12).toString() === "WEBP"
                 : file[0] === 80 && file[1] === 75;
       requireOk(signature, 422, "invalidFile");
+      if(d.investorProfileId){
+        requireOk(m.actor.roleId==='owner'&&owner.user_id===s.user_id&&!d.parentId&&!d.parentVersionId&&!d.investorAgreementId,403,'investorDocumentOwnerRequired');
+        requireOk((await c.query('select id from ab.investor_profiles where id=$1',[d.investorProfileId])).rowCount,404,'notFound');
+        await investorProfileLock(c,d.investorProfileId);
+        const same=(await c.query("select v.document_id id,v.id version_id,v.version,v.scan_status from ab.audit_events a join ab.document_versions v on v.document_id::text=a.entity_id where a.entity_type='document' and a.action='investor_profile_uploaded' and a.fields @> $1::text[] order by v.created_at limit 1",[['profile:'+d.investorProfileId,'sha256:'+sha(file)]])).rows[0];
+        if(same)return {id:same.id,versionId:same.version_id,version:same.version,scanStatus:same.scan_status,duplicate:true};
+      }
       let parent: any;
       if (d.parentId) {
         parent = (
@@ -1095,6 +1103,7 @@ export async function build(options: Options) {
         documentId,
         ["version", String(version), d.category],
       );
+      if(d.investorProfileId)await audit(c,s.tenant_id,s.user_id,'investor_profile_uploaded','document',documentId,['profile:'+d.investorProfileId,'sha256:'+sha(file)]);
       if(investorEvidence)await recordInvestorEvidence(c,m,s,cipher,investorEvidence,documentId,versionId);
       await indexDocumentText(c,cipher,s,'version_id',versionId,file,d.mime,scan);
       return { id: documentId, versionId, version, scanStatus: scan };
