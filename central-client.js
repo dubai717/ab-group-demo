@@ -30,7 +30,7 @@
         })[c],
     );
   async function api(path, method = "GET", body, key) {
-    if(C.viewAs&&!["GET","HEAD"].includes(method)&&!["view-as/start","view-as/stop","logout","central-reports/preview","central-reports/export","personnel/export","communication-templates/preview","communications/from-template/preview"].includes(path.split("?")[0]))throw Error("viewAsReadOnly");
+    if((C.viewAs||C.previewUncertain)&&!["GET","HEAD"].includes(method)&&!["view-as/start","view-as/stop","logout","central-reports/preview","central-reports/export","personnel/export","communication-templates/preview","communications/from-template/preview"].includes(path.split("?")[0]))throw Error("viewAsReadOnly");
     const finish=globalThis.OperationUI?.begin(path,method);try{
     if (key) {
       const digest = new Uint8Array(
@@ -83,7 +83,7 @@
     const b = await api("bootstrap");
     if(C.actor?.id!==b.actor.id){C.hiddenUserId=null;globalThis.CenterForms?.clear();globalThis.AttachmentViewer?.close();globalThis.FinanceWorkbench?.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();globalThis.LedgerUI?.reset();globalThis.RegisterStore?.clear();globalThis.RegisterView?.clear();globalThis.FinancialTables?.clear();C.documents.clear();C.enrollment.clear();activeUser=activeCompany=activeBank=null;globalThis.CompanyDocuments?.centralSelect?.(null);globalThis.UserManagement?.centralSelect?.(null);}
     C.actor = b.actor;
-    C.viewAs=b.viewAs||null;
+    C.viewAs=b.viewAs||null;C.previewUncertain=false;
     C.resetTestDatabaseAvailable=b.resetTestDatabaseAvailable===true;
     C.csrf = b.csrfToken;
     C.areas = b.areas;

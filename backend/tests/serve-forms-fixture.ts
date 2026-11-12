@@ -6,7 +6,7 @@ import {security} from '../src/core.js';
 const f=await businessCentersFixture(),manager=await f.employee('general_manager');
 for(const action of ['customer_view','vehicle_view'])await f.req('POST','/api/users/'+manager.id+'/grants',{action,scope:{type:'company',id:f.co1},delegable:false});
 const department=await f.req('POST','/api/departments',{companyId:f.co1,name:'Synthetic Preview Department'});
-await f.req('PATCH','/api/users/'+manager.id,{revision:1,nameAr:'علي معاينة جزئية',nameEn:'Ali Partial Preview',departmentIds:[department.id]});
+await f.req('PATCH','/api/users/'+manager.id,{revision:1,nameAr:'علي معاينة جزئية مسؤول العلاقات العامة وإدارة العمليات والنقل للمجموعة',nameEn:'Ali Partial Preview — Senior Public Relations and Transport Operations Coordinator for AB Group',departmentIds:[department.id]});
 const permissionTarget=await f.employee(),inactive=await f.employee();await f.req('PATCH','/api/users/'+inactive.id,{revision:1,status:'Disabled'});
 const pro=await f.req('POST','/api/personnel/employees',{companyId:f.co1,userId:manager.id,nameAr:'مسؤول علاقات اختبار',nameEn:'Synthetic PRO',departmentId:department.id,jobTitle:'Public relations',hiredOn:'2026-01-01'}),pendingRequest=await f.request();
 const cipher=security(f.secret.key),contact=(await f.admin.query('select payload_cipher from ab.customers where id=$1',[f.client])).rows[0];
