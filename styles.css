@@ -1003,3 +1003,16 @@ button.primary-btn,button.secondary-btn,button.ghost-btn{word-break:normal;overf
 #investor-registry .stat-card{min-inline-size:0;gap:.6rem}
 #investor-registry .stat-card strong{font-size:.95rem;line-height:1.5;overflow-wrap:anywhere}
 #investor-registry .stat-card span{font-size:clamp(1.1rem,2vw,1.65rem);overflow-wrap:anywhere;line-height:1.4}
+
+/* Investor attachments use the original private storage and shared preview. */
+.investor-document-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:1rem;margin-block:1rem;}
+.investor-document-card{border:1px solid var(--line);border-radius:12px;padding:1rem;display:flex;flex-direction:column;gap:.6rem;min-width:0;overflow-wrap:anywhere;}
+.investor-document-thumbnail,.investor-pdf-icon{height:140px;display:flex;align-items:center;justify-content:center;background:var(--panel);font-weight:700;font-size:2rem;}
+.investor-document-thumbnail img,.investor-document-card>img{height:140px;width:100%;object-fit:contain;}
+.investor-profile-window .record-details{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));}
+.investor-profile-window .record-detail-field{display:block;min-width:0;}
+.investor-document-card[data-busy=true] [role=status]::before{content:'◌';display:inline-block;margin-inline-end:.4rem;animation:investor-upload-spin 1s linear infinite;}
+@keyframes investor-upload-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.investor-document-card[data-busy=true] [role=status]::before{animation:none;}}
+
+dialog.investor-profile-form{z-index:20000!important;}
