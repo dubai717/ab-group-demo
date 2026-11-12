@@ -1145,6 +1145,19 @@ export async function build(options: Options) {
         return { bytes, row };
       },s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:undefined,
     );
+    // Authorization, scan status and integrity are checked before every byte-range response.
+    reply.header('Cache-Control','private, no-store').header('Accept-Ranges','bytes');
+    let bytes=result.bytes;
+    const range=req.headers.range;
+    if(range){
+      const match=/^bytes=(\d+)-(\d*)$/.exec(range);
+      const start=match?Number(match[1]):-1,end=match&&match[2]?Number(match[2]):bytes.length-1;
+      if(!match||!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||start>=bytes.length||end<start)return reply.code(416).header('Content-Range','bytes */'+bytes.length).send();
+      const last=Math.min(end,bytes.length-1);
+      reply.code(206).header('Content-Range',`bytes ${start}-${last}/${bytes.length}`);
+      bytes=bytes.subarray(start,last+1);
+    }
+    reply.header('Content-Length',bytes.length);
     reply
       .header("Content-Security-Policy", "sandbox; default-src 'none'")
       .header("Content-Type", result.row.mime)
@@ -1153,7 +1166,7 @@ export async function build(options: Options) {
         "attachment; filename*=UTF-8''" +
           encodeURIComponent(result.row.original_name),
       )
-      .send(result.bytes);
+      .send(bytes);
   });
   if (options.serveFrontend !== false) {
     const root = fileURLToPath(new URL("../../", import.meta.url));
