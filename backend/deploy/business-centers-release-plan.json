@@ -142,6 +142,19 @@
       "path": "supabase/additive/027_investor_electronic_access.sql",
       "sha256": "1af1b0403b3ccd9a47bd8ccc235db28e7a80078102c01becd16f85784213b4d8",
       "tables": []
+    },
+    {
+      "name": "028_investor_monthly_settlements.sql",
+      "path": "supabase/additive/028_investor_monthly_settlements.sql",
+      "sha256": "2f997597dfd13540c68f714f191c349e611d7043648871caa4eeefc58938f94c",
+      "tables": [
+        "investor_monthly_configurations",
+        "investor_monthly_versions",
+        "investor_monthly_invoice_classifications",
+        "investor_monthly_settlements",
+        "investor_monthly_lines",
+        "investor_monthly_exclusions"
+      ]
     }
   ]
 }
