@@ -229,7 +229,7 @@
     "vehicles.js": "7997c77e346b5d30d6daebae48bdd3e66aa9088ea86293f988a6c77a38f84160",
     "view-as-ui.js": "3ecbf68bcac2b6ad5751e5cde97902280530c76a34ae543b7b95a07fde0aa7f0",
     "workspace-ui.js": "507ac75651d0d5a5579a9f90e8837f3b990384bbc9a0f1a107fa02e71c06061e",
-    "investor-registry-ui.js": "b966bfe23977115171572d39cc1df195baa5dfbd6529e8bb9ae2e9766fba6842",
+    "investor-registry-ui.js": "9ecd3b023b9d87aea380d6ec51ccc512ba0fb5a49f84951888bdde86809a260f",
     "backend/src/investor-registry.ts": "f7511d9dac017b6aa0d38cb44e33a80ac428479bd9e0e89aacbf02b74b05610f",
     "backend/deploy/investor-schema-preservation.ts": "0a053cdf880a720ca69f65d7ee77ad28014f9ea4bccda8e612097f81e1fe06f2",
     "supabase/additive/026_investor_registry_versions.sql": "5d3a575fb2261183e206f066318680d1d5217866e30999e33943eb3424b451e7",
@@ -238,7 +238,7 @@
     "backend/tests/investor-usability.test.ts": "a7e8f7f1c909fefcdad0e2fa53acd843dc7d912306a9d359ee9d18d9a7167f7b",
     "backend/tests/investor-performance.mts": "75ae78b80a71aee267b7bf7e3e45a262c97b4c09fa004e067fc9964624485b5c",
     "backend/tests/investor-navigation-performance.cjs": "2ddb69ca644cf985f89563b0035a59963938e84c9fc32ad2173d8221f1f722be",
-    "docs/releases/investor-usability-performance.md": "538372be0858b378c820be1b2a6e7b32c27b7558b1c99f896a86f8994fb79d4b",
-    "backend/tests/investor-registry.browser.cjs": "829b58b463b6cd82a43660384428f82791a1896200c0277775d8043b2142e8be"
+    "docs/releases/investor-usability-performance.md": "c139e09ff24d2004581bd0e78ac65bc51c74fa9edcad725f1c50e4afe164ee3f",
+    "backend/tests/investor-registry.browser.cjs": "8769dda4b710fe092d87b5d5d38d962b275c39e0a0d096b9003be5840d33f5ab"
   }
 }
