@@ -252,6 +252,7 @@
     "backend/tests/user-ux.browser.cjs": "f425f170950305730259ce28ed504be2d1c667f0e9d77549f58b3f8febcc1a27",
     "tests/integration.browser.cjs": "30377173aea9c2e5e131445429e2d42532140ae9c9693cac43f25bb89409eed1",
     "tests/user-management.browser.cjs": "ff7125a2d5c449f610fe836a483a437032c58f1f88e3367c347445db9245a91c",
-    "docs/releases/permission-dual-list-preview.md": "2c510c9156c585cc36e26b7c3f7cabf8b9b200be1ea3ac5f893edd878f389375"
+    "docs/releases/permission-dual-list-preview.md": "2c510c9156c585cc36e26b7c3f7cabf8b9b200be1ea3ac5f893edd878f389375",
+    "backend/tests/company-profile.browser.cjs": "2b162942802458f9f2502195d6b4a55f88949dcc7504ccd4a0d2bb9f0b616d92"
   }
 }
