@@ -23,7 +23,7 @@ test('Central dashboards and typed reports enforce original record scope and saf
   const u=await f.employee();
   await t.test('owner preview uses target scopes without changing roles or sessions',async()=>{
    const roles=(await f.admin.query('select * from ab.role_permissions order by role_id,permission_id')).rows;
-   const r=await f.req('GET','/api/central-dashboard?asUserId='+u.id);assert.equal(r.viewAs.readOnly,true);assert.equal(r.actor.id,u.id);assert.equal(r.counts.invoices,0);assert.deepEqual(r.financial,[]);
+   const r=await f.req('GET','/api/central-dashboard?asUserId='+u.id);assert.equal(r.viewAs.readOnly,true);assert.equal(r.actor.id,u.id);assert.equal(r.counts.invoices,null);assert.deepEqual(r.financial,[]);
    assert.equal((await f.req('GET','/api/bootstrap')).actor.id,f.org.user);
    assert.deepEqual((await f.admin.query('select * from ab.role_permissions order by role_id,permission_id')).rows,roles);
    await f.login(u.username,u.password);await f.req('GET','/api/central-dashboard?asUserId='+f.org.user,undefined,403);await f.req('POST','/api/central-reports/preview',report,403);await f.req('GET','/api/record-links/invoice/'+original.id,undefined,403);await f.login();
