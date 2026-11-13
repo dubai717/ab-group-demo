@@ -1,3 +1,4 @@
+import {appointmentGrants} from './staff-appointments.js';
 // REVIEW ONLY: dormant until its uncatalogued, owner-approved SQL exists.
 import {randomUUID} from 'node:crypto';
 import {z} from 'zod';
@@ -8,7 +9,7 @@ const entry=z.object({action:z.string().min(1).max(100),scope,delegable:z.litera
 const identity={kind:z.enum(['role','department']),targetId:z.string().min(1).max(100)};
 const definition=z.object({...identity,revision:z.number().int().nonnegative(),entries:z.array(entry).max(300)}).strict();
 export async function permissionTemplatesReady(c:any){if(!(await c.query("select to_regprocedure('ab.permission_template_schema_version()')ok")).rows[0].ok)return false;return(await c.query('select ab.permission_template_schema_version()version')).rows[0].version==='AB-PERMISSION-TEMPLATES-REVIEW-1';}
-export async function inheritedTemplateGrants(c:any,user:string){return await permissionTemplatesReady(c)?(await c.query('select * from ab.permission_template_current_grants($1)',[user])).rows:[];}
+export async function inheritedTemplateGrants(c:any,user:string){const appointments=await appointmentGrants(c,user);return await permissionTemplatesReady(c)?(await c.query('select * from ab.permission_template_current_grants($1)',[user])).rows.concat(appointments):appointments;}
 const key=(v:any)=>v.action+':'+v.scope.type+':'+v.scope.id;
 export function registerPermissionTemplates(app:any,call:any,cipher:any,helpers:any){
  const owner=async(c:any,m:any)=>{requireOk(m.actor.roleId==='owner',403,'ownerOnly');requireOk(await permissionTemplatesReady(c),503,'permissionTemplateReviewPending');};

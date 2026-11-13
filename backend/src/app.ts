@@ -1192,6 +1192,7 @@ export async function build(options: Options) {
       "bank-accounts.js",
       "user-management.js",
       "permission-template-ui.js",
+      "staff-appointments-ui.js",
       "demo-credentials.js",
       "auth-flows.js",
       "central-client.js",
