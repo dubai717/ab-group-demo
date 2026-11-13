@@ -453,6 +453,8 @@ export async function build(options: Options) {
           422,
           "invalidReference",
         );
+      await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':department:'+d.companyId]);
+      requireOk(!(await c.query(`select 1 from ab.departments d left join ab.settings s on s.tenant_id=d.tenant_id and s.key='department-profile:'||d.id::text where d.company_id=$1 and (lower(trim(d.name))=lower(trim($2)) or lower(trim(s.value->>'nameAr'))=lower(trim($2)) or lower(trim(s.value->>'nameEn'))=lower(trim($2)))`,[d.companyId,d.name])).rowCount,409,'duplicateDepartment');
       const id = randomUUID();
       await c.query(
         "insert into ab.departments(id,tenant_id,company_id,name,manager_id)values($1,$2,$3,$4,$5)",
