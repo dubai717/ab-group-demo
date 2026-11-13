@@ -22,7 +22,7 @@ The appointment proposal depends on `owner-role-bounds.review-only.sql`. Four ne
 
 Existing dual permission lists remain. Every operative fine grant shows its sources (personal, role or administrative unit; temporary delegation is a time-limited derivative of its original source, never a fourth source), inherited grants stay protected, and approved exception handling remains in the existing engine. Additional-role/appointment UI uses the current user profile, floating records and bilingual responsive controls. Templates are curated fine-permission bundles, not an automatic copy of every legacy primary-role privilege.
 
-## Explicit limitations requiring further design
+## Approved sources and data scopes
 
 The approved permission sources are administrative unit/department, job role/position, and the employee personally. Company and trade licence are data scopes, never permission sources. Branch is not an approved model: no branch table, selector or implicit conversion to a licence is introduced. Unknown branch fields are rejected. Existing legacy role names and stored grants are preserved without reinterpretation. Unit context does not fabricate row-level attribution where business records lack it. Existing approval/rejection rights that are coupled in original workflows remain coupled.
 
@@ -35,3 +35,5 @@ Isolated tests cover two additional role versions, preserved primary/personal ri
 Activation requires explicit owner consent to both exact reviewed SQL files, catalog/order review without renumbering or implicitly applying financial 028, a fresh encrypted hosted backup with isolated verified restore, atomic rehearsal and unchanged-row/grant checks, then the native protected staging gate. Until then this stays draft and is NOT merged/published. No Production, Reset, deletes, existing balances or automatic current-user permission changes.
 
 Before appointments exist, reverting the application is a code-only recovery. After appointments exist, use a compatible forward fix or explicitly end affected appointments while retaining their history; old code cannot display temporary task resolution correctly. Never drop the eligibility policy/guards while temporary grant rows exist, and never restore an old database over later financial activity automatically.
+
+Reviewed SQL SHA-256: `e0079ee19a6bdf0398f594de8fd44943ea1ca0dfe88d1533086514dd7ccd64ab` (staff appointments), `7327e6821c22a97e13c683e7bdc92a4392e987bda6159cb7e824f3a03b3a8b9e` (owner role bounds). The three-source clarification creates no branch structures and does not reinterpret existing grants.
