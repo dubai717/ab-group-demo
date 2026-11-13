@@ -1,3 +1,4 @@
+import {number} from '../src/vehicle-domain.js';
 // TEST_DATA fixtures use existing domain services, runtime RLS and an in-process
 // adapter which never listens on a network port. Public authentication is unchanged.
 import Fastify from 'fastify';
@@ -27,6 +28,8 @@ export async function fixtureDriver(c:PoolClient,key:string,tenant:string,owner:
  const options={objects:store,scan:async(bytes:Buffer)=>trusted.has(sha(bytes))?'clean' as const:'pending' as const};
  registerCustomers(app,call,cipher,options);registerVehicles(app,call,cipher,options);registerLedger(app,call,cipher);registerPersonnel(app,call,cipher,options);await app.ready();
  return {c,cipher,m,objects,session,close:()=>app.close(),
+  // Private synthetic historical records, not a legacy switch in the public creation API.
+  historicalRequest:async(customerId:string,d:any)=>{requireOk(String(d.notes||'').startsWith('TEST_DATA'),403,'testScopeRequired');const id=randomUUID(),num=await number(c,tenant,'request');await c.query('insert into ab.vehicle_requests(id,tenant_id,company_id,customer_id,request_number,finance_type,funding_state,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9)',[id,tenant,d.companyId,customerId,num,d.financeType,['group','investor'].includes(d.financeType)?'Requested':'NotRequired',cipher.seal(d),owner]);await c.query("insert into ab.vehicle_events(id,tenant_id,company_id,request_id,actor_id,kind,payload_cipher)values($1,$2,$3,$4,$5,'request_created',$6)",[randomUUID(),tenant,d.companyId,id,owner,cipher.seal({before:null,after:d})]);return{id,requestNumber:String(num)};},
   company:async(d:any,id?:string)=>{const key=await persistCompany(c,m,tenant,d,id);const row=(await c.query('select revision from ab.companies where id=$1',[key])).rows[0];Object.assign(m.state.companies.find((x:any)=>x.id===key),{revision:row.revision});return key;},bank:(d:any)=>persistBank(c,m,cipher,tenant,d),
   reference:async(kind:string,data:any)=>{const row=m.bank.addReference(kind,data);await c.query('insert into ab.bank_references values($1,$2,$3,$4)on conflict do nothing',[tenant,row.id,kind,row]);return row.id;},
   proof:async(url:string,label:string,kind:string)=>{const bytes=await syntheticPdf(label);trusted.add(sha(bytes));const r=await app.inject({method:'POST',url,payload:{name:'TEST_DATA-'+label+'.pdf',title:'TEST_DATA '+label,kind,mime:'application/pdf',base64:bytes.toString('base64')},headers:{'idempotency-key':randomUUID()}});if(r.statusCode!==200)throw new ApiError(r.statusCode,'seedProofRejected');return r.json().id;},
