@@ -1,7 +1,7 @@
 import {inflateRawSync} from 'node:zlib';
 import {Worker} from 'node:worker_threads';
 // Bound ZIP expansion before a maintained XLSX reader runs in a memory/time limited worker.
-export async function customerSpreadsheet(bytes:Buffer,requiredHeader='fullName'):Promise<Record<string,string>[]> {
+export async function customerSpreadsheet(bytes:Buffer,requiredHeader:string|null='fullName'):Promise<Record<string,string>[]> {
  if(bytes.length>5e6||bytes.length<22)throw Error('invalidSpreadsheet');
  let end=-1;for(let i=bytes.length-22;i>=Math.max(0,bytes.length-65557);i--)if(bytes.readUInt32LE(i)===0x06054b50){end=i;break;}
  if(end<0||bytes.readUInt16LE(end+4)||bytes.readUInt16LE(end+6))throw Error('invalidSpreadsheet');
@@ -18,5 +18,5 @@ export async function customerSpreadsheet(bytes:Buffer,requiredHeader='fullName'
   cursor+=46+nl+extra+comment;
  }
  const raw=await new Promise<string[][]>((resolve,reject)=>{const worker=new Worker(new URL(import.meta.url.endsWith('.ts')?'./customer-spreadsheet-worker.ts':'./customer-spreadsheet-worker.js',import.meta.url),{workerData:bytes,resourceLimits:{maxOldGenerationSizeMb:128,stackSizeMb:4}});const timer=setTimeout(()=>{void worker.terminate();reject(Error('spreadsheetLimit'));},15000);worker.once('message',r=>{clearTimeout(timer);void worker.terminate();r.error?reject(Error(r.error)):resolve(r.rows);});worker.once('error',()=>{clearTimeout(timer);reject(Error('invalidSpreadsheet'));});worker.once('exit',code=>{if(code!==0){clearTimeout(timer);reject(Error('invalidSpreadsheet'));}});});
- const header=raw.shift()||[];if(!header.includes(requiredHeader)||new Set(header).size!==header.length)throw Error('invalidSpreadsheet');return raw.filter(r=>r.some(Boolean)).map(r=>Object.fromEntries(header.map((h,i)=>[h,r[i]||''])));
+ const header=raw.shift()||[];if((requiredHeader!==null&&!header.includes(requiredHeader))||new Set(header).size!==header.length)throw Error('invalidSpreadsheet');return raw.filter(r=>r.some(Boolean)).map(r=>Object.fromEntries(header.map((h,i)=>[h,r[i]||''])));
 }

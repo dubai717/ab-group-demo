@@ -1,3 +1,4 @@
+import {registerMyWork} from './my-work.js';
 import {investorProfileLock,investorRegistryDocumentRead} from './investor-registry.js';
 import {registerPermissionAdmin} from './permission-admin.js';
 import {investorEvidenceRead,investorEvidenceUpload,recordInvestorEvidence,registerInvestorEvidence} from './investor-evidence.js';
@@ -248,6 +249,7 @@ export async function build(options: Options) {
   registerCollectionFollowup(app,call,cipher);
   registerDocumentCenter(app,call,cipher,options);
   registerApprovalCenter(app,call);
+ registerMyWork(app,call,cipher);
   registerRecordLinks(app,call,cipher);
   registerInvestorEvidence(app,call);
   registerMarketing(app,call,cipher);
@@ -1209,11 +1211,13 @@ export async function build(options: Options) {
       "view-as-ui.js",
       "collection-ui.js",
       "dashboard-ui.js",
+      "my-work-ui.js",
       "reports-ui.js",
       "communications-ui.js",
       "record-links.js",
       "marketing-ui.js",
       "contracting-companies-ui.js",
+      "data-import-ui.js",
       "investors-ui.js",
       "investor-registry-ui.js",
       "workspace-ui.js",

@@ -1034,3 +1034,14 @@ button.primary-btn,button.secondary-btn,button.ghost-btn{word-break:normal;overf
 /* Long preview identities stay readable without squeezing language controls. */
 .topbar>div:first-child{min-inline-size:0;flex:1 1 20rem}.user-controls{min-inline-size:0;max-inline-size:100%;flex:0 1 28rem}.lang-switch{flex:0 0 auto;min-inline-size:4rem;white-space:nowrap}.account-menu{min-inline-size:0;max-inline-size:24rem}.user-pill{max-inline-size:100%}.user-pill>.avatar{flex:0 0 auto}.user-pill>span:last-child{min-inline-size:0}.user-pill>span:last-child>span:first-child{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.screen-identity{min-block-size:7rem}
 @media(max-width:720px){.topbar>div:first-child,.user-controls{flex-basis:100%}.screen-identity{min-block-size:10rem}.user-controls .account-menu{flex:1 1 auto}}
+
+/* Existing floating record windows: compact contract groups and real vehicle picker. */
+.record-form-dialog .record-section { margin-block: .65rem; padding: .8rem; }
+.record-form-dialog .record-section dl { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:.6rem 1rem;margin-block:.5rem; }
+.record-form-dialog details.record-section>summary {cursor:pointer;font-weight:700;padding:.35rem;}
+.contract-picker-filters {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:.7rem;}
+.contract-picker-filters label {min-width:0;}
+.record-action-row {display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;}
+.record-action-row button {min-height:40px;min-width:110px;white-space:normal;word-break:normal;}
+
+#my-work .work-cards {display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));}#my-work .stat-card strong {font-size:1.8rem;}

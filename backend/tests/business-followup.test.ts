@@ -77,8 +77,8 @@ test('Collection attempts use existing tasks, invoice balances and delayed inter
         });
         await t.test('paid is a report, not evidence of settlement or permission to close',async()=>{
             const r=await f.req('POST','/api/collections/tasks/'+created.id+'/attempts',{outcome:'paid',phoneId:'fixture-phone',note:'Synthetic customer claim'});assert.equal(r.reportedPaidVerified,false);assert.equal(r.taskClosed,false);
-            await f.req('POST','/api/personnel/tasks/'+created.id+'/action',{action:'submit',note:'Reported claim only',revision:1});
-            await f.req('POST','/api/personnel/tasks/'+created.id+'/action',{action:'complete',note:'Cannot verify unfunded claim',revision:2},409);
+            const revision=(await f.req('GET','/api/collections/tasks/'+created.id)).task.revision;await f.req('POST','/api/personnel/tasks/'+created.id+'/action',{action:'submit',note:'Reported claim only',revision});
+            await f.req('POST','/api/personnel/tasks/'+created.id+'/action',{action:'complete',note:'Cannot verify unfunded claim',revision:revision+1},409);
             assert.equal((await f.req('GET','/api/collections/tasks/'+created.id)).invoice.outstanding,'1000.000');
         });
         await t.test('promise requires a future followup; bad phones and outcomes are rejected',async()=>{
