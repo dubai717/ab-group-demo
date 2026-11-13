@@ -1,0 +1,33 @@
+# Company register navigation and customer service requests
+
+Repository: dubai717/ab-group-demo. Based on staged/live a3a687b. No DDL, permission reassignment, legacy balance/contract edits or financial 028 activation.
+
+## Company navigation
+
+The existing toolbar Companies command clears the existing company form/profile selection after the same WorkspaceUI.leave guard used by Back to register. It renders the existing register. The Add and Departments command definitions and Departments handling are unchanged. Actual bilingual browser tests cover pristine return without a prompt, dirty stay/discard, the original Back control, successful create/readback/return without a prompt and unchanged Departments markup.
+
+## Canonical requests and history
+
+New residence/general requests extend the existing encrypted immutable customer_events journal, with their own existing vehicle_numbers counter kind and stable client-key/source uniqueness. Customer, responsible company, type and initial definition are immutable. Transitions, decisions, resubmissions, document links and financial references append events. Legacy service_intents remain unchanged and are not silently upgraded into financial requests. Existing vehicle_requests appear in the unified authorized list and open the original vehicle workflow, without changing financing/disbursement/registration rules. The original inactive-customer review/exception requirement is reused; no customer is activated automatically.
+
+The customer file has a clear first-step type chooser. Dedicated residence (new/renewal/cancellation) and general forms save and reopen real records. The list uses server type/state filters and bounded pages. Floating request records show details, financial source totals, expenses, decisions, authorized archive documents and readable history. Documents reuse permanent customer-file storage, ownership checks and scan-gated preview/download; no duplicate attachment store or browser-only persistence.
+
+## Existing accounting engine, explicit actions
+
+Invoice creation calls the existing ledger invoice routine with an approved item/account mapping and a unique request source. It is an explicit authorized action, never a consequence of saving a request. Customer request collection uses the existing targeted-allocation path, restricted to the exact linked invoice/customer/company/currency; vehicle and contracting-company rules remain unchanged. Reloading dues preserves the target. Billed, collected, outstanding and bank-confirmed figures are separate. Recognized margin comes from linked posted income/expense entries, credit adjustments and reversals, excluding output tax liability. Paid costs are shown separately; quotes and operational expense approvals do not count as posted costs or cash.
+
+Expense requests support Pending, Approved, Rejected and Returned with mandatory comments, revision checks and immutable resubmission history. Operational approval creates no voucher, journal, cheque or payment. Explicit voucher creation calls the existing ledger routine, after which the original preparation, signed financial approval and actual bank settlement remain mandatory. Voucher source uniqueness, transaction/idempotency guards and matching approved expense terms prevent duplication or unauthorized term changes.
+
+Only vouchers carrying the new adapter marker AB-CUSTOMER-SERVICE-REQUEST-1 use the added request-budget guard. Legacy vouchers, including unrelated manual source keys with the same textual prefix, retain existing behaviour. New request payment requires eligible confirmed allocations or an explicit owner-only documented ceiling from available company bank funds, with a source reference and mandatory attestation excluding custody/customer/investor funds. A bank balance alone is not automatically classified as unencumbered company ownership. Partially deposited pooled cash receipts are conservatively held until their whole receipt is bank-confirmed; a documented owner exception can authorize other actual company funds instead of assuming a partial allocation policy. Bank availability is rechecked under a bank-row lock before actual payment. No cheque or balance change occurs from exception/operational approval. Requests with unsettled approved costs cannot be cancelled to bypass financial review.
+
+## Permissions and verification
+
+Existing customer and ledger permissions are reused independently; financial posting does not implicitly grant customer editing. Scoped API checks, existing database tenant/financial policies, immutable histories, source constraints and original financial guards remain. No user receives a new permission automatically.
+
+Actual local validation: dedicated server integration journeys passed for all three types, immutable type/history (including rejected direct database mutation), replay prevention, invoice uniqueness, old-invoice isolation, cash versus confirmed bank, partial-deposit hold, returned expense/resubmission, original voucher approval and once-only payment, explicit owner exception/no money on approval, insufficient budget/cash rejection, archive byte retrieval, cross-company denial and a finance clerk without customer-edit privileges, an operational employee without ledger privileges, and a settling cashier without bank-edit privileges. The original ledger integration suite (23 tests) also passed. Existing 170 unit/policy tests and TypeScript passed. Real browsers passed both requested company-navigation paths and residence/general creation, exact targeted native collection, pending expense, original vehicle form, floating records and Arabic/English desktop/tablet/phone. Full final-source and merged-source CI remain required before publication.
+
+## Remaining business definition and delivery
+
+Detailed immigration service stages, mandatory evidence by transaction, approved fee catalogs and any specialized general-service procedures require owner definition later. Current execution stages are internal request tracking, not certification of a government transaction.
+
+Stage only through the native protected owner gate. Extend the existing GET-only smoke list for workspace-ui.js, ledger-ui.js and customer-requests-ui.js, preserving controller pins, catalog and environments. Verify exact source/CSS/module bytes after deployment. Before any new service finance is used, reverting application code needs no database restoration. After new tagged vouchers exist, retain their guard/history and use a compatible forward fix or formal native cancellation/correction; never remove the guard or restore an old database over subsequent financial activity automatically.
