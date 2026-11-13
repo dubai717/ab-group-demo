@@ -148,7 +148,7 @@
     "backend/src/vehicle-jobs.ts": "b07f58b9624737922154aee7acbc0b0de36c3f50b1ca826de1e1b9036a61113b",
     "backend/src/vehicle-movement-report.ts": "f8ebc9695fdd49a676c4e24596a3110f95faac20a83843d33abc0931715f6cca",
     "backend/src/vehicle-pdf.ts": "393d1a2dc63e0b4bd85f9244cea769d3b4cebb54094bc284882d494fb06235d0",
-    "backend/src/vehicles.ts": "502289d639d9bf64e699628c4b6fdab2f4235c13266e00a1dcc77a423ef14f8a",
+    "backend/src/vehicles.ts": "a16735b09da45f55c7b8d35608051ed98333cccccec188a1347499abadbfe6d2",
     "backend/src/view-as.ts": "e1ec8fa3398d7f67eb7d7ed7604702720c2bd16972d72a4445f50d0ad8c69962",
     "backend/tests/approval-center.test.ts": "7a66d0999c24c814d6d85ad4d8e760351703d707dfb86c1dafca7a8475f4aa0d",
     "backend/tests/backup-envelope-assertions.ts": "5b5f109ad0e0d08b85493e119337020f10868a153acf28c77cd436d9da503d02",
@@ -266,12 +266,12 @@
     "tests/user-management.browser.cjs": "ff7125a2d5c449f610fe836a483a437032c58f1f88e3367c347445db9245a91c",
     "user-management.js": "3fe51349fc36b55f4b786ad174ff67200053a222a3b1249e0d8ff3d7e19d8071",
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
-    "vehicles.js": "3c090b8921b7a7edcf8e95197b34c37c890df18c29bdb22d714206c09ce89c17",
+    "vehicles.js": "0e80370d92cccdc527d467a010857f3eebed66a9a45d5e7f42b956709d79bd36",
     "view-as-ui.js": "30d331e30558672cc30b0abb89998a5e7c61ec70e2c079dfd0283a05fd1f4138",
     "workspace-ui.js": "7c57383820f7bcc371a011dc0da0b2911bffe2968549d413be9dd5a8d0051145",
-    "backend/src/funding-review.ts": "e5e6cc7eb3443d432ec8196e1786ae4db453e1ab90a669ee323d25a3871625c5",
+    "backend/src/funding-review.ts": "691553fdff5bbd365d3b0bff604ee8a6dd54d952b219f2f5a102fb8fa5db5667",
     "backend/src/funding-cash.ts": "c545d6d31eb2bf11ad6cdcb433e3764aaeb6714a5648676dc2891dbfc517b8bf",
     "backend/src/personnel-directory.ts": "bdca7cbd8a84cbd8fd63715269d64db9f20dfedcee4de8bb48da15a1aa3d9bea",
-    "backend/src/vehicle-bank-contract.ts": "194c76fb8be9ed63cdfb19c5f763dfe058ec4dabb6de0ba2e156b95129dff5ca"
+    "backend/src/vehicle-bank-contract.ts": "fbd8a186cd5b6481b27a968b9b22c2b7981e29818e4b26072e2cd51823a063d9"
   }
 }
