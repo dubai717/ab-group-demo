@@ -1045,3 +1045,28 @@ button.primary-btn,button.secondary-btn,button.ghost-btn{word-break:normal;overf
 .record-action-row button {min-height:40px;min-width:110px;white-space:normal;word-break:normal;}
 
 #my-work .work-cards {display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));}#my-work .stat-card strong {font-size:1.8rem;}
+
+/* Shared AB register identity: applies inside profiles and floating records too. */
+:root{--register-row:var(--panel);--register-alt:color-mix(in srgb,var(--primary-soft) 24%,var(--panel));--register-hover:color-mix(in srgb,var(--primary-soft) 60%,var(--panel));--register-selected:var(--gold-soft)}
+.table-wrap{max-inline-size:100%;max-block-size:65vh;overflow:auto;isolation:isolate;scrollbar-gutter:stable;overscroll-behavior-inline:contain;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:separate;border-spacing:0;table-layout:auto}
+table th,table td{padding:.7rem .8rem;border-inline-end:1px solid var(--line);border-block-end:1px solid var(--line);vertical-align:middle;min-inline-size:7rem;line-height:1.55;word-break:normal;overflow-wrap:normal!important}
+table th:last-child,table td:last-child{border-inline-end:0}
+table thead th{position:sticky;inset-block-start:0;z-index:2;background:var(--primary);color:#fff;white-space:nowrap;font-size:.875rem;letter-spacing:normal;text-transform:none;text-align:start}
+table thead th .rg-filter>summary{color:inherit;min-block-size:1.7rem;max-inline-size:32rem}
+table tbody tr>td{background:var(--register-row);transition:background-color .12s ease}
+table tbody tr:nth-child(even)>td{background:var(--register-alt)}
+table tbody tr:hover>td{background:var(--register-hover)}
+table tbody tr[data-register-selected]>td,table tbody tr[aria-selected=true]>td{background:var(--register-selected)}
+table tbody td{max-inline-size:32rem;unicode-bidi:plaintext}
+table td .row-actions{flex-wrap:wrap;min-inline-size:8rem}
+table td button{white-space:nowrap;word-break:normal;min-block-size:2.25rem}
+table tr[data-register-open]{cursor:pointer}
+table tr:focus-visible{outline:3px solid var(--accent);outline-offset:-3px}
+table .rg-filter>summary:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.rg-menu{background:var(--panel);color:var(--text);border-color:var(--line);font-size:.9rem}
+.rg-menu hr{border-color:var(--line)}
+.rg-menu button:focus-visible,.register-actions button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+@media(max-width:700px){table th,table td{padding:.6rem .65rem;min-inline-size:7rem;font-size:.875rem}.table-wrap{max-block-size:60vh}.register-actions{gap:.45rem}}
+@media(prefers-reduced-motion:reduce){table tbody tr>td{transition:none}}
+@media print{.table-wrap{max-block-size:none;overflow:visible;border:0}table thead th{position:static;print-color-adjust:exact}table tbody tr>td{print-color-adjust:exact}}
