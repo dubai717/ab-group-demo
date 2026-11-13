@@ -1,3 +1,4 @@
+import {registerReviewedUserAccess} from './reviewed-user-access.js';
 import {registerMyWork} from './my-work.js';
 import {investorProfileLock,investorRegistryDocumentRead} from './investor-registry.js';
 import {registerPermissionAdmin} from './permission-admin.js';
@@ -243,6 +244,7 @@ export async function build(options: Options) {
         return result;
       },s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:undefined);
     };
+  registerReviewedUserAccess(app,call,cipher);
   registerPermissionAdmin(app,call,cipher);
   registerFinance(app,call,cipher);
   registerCustomers(app,call,cipher,options);
@@ -1191,6 +1193,8 @@ export async function build(options: Options) {
       "company-documents.js",
       "bank-accounts.js",
       "user-management.js",
+      "permission-template-ui.js",
+      "staff-appointments-ui.js",
       "demo-credentials.js",
       "auth-flows.js",
       "central-client.js",
