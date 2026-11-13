@@ -14,11 +14,15 @@ const builtins = [
     { id: 'off', nameAr: 'مغلق', nameEn: 'Switched off', minutes: 60 },
     { id: 'no_answer', nameAr: 'لا يرد', nameEn: 'No answer', minutes: 30 },
     { id: 'promise', nameAr: 'وعد بالدفع', nameEn: 'Promise to pay', minutes: null },
+    { id: 'contacted', nameAr:'تم التواصل', nameEn:'Contacted', minutes:null },
+    { id: 'extension', nameAr:'طلب مهلة', nameEn:'Requested more time', minutes:null },
+    { id: 'partial', nameAr:'أفاد بسداد جزئي', nameEn:'Reported partial payment', minutes:60 },
+    { id: 'escalate', nameAr:'يحتاج تصعيداً', nameEn:'Needs escalation', minutes:30 },
     { id: 'paid', nameAr: 'أفاد بالسداد', nameEn: 'Reported paid', minutes: null },
 ];
 async function configuration(c: any, company: string) {
     const r = (await c.query('select value from ab.settings where key=$1', ['collection-followup:' + company])).rows[0];
-    if (r) return r.value;
+    if (r) return {...r.value,outcomes:[...r.value.outcomes,...builtins.filter(o=>!r.value.outcomes.some((v:any)=>v.id===o.id))]};
     const legacy = (await c.query('select value from ab.settings where key=$1', ['customer:' + company])).rows[0]?.value;
     return { outcomes: builtins.map(o => ({ ...o, minutes: o.id === 'off' ? legacy?.offMinutes || 60 : o.id === 'no_answer' ? legacy?.noAnswerMinutes || 30 : null })) };
 }
@@ -43,7 +47,7 @@ export function registerCollectionFollowup(app: any, call: any, cipher: any) {
     app.post('/api/collections/settings/:companyId', route(async (c: any, m: any, s: any, req: any) => {
         const company = uuid.parse(req.params.companyId); requireOk(customerCan(m, 'configure', company));
         const d = z.object({ outcomes: z.array(z.object({ id: z.string().regex(/^[a-z][a-z0-9_]{0,49}$/), nameAr: text, nameEn: text, minutes: z.number().int().min(1).max(43200).nullable() }).strict()).min(4).max(50) }).strict().parse(req.body);
-        requireOk(new Set(d.outcomes.map(o => o.id)).size === d.outcomes.length && builtins.every(o => d.outcomes.some(v => v.id === o.id)), 422, 'invalidOutcomes');
+        requireOk(new Set(d.outcomes.map(o => o.id)).size === d.outcomes.length && builtins.filter(o=>['off','no_answer','promise','paid'].includes(o.id)).every(o => d.outcomes.some(v => v.id === o.id)), 422, 'invalidOutcomes');
         requireOk(d.outcomes.filter(o => ['off','no_answer'].includes(o.id)).every(o => o.minutes !== null), 422, 'followupRequired');
         await c.query('insert into ab.settings values($1,$2,$3) on conflict(tenant_id,key)do update set value=excluded.value', [s.tenant_id, 'collection-followup:' + company, d]);
         await audit(c, s.tenant_id, s.user_id, 'collection_followup_configured', 'company', company, ['outcomes']);
@@ -73,19 +77,20 @@ export function registerCollectionFollowup(app: any, call: any, cipher: any) {
         requireOk(cipher.open(customer.payload_cipher).phones?.some((p: any) => p.id === d.phoneId && p.status === 'valid'), 422, 'invalidPhone');
         const cfg = await configuration(c, t.company_id), outcome = cfg.outcomes.find((o: any) => o.id === d.outcome);
         requireOk(outcome, 422, 'invalidOutcome');
-        const due = outcome.minutes ? new Date(Date.now() + outcome.minutes * 60000) : d.nextAt ? new Date(d.nextAt) : null;
-        requireOk(d.outcome !== 'promise' || due, 422, 'followupRequired');
+        const due = d.nextAt ? new Date(d.nextAt) : outcome.minutes ? new Date(Date.now() + outcome.minutes * 60000) : null;
+        requireOk(!['promise','extension'].includes(d.outcome) || due, 422, 'followupRequired');
         requireOk(!due || due.getTime() > Date.now(), 422, 'followupMustBeFuture');
         const key = randomUUID();
         await c.query(`insert into ab.collection_attempts(id,tenant_id,company_id,customer_id,vehicle_id,invoice_id,task_id,outcome,next_at,payload_cipher,created_by)
             values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, [key,s.tenant_id,t.company_id,i.customer_id,i.vehicle_id,i.id,t.id,d.outcome,due,cipher.seal({note:d.note,phoneId:d.phoneId,outcomeSnapshot:outcome,outstandingSnapshot:i.legalOutstanding,currency:i.currency}),s.user_id]);
         if (due) {
+            await c.query("update ab.tasks set due_on=($2::timestamptz at time zone 'Asia/Dubai')::date,revision=revision+1 where id=$1",[t.id,due]);
             const assignee = (await c.query('select user_id from ab.hr_employees where id=$1', [t.employee_id])).rows[0];
             requireOk(assignee?.user_id, 409, 'taskAssigneeHasNoLogin');
             await c.query(`insert into ab.finance_notifications(id,tenant_id,company_id,user_id,action,event_key,entity_id,due_at)
                 values($1,$2,$3,$4,'collection:followup',$5,$6,$7) on conflict(tenant_id,user_id,event_key)do nothing`, [randomUUID(),s.tenant_id,t.company_id,assignee.user_id,'collection:' + key,t.id,due]);
         }
-        await taskEvent(c,cipher,s,t.id,'collection_attempt',{attemptId:key,outcome:d.outcome,nextAt:due});
+        await taskEvent(c,cipher,s,t.id,'collection_attempt',{attemptId:key,outcome:d.outcome,nextAt:due,previousDueOn:t.due_on,financialBalanceChanged:false});
         await audit(c,s.tenant_id,s.user_id,'collection_attempt','task',t.id,['outcome','nextAt']);
         return { id:key,saved:true,nextAt:due,taskClosed:false,reportedPaidVerified:d.outcome === 'paid' ? V.units(i.paid) >= V.units(i.amount) : null,invoiceSettled:V.units(i.legalOutstanding)<=0n };
     }));

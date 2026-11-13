@@ -1,0 +1,4 @@
+import {zipSync,strToU8} from 'fflate';
+import {boundedZip,importWorkbook} from '../src/import-files.js';
+export function workbook(matrix:string[][]){const entries=Object.fromEntries(boundedZip(importWorkbook(matrix[0].map(key=>({key,ar:key,en:key,type:'text'}))))),esc=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]!));entries['xl/worksheets/sheet1.xml']=Buffer.from('<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+matrix.map((r,i)=>'<row r="'+(i+1)+'">'+r.map((v,j)=>'<c r="'+String.fromCharCode(65+j)+(i+1)+'" t="inlineStr"><is><t>'+esc(v)+'</t></is></c>').join('')+'</row>').join('')+'</sheetData></worksheet>');return Buffer.from(zipSync(entries));}
+export const pdf=Buffer.from('%PDF-1.4\n% synthetic local document\n%%EOF');
