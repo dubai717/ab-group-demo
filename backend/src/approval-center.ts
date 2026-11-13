@@ -6,9 +6,8 @@ import { hrRight } from './personnel-domain.js';
 import { requireOk } from './core.js';
 
 // Read-only adapters. Decisions execute the authoritative source endpoint, not a second workflow.
-export function registerApprovalCenter(app:any,call:any){
-    app.get('/api/approval-center',call(async(c:any,m:any,_s:any,req:any)=>{
-        const q=z.object({q:z.string().max(200).default(''),state:z.string().max(40).optional(),companyId:z.uuid().optional()}).strict().parse(req.query),out:any[]=[];
+export async function approvalRows(c:any,m:any,query:any={}){
+        const q=z.object({q:z.string().max(200).default(''),state:z.string().max(40).optional(),companyId:z.uuid().optional()}).strict().parse(query),out:any[]=[];
         const employees=(await c.query("select to_regclass('ab.hr_employees') ok")).rows[0].ok?(await c.query('select id,user_id,manager_id,company_id from ab.hr_employees')).rows:[];
         const leaveAllowed=(r:any)=>{const e=employees.find((e:any)=>e.id===r.employee_id);return e&&e.user_id!==m.actor.id&&(e.manager_id===m.actor.id||hrRight(m,'leave_approve',e.company_id));};
         const add=async(table:string,stateColumn:string,module:string,authorize:(r:any)=>boolean,decorate:(r:any)=>any)=>{
@@ -28,5 +27,5 @@ export function registerApprovalCenter(app:any,call:any){
         await add('finance_vouchers','status','ledger',r=>financeRight(m,'ledger_voucher_approve',r.company_id),r=>({label:'Voucher #'+r.number,sourcePage:'financialManagement',sourceId:r.id,pending:r.status==='Pending',decision:null,originalProcedureRequired:true}));
         await add('finance_deposits','status','ledger',r=>financeRight(m,'ledger_deposit_verify',r.company_id),r=>({label:'Deposit',sourcePage:'financialManagement',sourceId:r.id,pending:r.status==='Review',decision:null,originalProcedureRequired:true}));
         return {rows:out.sort((a,b)=>new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime()),originalWorkflows:true,additionalApprovalSteps:0};
-    }));
 }
+export function registerApprovalCenter(app:any,call:any){app.get('/api/approval-center',call((c:any,m:any,_s:any,req:any)=>approvalRows(c,m,req.query)));}
