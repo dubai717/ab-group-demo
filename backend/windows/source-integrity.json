@@ -210,7 +210,7 @@
     "contracting-companies-ui.js": "2544de319952600f7789663c33c0a4ba878f1e535e20aa55a8bfbe765df141c1",
     "customer-policy.js": "70b028e17768fbc945af1848a3bfceae9241260c661417b5d232057b804a99dd",
     "customers.js": "879a48ccca172cc2449d13d80115438820105e030dffa71934c1c9fe7d364c76",
-    "dashboard-ui.js": "53a752572fbf6d8d131cc3216174020cb9f4937078f7089d57fddefd540352dc",
+    "dashboard-ui.js": "3f279b970baaf8ec1ab159421e54c273a3f2cb6d0a2db6bf5bdfafffa0bcf69c",
     "data-import-ui.js": "528a3b385bd418c2eb0216b288981c2cf555830998d8602d936d0d171f0ce920",
     "data/uae-areas.js": "a5db8e1e0d1f6f3827dd359782bf772f0a80898d53317a8040e5eb1265279d7a",
     "demo-credentials.js": "6d11baa34790c15e593b0465a574ebf55d027bffd2446b40c17ac7c953ebe2ea",
@@ -265,7 +265,7 @@
     "user-management.js": "1b82d02de64f18bf0b013ca8c23181274d0b7d9583023433fb284637ff998304",
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
     "vehicles.js": "228386a9ef0c6336abb87eb2a43d4c8421aac6b6c7276c6840dea6769a73ae89",
-    "view-as-ui.js": "3a2fff3355c00cd772cd29ddf7ddc250aedbb5f43b2fd1271f87467457ae8ee1",
+    "view-as-ui.js": "30d331e30558672cc30b0abb89998a5e7c61ec70e2c079dfd0283a05fd1f4138",
     "workspace-ui.js": "3279cc77363e16405585915ccc9a058844cd853c632f0631bb5dc0670ffcab67"
   }
 }
