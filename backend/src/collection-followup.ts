@@ -6,7 +6,7 @@ import { audit } from './data.js';
 import { customerCan } from './customers.js';
 import { financeRight } from './finance.js';
 import { invoices } from './ledger-domain.js';
-import { makeTask, task, taskEvent, taskRight } from './personnel-domain.js';
+import { makeTask, task, taskEvent, taskRight, notice } from './personnel-domain.js';
 import { V, today, vehicleInvoices } from './vehicle-domain.js';
 
 const uuid = z.uuid(), text = z.string().trim().min(1).max(2000);
@@ -90,6 +90,7 @@ export function registerCollectionFollowup(app: any, call: any, cipher: any) {
             await c.query(`insert into ab.finance_notifications(id,tenant_id,company_id,user_id,action,event_key,entity_id,due_at)
                 values($1,$2,$3,$4,'collection:followup',$5,$6,$7) on conflict(tenant_id,user_id,event_key)do nothing`, [randomUUID(),s.tenant_id,t.company_id,assignee.user_id,'collection:' + key,t.id,due]);
         }
+        if(d.outcome==='escalate'){const assignee=(await c.query('select manager_id from ab.hr_employees where id=$1',[t.employee_id])).rows[0];for(const u of m.state.users.filter((u:any)=>u.status==='Active'&&(u.roleId==='owner'||u.id===assignee?.manager_id)&&financeRight({...m,actor:u},'ledger_view',t.company_id)))await notice(c,s,t.company_id,u.id,t.id,'collection_escalated','collection-escalation:'+key+':'+u.id);}
         await taskEvent(c,cipher,s,t.id,'collection_attempt',{attemptId:key,outcome:d.outcome,nextAt:due,previousDueOn:t.due_on,financialBalanceChanged:false});
         await audit(c,s.tenant_id,s.user_id,'collection_attempt','task',t.id,['outcome','nextAt']);
         return { id:key,saved:true,nextAt:due,taskClosed:false,reportedPaidVerified:d.outcome === 'paid' ? V.units(i.paid) >= V.units(i.amount) : null,invoiceSettled:V.units(i.legalOutstanding)<=0n };
