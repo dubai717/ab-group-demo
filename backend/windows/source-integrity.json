@@ -126,7 +126,7 @@
     "backend/src/marketing.ts": "b70f509bad7f0205e479dcd0a9e6bb55b450605f3c2661e1d109963219af7d8c",
     "backend/src/migrate.ts": "dda13588de08527806f35ce401c8121c4dada98075c25a74adeaf1d4a88f2539",
     "backend/src/my-work.ts": "c0644bfc33521c17f18301874250282dc019278d4ee20d3060cb5d32ead143fb",
-    "backend/src/operating-billing.ts": "f462a40f91980de120c4e95226a72d97564c21c865990d9a053a24092d75bc76",
+    "backend/src/operating-billing.ts": "d3180212014abf0a8566b5c802b797958d436dc1438f4945c3b902416038ceeb",
     "backend/src/permission-admin.ts": "e40d9a2a84dae485f4e43a6032756f85f6a27f5848f1159ce84ff7fe54d66b12",
     "backend/src/personnel-directory.ts": "03d83de61f195c612ce67466ed15fd7fd83de36bf900cb029b3f36ef42ac79c9",
     "backend/src/personnel-documents.ts": "36a1a6907533e6affa41ba76e1b3ec2342f27b836930ac1909000db5528b7bdb",
