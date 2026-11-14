@@ -271,9 +271,9 @@
     "workspace-ui.js": "3828158224eec17735345653f65ac5373334815696c136de0e01caef877dbfec",
     "backend/src/funding-review.ts": "691553fdff5bbd365d3b0bff604ee8a6dd54d952b219f2f5a102fb8fa5db5667",
     "backend/src/funding-cash.ts": "c545d6d31eb2bf11ad6cdcb433e3764aaeb6714a5648676dc2891dbfc517b8bf",
-    "backend/src/personnel-directory.ts": "7dab00252ffc20feb558c8b26e3fe6f837bbc61e86d65817aa38e6184dbcc39e",
+    "backend/src/personnel-directory.ts": "03d83de61f195c612ce67466ed15fd7fd83de36bf900cb029b3f36ef42ac79c9",
     "backend/src/vehicle-bank-contract.ts": "fbd8a186cd5b6481b27a968b9b22c2b7981e29818e4b26072e2cd51823a063d9",
     "backend/src/phone.ts": "5bbcd309e18aaa21fb7e5818cd0a458c0dce41f23949e6c8a136f3482777b6cf",
-    "backend/src/personnel-structure.ts": "21a9e5d112867b811c7b026fa35981fa25ccb69274f0c6f443039f01f08b3317"
+    "backend/src/personnel-structure.ts": "f60391e7ff8740584a470ed2d965b9a861bce5d8a5a8bc703646369a3b42a290"
   }
 }
