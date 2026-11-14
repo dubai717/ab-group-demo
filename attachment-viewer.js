@@ -21,7 +21,7 @@
  async function draw(item){if(!live()||!item.host.isConnected)return;const slot=item.host;slot.setAttribute('aria-busy','true');let task;try{
  if(item.mime==='application/pdf'){
  const renderer=await import('/assets/pdfjs/pdf.mjs');if(!live())return;renderer.GlobalWorkerOptions.workerSrc='/assets/pdfjs/pdf.worker.mjs';let source;
- if(item.file)source={data:new Uint8Array(await item.file.arrayBuffer())};else{
+ if(item.file||item.load&&!item.id){const blob=item.file||await item.load();if(!live())return;source={data:new Uint8Array(await blob.arrayBuffer())};}else{
  const initial=await range(item,0,Math.min(item.size,65536));
  class PrivateRange extends renderer.PDFDataRangeTransport{requestDataRange(begin,end){range(item,begin,end).then(bytes=>{if(live())this.onDataRange(begin,bytes);}).catch(()=>{try{task?.destroy()?.catch(()=>{});}catch{}});}}
  source={range:new PrivateRange(item.size,initial,true),length:item.size,disableStream:true,disableAutoFetch:true,rangeChunkSize:65536};

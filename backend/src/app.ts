@@ -1,3 +1,5 @@
+import {normalizeContactPayload} from './phone.js';
+import {hrRight} from './personnel-domain.js';
 import {registerMyWork} from './my-work.js';
 import {investorProfileLock,investorRegistryDocumentRead} from './investor-registry.js';
 import {registerPermissionAdmin} from './permission-admin.js';
@@ -203,6 +205,7 @@ export async function build(options: Options) {
     (handler: (c: PoolClient, m: any, s: any, req: any) => Promise<any>) =>
     async (req: any) => {
       const s = await session(req);
+      if(req.body)req.body=normalizeContactPayload(req.body);
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
         // Personnel export contains personal contact data; never cache the file in request_dedup.
         const key = s.viewAs || req.method === "GET" || isReadOnlyPost(req.url.split("?")[0]) ? undefined : req.headers["idempotency-key"];
@@ -345,6 +348,7 @@ export async function build(options: Options) {
     call(async (c, m, s) => {
       const areas = await loadAreas(c);
       const visibleUsers = m.policy.list(s.user_id);
+      const linkedEmployees=(await c.query("select to_regclass('ab.hr_employees') ok")).rows[0].ok?(await c.query('select id,user_id,company_id from ab.hr_employees where user_id is not null')).rows:[];
       const users = [];
       for (const u of visibleUsers) {
         if (!(u.id === s.user_id || m.policy.can(s.user_id, "edit", u))) {
@@ -359,6 +363,7 @@ export async function build(options: Options) {
           if (p.rows[0].private_cipher)
             Object.assign(u, cipher.open(p.rows[0].private_cipher));
         }
+        const staff=linkedEmployees.find((e:any)=>e.user_id===u.id);if(staff&&(m.actor.roleId==='owner'||u.id===s.user_id||hrRight(m,'view',staff.company_id)))u.employeeId=staff.id;
         users.push(u);
       }
       const canCompany = m.company.canRead();
@@ -598,6 +603,7 @@ export async function build(options: Options) {
       previous = m.policy.actor(id);
       requireOk(previous, 404, "notFound");
       assertRevision(previous.revision, input.revision);
+      if((await c.query("select to_regclass('ab.hr_employees') ok")).rows[0].ok&&(await c.query('select 1 from ab.hr_employees where user_id=$1',[id])).rowCount){for(const key of ['nameAr','nameEn','emiratesId','nationality','phone','jobTitle','hireDate'])if(Object.hasOwn(input,key))requireOk(String(input[key]||'')===String(previous[key]||''),409,'employeeProfileRequired');}
       input = { ...previous, ...input };
       const privateRow = (
         await c.query("select private_cipher from ab.users where id=$1", [id])

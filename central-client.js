@@ -271,6 +271,7 @@
   }
   function panel(owner, host) {
     if (!host) return;
+    if(owner.userId&&app.state.users.find(u=>u.id===owner.userId)?.employeeId){host.querySelector('.central-documents')?.remove();return;}
     const q = new URLSearchParams(owner).toString(),
       rows = C.documents.get(q) || [];
     host.querySelector(".central-documents")?.remove();
