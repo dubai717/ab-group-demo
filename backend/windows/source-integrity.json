@@ -264,7 +264,7 @@
     "supabase/proposed/013_personnel_tasks_performance.sql": "9cdf974b9a57cb5d9cde44458b3ecce6773803dbe975f354ecb93b673de8a45f",
     "tests/integration.browser.cjs": "30377173aea9c2e5e131445429e2d42532140ae9c9693cac43f25bb89409eed1",
     "tests/user-management.browser.cjs": "ff7125a2d5c449f610fe836a483a437032c58f1f88e3367c347445db9245a91c",
-    "user-management.js": "92f1ede83dd67f855adf4da97b4c372b1c5ecd28419a4cad65e3a76786369c39",
+    "user-management.js": "8df34836ed1dd4e4e09f3a8cf8be6c3d3b0ee902f1e8712a208dcbc6af0c28fa",
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
     "vehicles.js": "0e80370d92cccdc527d467a010857f3eebed66a9a45d5e7f42b956709d79bd36",
     "view-as-ui.js": "30d331e30558672cc30b0abb89998a5e7c61ec70e2c079dfd0283a05fd1f4138",
