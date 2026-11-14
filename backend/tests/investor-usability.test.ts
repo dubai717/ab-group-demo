@@ -8,7 +8,7 @@ import {investorToday,registryFundingSnapshot} from '../src/investor-registry.js
 test('Simplified versions freeze absent recovery instructions without inheriting historical fields; private ranges stay authorized',async()=>{
  const f=await businessCentersFixture();try{
  await f.admin.query(await readFile('supabase/additive/026_investor_registry_versions.sql','utf8'));
- const person={nameAr:'مستثمر نموذج مبسط',nameEn:'Simplified investor',type:'individual',identityNumber:'SIMPLIFIED-ONLY',identityAuthority:'Synthetic',nationality:'AE',phone:'000',address:'Isolated test'};
+ const person={nameAr:'مستثمر نموذج مبسط',nameEn:'Simplified investor',type:'individual',identityNumber:'SIMPLIFIED-ONLY',identityAuthority:'Synthetic',nationality:'AE',phone:'+971500000000',address:'Isolated test'};
  const p=await f.req('POST','/api/investor-registry/profiles',person),proof=await f.proof(),today=investorToday();
  const legacy={effectiveOn:'2026-01-01',registrationBaseFee:'300',registrationShareAmount:'50',documentVersionId:proof,principalRecoveryMethod:'pro_rata',capitalReturnFrom:'2026-01-02',returnsDueFrom:'2026-01-03',yieldBps:1200};
  const a=await f.req('POST','/api/investor-registry/agreements',{...legacy,investorId:p.id,companyId:f.co1,mode:'prefunded',pledged:'0'});await f.req('POST','/api/investor-registry/versions/'+a.id+'/approve',{confirm:true});
