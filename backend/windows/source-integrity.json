@@ -130,7 +130,7 @@
     "backend/src/personnel-export.ts": "5f004353cb6aa05f0e662603824c85bab7b175372c6c73e499d4995d6396a2e1",
     "backend/src/personnel-jobs.ts": "2aa1052b14edac86159e82872803db273421e984d40c6f3398744810f2f5768f",
     "backend/src/personnel-workflows.ts": "1630e4b831bfc8b25de7a889a72189f6566e6569405aa5278318a173409acf0d",
-    "backend/src/personnel.ts": "f6a30c6a5b05f52162493d2c005650e7096084a278c6c935c3329f7c0bb05194",
+    "backend/src/personnel.ts": "2aa03ce2af9490dc43ff9300f8477f71a2fc3a36f90dbc0c52908cc862028469",
     "backend/src/provision.ts": "5b5228f58a44ec08b4e647f8636af08380ccc836ba462e9164ec809bc388740a",
     "backend/src/record-links.ts": "2562dadd876132d5a0bc0821e85b4811ed02fbd3fefb926d1c8fc3344a271b04",
     "backend/src/register-query.ts": "4e2e2be511764d719485bd4a8a4d77bf0475c6fbc42618cb97743d4ece79ff6c",
@@ -234,7 +234,7 @@
     "package-lock.json": "7323a1e675e3ac21897afe27bbb3fa15c99a7886427a758e4951cffdf12d4b46",
     "package.json": "0f0680275004ea79bd122e405989f61f2261f39db3d9ae50c0cdf0d31676aa7d",
     "personnel-policy.js": "09b753d90a8379e16a7880992a94440b2337f173972f0123a05453acc137bd77",
-    "personnel-ui.js": "1fed1de4eee97d3c9cbee5e67d5697c923871e829b832083012063bf7e9b003c",
+    "personnel-ui.js": "5739b180017aa71e9826e28c7c9d230ac4c71ad3ea1d498d0a815e67cacdf51f",
     "record-links.js": "35817744433f82e8f159a9a0c6380bc304f9250f02202d39ddac060687483b65",
     "register-tools.js": "42c3b0fa05d16fd5f1fbc977e22b7a65cae50a6801255e76e54968e5c35e5dde",
     "render.yaml": "6b5380726ff44ce58208e6b8990b5fdb588e40175a969b11e79b4fdb22417c57",
@@ -274,6 +274,6 @@
     "backend/src/personnel-directory.ts": "7dab00252ffc20feb558c8b26e3fe6f837bbc61e86d65817aa38e6184dbcc39e",
     "backend/src/vehicle-bank-contract.ts": "fbd8a186cd5b6481b27a968b9b22c2b7981e29818e4b26072e2cd51823a063d9",
     "backend/src/phone.ts": "5bbcd309e18aaa21fb7e5818cd0a458c0dce41f23949e6c8a136f3482777b6cf",
-    "backend/src/personnel-structure.ts": "27b632ca8831f41832bb908d949eb8a8431da65fda3f66620d465cc862034eda"
+    "backend/src/personnel-structure.ts": "68d4d237558c8813b2dfc4dd18f802367b6e6b8be04f5e1ff35f499b71900baf"
   }
 }
