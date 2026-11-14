@@ -1,0 +1,14 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {operatingPeriods,operatingPlan} from '../src/contract-operating.js';
+const vehicle={termsVersion:2,vehicleId:'d449f507-976c-43ab-98f1-86dc5501a016',type:'Bus',startsOn:'2026-01-01',endsOn:'2026-03-31',rate:'1000',monthPolicy:'calendar_actual'};
+test('Monthly operating periods use dates, not a multiplier on monthly bills; leap months and partial-month policies are explicit',()=>{
+ const p=operatingPeriods('2026-01-01','2026-03-31','1000','calendar_actual');assert.equal(p.months,'3.000');assert.equal(p.total,'3000.000');assert.deepEqual(p.periods.map(x=>x.amount),['1000.000','1000.000','1000.000']);
+ assert.equal(operatingPeriods('2024-02-15','2024-02-29','2900','calendar_actual').total,'1500.000');assert.equal(operatingPeriods('2026-02-15','2026-02-28','1000','calendar_actual').months,'0.500');assert.equal(operatingPeriods('2026-02-15','2026-02-28','1000','full_month').total,'1000.000');
+ assert.throws(()=>operatingPeriods('2026-02-30','2026-03-31','100','calendar_actual'));assert.throws(()=>operatingPeriods('2026-03-01','2026-02-01','100','calendar_actual'));
+});
+test('Each service has a stable identity: monthly and once-only lines remain distinct, including multiple services on one vehicle',()=>{
+ const p=operatingPlan({...vehicle,services:[{id:crypto.randomUUID(),name:'Fuel',amount:'100',currency:'AED',startsOn:'2026-02-01',monthly:true},{id:crypto.randomUUID(),name:'Delivery',amount:'50',currency:'AED',startsOn:'2026-01-01',monthly:false},{id:crypto.randomUUID(),name:'Meals',amount:'25',currency:'AED',startsOn:'2026-01-01',endsOn:'2026-01-31',monthly:true}]},'AED');assert.equal(p.total,'3275.000');assert.equal(p.lines.filter(x=>x.kind==='service_once').length,1);assert.equal(p.lines.filter(x=>x.kind==='service_recurring').length,3);assert.equal(new Set(p.lines.map(x=>x.key)).size,p.lines.length);assert.deepEqual(operatingPlan(vehicle,'AED').lines.map(x=>x.amount),['1000.000','1000.000','1000.000']);
+ const s={id:crypto.randomUUID(),name:'Fuel',amount:'100',currency:'AED',startsOn:'2026-01-01',monthly:true};assert.throws(()=>operatingPlan({...vehicle,services:[s,s]},'AED'));assert.throws(()=>operatingPlan({...vehicle,services:[{...s,currency:'USD'}]},'AED'));assert.throws(()=>operatingPlan({...vehicle,services:[{...s,startsOn:'2025-12-01'}]},'AED'));
+});
+test('Rounding is per calendar period at mill precision and sums exactly; vehicle prices and periods stay independent',()=>{const a=operatingPlan({...vehicle,startsOn:'2026-01-31',endsOn:'2026-02-28',rate:'100'},'AED'),b=operatingPlan({...vehicle,startsOn:'2026-02-01',endsOn:'2026-02-28',rate:'200'},'AED');assert.equal(a.total,'103.226');assert.equal(b.total,'200.000');assert.equal(a.lines[0].amount,'3.226');assert.equal(a.months,'1.032');});
