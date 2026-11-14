@@ -1076,3 +1076,7 @@ table .rg-filter>summary:focus-visible{outline:2px solid var(--gold);outline-off
 .contract-profile-dialog .record-section{margin-block:.65rem;padding:.8rem;}
 .contract-history-dialog td{vertical-align:top;}
 @media(max-width:600px){.contract-profile-dialog .secondary-btn,.contract-history-dialog .secondary-btn{white-space:normal;max-inline-size:100%;}.contract-history-dialog .record-action-row{display:flex;flex-wrap:wrap;gap:.4rem;}}
+
+.reference-choice-controls{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin-block:.4rem;min-inline-size:0}.reference-choice-controls>input{flex:1 1 12rem;min-inline-size:0}.reference-choice-controls small{color:var(--muted);white-space:nowrap}.reference-choice-controls button{white-space:nowrap;min-block-size:36px}[data-hr-checklist]>.form-grid{max-block-size:22rem;overflow:auto;overscroll-behavior:contain;padding:.3rem}[data-hr-checklist] label[hidden]{display:none!important}#um-profile select[multiple]{min-block-size:10rem;inline-size:100%}@media(max-width:600px){.reference-choice-controls{gap:.35rem}.reference-choice-controls>input{flex-basis:100%}}
+
+.reference-select-field{min-inline-size:0}.reference-select-field>label{display:grid;gap:.4rem}.reference-select-field .reference-choice-controls{margin-block-start:0}
