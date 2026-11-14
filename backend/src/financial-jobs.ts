@@ -1,3 +1,4 @@
+import {operatingBillingTick} from './operating-billing.js';
 import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { security, transaction, requireOk } from './core.js';
@@ -68,7 +69,7 @@ export async function financialTick(pool: Pool, cipher: any, asOf = today()) {
     for (const job of (await pool.query('select * from ab.enabled_financial_jobs()')).rows) {
         const result = await transaction(pool, job.tenant_id, job.actor_id, async (c) => { const m = await model(c, job.actor_id, cipher); if (!m.state.companies.some((co: any) => co.id === job.company_id && co.status === 'Active'))
             return { issued: 0 }; if (!financeRight(m, 'ledger_configure', job.company_id) || !financeRight(m, 'ledger_invoice_create', job.company_id))
-            return { issued: 0 }; const s = { tenant_id: job.tenant_id, user_id: job.actor_id, actor_type: 'service' }, result = await recurringFinancial(c, cipher, m, s, job.company_id, asOf), reminders = await financialReminders(c, cipher, s, job.company_id, asOf); if (result.issued || reminders.emitted)
+            return { issued: 0 }; const s = { tenant_id: job.tenant_id, user_id: job.actor_id, actor_type: 'service' }, result = await recurringFinancial(c, cipher, m, s, job.company_id, asOf), reminders = await financialReminders(c, cipher, s, job.company_id, asOf), operating = await operatingBillingTick(c,cipher,m,s,job.company_id,asOf);result.issued+=operating.issued; if (result.issued || reminders.emitted)
             await c.query("insert into ab.audit_events(id,tenant_id,actor_id,actor_type,action,entity_type,entity_id,fields,request_id)values($1,$2,$3,'service','financial_scheduled_run','company',$4,ARRAY['invoices','reminders'],gen_random_uuid())", [randomUUID(), job.tenant_id, job.actor_id, job.company_id]); return result; });
         issued += result.issued;
     }
