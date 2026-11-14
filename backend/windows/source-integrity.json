@@ -234,7 +234,7 @@
     "package-lock.json": "7323a1e675e3ac21897afe27bbb3fa15c99a7886427a758e4951cffdf12d4b46",
     "package.json": "0f0680275004ea79bd122e405989f61f2261f39db3d9ae50c0cdf0d31676aa7d",
     "personnel-policy.js": "09b753d90a8379e16a7880992a94440b2337f173972f0123a05453acc137bd77",
-    "personnel-ui.js": "20f9176c57aaa0cba1e0e6e465ba916a98940b7d67b77d648e8a8abd1728f40e",
+    "personnel-ui.js": "1fed1de4eee97d3c9cbee5e67d5697c923871e829b832083012063bf7e9b003c",
     "record-links.js": "35817744433f82e8f159a9a0c6380bc304f9250f02202d39ddac060687483b65",
     "register-tools.js": "42c3b0fa05d16fd5f1fbc977e22b7a65cae50a6801255e76e54968e5c35e5dde",
     "render.yaml": "6b5380726ff44ce58208e6b8990b5fdb588e40175a969b11e79b4fdb22417c57",
@@ -274,6 +274,6 @@
     "backend/src/personnel-directory.ts": "7dab00252ffc20feb558c8b26e3fe6f837bbc61e86d65817aa38e6184dbcc39e",
     "backend/src/vehicle-bank-contract.ts": "fbd8a186cd5b6481b27a968b9b22c2b7981e29818e4b26072e2cd51823a063d9",
     "backend/src/phone.ts": "5bbcd309e18aaa21fb7e5818cd0a458c0dce41f23949e6c8a136f3482777b6cf",
-    "backend/src/personnel-structure.ts": "d75c771097daa56bfc73309fb11d4f1d29b82824fa5146a4d5853140c76a5eca"
+    "backend/src/personnel-structure.ts": "27b632ca8831f41832bb908d949eb8a8431da65fda3f66620d465cc862034eda"
   }
 }
