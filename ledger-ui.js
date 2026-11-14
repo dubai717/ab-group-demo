@@ -2,7 +2,7 @@
 (function (root) {
     'use strict';
     let preferencesLoaded = false;
-    let cap = null, book = null, co = '', tab = 'dashboard', actor = '', epoch = 0, busy = false, notice = '', customers = [], vehicles = [], docs = [], bills = [], report = null, preview = null, selected = '', drafts = {}, context = null, importJob = null;
+    let operatingAvailable=false;let cap = null, book = null, co = '', tab = 'dashboard', actor = '', epoch = 0, busy = false, notice = '', customers = [], vehicles = [], docs = [], bills = [], report = null, preview = null, selected = '', drafts = {}, context = null, importJob = null;
     const t = (a, b) => getLocale() === 'ar' ? a : b, e = x => WorkspaceUI.esc(x ?? ''), now = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dubai' }).format(new Date()), L = LedgerPolicy;
     const labels = { dashboard: ['الرقابة المالية', 'Financial control'], invoices: ['الفواتير', 'Invoices'], collect: ['تنظيم تحصيل', 'Organize collection'], custody: ['العهد والتسليم', 'Custody & handover'], deposits: ['الإيداعات', 'Deposits'], vouchers: ['سندات الصرف المعلقة', 'Pending payment vouchers'], funds: ['الصناديق والنثريات', 'Funds & petty cash'], cards: ['بطاقات الائتمان', 'Credit cards'], journals: ['القيود', 'Journals'], reports: ['القوائم والتقارير', 'Statements & reports'], work: ['Work Amount', 'Work Amount'], intercompany: ['التحويلات بين الشركات', 'Intercompany transfers'], reconciliation: ['المطابقة البنكية والبطاقات', 'Bank/card reconciliation'], setup: ['دليل الحسابات والبنود', 'Accounts & financial items'], import: ['استيراد الفواتير', 'Invoice import'], closing: ['الإغلاق المالي', 'Financial closing'] };
     const words = { id: ['المرجع', 'Reference'], invoiceNumber: ['رقم الفاتورة', 'Invoice number'], receipt_number: ['رقم السند', 'Receipt number'], number: ['الرقم', 'Number'], amount: ['المبلغ', 'Amount'], paid: ['المحصل', 'Paid'], outstanding: ['المستحق', 'Outstanding'], status: ['الحالة', 'Status'], currency: ['العملة', 'Currency'], kind: ['النوع', 'Type'], name: ['الاسم', 'Name'], name_ar: ['الاسم العربي', 'Arabic name'], name_en: ['الاسم الإنجليزي', 'English name'], code: ['الرمز', 'Code'], balance: ['الرصيد', 'Balance'], refill: ['التغذية المطلوبة', 'Refill required'], actual: ['المستلم فعلياً', 'Actually received'], debit: ['مدين', 'Debit'], credit: ['دائن', 'Credit'], net: ['الصافي', 'Net'], company_id: ['الشركة', 'Company'], holder_id: ['الموظف', 'Employee'], dueOn: ['الاستحقاق', 'Due date'], last_four: ['آخر أربعة أرقام', 'Last four'], payment_state: ['حالة التحصيل', 'Collection state'], Active: ['نشط', 'Active'], Pending: ['معلق', 'Pending'], Approved: ['معتمد', 'Approved'], Paid: ['مسدد', 'Paid'], Review: ['للمراجعة', 'Review'], Cleared: ['محصل فعلياً', 'Cleared'], Returned: ['مرتجع', 'Returned'], Partial: ['مسدد جزئياً', 'Partial'], Unpaid: ['غير مسدد', 'Unpaid'], Posted: ['مرحل', 'Posted'], Draft: ['مسودة', 'Draft'], Cancelled: ['ملغى', 'Cancelled'], Corrected: ['مصحح', 'Corrected'] };
@@ -65,7 +65,7 @@
             if (!co || !cap.companies.some(c => c.id === co))
                 co = cap.companies[0]?.id || '';
             if (cap.available && co) {
-                book = await api('workbench?companyId=' + co);
+                book = await api('workbench?companyId=' + co);const operating=await CenterForms.api('operating-billing/capabilities');operatingAvailable=operating.available&&operating.companies.some(x=>x.id===co);
                 await references();
                 if (context || tab === 'invoices')
                     bills = (await api('invoices?' + new URLSearchParams({ companyId: co, ...(context?.customerId ? { customerId: context.customerId } : {}), ...(context?.vehicleId ? { vehicleId: context.vehicleId } : {}) }))).rows;
@@ -85,7 +85,7 @@
             }
         }
     }
-    function reset() { epoch++; preferencesLoaded = false; cap = book = null; co = ''; actor = ''; busy = false; customers = []; vehicles = []; docs = []; bills = []; report = preview = importJob = context = null; drafts = {}; notice = ''; tab = 'dashboard'; }
+    function reset() { operatingAvailable=false;epoch++; preferencesLoaded = false; cap = book = null; co = ''; actor = ''; busy = false; customers = []; vehicles = []; docs = []; bills = []; report = preview = importJob = context = null; drafts = {}; notice = ''; tab = 'dashboard'; }
     function body() {
         const items = book.finance_items, accounts = accountOptions();
         if (tab === 'dashboard')
@@ -152,7 +152,7 @@
             return `<section class="content-panel"><h2>${t('الإدارة المالية', 'Financial management')}</h2><p>${message('ledgerSchemaPending')}</p></section>`;
         if (!book)
             return `<section class="content-panel"><p role="alert">${e(notice || t('لا توجد شركة مفوضة', 'No authorized company'))}</p></section>`;
-        const registerContent=body();return `<section class="content-panel ld-section"><h2>${t('الإدارة المالية والتحصيل والخزينة', 'Finance, collections and treasury')}</h2><nav class="workspace-toolbar">${Object.keys(labels).map(k => btn('tab', label(k), k)).join('')}</nav><div class="fw-actions"><label>${t('الشركة القانونية', 'Legal company')}<select class="input" id="ld-company">${opts(cap.companies, co)}</select></label>${btn('reload', t('تحديث', 'Refresh'))}</div><p id="ld-notice" role="status" aria-live="polite">${e(notice)}</p>${registerContent.includes('data-ft-table')?FinancialTables.search(registerScope()):''}<div id="ld-body">${registerContent}</div><div id="ld-dialog"></div></section>`;
+        const registerContent=body();return `<section class="content-panel ld-section"><h2>${t('الإدارة المالية والتحصيل والخزينة', 'Finance, collections and treasury')}</h2><nav class="workspace-toolbar">${Object.keys(labels).map(k => btn('tab', label(k), k)).join('')}</nav><div class="fw-actions"><label>${t('الشركة القانونية', 'Legal company')}<select class="input" id="ld-company">${opts(cap.companies, co)}</select></label>${btn('reload', t('تحديث', 'Refresh'))}${operatingAvailable?btn('actual-charges',t('الرسوم والمصاريف الفعلية','Actual vehicle charges')):''}</div><p id="ld-notice" role="status" aria-live="polite">${e(notice)}</p>${registerContent.includes('data-ft-table')?FinancialTables.search(registerScope()):''}<div id="ld-body">${registerContent}</div><div id="ld-dialog"></div></section>`;
     }
     function dialog(title, key, fields, extra = '') { document.querySelector('#ld-dialog').innerHTML = '<h3>' + e(title) + '</h3>' + form(key, title, fields, undefined, null, extra).replace('<details class="ld-form-section"', '<details open class="ld-form-section"'); bindForms(); document.querySelector('#ld-dialog').scrollIntoView({ block: 'nearest' }); }
     const serialize = form => {
@@ -447,7 +447,7 @@
     function bindRegisterActions(host=document){host.querySelectorAll('[data-ld]').forEach(button => button.onclick = async () => {
             const action = button.dataset.ld, key = button.dataset.id;
             try {
-                if (action === 'tab') {
+                if(action==='actual-charges'){await root.OperatingBillingUI.openCharges(co);return;}if (action === 'tab') {
                     tab = key;
                     if(!ABCentral.viewAs)await api('preferences', 'POST', { companyId: co, tab: key }, crypto.randomUUID());
                     report = null;

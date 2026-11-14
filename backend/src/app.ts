@@ -1,3 +1,4 @@
+import {registerOperatingBilling} from './operating-billing.js';
 import {normalizeContactPayload} from './phone.js';
 import {hrRight} from './personnel-domain.js';
 import {registerMyWork} from './my-work.js';
@@ -256,6 +257,7 @@ export async function build(options: Options) {
   registerRecordLinks(app,call,cipher);
   registerInvestorEvidence(app,call);
   registerMarketing(app,call,cipher);
+  registerOperatingBilling(app,call,cipher,options.scan);
   registerContractingCompanies(app,call,cipher);
   registerInvestors(app,call,cipher);
   registerInvestorRatingPolicy(app,call,cipher);
@@ -1227,6 +1229,7 @@ export async function build(options: Options) {
       "communications-ui.js",
       "record-links.js",
       "marketing-ui.js",
+      "operating-billing-ui.js",
       "contracting-companies-ui.js",
       "data-import-ui.js",
       "investors-ui.js",
