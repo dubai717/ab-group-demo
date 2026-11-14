@@ -1070,3 +1070,9 @@ table .rg-filter>summary:focus-visible{outline:2px solid var(--gold);outline-off
 @media(max-width:700px){table th,table td{padding:.6rem .65rem;min-inline-size:7rem;font-size:.875rem}.table-wrap{max-block-size:60vh}.register-actions{gap:.45rem}}
 @media(prefers-reduced-motion:reduce){table tbody tr>td{transition:none}}
 @media print{.table-wrap{max-block-size:none;overflow:visible;border:0}table thead th{position:static;print-color-adjust:exact}table tbody tr>td{print-color-adjust:exact}}
+
+/* Contract actions reuse the existing Change state button and brand tokens. */
+.contract-profile-dialog .secondary-btn,.contract-history-dialog .secondary-btn{min-block-size:40px;min-inline-size:min(100%,7rem);white-space:nowrap;word-break:normal;overflow-wrap:normal;margin:.3rem;}
+.contract-profile-dialog .record-section{margin-block:.65rem;padding:.8rem;}
+.contract-history-dialog td{vertical-align:top;}
+@media(max-width:600px){.contract-profile-dialog .secondary-btn,.contract-history-dialog .secondary-btn{white-space:normal;max-inline-size:100%;}.contract-history-dialog .record-action-row{display:flex;flex-wrap:wrap;gap:.4rem;}}
