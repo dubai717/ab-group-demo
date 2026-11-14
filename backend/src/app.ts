@@ -894,6 +894,7 @@ export async function build(options: Options) {
         "invalid",
       );
       let investorEvidence:any=null;requireOk(d.category==='investorEvidence'?!!d.investorAgreementId&&!d.companyId&&!d.bankAccountId&&!!d.userId:!d.investorAgreementId,422,'investorEvidenceContextRequired');if(d.category==='investorEvidence'){investorEvidence=await investorEvidenceUpload(c,m,d.investorAgreementId!,d.userId!,d.parentId);owner.investor_evidence=true;owner.category=d.category;}
+      let linkedEmployeeForDocuments:any=null;if(owner.user_id&&d.category!=='investorEvidence'&&(await c.query("select to_regclass('ab.hr_employees') ok")).rows[0].ok){const linked=(await c.query('select * from ab.hr_employees where user_id=$1',[owner.user_id])).rows[0];linkedEmployeeForDocuments=linked;if(linked)requireOk(hrRight(m,'document_update',linked.company_id)||linked.user_id===m.actor.id,403,'employeeDocumentsRequired');}
       let initialEnrollment = false;
       if (
         owner.user_id &&
@@ -958,8 +959,9 @@ export async function build(options: Options) {
       ];
       requireOk(allowed.includes(d.mime), 422, "invalidFile");
       if (owner.user_id) {
+        const legacyCategoryVersion=linkedEmployeeForDocuments&&d.parentId&&(await c.query('select 1 from ab.documents where id=$1 and user_id=$2 and category=$3',[d.parentId,owner.user_id,d.category])).rowCount;
         requireOk(
-          [
+          ([
             "photo",
             "idFront",
             "idBack",
@@ -967,7 +969,7 @@ export async function build(options: Options) {
             "contract",
             "driving",
             "investorEvidence",
-          ].includes(d.category) &&
+          ].includes(d.category)||!!legacyCategoryVersion) &&
             file.length <= 5 * 1024 * 1024 &&
             ["application/pdf", "image/png", "image/jpeg"].includes(d.mime),
           422,
