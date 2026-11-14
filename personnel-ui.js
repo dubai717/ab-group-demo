@@ -319,7 +319,7 @@ const modal=CenterForms.form(t('الوحدة الإدارية','Administrative u
         f.addEventListener('submit', async (event) => { event.preventDefault(); if (f.dataset.busy)
             return; f.dataset.busy = '1'; const data = new FormData(f), body = {};for(const [name,file]of Object.entries(dialog.files||{})){data.delete(name);for(const item of (Array.isArray(file)?file:[file]))data.append(name,item);} for (const def of dialog.defs)
             if (def.type !== 'file')
-                body[def.name] = ['multiselect','checklist'].includes(def.type)?data.getAll(def.name):def.type === 'checkbox' ? data.has(def.name) : data.get(def.name); const savingDialog=dialog,uploadControls=[...new Set([...f.elements,...document.querySelectorAll('#personnel-workspace [data-hr],#hr-form [data-add-position],#hr-form [data-staff-version]')])].map(node=>[node,node.disabled]);for(const [node]of uploadControls)node.disabled=true;try {
+                body[def.name] = ['multiselect','checklist'].includes(def.type)?data.getAll(def.name):def.type === 'checkbox' ? data.has(def.name) : data.get(def.name); const savingDialog=dialog,uploadControls=[...new Set([...f.elements,...document.querySelectorAll('#personnel-workspace [data-hr],#hr-form [data-add-position],#hr-form [data-staff-version]')])].map(node=>[node,node.disabled]);for(const [node]of uploadControls)node.disabled=true;const restoreControls=()=>{for(const [node,disabled]of uploadControls)if(node.isConnected){const retained=dialog===savingDialog&&dialog?.committedEmployee&&node.closest('#hr-form')&&((node.matches('input:not([type=file]),select,textarea')&&!node.closest('[data-staff-queue]'))||node.matches('[data-hr-check-all],[data-add-position]'));node.disabled=retained?true:disabled;}};try {
             const r = await dialog.save(body, data);
             if (r.preview) {
                 dialog = null;
@@ -334,11 +334,11 @@ const modal=CenterForms.form(t('الوحدة الإدارية','Administrative u
             }
         }
         catch (err) {
-            if (err.message !== 'staleSession')
+            restoreControls();if (err.message !== 'staleSession')
                 FormValidation.fromError(f,err);f.querySelector('#hr-form-error').textContent = (dialog?.committedEmployee?t('حُفظ الموظف؛ أعد المحاولة لاستكمال المرفقات دون إنشاء ملف آخر. ','Employee saved; retry to complete attachments without creating another employee. '):t('تعذر الحفظ؛ لم تُفقد المدخلات. ', 'Save failed; input retained. ')) + err.message;
         }
         finally {
-            for(const [node,disabled]of uploadControls)if(node.isConnected){const retained=dialog===savingDialog&&dialog?.committedEmployee&&node.closest('#hr-form')&&((node.matches('input:not([type=file]),select,textarea')&&!node.closest('[data-staff-queue]'))||node.matches('[data-hr-check-all],[data-add-position]'));node.disabled=retained?true:disabled;}delete f.dataset.busy;
+            restoreControls();delete f.dataset.busy;
         } });
     } WorkspaceUI.enhance();bindStaffForm(f);bindDocumentThumbnails();}
     root.PersonnelUI = { openTask:async id=>{app.state.currentPage='tasks';await load();if(!tasks.some(t=>t.id===id))throw Error('notFound');taskFocus=id;section='tasks';redraw();}, openProfile: async id => { app.state.currentPage='personnel'; await load(); selected=await api('employees/'+id); panel='profile'; await loadPhoto(selected); redraw(); }, render: () => renderUI(), renderTasks: () => renderUI(true), canEnter: () => !!root.ABCentral?.enabled && !!ABCentral.actor, bind, reset, openNotification: async () => { app.state.currentPage = 'personnel'; await load(); redraw(); } };
