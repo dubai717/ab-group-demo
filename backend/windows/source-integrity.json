@@ -246,7 +246,7 @@
     "package-lock.json": "7323a1e675e3ac21897afe27bbb3fa15c99a7886427a758e4951cffdf12d4b46",
     "package.json": "0f0680275004ea79bd122e405989f61f2261f39db3d9ae50c0cdf0d31676aa7d",
     "personnel-policy.js": "09b753d90a8379e16a7880992a94440b2337f173972f0123a05453acc137bd77",
-    "personnel-ui.js": "a4acc299fc2ef8fbe9c6693482dc08e0f98b80670e21888763f51957a36d802e",
+    "personnel-ui.js": "36790e06dd980d4b5dd7ce50d5e51084541bb8424771075c9a9ff14f427ceb98",
     "record-links.js": "35817744433f82e8f159a9a0c6380bc304f9250f02202d39ddac060687483b65",
     "register-tools.js": "42c3b0fa05d16fd5f1fbc977e22b7a65cae50a6801255e76e54968e5c35e5dde",
     "render.yaml": "6b5380726ff44ce58208e6b8990b5fdb588e40175a969b11e79b4fdb22417c57",
@@ -280,6 +280,7 @@
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
     "vehicles.js": "0e80370d92cccdc527d467a010857f3eebed66a9a45d5e7f42b956709d79bd36",
     "view-as-ui.js": "30d331e30558672cc30b0abb89998a5e7c61ec70e2c079dfd0283a05fd1f4138",
-    "workspace-ui.js": "ced27fd06ee5f229dbc2fb0bece48b5124381882b3d6d4b24358a540f66c0201"
+    "workspace-ui.js": "ced27fd06ee5f229dbc2fb0bece48b5124381882b3d6d4b24358a540f66c0201",
+    "backend/tests/personnel-directory.browser.cjs": "69bb074acaee99c68bf0bcd2862269dc4bdc737baaf9355e1caf73d96388c363"
   }
 }
