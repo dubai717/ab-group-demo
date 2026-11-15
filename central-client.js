@@ -487,7 +487,7 @@
       const old=form.dataset.userId||null;
       if(old)data.revision=Number(form.dataset.userRevision||app.state.users.find(u=>u.id===old)?.revision);
       else{if(fd.get('demoPassword')!==fd.get('demoConfirm'))throw Error('mismatch');data.password=fd.get('demoPassword');}
-      delete data.demoPassword;delete data.demoConfirm;
+      delete data.demoPassword;delete data.demoConfirm;if(!old&&form.dataset.sourceEmployeeId){data.sourceEmployeeId=form.dataset.sourceEmployeeId;data.confirmEmployeeLink=!!form.querySelector('[data-confirm-employee-link]')?.checked;}
       const payload=JSON.stringify(data);
       if(form._userResult&&form._userPayload!==payload)throw Error('createdInputChanged');
       const r=form._userResult||await api('users'+(old?'/'+old:''),old?'PATCH':'POST',data,idempotency(form));
