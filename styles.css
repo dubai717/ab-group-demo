@@ -1093,3 +1093,5 @@ select.reference-choice-source{position:absolute!important;inline-size:1px!impor
 @media(max-width:720px){.record-grouped-form .form-grid,.record-data-values{grid-template-columns:minmax(0,1fr)}.record-data-section{padding:.8rem}.record-data-section .reference-choice-controls>input{flex-basis:100%}.record-related-documents{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:1000px){.record-grouped-form .form-grid{grid-template-columns:minmax(0,1fr)}}
 @media(prefers-color-scheme:dark){.record-data-section>h3,.record-data-section>legend{color:var(--text)}}
+/* Keep bulk actions adjacent even when a narrow phone wraps the search and count. */
+.reference-choice-controls:has(>[data-choice-bulk])>[data-choice-count]{flex-basis:100%}.reference-choice-controls>[data-choice-bulk]{flex:1 0 calc(50% - .5rem)}
