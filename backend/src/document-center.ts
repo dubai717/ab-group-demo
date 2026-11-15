@@ -1,3 +1,6 @@
+import {documentExpiry} from './document-expiry.js';
+import {today} from './vehicle-domain.js';
+import {withdrawnAttachments,restoreAttachment} from './attachment-history.js';
 import {investorRegistryDocumentRead} from './investor-registry.js';
 import {investorEvidenceRead} from './investor-evidence.js';
 import { documentSearchTokens,normalizeDocumentText,indexDocumentText } from './document-text.js';
@@ -12,7 +15,7 @@ import { employee,hrRight } from './personnel-domain.js';
 import { attachmentRoot } from './attachment-history.js';
 
 const kind=z.enum(['document','customer','vehicle']);
-const schema=z.object({q:z.string().max(200).default(''),companyId:z.uuid().optional(),customerId:z.uuid().optional(),vehicleId:z.uuid().optional(),type:z.string().max(60).optional(),from:z.iso.date().optional(),to:z.iso.date().optional(),archive:z.enum(['current','archived','all']).default('current')}).strict();
+const schema=z.object({q:z.string().max(200).default(''),companyId:z.uuid().optional(),customerId:z.uuid().optional(),vehicleId:z.uuid().optional(),type:z.string().max(60).optional(),from:z.iso.date().optional(),to:z.iso.date().optional(),archive:z.enum(['current','archived','all']).default('current'),expiring:z.enum(['true','false']).default('false')}).strict();
 async function permitted(fn:()=>Promise<any>|any){try{await fn();return true;}catch(e){if(e instanceof ApiError&&[403,404].includes(e.status))return false;throw e;}}
 export function registerDocumentCenter(app:any,call:any,cipher:any,options:any){
     async function authorize(c:any,m:any,source:string,r:any,write=false){
@@ -20,7 +23,7 @@ export function registerDocumentCenter(app:any,call:any,cipher:any,options:any){
         if(source==='vehicle'){requireOk(vehicleRight(m,'documents',r.company_id));return;}
         if(r.employee_id){const e=await employee(c,m,r.employee_id);requireOk(hrRight(m,write?'document_update':'documents',e.company_id)||e.user_id===m.actor.id);return;}
         if(r.personnel_library_id){const l=(await c.query('select * from ab.hr_library where id=$1',[r.personnel_library_id])).rows[0];requireOk(l,404,'notFound');requireOk(hrRight(m,write?'library_manage':'library_download',l.company_id));const p=cipher.open(l.payload_cipher);requireOk(write||m.actor.roleId==='owner'||!p.readerIds?.length||p.readerIds.includes(m.actor.id));return;}
-        r.investor_registry=await investorRegistryDocumentRead(c,m,r.id);if(r.category==='investorEvidence')r.investor_evidence=await investorEvidenceRead(c,m,r.id);documentRight(m,r,write);
+        if(r.user_id&&r.category!=='investorEvidence'&&(await c.query("select to_regclass('ab.hr_employees')ok")).rows[0].ok){const linked=(await c.query('select id from ab.hr_employees where user_id=$1',[r.user_id])).rows[0];if(linked){const e=await employee(c,m,linked.id);requireOk(hrRight(m,write?'document_update':'documents',e.company_id)||e.user_id===m.actor.id);}}r.investor_registry=await investorRegistryDocumentRead(c,m,r.id);if(r.category==='investorEvidence')r.investor_evidence=await investorEvidenceRead(c,m,r.id);documentRight(m,r,write);
     }
     async function original(c:any,m:any,source:string,id:string,write=false){
         const table=source==='document'?'documents':source==='customer'?'customer_files':'vehicle_files';
@@ -34,18 +37,19 @@ export function registerDocumentCenter(app:any,call:any,cipher:any,options:any){
         const r=(await c.query('select company_id from ab.vehicles where id=$1',[d.vehicleId])).rows[0];requireOk(r&&vehicleRight(m,'documents',r.company_id));
     }
     const route=(fn:any)=>call(async(c:any,m:any,s:any,req:any)=>{if(req.method!=='GET')requireOk(req.headers['idempotency-key'],422,'idempotencyRequired');return fn(c,m,s,req);});
-    app.get('/api/document-center',route(async(c:any,m:any,_s:any,req:any)=>{
+    const listDocuments=async(c:any,m:any,_s:any,req:any)=>{
         const q=schema.parse(req.query),available=!!(await c.query("select to_regclass('ab.document_archive_events') ok")).rows[0].ok;
-        const sources:any[]=[];
+        const hasPersonnel=!!(await c.query("select to_regclass('ab.hr_employees')ok")).rows[0].ok,linkedMetadata=new Map<string,any[]>(),linkedCompanies=new Map<string,string>();const sources:any[]=[],checked=new Map<string,boolean>();const allowed=async(source:string,row:any,write=false)=>{const key=[source,row.employee_id||row.personnel_library_id||row.id,write].join(':');if(!checked.has(key))checked.set(key,await permitted(()=>authorize(c,m,source,row,write)));return checked.get(key);};
         const docRows=(await c.query(`select d.*,v.id version_id,v.version,v.original_name,v.title version_title,v.category version_category,v.document_date version_date,v.mime,v.size,v.scan_status,v.created_at version_created_at from ab.documents d join ab.document_versions v on v.document_id=d.id order by v.created_at desc limit 20001`)).rows;
         requireOk(docRows.length<=20000,422,'registerTooLarge');
         for(const r of docRows){
-            if(!await permitted(()=>authorize(c,m,'document',r)))continue;
+            if(!await allowed('document',r))continue;
             let meta:any={name:r.original_name,title:r.version_title,kind:r.version_category};let companyId=r.company_id,endpoint='documents/'+r.version_id+'/file';
             if(r.employee_id){const rec=(await c.query('select r.payload_cipher,r.expires_on,e.company_id from ab.hr_document_records r join ab.hr_employees e on e.id=r.employee_id where r.version_id=$1',[r.version_id])).rows[0];if(!rec)continue;meta={...cipher.open(rec.payload_cipher),expiresOn:rec.expires_on};companyId=rec.company_id;endpoint='personnel/employees/'+r.employee_id+'/documents/'+r.version_id;}
             else if(r.personnel_library_id){const rec=(await c.query('select v.payload_cipher,l.company_id from ab.hr_library_versions v join ab.hr_library l on l.id=v.library_id where v.version_id=$1',[r.version_id])).rows[0];if(!rec)continue;meta=cipher.open(rec.payload_cipher);companyId=rec.company_id;endpoint='personnel/library/'+r.personnel_library_id+'/documents/'+r.version_id;}
+            if(hasPersonnel&&r.user_id){if(!linkedMetadata.has(r.user_id)){const staff=(await c.query('select id,company_id from ab.hr_employees where user_id=$1',[r.user_id])).rows[0];if(staff)linkedCompanies.set(r.user_id,staff.company_id);linkedMetadata.set(r.user_id,staff?(await c.query("select payload_cipher from ab.hr_audit_events where employee_id=$1 and kind='linked_document_metadata'order by created_at desc,id desc",[staff.id])).rows.map((x:any)=>cipher.open(x.payload_cipher).after):[]);}if(linkedCompanies.has(r.user_id))companyId=linkedCompanies.get(r.user_id);const extra=linkedMetadata.get(r.user_id)!.find((x:any)=>x.versionId===r.version_id);if(extra)meta={...meta,...extra};}
             if(r.bank_account_id)companyId=m.state.bankAccounts.find((b:any)=>b.id===r.bank_account_id)?.companyId;
-            sources.push({source:'document',canManage:await permitted(()=>authorize(c,m,'document',r,true)),id:r.id,versionId:r.version_id,version:r.version,companyId,name:meta.name,title:meta.title,type:meta.kind,mime:r.mime,size:r.size,scanStatus:r.scan_status,date:r.version_date,createdAt:r.version_created_at,expiresOn:meta.expiresOn||null,endpoint});
+            sources.push({source:'document',canManage:await allowed('document',r,true),id:r.id,versionId:r.version_id,version:r.version,companyId,name:meta.name,title:meta.title,type:meta.kind,mime:r.mime,size:r.size,scanStatus:r.scan_status,date:r.version_date,createdAt:r.version_created_at,expiresOn:meta.expiresOn||null,endpoint});
         }
         for(const source of ['customer','vehicle']){
             if(!(await c.query('select to_regclass($1) ok',['ab.'+source+'_files'])).rows[0].ok)continue;
@@ -55,8 +59,7 @@ export function registerDocumentCenter(app:any,call:any,cipher:any,options:any){
         }
         const archiveRows=available?(await c.query('select document_id,customer_file_id,vehicle_file_id,action from ab.document_archive_events order by created_at desc,id desc')).rows:[];
         const archiveState=new Map<string,string>();for(const r of archiveRows){const k=r.document_id?'document:'+r.document_id:r.customer_file_id?'customer:'+r.customer_file_id:'vehicle:'+r.vehicle_file_id;if(!archiveState.has(k))archiveState.set(k,r.action);}
-        const withdrawnRows=(await c.query("select entity_type,entity_id from ab.audit_events where action='attachment_withdrawn'")).rows;
-        const withdrawnSet=new Set(withdrawnRows.map((r:any)=>r.entity_type+':'+r.entity_id));
+        const withdrawnSet=new Set<string>();for(const source of ['document','customer_file','vehicle_file'])for(const id of await withdrawnAttachments(c,source))withdrawnSet.add(source+':'+id);
         const linkRows=available?(await c.query('select document_id,customer_file_id,vehicle_file_id,company_id,customer_id,vehicle_id from ab.document_links')).rows:[];
         const bySource=new Map<string,any[]>();for(const r of linkRows){const k=r.document_id?'document:'+r.document_id:r.customer_file_id?'customer:'+r.customer_file_id:'vehicle:'+r.vehicle_file_id;const list=bySource.get(k)||[];list.push(r);bySource.set(k,list);}
         const targetCache=new Map<string,boolean>();
@@ -70,18 +73,27 @@ export function registerDocumentCenter(app:any,call:any,cipher:any,options:any){
             const entityMatch=(!q.companyId||r.companyId===q.companyId||links.some(l=>l.companyId===q.companyId))&&(!q.customerId||r.customerId===q.customerId||links.some(l=>l.customerId===q.customerId))&&(!q.vehicleId||r.vehicleId===q.vehicleId||links.some(l=>l.vehicleId===q.vehicleId));
             const date=r.date instanceof Date?r.date.toISOString().slice(0,10):String(r.date||'').slice(0,10);
             if(!entityMatch||q.type&&r.type!==q.type||q.from&&date<q.from||q.to&&date>q.to)continue;
-            if(q.archive==='current'&&(archive||withdrawn)||q.archive==='archived'&&!archive)continue;
+            if(q.archive==='current'&&(archive||withdrawn)||q.archive==='archived'&&!archive&&!withdrawn)continue;
             const words=normalizeDocumentText([r.name,r.title,r.type,date].join(' '));if(q.q&&!words.includes(normalizeDocumentText(q.q))&&!textIds.has(r.versionId))continue;
             out.push({...r,date,archived:archive,withdrawn,links});
         }
-        return {rows:out,archiveAvailable:available,contentSearch:textReady,contentSearchMode:'PDF text layers and metadata; no OCR or AI',ai:'notActivated',ocr:'notActivated',originalStorageOnly:true};
-    }));
+        const latest=new Map<string,any>();for(const r of out){const key=r.source+':'+r.id,old=latest.get(key);if(!old||Number(r.version)>Number(old.version))latest.set(key,r);}let visible=q.expiring==='true'?[...latest.values()].map(r=>({...r,expiry:documentExpiry(r.expiresOn,today())})).filter(r=>r.expiry&&r.expiry.days<=90):out;
+        if(q.expiring==='true'){const recorded=(await c.query("select entity_id,action,actor_id,created_at from ab.audit_events where entity_type='document_expiry'and entity_id=any($1::text[])order by created_at,id",[visible.map((r:any)=>r.versionId)])).rows;visible=visible.map(r=>({...r,expiryAction:recorded.filter((a:any)=>a.entity_id===r.versionId).at(-1)||null}));}
+        return {rows:visible,archiveAvailable:available,contentSearch:textReady,contentSearchMode:'PDF text layers and metadata; no OCR or AI',ai:'notActivated',ocr:'notActivated',originalStorageOnly:true};
+    };app.get('/api/document-center',route(listDocuments));
+    app.get('/api/document-expiries',route(async(c:any,m:any,s:any,req:any)=>{const documents=await listDocuments(c,m,s,{query:{expiring:'true'}}),rows=[...documents.rows],asOf=today();const add=(source:string,id:string,field:string,expiresOn:any,title:string,companyId:string,reference:string)=>{const expiry=documentExpiry(expiresOn,asOf);if(expiry&&expiry.days<=90)rows.push({source,id,field,versionId:null,title,type:field,companyId,reference,expiresOn:expiry.date,expiry,canManage:false,recordOnly:true});};
+     if((await c.query("select to_regclass('ab.customers') ok")).rows[0].ok){const permitted=m.state.companies.filter((co:any)=>customerCan(m,'view',co.id)).map((co:any)=>co.id),clients=(await c.query('select id,company_id,file_number,payload_cipher from ab.customers where company_id=any($1::uuid[])limit 20001',[permitted])).rows;requireOk(clients.length<=20000,422,'registerTooLarge');for(const r of clients){const data=cipher.open(r.payload_cipher);for(const d of data.identityDocuments||[])if(!d.verifiedVersionId||!rows.some((x:any)=>x.versionId===d.verifiedVersionId))add('customer-record',r.id,d.kind,d.expiresOn,data.fullName,r.company_id,String(r.file_number));}}
+     if((await c.query("select to_regclass('ab.vehicles') ok")).rows[0].ok){const permitted=m.state.companies.filter((co:any)=>vehicleRight(m,'view',co.id)).map((co:any)=>co.id),vehicles=(await c.query('select id,company_id,file_number,payload_cipher from ab.vehicles where company_id=any($1::uuid[])limit 20001',[permitted])).rows;requireOk(vehicles.length<=20000,422,'registerTooLarge');for(const r of vehicles){const d=cipher.open(r.payload_cipher);for(const field of ['ownershipExpiresOn','insuranceExpiresOn'])add('vehicle-record',r.id,field,d[field],d.plate||String(r.file_number),r.company_id,String(r.file_number));}}
+     if(m.company.canRead())for(const co of m.state.companies.filter((co:any)=>m.actor.roleId==='owner'||m.actor.companyIds?.includes(co.id)))add('company-record',co.id,'tradeLicence',co.expiryDate,co.arabicName||co.englishName,co.id,co.tradeLicenseNumber||'');
+     return{rows,total:rows.length,asOf};}));
+
+    app.post('/api/document-center/:source/:id/expiry-action',route(async(c:any,m:any,s:any,req:any)=>{const source=kind.parse(req.params.source),originalRow=await original(c,m,source,z.uuid().parse(req.params.id),false),d=z.object({versionId:z.uuid(),action:z.enum(['acknowledged','renewing']),reason:z.string().max(2000).default('')}).strict().parse(req.body);if(d.action==='renewing')await authorize(c,m,source,originalRow.row,true);const row=(await c.query(source==='document'?'select document_id owner from ab.document_versions where id=$1':'select id,parent_id from ab.'+source+'_files where id=$1',[d.versionId])).rows[0];requireOk(row,404,'notFound');requireOk(source==='document'?row.owner===originalRow.root:await attachmentRoot(c,(source+'_files')as 'customer_files'|'vehicle_files',d.versionId)===originalRow.root,422,'invalidReference');await c.query('select pg_advisory_xact_lock(hashtext($1))',['expiry:'+d.versionId]);const previous=(await c.query("select action from ab.audit_events where entity_type='document_expiry'and entity_id=$1 order by created_at desc,id desc limit 1",[d.versionId])).rows[0];if(previous?.action!==d.action)await audit(c,s.tenant_id,s.user_id,d.action,'document_expiry',d.versionId,['original:'+source+':'+originalRow.root,'retained-originals']);return{saved:true,action:d.action};}));
     app.post('/api/document-center/:source/:id/archive',route(async(c:any,m:any,s:any,req:any)=>{
         const d=z.object({action:z.enum(['archive','restore']),reason:z.string().trim().min(1).max(2000)}).strict().parse(req.body),source=kind.parse(req.params.source),r=await original(c,m,source,z.uuid().parse(req.params.id),true);
         requireOk((await c.query("select to_regclass('ab.document_archive_events') ok")).rows[0].ok,503,'documentCenterMigrationPending');
         await c.query('select pg_advisory_xact_lock(hashtext($1))',['archive:'+r.root]);
         const latest=(await c.query('select action from ab.document_archive_events where '+r.column+'=$1 order by created_at desc,id desc limit 1',[r.root])).rows[0]?.action;
-        requireOk(latest!==d.action&&(d.action==='archive'||latest==='archive'),409,'archiveStateConflict');
+        const withdrawalKind=source==='document'?'document':source+'_file',withdrawn=(await withdrawnAttachments(c,withdrawalKind)).has(r.root);requireOk(latest!==d.action&&(d.action==='archive'||latest==='archive'||withdrawn),409,'archiveStateConflict');if(d.action==='restore'&&withdrawn)await restoreAttachment(c,s.tenant_id,s.user_id,withdrawalKind,r.root,d.reason);
         await c.query('insert into ab.document_archive_events(id,tenant_id,'+r.column+',action,reason_cipher,created_by)values($1,$2,$3,$4,$5,$6)',[randomUUID(),s.tenant_id,r.root,d.action,cipher.seal({reason:d.reason}),s.user_id]);
         await audit(c,s.tenant_id,s.user_id,'document_'+d.action,'document_center',r.root,['state']);return {saved:true,archived:d.action==='archive',fileDeleted:false};
     }));

@@ -1,3 +1,6 @@
+import {assertEmployeeLoginHierarchy} from './personnel-structure.js';
+import {syncEmployeeIdentity} from './personnel-directory.js';
+import {auditHR} from './personnel-domain.js';
 import {normalizeContactPayload} from './phone.js';
 import {hrRight} from './personnel-domain.js';
 import {registerMyWork} from './my-work.js';
@@ -251,7 +254,7 @@ export async function build(options: Options) {
   registerCustomers(app,call,cipher,options);
   registerCollectionFollowup(app,call,cipher);
   registerDocumentCenter(app,call,cipher,options);
-  registerApprovalCenter(app,call);
+  registerApprovalCenter(app,call,cipher);
  registerMyWork(app,call,cipher);
   registerRecordLinks(app,call,cipher);
   registerInvestorEvidence(app,call);
@@ -261,7 +264,7 @@ export async function build(options: Options) {
   registerInvestorRatingPolicy(app,call,cipher);
   registerCentralReports(app,call,cipher);
   registerCentralDashboard(app,call,cipher);
-  registerCommunications(app,call,cipher);
+  registerCommunications(app,call,cipher,options);
   registerVehicles(app,call,cipher,options);
   registerRegisters(app,call,cipher);
   registerLedger(app,call,cipher);
@@ -598,6 +601,9 @@ export async function build(options: Options) {
   const userSave = async (c: PoolClient, m: any, s: any, req: any) => {
     let input = bounded(req.body);
     const id = req.params.id ? uuid(req.params.id) : undefined;
+    let employeeSource:any=null;
+    if(!id&&input.sourceEmployeeId){requireOk(m.actor.roleId==='owner',403,'ownerOnly');requireOk(input.confirmEmployeeLink===true,422,'employeeLinkConfirmationRequired');employeeSource=(await c.query('select * from ab.hr_employees where id=$1 for update',[uuid(input.sourceEmployeeId)])).rows[0];requireOk(employeeSource,404,'notFound');requireOk(!employeeSource.user_id,409,'loginAlreadyLinked');requireOk(!['Ended','Inactive'].includes(employeeSource.state),409,'employmentInactive');const source=cipher.open(employeeSource.payload_cipher);input={...input,nameAr:source.nameAr,nameEn:source.nameEn,phone:source.phone||'',email:source.email||'',jobTitle:employeeSource.job_title,hireDate:employeeSource.hired_on.toISOString().slice(0,10)};requireOk(input.companyIds?.includes(employeeSource.company_id),422,'invalidUserCompany');}
+    delete input.sourceEmployeeId;delete input.confirmEmployeeLink;
     let previous: any;
     if (id) {
       previous = m.policy.actor(id);
@@ -693,6 +699,7 @@ export async function build(options: Options) {
       companyIds,
       departmentIds,
     ]);
+    if(employeeSource){await assertEmployeeLoginHierarchy(c,cipher,employeeSource.id,realId);await c.query('update ab.hr_employees set user_id=$2,revision=revision+1 where id=$1',[employeeSource.id,realId]);await syncEmployeeIdentity(c,cipher,realId,cipher.open(employeeSource.payload_cipher));await auditHR(c,cipher,s,employeeSource,'employee_login_linked',null,{userId:realId,confirmed:true,grantsChanged:false});}
     if (status !== "Active") {
       await c.query(
         "update ab.sessions set expires_at=now() where user_id=$1",
@@ -894,7 +901,7 @@ export async function build(options: Options) {
         "invalid",
       );
       let investorEvidence:any=null;requireOk(d.category==='investorEvidence'?!!d.investorAgreementId&&!d.companyId&&!d.bankAccountId&&!!d.userId:!d.investorAgreementId,422,'investorEvidenceContextRequired');if(d.category==='investorEvidence'){investorEvidence=await investorEvidenceUpload(c,m,d.investorAgreementId!,d.userId!,d.parentId);owner.investor_evidence=true;owner.category=d.category;}
-      let linkedEmployeeForDocuments:any=null;if(owner.user_id&&d.category!=='investorEvidence'&&(await c.query("select to_regclass('ab.hr_employees') ok")).rows[0].ok){const linked=(await c.query('select * from ab.hr_employees where user_id=$1',[owner.user_id])).rows[0];linkedEmployeeForDocuments=linked;if(linked)requireOk(hrRight(m,'document_update',linked.company_id)||linked.user_id===m.actor.id,403,'employeeDocumentsRequired');}
+      let linkedEmployeeForDocuments:any=null;if(owner.user_id&&d.category!=='investorEvidence'&&(await c.query("select to_regclass('ab.hr_employees') ok")).rows[0].ok){const linked=(await c.query('select * from ab.hr_employees where user_id=$1',[owner.user_id])).rows[0];linkedEmployeeForDocuments=linked;if(linked){requireOk(hrRight(m,'document_update',linked.company_id)||linked.user_id===m.actor.id,403,'employeeDocumentsRequired');requireOk(d.relation==='version'&&d.parentId&&d.parentVersionId,409,'employeeProfileRequired');}}
       let initialEnrollment = false;
       if (
         owner.user_id &&
@@ -1236,6 +1243,7 @@ export async function build(options: Options) {
       "data/uae-areas.js",
       "assets/Untitled.png",
       "assets/logo.svg",
+      "assets/libphonenumber-max.js",
     ];
     const send = async (file: string, reply: any) => {
       const types: Record<string, string> = {
