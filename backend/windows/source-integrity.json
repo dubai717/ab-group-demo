@@ -223,7 +223,7 @@
     "contracting-companies-ui.js": "276d77016a0defb49d5c65dbbab373985cac55516daedb28c496a5360a74510d",
     "customer-policy.js": "70b028e17768fbc945af1848a3bfceae9241260c661417b5d232057b804a99dd",
     "customer-requests-ui.js": "0a96453ee20bb56ebb39cb4f4f300b78c49d5da67d57ea04c20d5ab072aa4765",
-    "customers.js": "e6a35154e0d06520369d1b5815789d7bd720ff40dec4790ff065b4d545df8c53",
+    "customers.js": "e29878dd432d10a4b47cdebfb7c5f61ce22571a0e7bb176f55f26323d6f1dfc4",
     "dashboard-ui.js": "75851f06efd053e998ac3a162594f623c2e13425c38c2565b35874aa2da1ee63",
     "data-import-ui.js": "528a3b385bd418c2eb0216b288981c2cf555830998d8602d936d0d171f0ce920",
     "data/uae-areas.js": "a5db8e1e0d1f6f3827dd359782bf772f0a80898d53317a8040e5eb1265279d7a",
@@ -246,14 +246,14 @@
     "package-lock.json": "7323a1e675e3ac21897afe27bbb3fa15c99a7886427a758e4951cffdf12d4b46",
     "package.json": "0f0680275004ea79bd122e405989f61f2261f39db3d9ae50c0cdf0d31676aa7d",
     "personnel-policy.js": "09b753d90a8379e16a7880992a94440b2337f173972f0123a05453acc137bd77",
-    "personnel-ui.js": "36790e06dd980d4b5dd7ce50d5e51084541bb8424771075c9a9ff14f427ceb98",
+    "personnel-ui.js": "4244d2c86badb7795526d31ab1ff3b3d18fbeebf52610951ebeef8872667d76d",
     "record-links.js": "35817744433f82e8f159a9a0c6380bc304f9250f02202d39ddac060687483b65",
     "register-tools.js": "42c3b0fa05d16fd5f1fbc977e22b7a65cae50a6801255e76e54968e5c35e5dde",
     "render.yaml": "6b5380726ff44ce58208e6b8990b5fdb588e40175a969b11e79b4fdb22417c57",
     "reports-ui.js": "6c6b591ca8537c08539992c7579dee6851c5fd083b70d50319422bada14a586f",
     "runtime-config.js": "c7620ce7a24aadc0d789008b7b5d0d934201708ec40df2024d44a29ec19e8aca",
     "server.js": "1f682dd293a894275429b3f3b7afb4cb901e6b0827f524ba0fa1bb3f67a299d7",
-    "styles.css": "6d2871a6e50b6a49cb1744dd2d34c4056948e371005d01564c1dff892438e39b",
+    "styles.css": "4132036d5920755ba5b72cc06f561c04582821c2da2fb85d781a83ca36c173b8",
     "supabase/additive/014_followup_and_eos.sql": "9cbdbeb1af74513f7da94c39a1c701e7f71054825f830d0f8653e13ceb5f1a69",
     "supabase/additive/015_document_center.sql": "676a9d583bd4534ae37b16fd82a217276f803212df34f2b615e28843a9a435a3",
     "supabase/additive/016_marketing.sql": "cd9cd41cb18f0bb2d789f395233427fe963c863806a1f5cb8a956e054bc34405",
@@ -278,9 +278,9 @@
     "tests/user-management.browser.cjs": "ff7125a2d5c449f610fe836a483a437032c58f1f88e3367c347445db9245a91c",
     "user-management.js": "7c0345c7f3c4fb23bdc8b56032be662bb728e166ffb2a7c75ec2f4e310e58e5e",
     "vehicle-policy.js": "820c70e08a11eea43a755ef29112b09059cf54e43bcbdc7cd28dc453d88f3781",
-    "vehicles.js": "0e80370d92cccdc527d467a010857f3eebed66a9a45d5e7f42b956709d79bd36",
+    "vehicles.js": "ae5a952fcfd5059d7b108bd69b05273bbf007cd5094bef0caa64c390dbd40a26",
     "view-as-ui.js": "30d331e30558672cc30b0abb89998a5e7c61ec70e2c079dfd0283a05fd1f4138",
-    "workspace-ui.js": "ced27fd06ee5f229dbc2fb0bece48b5124381882b3d6d4b24358a540f66c0201",
-    "backend/tests/personnel-directory.browser.cjs": "69bb074acaee99c68bf0bcd2862269dc4bdc737baaf9355e1caf73d96388c363"
+    "workspace-ui.js": "1f040802ec50852b6491a496e55bdae8dcd30a5df4cc5d7aadd2d91c079b622c",
+    "backend/tests/personnel-directory.browser.cjs": "f3723cec57a785dda386ab8ab7fad42982ca99e7edb30126363a635e5c0dee03"
   }
 }
