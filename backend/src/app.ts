@@ -498,7 +498,7 @@ export async function build(options: Options) {
   );
   app.get(
     "/api/companies/:id",
-    call(async (c, m, s, req) => m.company.get(uuid(req.params.id))),
+    call(async (c, m, s, req) => {const companyId=uuid(req.params.id);requireOk(securityRoleCompany(m,companyId),403,'companyScopeDenied');return m.company.get(companyId);}),
   );
   const saveBank=async(c:any,m:any,s:any,req:any,bankId?:string)=>{
     const prior=bankId?m.bank.get(bankId):null;
