@@ -1,3 +1,4 @@
+import {securityRoleCompany} from './security-role-access.js';
 import {registerGeneralCommunications} from './general-communications.js';
 import {contractingRight} from './contracting-access.js';
 import {randomUUID} from 'node:crypto';
@@ -17,7 +18,7 @@ const placeholders=new Set(['companyName','customerName','vehicleNumber','record
 export function renderMessageTemplate(body:string,values:Record<string,string>){const keys=[...body.matchAll(/\{\{([a-zA-Z][a-zA-Z0-9]*)\}\}/g)].map(m=>m[1]);requireOk(keys.every(k=>placeholders.has(k)&&typeof values[k]==='string'),422,'templatePlaceholderMissing');requireOk(body.replace(/\{\{([a-zA-Z][a-zA-Z0-9]*)\}\}/g,'').indexOf('{{')===-1,422,'invalidTemplate');return body.replace(/\{\{([a-zA-Z][a-zA-Z0-9]*)\}\}/g,(_,k)=>values[k]);}
 export async function communicationSource(c:any,m:any,type:string,key:string){
  const table=({company:'companies',customer:'customers',vehicle:'vehicles',invoice:'vehicle_invoices',task:'tasks',marketing:'marketing_opportunities',investment:'investor_agreements'}as any)[type];requireOk(table,422,'invalidSource');const r=(await c.query('select * from ab.'+table+' where id=$1',[uuid.parse(key)])).rows[0];requireOk(r,404,'notFound');const co=type==='company'?r.id:r.company_id;
- let allowed=type==='company'?m.company.canRead():type==='customer'?customerCan(m,'view',co):type==='vehicle'?vehicleRight(m,'view',co):type==='invoice'?financeRight(m,'ledger_view',co)&&(!r.contracting_company_id||contractingRight(m,'view',co)):type==='marketing'?marketingAllowed(m,co):false;
+ let allowed=type==='company'?m.company.canRead()&&securityRoleCompany(m,co):type==='customer'?customerCan(m,'view',co):type==='vehicle'?vehicleRight(m,'view',co):type==='invoice'?financeRight(m,'ledger_view',co)&&(!r.contracting_company_id||contractingRight(m,'view',co)):type==='marketing'?marketingAllowed(m,co):false;
  if(type==='marketing'&&(await c.query("select value from ab.settings where key='marketing-enabled'")).rows[0]?.value?.enabled!==true)allowed=false;
  if(type==='task'){await task(c,m,r.id);allowed=true;}
  if(type==='investment'){const p=(await c.query('select user_id from ab.investor_profiles where id=$1',[r.investor_id])).rows[0];allowed=p?.user_id===m.actor.id||investorManager(m,co);}

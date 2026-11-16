@@ -1,3 +1,4 @@
+import {securityRoleCompany} from './security-role-access.js';
 import { requireOk } from './core.js';
 
 // Shared with original document routes: a central index must never invent a broader grant.
@@ -10,6 +11,7 @@ export function documentRight(m: any, owner: any, write: boolean, initialEnrollm
         requireOk(row,404,'notFound');
         requireOk(m.bank.can(write?'manage_documents':'view_documents',row.companyId));
     } else if(owner.company_id) {
+        requireOk(securityRoleCompany(m,owner.company_id),403,'companyScopeDenied');
         requireOk(m.state.companies.some((co:any)=>co.id===owner.company_id),404,'notFound');
         requireOk(write?m.company.canEdit():m.company.canFiles());
     } else {

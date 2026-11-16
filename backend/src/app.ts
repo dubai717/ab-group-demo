@@ -384,7 +384,7 @@ export async function build(options: Options) {
           "select * from ab.audit_events where ($1::boolean or actor_id=$2) order by created_at desc limit 500",
           [m.actor.roleId === "owner", s.user_id],
         )
-      ).rows.map((raw) => {const r=companyAuditView(cipher,raw,canCompany);return ({
+      ).rows.map((raw) => {const r=companyAuditView(cipher,raw,canCompany&&(!m.actor.roleId.startsWith('security:')||m.actor.companyIds.includes(raw.entity_id)));return ({
         entityType:r.entity_type,companyChange:r.companyChange,
         id: r.id,
         at: r.created_at.toISOString(),

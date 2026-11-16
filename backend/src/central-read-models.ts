@@ -1,3 +1,4 @@
+import {securityRoleCompany} from './security-role-access.js';
 import {contractingRight} from './contracting-access.js';
 import { z } from 'zod';
 import { requireOk } from './core.js';
@@ -32,7 +33,7 @@ const columnDate=(v:any)=>v instanceof Date?v.toISOString().slice(0,10):String(v
 export function centralDatasetAccess(m:any,source:string,rows:any[]=[],companyId?:string){
  if(m.actor.roleId==='owner')return true;
  const any=(fn:any)=>m.state.companies.some((co:any)=>(!companyId||co.id===companyId)&&fn(co.id));
- if(source==='companies')return m.company.canRead();
+ if(source==='companies')return m.company.canRead()&&m.state.companies.some((co:any)=>(!companyId||co.id===companyId)&&securityRoleCompany(m,co.id));
  if(source==='banks')return any((co:string)=>m.bank.can('view',co));
  if(source==='customers')return any((co:string)=>customerCan(m,'view',co));
  if(source==='vehicles')return any((co:string)=>vehicleRight(m,'view',co));
