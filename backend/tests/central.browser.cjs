@@ -1,3 +1,4 @@
+const {recordRow}=require('./record-row-locator.cjs');
 const { chromium } = require("playwright"),
   assert = require("node:assert/strict"),
   fs = require("node:fs"),
@@ -88,7 +89,7 @@ const { chromium } = require("playwright"),
         ).id,
     );
     assert.equal(await p.locator("#company-form").count(),0);
-    await p.locator('[data-cd="profile"][data-company="'+companyId+'"]').click();
+    await recordRow(p.locator('[data-cd="profile"][data-company="'+companyId+'"]')).click();
     await p.locator("#cd-profile-form").waitFor();
     assert(await p.locator('#cd-profile-form [name=notes]').isDisabled());await p.locator('[data-cd=edit]').click();
     await p
@@ -127,7 +128,7 @@ const { chromium } = require("playwright"),
     );
     await p.reload();
     await p.locator('[data-page="bankAccounts"]').click();
-    await p.locator('[data-bk="open"][data-id="' + accountId + '"]').click();
+    await recordRow(p.locator('[data-bk="open"][data-id="' + accountId + '"]')).click();
     assert.equal(
       await p.locator("#bk-relationshipManagerEmail").inputValue(),
       "manager@example.test",
@@ -151,7 +152,7 @@ const { chromium } = require("playwright"),
       .waitFor();
     await p.reload();
     await p.locator('[data-page="bankAccounts"]').click();
-    await p.locator('[data-bk="open"][data-id="' + accountId + '"]').click();
+    await recordRow(p.locator('[data-bk="open"][data-id="' + accountId + '"]')).click();
     await p
       .locator(".central-documents")
       .getByText("central.pdf", { exact: true })
