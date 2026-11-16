@@ -1,3 +1,4 @@
+import {registerPersonnelOrganization} from './personnel-organization.js';
 import {registerPersonnelPositions,personnelPositions,checkEmployeeStructure} from './personnel-structure.js';
 import {internationalPhone,validateNewPhone} from './phone.js';
 import {registerPersonnelDirectory,personnelDepartments,normalizePhone,validEmiratesId,syncEmployeeIdentity,assertEmployeeIdentity} from './personnel-directory.js';
@@ -26,7 +27,7 @@ export function registerPersonnel(app: any, call: any, cipher: any, options: any
             throw new ApiError(422, e.message);
         throw e;
     } });
-    registerPersonnelDirectory(app,route,cipher);registerPersonnelPositions(app,route);
+    registerPersonnelDirectory(app,route,cipher);registerPersonnelPositions(app,route);registerPersonnelOrganization(app,route,cipher);
     registerEOSHistory(app, route, cipher);
     registerPersonnelDocuments(app, route, cipher, options);
     registerPersonnelWorkflows(app, route, cipher);

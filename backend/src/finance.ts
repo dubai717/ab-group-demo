@@ -1,3 +1,4 @@
+import {securityRoleRight} from './security-role-access.js';
 import {registerArgs,filterRegister,registerResponse} from './register-query.js';
 import {randomUUID} from 'node:crypto';
 import {createRequire} from 'node:module';
@@ -8,7 +9,7 @@ const P=createRequire(import.meta.url)('../../finance-policy.js');
 const id=z.uuid(),amount=z.string().regex(/^\d{1,18}(\.\d{1,3})?$/).refine(v=>P.units(v)>0n),date=z.iso.date();
 const refs=z.record(z.string().max(40),z.string().max(200)).default({});
 const optionalId=id.nullish();
-export function financeRight(m:any,right:string,company:string){return m.actor.status==='Active'&&(m.actor.roleId==='owner'||m.grants.some((g:any)=>g.user_id===m.actor.id&&g.permission_id===right&&((g.scope_type==='group')||(g.scope_type==='company'&&g.company_id===company))));}
+export function financeRight(m:any,right:string,company:string){return m.actor.status==='Active'&&(m.actor.roleId==='owner'||securityRoleRight(m,right,company)||m.grants.some((g:any)=>g.user_id===m.actor.id&&g.permission_id===right&&((g.scope_type==='group')||(g.scope_type==='company'&&g.company_id===company))));}
 const need=(m:any,r:string,c:string)=>requireOk(financeRight(m,r,c));
 async function ready(c:any){const r=await c.query("select to_regclass('ab.finance_operations') ok");if(!r.rows[0].ok)throw new ApiError(503,'financeSchemaPending');}
 function bank(m:any,bankId:string,active=true){const b=m.state.bankAccounts.find((r:any)=>r.id===bankId);requireOk(b&&m.bank.can('view',b.companyId),403,'denied');if(active)P.chooseBank(m.state.companies,m.state.bankAccounts,b.companyId,b.id);return b;}

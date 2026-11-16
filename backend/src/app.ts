@@ -1,3 +1,4 @@
+import {securityRoleCompany} from './security-role-access.js';
 import {assertEmployeeLoginHierarchy} from './personnel-structure.js';
 import {syncEmployeeIdentity} from './personnel-directory.js';
 import {auditHR} from './personnel-domain.js';
@@ -6,6 +7,7 @@ import {hrRight} from './personnel-domain.js';
 import {registerMyWork} from './my-work.js';
 import {investorProfileLock,investorRegistryDocumentRead} from './investor-registry.js';
 import {registerPermissionAdmin} from './permission-admin.js';
+import {registerSecurityRoles} from './security-roles.js';
 import {investorEvidenceRead,investorEvidenceUpload,recordInvestorEvidence,registerInvestorEvidence} from './investor-evidence.js';
 import {registerRecordLinks} from './record-links.js';
 import {registerInvestorRatingPolicy} from './investor-rating.js';
@@ -249,7 +251,7 @@ export async function build(options: Options) {
         return result;
       },s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:undefined);
     };
-  registerPermissionAdmin(app,call,cipher);
+  registerPermissionAdmin(app,call,cipher);registerSecurityRoles(app,call,cipher);
   registerFinance(app,call,cipher);
   registerCustomers(app,call,cipher,options);
   registerCollectionFollowup(app,call,cipher);
@@ -371,7 +373,7 @@ export async function build(options: Options) {
       }
       const canCompany = m.company.canRead();
       const companies = canCompany
-        ? m.state.companies
+        ? m.state.companies.filter((co:any)=>securityRoleCompany(m,co.id))
         : m.state.companies.map((co: any) => ({
             id: co.id,
             englishName: co.englishName,
@@ -383,7 +385,7 @@ export async function build(options: Options) {
           "select * from ab.audit_events where ($1::boolean or actor_id=$2) order by created_at desc limit 500",
           [m.actor.roleId === "owner", s.user_id],
         )
-      ).rows.map((raw) => {const r=companyAuditView(cipher,raw,canCompany);return ({
+      ).rows.map((raw) => {const r=companyAuditView(cipher,raw,canCompany&&(securityRoleCompany(m,raw.entity_id)));return ({
         entityType:r.entity_type,companyChange:r.companyChange,
         id: r.id,
         at: r.created_at.toISOString(),
@@ -496,7 +498,7 @@ export async function build(options: Options) {
   );
   app.get(
     "/api/companies/:id",
-    call(async (c, m, s, req) => m.company.get(uuid(req.params.id))),
+    call(async (c, m, s, req) => {const companyId=uuid(req.params.id);requireOk(securityRoleCompany(m,companyId),403,'companyScopeDenied');return m.company.get(companyId);}),
   );
   const saveBank=async(c:any,m:any,s:any,req:any,bankId?:string)=>{
     const prior=bankId?m.bank.get(bankId):null;
