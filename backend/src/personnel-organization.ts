@@ -24,7 +24,7 @@ export function registerPersonnelOrganization(app:any,route:any,cipher:any){
    if(q.departmentId&&e.department_id!==q.departmentId&&!additional.includes(q.departmentId))continue;
    if(q.search&&!normalize([p.nameAr,p.nameEn,e.employee_number].join(' ')).includes(normalize(q.search)))continue;
    if(q.position&&!normalize(e.job_title).includes(normalize(q.position)))continue;
-   rows.push({id:e.id,number:String(e.employee_number),nameAr:p.nameAr,nameEn:p.nameEn,jobTitle:e.job_title,positionId:p.positionId||null,departmentId:depIds.has(e.department_id)?e.department_id:null,additionalDepartmentIds:additional,companyId:companyIds.has(e.company_id)?e.company_id:null,companyIds:workCompanies,state:e.state,supervisorEmployeeId:p.supervisorEmployeeId||null,legacyManagerId:e.manager_id,userId:e.user_id});
+   rows.push({id:e.id,number:String(e.employee_number),nameAr:p.nameAr,nameEn:p.nameEn,jobTitle:e.job_title,positionId:p.positionId||null,departmentId:depIds.has(e.department_id)?e.department_id:null,departmentUnavailable:!!e.department_id&&!depIds.has(e.department_id),additionalDepartmentIds:additional,companyId:companyIds.has(e.company_id)?e.company_id:null,companyIds:workCompanies,state:e.state,supervisorEmployeeId:p.supervisorEmployeeId||null,legacyManagerId:e.manager_id,userId:e.user_id});
   }
   const visible=new Map(rows.map(e=>[e.id,e])),byUser=new Map(rows.filter(e=>e.userId).map(e=>[e.userId,e.id]));
   for(const e of rows){const supervisor=e.supervisorEmployeeId||byUser.get(e.legacyManagerId)||null;e.supervisorUnavailable=!!(e.supervisorEmployeeId||e.legacyManagerId)&&!visible.has(supervisor);e.supervisorEmployeeId=visible.has(supervisor)?supervisor:null;delete e.legacyManagerId;delete e.userId;}
