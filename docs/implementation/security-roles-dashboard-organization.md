@@ -12,13 +12,13 @@ Repository: `dubai717/ab-group-demo`. Target: protected staging only.
 
 ## Security migration: isolated only, NOT approved for staging application
 
-`backend/review/security-roles.sql` (SHA-256 `b387102c2e77c950106dc41defd8d25869fe6f0fe2570499203322cca2b3e978`) is a review candidate, outside every migration manifest and automatic migration directory. Application startup/build never runs it. Role-management writes return `securityRoleReviewRequired` until both reviewed procedures exist. The role directory remains readable to the owner, with an explicit pending-approval message.
+`backend/review/security-roles.sql` (SHA-256 `485456c446b1bd86b24183d8f468756bf6e6f8848f4748734010a0f6a31e6b63`) is a review candidate, outside every migration manifest and automatic migration directory. Application startup/build never runs it. Role-management writes return `securityRoleReviewRequired` until both reviewed procedures exist. The role directory remains readable to the owner, with an explicit pending-approval message.
 
 The proposed SQL:
 
 1. Adds nullable `tenant_id` to the existing `ab.roles` table. Existing built-in roles remain NULL, with their payloads and permissions unchanged.
 2. Adds SELECT RLS policies on the existing role and role-permission tables. Built-ins remain visible as before; a custom role is visible only in its own tenant.
-3. Adds two narrowly parameterized, owner-checked, fixed-search-path procedures for saving a tenant custom role and explicitly replacing a user's existing role.
+3. Adds an insert/role-update tenant guard on the existing users table, without rewriting any user. Adds two narrowly parameterized, owner-checked, fixed-search-path procedures for saving a tenant custom role and explicitly replacing a user's existing role.
 4. Grants EXECUTE on those two procedures to the existing runtime role. No superuser, table-write, BYPASSRLS, login or password privilege is added.
 5. Never reassigns users, seeds new roles, changes grants, modifies memberships or deletes a role. Built-in templates cannot be edited globally; the UI can copy one to an explicitly created tenant role.
 6. Blocks owner/self reassignment and cross-tenant role selection. Users with outstanding delegated grants require a separate downstream-grant review before role reassignment. Every actual operation is audited with previous/new values.

@@ -6,6 +6,13 @@ ALTER TABLE ab.roles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY security_role_visibility ON ab.roles FOR SELECT USING(tenant_id IS NULL OR tenant_id=ab.tenant());
 ALTER TABLE ab.role_permissions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY security_role_permission_visibility ON ab.role_permissions FOR SELECT USING(EXISTS(SELECT 1 FROM ab.roles r WHERE r.id=role_id));
+CREATE FUNCTION ab.guard_security_role_tenant() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,ab AS $$
+BEGIN
+ IF NOT EXISTS(SELECT 1 FROM ab.roles r WHERE r.id=NEW.role_id AND(r.tenant_id IS NULL OR r.tenant_id=NEW.tenant_id)) THEN RAISE EXCEPTION 'roleTenantMismatch' USING ERRCODE='23514';END IF;
+ RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION ab.guard_security_role_tenant() FROM PUBLIC;
+CREATE TRIGGER security_role_tenant_guard BEFORE INSERT OR UPDATE OF role_id,tenant_id ON ab.users FOR EACH ROW EXECUTE FUNCTION ab.guard_security_role_tenant();
 
 CREATE FUNCTION ab.save_security_role(role_key text,document jsonb,expected_revision integer) RETURNS text
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,ab AS $$

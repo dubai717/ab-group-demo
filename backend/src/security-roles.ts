@@ -7,7 +7,7 @@ import {model} from './data.js';
 // Writes remain unavailable until the separately reviewed DB procedures are installed.
 export function registerSecurityRoles(app:any,call:any,cipher:any){
  const owner=(m:any)=>requireOk(m.actor.roleId==='owner',403,'ownerOnly');
- const ready=async(c:any)=>!!(await c.query("select to_regprocedure('ab.save_security_role(text,jsonb,integer)')is not null and to_regprocedure('ab.assign_security_role(uuid,text,integer)')is not null ok")).rows[0].ok;
+ const ready=async(c:any)=>!!(await c.query("select to_regprocedure('ab.save_security_role(text,jsonb,integer)')is not null and to_regprocedure('ab.assign_security_role(uuid,text,integer)')is not null and exists(select 1 from pg_trigger where tgrelid='ab.users'::regclass and tgname='security_role_tenant_guard' and tgenabled<>'D')ok")).rows[0].ok;
  const version=(m:any)=>cipher.digest(JSON.stringify({roles:m.state.roles,users:m.state.users.map((u:any)=>({id:u.id,roleId:u.roleId,revision:u.revision})),grants:m.grants}));
  const members=(m:any,id:string)=>m.state.users.filter((u:any)=>u.roleId===id).map((u:any)=>({id:u.id,nameAr:u.nameAr,nameEn:u.nameEn,username:u.username,revision:u.revision}));
  const roleSchema=z.object({id:z.string().max(120).optional(),revision:z.number().int().min(0),nameAr:z.string().trim().min(1).max(160),nameEn:z.string().trim().min(1).max(160),description:z.string().max(2000).default(''),permissions:z.array(z.string().max(100)).max(500),version:z.string().length(64)}).strict();
