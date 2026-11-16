@@ -12,7 +12,7 @@ Repository: `dubai717/ab-group-demo`. Target: protected staging only.
 
 ## Security migration: isolated only, NOT approved for staging application
 
-`backend/review/security-roles.sql` (SHA-256 `485456c446b1bd86b24183d8f468756bf6e6f8848f4748734010a0f6a31e6b63`) is a review candidate, outside every migration manifest and automatic migration directory. Application startup/build never runs it. Role-management writes return `securityRoleReviewRequired` until both reviewed procedures exist. The role directory remains readable to the owner, with an explicit pending-approval message.
+`backend/review/security-roles.sql` (SHA-256 `388c6f2e5305480729315c119909cd8cca2d1c1a06e6f74685fadfe77bc27ed4`) is a review candidate, outside every migration manifest and automatic migration directory. Application startup/build never runs it. Role-management writes return `securityRoleReviewRequired` until both reviewed procedures exist. The role directory remains readable to the owner, with an explicit pending-approval message.
 
 The proposed SQL:
 
@@ -23,7 +23,7 @@ The proposed SQL:
 5. Never reassigns users, seeds new roles, changes grants, modifies memberships or deletes a role. Built-in templates cannot be edited globally; the UI can copy one to an explicitly created tenant role.
 6. Blocks owner/self reassignment and cross-tenant role selection. Users with outstanding delegated grants require a separate downstream-grant review before role reassignment. Every actual operation is audited with previous/new values.
 
-After this separately approved migration, custom-role granular domain rights use the existing account company memberships; legacy built-in role behavior remains unchanged. HR work companies, job titles, reporting lines and units never grant these rights. Removing a role requires an explicitly selected replacement (for example the existing employee role), never automatic reassignment.
+The new procedures explicitly mark only newly managed roles; an existing role is never reinterpreted from its name or identifier. After this separately approved migration, custom-role granular domain rights use the existing account company memberships; legacy built-in role behavior remains unchanged. HR work companies, job titles, reporting lines and units never grant these rights. Removing a role requires an explicitly selected replacement (for example the existing employee role), never automatic reassignment.
 
 ### Required approval and recovery plan
 

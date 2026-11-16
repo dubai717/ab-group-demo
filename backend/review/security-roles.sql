@@ -28,7 +28,7 @@ BEGIN
  FOR permission IN SELECT jsonb_array_elements_text(document->'permissions') LOOP
   IF NOT EXISTS(SELECT 1 FROM ab.permissions WHERE id=permission) THEN RAISE EXCEPTION 'invalidPermission' USING ERRCODE='23514';END IF;
  END LOOP;
- next:=document||jsonb_build_object('revision',expected_revision+1,'name',document->>'nameEn');
+ next:=document||jsonb_build_object('revision',expected_revision+1,'name',document->>'nameEn','securityManaged',true);
  IF old IS NULL THEN INSERT INTO ab.roles(id,data,tenant_id)VALUES(role_key,next,org);ELSE UPDATE ab.roles SET data=next WHERE id=role_key AND tenant_id=org;END IF;
  DELETE FROM ab.role_permissions WHERE role_id=role_key;
  INSERT INTO ab.role_permissions(role_id,permission_id)SELECT role_key,p FROM(SELECT DISTINCT jsonb_array_elements_text(next->'permissions')p)x;

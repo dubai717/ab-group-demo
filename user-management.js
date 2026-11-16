@@ -56,10 +56,10 @@
       if (!actor || actor.status !== 'Active') return [];
       const result = (grants.get(id) || []).filter(g => g.action === action);
       const role = roles.find(r => r.id === actor.roleId);
-      if (isOwner(id) || (!role?.id.startsWith('security:') && legacy[action] && role?.permissions.includes(legacy[action]))) {
+      if (isOwner(id) || (role?.securityManaged!==true && legacy[action] && role?.permissions.includes(legacy[action]))) {
         result.push({ action, scope: { type: 'group', id: '' }, delegable: isOwner(id) });
       }
-      if(role?.id.startsWith('security:')&&(role.permissions.includes(action)||legacy[action]&&role.permissions.includes(legacy[action])))for(const companyId of actor.companyIds||[])if(companies.some(c=>c.id===companyId))result.push({action,scope:{type:'company',id:companyId},delegable:false});
+      if(role?.securityManaged===true&&(role.permissions.includes(action)||legacy[action]&&role.permissions.includes(legacy[action])))for(const companyId of actor.companyIds||[])if(companies.some(c=>c.id===companyId))result.push({action,scope:{type:'company',id:companyId},delegable:false});
       if (action.startsWith('bank_')) {
         for (const entry of (Array.isArray(actor.companyBankPermissions) ? actor.companyBankPermissions : [])) {
           if (Array.isArray(entry.permissions) && entry.permissions.includes(action.slice(5)) && companies.some(c => c.id === entry.companyId)) result.push({action, scope:{type:'company',id:entry.companyId}, delegable:false});
