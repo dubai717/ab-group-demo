@@ -420,7 +420,7 @@ function isUserAllowed(user, permission) {
 
 function getRoleName(roleId) {
   const role = app.state.roles.find(r => r.id === roleId);
-  return role ? role.name : 'Unknown';
+  return role ? ((getLocale()==='ar'?role.nameAr:role.nameEn)||role.name) : 'Unknown';
 }
 
 function getDepartmentName(deptId) {

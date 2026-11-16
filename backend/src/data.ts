@@ -140,7 +140,7 @@ export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
     id: () => randomUUID(),
   });
   const company = CompanyPolicy.createService({
-    state: () => state,
+    state: () => actor.roleId.startsWith('security:')?{...state,companies:state.companies.filter((co:any)=>actor.companyIds.includes(co.id))}:state,
     actor: () => actor,
     persist: () => true,
     validateLocation: (data: any) => location(state, data),

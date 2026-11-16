@@ -1,3 +1,4 @@
+import {dashboardSecurity} from './dashboard-security.js';
 // Read-only projections of existing, recorded lifecycle events. No inferred balances.
 import {z} from 'zod';
 import {requireOk} from './core.js';
@@ -18,9 +19,10 @@ export function movementSeries(events:any[],{months=12,end=today(),from='',to=''
  }const entered=bins.reduce((a,b)=>a+b.in,0),exited=bins.reduce((a,b)=>a+b.out,0);return{months:bins,rows,entered,exited,net:entered-exited};
 }
 export function registerVehicleMovementReport(app:any,call:any,cipher:any){app.get('/api/central-dashboard/vehicle-movements',call(async(c:any,m:any,_s:any,req:any)=>{
+ const security=await dashboardSecurity(c,m);requireOk(security.open&&security.panels.includes('charts')&&security.widgets.includes('vehicles')&&security.details.includes('vehicles')&&security.departmentIds===null,403,'dashboardChartDenied');
  const q=z.object({months:z.coerce.number().refine(n=>n===12||n===24).default(12),companyId:z.uuid().optional(),licenseId:z.uuid().optional(),emirate:z.string().max(80).optional(),from:z.iso.date().optional(),to:z.iso.date().optional()}).strict().parse(req.query);requireOk(has(m.actor,'view_dashboard'));requireOk(!q.from||!q.to||q.to>=q.from,422,'invalidPeriod');
  if(!(await c.query("select to_regclass('ab.vehicle_events') ok")).rows[0].ok)return{available:false,reason:'vehicleSchemaPending'};
- const vehicles=(await c.query('select id,company_id,file_number,payload_cipher from ab.vehicles')).rows.filter((v:any)=>vehicleRight(m,'view',v.company_id)&&(!q.companyId||v.company_id===q.companyId)&&(!q.licenseId||m.state.companies.some((co:any)=>co.id===v.company_id&&co.licenseId===q.licenseId)));
+ const vehicles=(await c.query('select id,company_id,file_number,payload_cipher from ab.vehicles')).rows.filter((v:any)=>vehicleRight(m,'view',v.company_id)&&(security.companyIds===null||security.companyIds.includes(v.company_id))&&(!q.companyId||v.company_id===q.companyId)&&(!q.licenseId||m.state.companies.some((co:any)=>co.id===v.company_id&&co.licenseId===q.licenseId)));
  const allowed=new Map<string,any>();for(const v of vehicles){const p=cipher.open(v.payload_cipher);const geo=(value:string)=>Areas.emirates.find((e:any)=>[e.id,e.legacy,e.ar,e.en].includes(value))?.id||value;if(!q.emirate||geo(p.emirate)===geo(q.emirate))allowed.set(v.id,{...v,plate:p.plate});}
  const raw=allowed.size?(await c.query("select id,vehicle_id,company_id,kind,payload_cipher,created_at from ab.vehicle_events where vehicle_id=any($1::uuid[])and kind=any($2::text[])order by created_at,id limit 50001",[[...allowed.keys()],['registered','internal_sale_registered','status_changed','sale_closed']])).rows:[];requireOk(raw.length<=50000,422,'reportTooLarge');
  const events=raw.map((r:any)=>{const p=cipher.open(r.payload_cipher),v=allowed.get(r.vehicle_id);return{id:r.id,vehicleId:r.vehicle_id,companyId:r.company_id,fileNumber:String(v.file_number),plate:v.plate,kind:r.kind,before:p.before,after:p.after,createdAt:r.created_at.toISOString()};});

@@ -6,6 +6,7 @@ import {hrRight} from './personnel-domain.js';
 import {registerMyWork} from './my-work.js';
 import {investorProfileLock,investorRegistryDocumentRead} from './investor-registry.js';
 import {registerPermissionAdmin} from './permission-admin.js';
+import {registerSecurityRoles} from './security-roles.js';
 import {investorEvidenceRead,investorEvidenceUpload,recordInvestorEvidence,registerInvestorEvidence} from './investor-evidence.js';
 import {registerRecordLinks} from './record-links.js';
 import {registerInvestorRatingPolicy} from './investor-rating.js';
@@ -249,7 +250,7 @@ export async function build(options: Options) {
         return result;
       },s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:undefined);
     };
-  registerPermissionAdmin(app,call,cipher);
+  registerPermissionAdmin(app,call,cipher);registerSecurityRoles(app,call,cipher);
   registerFinance(app,call,cipher);
   registerCustomers(app,call,cipher,options);
   registerCollectionFollowup(app,call,cipher);
@@ -371,7 +372,7 @@ export async function build(options: Options) {
       }
       const canCompany = m.company.canRead();
       const companies = canCompany
-        ? m.state.companies
+        ? m.state.companies.filter((co:any)=>!m.actor.roleId.startsWith('security:')||m.actor.companyIds.includes(co.id))
         : m.state.companies.map((co: any) => ({
             id: co.id,
             englishName: co.englishName,
