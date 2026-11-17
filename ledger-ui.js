@@ -87,7 +87,7 @@
         }
     }
     function reset() { FinancialPackageUI.reset();epoch++; preferencesLoaded = false; cap = book = null; co = ''; actor = ''; busy = false; customers = []; vehicles = []; docs = []; bills = []; report = preview = importJob = context = null; drafts = {}; notice = ''; tab = 'dashboard'; }
-    const packageContext=()=>({co,book,api,refresh,customers,vehicles,docs,company:cap?.companies?.find(r=>r.id===co)});
+    const packageContext=()=>({co,book,api,refresh,customers,vehicles,docs,scope:registerScope(),company:cap?.companies?.find(r=>r.id===co)});
     function body() {
         const packageBody=FinancialPackageUI.body(tab,packageContext());if(packageBody!==null)return packageBody;
         const items = book.finance_items, accounts = accountOptions();
@@ -584,7 +584,7 @@
                 if (err.message !== 'staleSession')
                     show(err);
             } finally {FinancialTables.bind(document.querySelector('.ld-section'),bindRegisterActions);}
-        });}
+        });FinancialPackageUI.bind(packageContext());}
  function bind() {
         if (app.state.currentPage !== 'financialManagement')
             return;

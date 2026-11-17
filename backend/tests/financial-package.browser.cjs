@@ -14,6 +14,8 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         await p.locator('[data-page=financialManagement]').click();
         await p.locator('#ld-company').selectOption(f.companyId);
         await tab('setup');
+        assert.equal(await p.locator('[data-ft-search]').count(), 1, 'one shared search for accounts and financial items');
+        assert.equal(await p.locator('.ld-section table').count(), await p.locator('.ld-section [data-ft-table] table').count(), 'all setup tables use the financial adapter');
         await p.locator('[data-fp=new-item]').click();
         let dialog = p.locator('dialog[open]').last();
         assert.equal(await dialog.locator('[name=code]').count(), 0);
@@ -32,6 +34,14 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         assert(item);
         assert.match(item.code, /^FI-\d+/);
         assert.equal(item.details.recurrenceBinding, 'explicit');
+        await p.locator('[data-ft-search] [name=q]').fill('Financial package UI item');
+        await p.locator('[data-ft-search] button').click();
+        await p.locator('[data-ft-table="package:items"] [data-fp-open="' + item.id + '"]').locator('xpath=ancestor::tr').locator('td').first().click();
+        dialog = p.locator('dialog[open]').last();
+        assert.equal(await dialog.locator('[name=nameEn]').inputValue(), 'Financial package UI item', 'row action is rebound after shared filtering');
+        await dialog.locator('[data-cancel]').click();
+        await p.locator('[data-ft-search] [name=q]').fill('');
+        await p.locator('[data-ft-search] button').click();
         await tab('priorities');
         const before = await p.locator('[data-priority-list] [data-item]').evaluateAll(xs => xs.map(x => x.dataset.item));
         const index = before.indexOf(item.id);
@@ -76,13 +86,13 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         await edit.locator('[type=submit]').click();
         await edit.waitFor({ state: 'detached' });
         await p.locator('#fp-document-type').selectOption('Discount');
-        await p.waitForFunction(() => document.querySelector('[data-register-view*="documents"] tbody')?.innerText.includes('DS-'));
+        await p.waitForFunction(() => document.querySelector('[data-ft-table="package:documents"] tbody')?.innerText.includes('DS-'));
         const documents = await p.evaluate(co => ABCentral.api('ledger/package/documents?companyId=' + co + '&type=Discount'), f.companyId);
         assert.equal(documents.rows.length, 1);
         assert(documents.rows[0].number.startsWith('DS-'));
         for (const type of ['RV', 'PV', 'Deposit']) {
             await p.locator('#fp-document-type').selectOption(type);
-            await p.waitForFunction(() => document.querySelector('[data-register-view*="documents"] [data-fp-open]'));
+            await p.waitForFunction(() => document.querySelector('[data-ft-table="package:documents"] [data-fp-open]'));
             const docs = await p.evaluate(({ co, type }) => ABCentral.api('ledger/package/documents?companyId=' + co + '&type=' + type), { co: f.companyId, type });
             assert.equal(docs.rows.length, 1);
             assert(docs.rows[0].number);
