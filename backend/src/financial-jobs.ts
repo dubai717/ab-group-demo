@@ -1,3 +1,4 @@
+import {runAdministrativeFees,runExplicitRecurring} from './financial-package.js';
 import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { security, transaction, requireOk } from './core.js';
@@ -32,8 +33,8 @@ export async function financialReminders(c: any, cipher: any, s: any, co: string
 // generators stay authoritative; this runner will never invent principal/profit classifications.
 export async function recurringFinancial(c: any, cipher: any, m: any, s: any, co: string, asOf = today()) {
     company(m, co);
-    let issued = 0, skipped = 0;
-    const items = (await c.query('select * from ab.finance_items where active')).rows.map((r: any) => ({ ...r, data: cipher.open(r.payload_cipher) })).filter((r: any) => r.data.invoice && r.data.methods.includes('automatic') && r.data.recurrence !== 'none' && L.units(r.data.recurringAmount) > 0n && r.data.companyIds.includes(co));
+    let issued = (await runExplicitRecurring(c,cipher,m,s,co,asOf)).issued, skipped = 0;
+    const items = (await c.query('select * from ab.finance_items where active')).rows.map((r: any) => ({ ...r, data: cipher.open(r.payload_cipher) })).filter((r: any) => r.data.invoice && r.data.methods.includes('automatic') && r.data.recurrence !== 'none' && r.data.recurrence !== 'contract' && r.data.recurrenceBinding !== 'explicit' && L.units(r.data.recurringAmount) > 0n && r.data.companyIds.includes(co));
     const vehicles = (await c.query("select v.*,u.status customer_status from ab.vehicles v join ab.customers u on u.id=v.customer_id where v.company_id=$1 and v.status in('Active','Pending')", [co])).rows;
     const targetYear = Number(asOf.slice(0, 4)) + (asOf.slice(5, 7) === '12' ? 1 : 0), startMonth = asOf.slice(5, 7) === '12' ? 1 : Number(asOf.slice(5, 7));
     for (const it of items) {
@@ -68,7 +69,7 @@ export async function financialTick(pool: Pool, cipher: any, asOf = today()) {
     for (const job of (await pool.query('select * from ab.enabled_financial_jobs()')).rows) {
         const result = await transaction(pool, job.tenant_id, job.actor_id, async (c) => { const m = await model(c, job.actor_id, cipher); if (!m.state.companies.some((co: any) => co.id === job.company_id && co.status === 'Active'))
             return { issued: 0 }; if (!financeRight(m, 'ledger_configure', job.company_id) || !financeRight(m, 'ledger_invoice_create', job.company_id))
-            return { issued: 0 }; const s = { tenant_id: job.tenant_id, user_id: job.actor_id, actor_type: 'service' }, result = await recurringFinancial(c, cipher, m, s, job.company_id, asOf), reminders = await financialReminders(c, cipher, s, job.company_id, asOf); if (result.issued || reminders.emitted)
+            return { issued: 0 }; const s = { tenant_id: job.tenant_id, user_id: job.actor_id, actor_type: 'service' }, result = await recurringFinancial(c, cipher, m, s, job.company_id, asOf), reminders = await financialReminders(c, cipher, s, job.company_id, asOf), fees=await runAdministrativeFees(c,cipher,m,s,job.company_id,asOf);result.issued+=fees.issued;if (result.issued || reminders.emitted)
             await c.query("insert into ab.audit_events(id,tenant_id,actor_id,actor_type,action,entity_type,entity_id,fields,request_id)values($1,$2,$3,'service','financial_scheduled_run','company',$4,ARRAY['invoices','reminders'],gen_random_uuid())", [randomUUID(), job.tenant_id, job.actor_id, job.company_id]); return result; });
         issued += result.issued;
     }

@@ -1,0 +1,10 @@
+-- REVIEW ONLY. Not in any migration catalog; never applied by normal staging deployment.
+-- Requires separate owner financial approval after isolated preservation tests.
+CREATE OR REPLACE FUNCTION ab.financial_voucher_guard()RETURNS trigger LANGUAGE plpgsql AS $$BEGIN IF OLD.status='Pending' AND NEW.status='Pending' AND OLD.cheque_id IS NULL AND NEW.cheque_id IS NULL AND OLD.bank_account_id IS NULL AND NEW.bank_account_id IS NULL
+ AND OLD.source_key LIKE 'manual-pv:%' AND current_setting('ab.financial_pv_draft',true)=OLD.id::text
+ AND (OLD.tenant_id,OLD.company_id,OLD.item_id,OLD.customer_id,OLD.number,OLD.source_key,OLD.currency,OLD.created_by,OLD.approved_by,OLD.approved_at) IS NOT DISTINCT FROM (NEW.tenant_id,NEW.company_id,NEW.item_id,NEW.customer_id,NEW.number,NEW.source_key,NEW.currency,NEW.created_by,NEW.approved_by,NEW.approved_at)
+ AND NEW.revision=OLD.revision+1
+ AND EXISTS(SELECT 1 FROM ab.users u WHERE u.id=nullif(current_setting('ab.actor',true),'')::uuid AND u.tenant_id=OLD.tenant_id AND u.role_id='owner' AND u.status='Active')
+ AND EXISTS(SELECT 1 FROM ab.settings p WHERE p.tenant_id=OLD.tenant_id AND p.key='financial-package-v1:pv-drafts:'||OLD.company_id::text||':'||OLD.id::text)
+ AND NOT EXISTS(SELECT 1 FROM ab.finance_journals j WHERE j.company_id=OLD.company_id AND j.source_key='voucher:'||OLD.id::text)
+ THEN RETURN NEW; END IF; IF OLD.status IN('Paid','Cancelled')OR(OLD.tenant_id,OLD.company_id,OLD.item_id,OLD.customer_id,OLD.number,OLD.source_key,OLD.amount,OLD.currency,OLD.issued_on,OLD.payload_cipher,OLD.created_by)IS DISTINCT FROM(NEW.tenant_id,NEW.company_id,NEW.item_id,NEW.customer_id,NEW.number,NEW.source_key,NEW.amount,NEW.currency,NEW.issued_on,NEW.payload_cipher,NEW.created_by)OR(OLD.status='Approved'AND(OLD.bank_account_id,OLD.cheque_id)IS DISTINCT FROM(NEW.bank_account_id,NEW.cheque_id))THEN RAISE EXCEPTION 'immutable voucher identity' USING ERRCODE='23514';END IF;RETURN NEW;END $$;

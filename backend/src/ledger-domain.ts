@@ -75,7 +75,7 @@ export async function evidence(c: any, m: any, co: string, id: string, clean = t
     return r;
 }
 export async function balance(c: any, account: string) { return L.units((await c.query("select coalesce(sum(e.debit-e.credit),0)::text amount from ab.finance_entries e left join ab.finance_operations o on o.id=e.operation_id left join ab.finance_journals j on j.id=e.journal_id where e.chart_id=$1 and(o.status='Approved'or j.status='Posted')", [account])).rows[0].amount); }
-export async function invoices(c: any, q: any) { const rows = (await c.query(`select i.*,l.item_id,l.issued_on,l.source_key financial_source,it.name_ar,it.name_en,it.priority,ab.financial_allocation_total(i.id)::text paid,coalesce((select sum(a.amount)from ab.vehicle_invoice_adjustments a where a.invoice_id=i.id and a.kind<>'writeoff'),0)::text credited,coalesce((select sum(a.amount)from ab.vehicle_invoice_adjustments a where a.invoice_id=i.id and a.kind='writeoff'),0)::text written_off from ab.vehicle_invoices i join ab.finance_invoice_links l on l.invoice_id=i.id join ab.finance_items it on it.id=l.item_id where i.company_id=$1 and($2::uuid is null or i.customer_id=$2)and($3::uuid is null or i.vehicle_id=$3)and($4::text is null or i.currency=$4)and($5::text is null or to_jsonb(i)->>'contracting_company_id'=$5) order by it.priority,i.due_on,i.invoice_number`, [q.companyId, q.customerId || null, q.vehicleId || null, q.currency || null,q.contractingCompanyId||null])).rows; return rows.map((r: any) => { const legal = L.units(r.amount) - L.units(r.paid) - L.units(r.credited), book = legal - L.units(r.written_off); return { ...r, amount: L.money(L.units(r.amount)), paid: L.money(L.units(r.paid)), outstanding: L.money(legal), bookOutstanding: L.money(book > 0n ? book : 0n), status: legal === 0n ? (L.units(r.credited) === L.units(r.amount) ? 'Corrected' : 'Paid') : L.units(r.paid) > 0n ? 'Partial' : 'Unpaid', dueOn: r.due_on.toISOString().slice(0, 10), invoiceNumber: String(r.invoice_number), payload_cipher: undefined }; }); }
+export async function invoices(c: any, q: any) { const rows = (await c.query(`select i.*,l.item_id,l.issued_on,l.source_key financial_source,it.name_ar,it.name_en,it.priority,ab.financial_allocation_total(i.id)::text paid,coalesce((select sum(a.amount)from ab.vehicle_invoice_adjustments a where a.invoice_id=i.id and a.kind<>'writeoff'),0)::text credited,coalesce((select sum(a.amount)from ab.vehicle_invoice_adjustments a where a.invoice_id=i.id and a.kind='writeoff'),0)::text written_off from ab.vehicle_invoices i join ab.finance_invoice_links l on l.invoice_id=i.id join ab.finance_items it on it.id=l.item_id where i.company_id=$1 and($2::uuid is null or i.customer_id=$2)and($3::uuid is null or i.vehicle_id=$3)and($4::text is null or i.currency=$4)and($5::text is null or to_jsonb(i)->>'contracting_company_id'=$5) and($6::uuid[] is null or i.id=any($6::uuid[])) order by it.priority,i.due_on,i.invoice_number`, [q.companyId, q.customerId || null, q.vehicleId || null, q.currency || null,q.contractingCompanyId||null,q.invoiceIds||null])).rows; return rows.map((r: any) => { const legal = L.units(r.amount) - L.units(r.paid) - L.units(r.credited), book = legal - L.units(r.written_off); return { ...r, amount: L.money(L.units(r.amount)), paid: L.money(L.units(r.paid)), outstanding: L.money(legal), bookOutstanding: L.money(book > 0n ? book : 0n), status: legal === 0n ? (L.units(r.credited) === L.units(r.amount) ? 'Corrected' : 'Paid') : L.units(r.paid) > 0n ? 'Partial' : 'Unpaid', dueOn: r.due_on.toISOString().slice(0, 10), invoiceNumber: String(r.invoice_number), payload_cipher: undefined }; }); }
 export async function customer(c: any, m: any, id: string, co: string, vehicle?: string) {
     const r = (await c.query('select * from ab.customers where id=$1', [id])).rows[0];
     requireOk(r && r.status === 'Active' && customerCan(m, 'view', r.company_id), 403, 'denied');
@@ -88,7 +88,7 @@ export async function customer(c: any, m: any, id: string, co: string, vehicle?:
 export async function invoice(c: any, cipher: any, m: any, s: any, d: any) {
  company(m,d.companyId);requireOk(exactFinancialParty(d),422,'financialPartyRequired');
  if(d.contractingCompanyId)await contractingParty(c,m,d.contractingCompanyId,d.companyId);else await customer(c,m,d.customerId,d.companyId,d.vehicleId);
- const it=await item(c,cipher,m,d.itemId,d.companyId);requireOk(it.data.invoice&&it.data.methods.includes(d.mode||'manual'),403,'denied');await open(c,d.companyId,d.issuedOn);
+ const it=await item(c,cipher,m,d.itemId,d.companyId);if(it.data.recurrenceBinding==='explicit'&&it.data.recurrence==='contract')requireOk(d.contractId&&d.contractVehicleId&&d.contractingCompanyId,403,'contractScheduleAuthoritative');requireOk(it.data.invoice&&it.data.methods.includes(d.mode||'manual'),403,'denied');await open(c,d.companyId,d.issuedOn);
  requireOk(!(await c.query('select id from ab.finance_invoice_links where company_id=$1 and source_key=$2',[d.companyId,d.sourceKey])).rowCount,409,'duplicate');
  const id=randomUUID(),columns=d.contractingCompanyId?',contracting_company_id':'',placeholder=d.contractingCompanyId?',$13':'';
  await c.query("insert into ab.vehicle_invoices(id,tenant_id,company_id,customer_id,vehicle_id,invoice_number,kind,source_key,due_on,amount,currency,payload_cipher,created_by"+columns+")values($1,$2,$3,$4,$5,$6,'financial',$7,$8,$9,$10,$11,$12"+placeholder+")",[id,s.tenant_id,d.companyId,d.customerId||null,d.vehicleId||null,await number(c,s.tenant_id,'invoice'),'financial:'+d.sourceKey,d.dueOn,d.amount,d.currency,cipher.seal({itemId:d.itemId,description:d.description||'',issuedOn:d.issuedOn,source:d.mode||'manual',...(d.contractVehicleId?{contractVehicleId:d.contractVehicleId,contractId:d.contractId}: {})}),s.user_id,...(d.contractingCompanyId?[d.contractingCompanyId]:[])]);
@@ -142,15 +142,18 @@ export async function bankPosting(c: any, cipher: any, m: any, s: any, d: any) {
 }
 export async function allocateReceipt(c: any, s: any, r: any, cipher: any) {
     let left = L.units(r.amount);
-    const target=(r.payload_cipher?cipher.open(r.payload_cipher):{}).targetInvoiceId;
+    const selection=r.payload_cipher?cipher.open(r.payload_cipher):{},target=selection.targetInvoiceId;
     const bills = await invoices(c, { companyId: r.company_id, customerId: r.customer_id, contractingCompanyId:r.contracting_company_id, vehicleId: r.vehicle_id, currency: r.currency });
     for (const b of bills.filter((b: any) => (!target||b.id===target) && b.item_id === r.item_id && (b.contracting_company_id||null)===(r.contracting_company_id||null) && b.customer_id===r.customer_id && b.vehicle_id === r.vehicle_id && L.units(b.outstanding) > 0n)) {
-        const take = L.units(b.outstanding) < left ? L.units(b.outstanding) : left;
+        if(selection.invoiceAllocations&&!selection.invoiceAllocations.some((a:any)=>a.invoiceId===b.id))continue;
+        const explicit=selection.invoiceAllocations?.find((a:any)=>a.invoiceId===b.id);if(explicit)requireOk(L.units(explicit.amount)<=L.units(b.outstanding)&&L.units(explicit.amount)<=left,409,'allocationChanged');
+        const take = explicit?L.units(explicit.amount):L.units(b.outstanding) < left ? L.units(b.outstanding) : left;
         if (!take)
             break;
         await c.query('insert into ab.vehicle_allocations(id,tenant_id,company_id,invoice_id,receipt_id,amount,created_by)values($1,$2,$3,$4,$5,$6,$7)', [randomUUID(), s.tenant_id, r.company_id, b.id, r.id, L.money(take), s.user_id]);
         left -= take;
     }
+    if(selection.invoiceAllocations)requireOk(left===0n,409,'allocationChanged');
     return left;
 }
 export async function postReceipt(c: any, cipher: any, m: any, s: any, r: any, method: string, date: string) {

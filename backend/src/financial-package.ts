@@ -1,0 +1,233 @@
+import {financeRight} from './finance.js';
+import { randomUUID } from 'node:crypto';
+import { z } from 'zod';
+import { requireOk, sha } from './core.js';
+import { number, today } from './vehicle-domain.js';
+import { L, need, item, invoices, invoice, customer, event, resolve, line, journal, open, evidence, custody } from './ledger-domain.js';
+const id = z.uuid(), day = z.iso.date(), money = z.string().regex(/^\d{1,15}(\.\d{1,3})?$/), positive = money.refine(x => L.units(x) > 0n), text = z.string().trim().min(1).max(2000);
+const prefix = 'financial-package-v1:';
+export async function packageRecord(c: any, cipher: any, key: string) { const r = (await c.query('select value from ab.settings where key=$1', [prefix + key])).rows[0]; return r ? cipher.open(r.value.cipher) : null; }
+async function records(c: any, cipher: any, kind: string, co: string) { const rows = (await c.query('select value from ab.settings where key like $1 order by key limit 2001', [prefix + kind + ':' + co + ':%'])).rows; requireOk(rows.length <= 2000, 422, 'registerTooLarge'); return rows.map((r: any) => cipher.open(r.value.cipher)); }
+async function save(c: any, cipher: any, s: any, kind: string, d: any, previous: any = null) { const value = { ...d, revision: (previous?.revision || 0) + 1, createdBy: previous?.createdBy || s.user_id, createdAt: previous?.createdAt || new Date().toISOString(), updatedBy: s.user_id, updatedAt: new Date().toISOString() }; await c.query('insert into ab.settings(tenant_id,key,value)values($1,$2,$3)on conflict(tenant_id,key)do update set value=excluded.value', [s.tenant_id, prefix + kind + ':' + d.companyId + ':' + d.id, { cipher: cipher.seal(value), ...(kind === 'documents' ? { index: { documentId: value.documentId || value.id, nativeId: value.nativeId || value.id, documentType: value.kind || value.type || 'Discount', originInvoiceId: value.originInvoiceId || null } } : {}) }]); await event(c, cipher, s, d.companyId, kind === 'priority' ? d.companyId : d.id, 'financial_' + kind + (previous ? '_updated' : '_created'), previous, value); return value; }
+export async function registerManualVoucher(c: any, cipher: any, s: any, companyId: string, id: string) { return save(c, cipher, s, 'pv-drafts', { id, companyId, manual: true }); }
+export async function recordFinancialDocument(c: any, cipher: any, s: any, co: string, nativeId: string, type: string, details: any = {}) { const kind=type==='Deposit'?['DP-','financial_deposit']:type==='PV'?['CPV-','financial_cash_payment']:['DS-','financial_discount'];const n=kind[0]+await number(c,s.tenant_id,kind[1]); return save(c, cipher, s, 'documents', { id: nativeId, companyId: co, nativeId, number: n, kind: type, ...details }); }
+// Activation is a separately reviewed, company-specific owner approval. No UI/API here
+// creates this approval or silently enables it on existing data. Tests install it only
+// in their freshly-created isolated DB. No change to any existing role/grant is needed.
+export async function financialApproval(c: any, cipher: any, m: any, co: string, feature: string, record?: any) { const a = record === undefined ? await packageRecord(c, cipher, 'approval:' + co) : record; return !!(a && a.companyId === co && a.features?.includes(feature) && a.reviewedDigest && a.reason && a.approvedOn <= today() && m.state.users.some((u: any) => u.id === a.approvedBy && u.roleId === 'owner' && u.status === 'Active')); }
+export async function priorityPolicy(c: any, cipher: any, co: string) { return packageRecord(c, cipher, 'priority:' + co + ':current'); }
+export function orderDues(rows: any[], policy: any) { if (!policy?.enabled)
+    return rows; const rank = new Map(policy.itemIds.map((v: string, i: number) => [v, i])); return [...rows].sort((a, b) => Number(rank.get(a.item_id) ?? 100000) - Number(rank.get(b.item_id) ?? 100000) || a.dueOn.localeCompare(b.dueOn) || Number(a.invoiceNumber) - Number(b.invoiceNumber)).map(r => ({ ...r, priority: Number(rank.get(r.item_id) ?? 100000) })); }
+export function addCalendarMonths(date: string, months: number) { const [y, m, d] = date.split('-').map(Number), target = new Date(Date.UTC(y, m - 1 + months, 1)), last = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate(); return new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth(), Math.min(d, last))).toISOString().slice(0, 10); }
+export function planAdministrativeFees(rule: any, rows: any[], asOf: string, already = new Set<string>()) {
+    if (!rule.enabled || asOf < rule.effectiveOn)
+        return [];
+    const due = rows.filter(r => r.company_id === rule.companyId && r.item_id === rule.itemId && r.currency === 'AED' && !r.contracting_company_id && !r.administrativeFee && !r.creditReviewRequired && L.units(r.outstanding) > 0n && L.units(r.written_off || '0') === 0n && r.dueOn >= (rule.eligibleFrom || rule.effectiveOn) && addCalendarMonths(r.dueOn, rule.delayMonths) <= asOf);
+    const groups = new Map<string, any[]>();
+    for (const r of due) {
+        const key = rule.unit === 'customer_item' ? r.customer_id : r.id;
+        groups.set(key, [...(groups.get(key) || []), r]);
+    }
+    const out: any[] = [];
+    for (const [unit, bills] of groups) {
+        const first = bills.reduce((d, r) => d < addCalendarMonths(r.dueOn, rule.delayMonths) ? d : addCalendarMonths(r.dueOn, rule.delayMonths), addCalendarMonths(bills[0].dueOn, rule.delayMonths));
+        let cycle = first;
+        if (rule.repeat === 'monthly') {
+            let n = (Number(asOf.slice(0, 4)) - Number(first.slice(0, 4))) * 12 + Number(asOf.slice(5, 7)) - Number(first.slice(5, 7));
+            while (n > 0 && addCalendarMonths(first, n) > asOf)
+                n--;
+            cycle = addCalendarMonths(first, n);
+        }
+        if (cycle < rule.effectiveOn)
+            continue;
+        const period = rule.repeat === 'once' ? 'once' : cycle.slice(0, 7), sourceKey = 'admin-fee:' + rule.id + ':' + unit + ':' + period;
+        if (already.has(sourceKey))
+            continue;
+        out.push({ sourceKey, companyId: rule.companyId, customerId: bills[0].customer_id, vehicleId: rule.unit === 'invoice' ? bills[0].vehicle_id : null, originInvoiceIds: bills.map(r => r.id).sort(), originInvoiceNumbers: bills.map(r => r.invoiceNumber || null), amount: rule.amount, baseOutstanding: L.money(bills.reduce((n, r) => n + L.units(r.outstanding), 0n)), dueOn: asOf, period, unit: rule.unit, itemId: rule.feeItemId, ruleRevision: rule.revision });
+    }
+    return out;
+}
+export function planRecurring(relation: any, it: any, asOf: string, already = new Set<string>()) {
+    if (!relation.enabled || !it.active || !['none', 'monthly', 'annual'].includes(it.data.recurrence))
+        return [];
+    const anchor = relation.anchorOn, start = relation.effectiveOn, stop = relation.untilOn || '9999-12-31';
+    if (asOf < start || asOf > stop)
+        return [];
+    let due = anchor;
+    if (it.data.recurrence === 'monthly') {
+        let n = (Number(asOf.slice(0, 4)) - Number(anchor.slice(0, 4))) * 12 + Number(asOf.slice(5, 7)) - Number(anchor.slice(5, 7));
+        if (n < 0)
+            return [];
+        due = relation.proration === 'calendar_days' && n > 0 ? asOf.slice(0, 7) + '-01' : addCalendarMonths(anchor, n);
+        if (due > asOf)
+            return [];
+    }
+    if (it.data.recurrence === 'annual') {
+        let n = Number(asOf.slice(0, 4)) - Number(anchor.slice(0, 4));
+        if (n < 0)
+            return [];
+        due = addCalendarMonths(anchor, n * 12);
+        if (due > asOf)
+            return [];
+    }
+    if (due < start || due > stop)
+        return [];
+    const period = it.data.recurrence === 'none' ? anchor : it.data.recurrence === 'annual' ? due.slice(0, 4) : due.slice(0, 7), sourceKey = 'explicit-repeat:' + it.id + ':' + relation.customerId + ':' + period;
+    if (already.has(sourceKey))
+        return [];
+    let amount = relation.amount;
+    if (relation.proration === 'calendar_days' && it.data.recurrence === 'monthly') {
+        const date = new Date(due + 'T00:00:00Z'), days = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate(), first = due === anchor ? date.getUTCDate() : 1, last = stop.slice(0, 7) === due.slice(0, 7) ? Math.min(days, Number(stop.slice(8, 10))) : days, billed = last - first + 1;
+        if (billed <= 0)
+            return [];
+        amount = L.money((L.units(amount) * BigInt(billed) + BigInt(Math.floor(days / 2))) / BigInt(days));
+    }
+    return [{ sourceKey, companyId: relation.companyId, customerId: relation.customerId, vehicleId: relation.vehicleId || null, itemId: it.id, amount, currency: relation.currency, issuedOn: asOf, dueOn: due, period, relationId: relation.id }];
+}
+async function feePlan(c: any, cipher: any, m: any, co: string, rule: any, asOf: string) { const all = await invoices(c, { companyId: co }); const credits = (await c.query("select distinct r.customer_id from ab.finance_receipts r where r.company_id=$1 and r.currency='AED' and r.payment_state='Cleared' and r.kind<>'credit' and r.amount>coalesce((select sum(a.amount)from ab.vehicle_allocations a where a.receipt_id=r.id and not exists(select 1 from ab.finance_allocation_reversals x where x.allocation_id=a.id)),0)+coalesce((select sum(x.amount)from ab.finance_credit_applications x join ab.finance_receipts cr on cr.id=x.application_receipt_id where x.source_receipt_id=r.id and cr.payment_state='Cleared'),0)", [co])).rows; const held = new Set(credits.map((r: any) => r.customer_id)); const feeIds = new Set((await records(c, cipher, 'fees', co)).map((r: any) => r.feeItemId)); const links = (await c.query("select source_key from ab.finance_invoice_links where company_id=$1 and source_key like 'admin-fee:%'", [co])).rows; return planAdministrativeFees(rule, all.map((r: any) => ({ ...r, administrativeFee: feeIds.has(r.item_id), creditReviewRequired: held.has(r.customer_id) })), asOf, new Set(links.map((r: any) => r.source_key))); }
+export async function runExplicitRecurring(c: any, cipher: any, m: any, s: any, co: string, asOf: string) { if (!await financialApproval(c, cipher, m, co, 'recurring'))
+    return { issued: 0 }; let issued = 0; for (const r of await records(c, cipher, 'relations', co)) {
+    if (!r.enabled)
+        continue;
+    await evidence(c, m, co, r.contractEvidenceId);
+    const client = (await c.query('select status from ab.customers where id=$1 and company_id=$2', [r.customerId, co])).rows[0];
+    if (client?.status !== 'Active')
+        continue;
+    if (r.vehicleId) {
+        const v = (await c.query('select status from ab.vehicles where id=$1 and company_id=$2 and customer_id=$3', [r.vehicleId, co, r.customerId])).rows[0];
+        if (v?.status !== 'Active')
+            continue;
+    }
+    const it = await item(c, cipher, m, r.itemId, co), old = (await c.query("select source_key from ab.finance_invoice_links where company_id=$1 and source_key like 'explicit-repeat:%'", [co])).rows;
+    for (const p of planRecurring(r, it, asOf, new Set(old.map((x: any) => x.source_key)))) {
+        const bill = await invoice(c, cipher, m, s, { ...p, description: r.notes, mode: 'automatic' });
+        await save(c, cipher, s, 'recurrence-links', { id: bill.id, companyId: co, invoiceId: bill.id, relationId: r.id, contractEvidenceId: r.contractEvidenceId, period: p.period, anchorOn: r.anchorOn, amount: p.amount, proration: r.proration });
+        issued++;
+    }
+} return { issued }; }
+export async function runAdministrativeFees(c: any, cipher: any, m: any, s: any, co: string, asOf: string) { if (!await financialApproval(c, cipher, m, co, 'fees'))
+    return { issued: 0 }; let issued = 0; for (const r of await records(c, cipher, 'fees', co)) {
+    if (!r.enabled)
+        continue;
+    await evidence(c, m, co, r.contractEvidenceId);
+    for (const p of await feePlan(c, cipher, m, co, r, asOf)) {
+        const v = await invoice(c, cipher, m, s, { ...p, currency: 'AED', issuedOn: asOf, description: r.notes || 'Administrative follow-up fee', mode: 'automatic' });
+        await save(c, cipher, s, 'fee-links', { id: v.id, companyId: co, invoiceId: v.id, ...p });
+        issued++;
+    }
+} return { issued }; }
+async function discountPage(c: any, companyId: string, page: number) {
+    const group = "coalesce(meta.value->'index'->>'documentId',a.id::text)", from = " from ab.vehicle_invoice_adjustments a join ab.vehicle_invoices i on i.id=a.invoice_id left join ab.settings meta on meta.tenant_id=a.tenant_id and meta.key='financial-package-v1:documents:'||a.company_id::text||':'||a.id::text where a.company_id=$1 and a.kind='waiver' and to_jsonb(i)->>'contracting_company_id' is null and coalesce(meta.value->'index'->>'documentType','Discount')='Discount'";
+    const count = Number((await c.query('select count(distinct ' + group + ') n' + from, [companyId])).rows[0].n), groups = (await c.query('select ' + group + ' group_id,max(a.created_at) created_at' + from + ' group by ' + group + ' order by max(a.created_at) desc,' + group + ' limit 100 offset $2', [companyId, page * 100])).rows;
+    if (!groups.length)
+        return { count, rows: [] };
+    const lines = (await c.query('select a.*,i.customer_id,i.vehicle_id,i.currency,' + group + ' group_id' + from + ' and ' + group + '=any($2::text[]) order by a.created_at,a.id', [companyId, groups.map((r: any) => r.group_id)])).rows;
+    return { count, rows: groups.map((g: any) => { const children = lines.filter((r: any) => r.group_id === g.group_id), first = children[0]; return { ...first, amount: L.money(children.reduce((n: bigint, r: any) => n + L.units(r.amount), 0n)), vehicle_id: new Set(children.map((r: any) => r.vehicle_id)).size === 1 ? first.vehicle_id : null, invoice_ids: children.map((r: any) => r.invoice_id), allocationCount: children.length }; }) };
+}
+
+async function paymentPage(c:any,m:any,co:string,page:number){
+ const includeBank=financeRight(m,'finance_view',co)&&m.bank.can('view',co),sources="with sources as(select to_jsonb(v)||jsonb_build_object('source_kind','voucher','number',v.number::text,'amount',v.amount::text) document from ab.finance_vouchers v where v.company_id=$1 and to_jsonb(v)->>'contracting_company_id' is null union all select to_jsonb(j)||jsonb_build_object('source_kind','cash_journal','number',null,'journal_number',j.number::text,'issued_on',j.effective_on,'amount',(select sum(e.debit)::text from ab.finance_entries e where e.journal_id=j.id)) document from ab.finance_journals j where j.company_id=$1 and j.status='Posted' and j.source_key like 'petty:%' union all select to_jsonb(o)||jsonb_build_object('source_kind','bank_operation','number',o.reference,'issued_on',o.effective_on,'amount',o.amount::text) document from ab.finance_operations o where o.company_id=$1 and $2::boolean and o.kind='payment' and not exists(select 1 from ab.finance_vouchers v where v.company_id=o.company_id and (v.operation_id=o.id or v.cheque_id=o.cheque_id))) ";
+ const args=[co,includeBank],count=Number((await c.query(sources+'select count(*) n from sources',args)).rows[0].n),rows=(await c.query(sources+"select document from sources order by (document->>'created_at')::timestamptz desc,document->>'id' limit 100 offset $3",[...args,page*100])).rows.map((r:any)=>r.document);return{count,rows};
+}
+
+export function registerFinancialPackage(app: any, route: any, cipher: any, correct: any) {
+    const base = '/api/ledger/package';
+    app.get(base + '/state', route(async (c: any, m: any, s: any, req: any) => { const co = id.parse(req.query.companyId); need(m, 'view', co); const approval = await packageRecord(c, cipher, 'approval:' + co); return { companyId: co, priority: await priorityPolicy(c, cipher, co), feeRules: await records(c, cipher, 'fees', co), relations: await records(c, cipher, 'relations', co), approved: Object.fromEntries(await Promise.all(['priority', 'fees', 'recurring', 'documents'].map(async (f) => [f, await financialApproval(c, cipher, m, co, f, approval)]))), activation: 'specific owner financial review required; no automatic changes to existing balances' }; }));
+    app.post(base + '/priority', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id, enabled: z.boolean(), itemIds: z.array(id).max(2000), revision: z.number().int().min(0), confirm: z.literal(true) }).strict().parse(req.body); need(m, 'configure', d.companyId); requireOk(new Set(d.itemIds).size === d.itemIds.length, 422, 'duplicate'); const old = await priorityPolicy(c, cipher, d.companyId); requireOk((old?.revision || 0) === d.revision, 409, 'revisionConflict'); for (const key of d.itemIds)
+        await item(c, cipher, m, key, d.companyId, true); const active = await financialApproval(c, cipher, m, d.companyId, 'priority'); if (active)
+        requireOk(m.actor.roleId === 'owner', 403, 'ownerOnly'); return save(c, cipher, s, 'priority', { ...d, id: 'current', enabled: active && d.enabled && m.actor.roleId === 'owner', requestedEnabled: d.enabled }, old); }));
+    const feeSchema = z.object({ companyId: id, itemId: id, feeItemId: id, delayMonths: z.number().int().min(1).max(120), amount: positive, repeat: z.enum(['once', 'monthly']), unit: z.enum(['customer_item', 'invoice']), effectiveOn: day, enabled: z.boolean().default(false), contractEvidenceId: id, notes: z.string().max(4000).default(''), revision: z.number().int().min(0).default(0), confirm: z.literal(true) }).strict();
+    app.post(base + '/fees', route(async (c: any, m: any, s: any, req: any) => { const d = feeSchema.parse(req.body); need(m, 'configure', d.companyId); need(m, 'item_manage', d.companyId); requireOk(d.effectiveOn >= today(), 422, 'retroactiveFinancialRuleForbidden'); requireOk(d.itemId !== d.feeItemId, 422, 'feeCompoundingForbidden'); await item(c, cipher, m, d.itemId, d.companyId); const fee = await item(c, cipher, m, d.feeItemId, d.companyId); requireOk(fee.data.invoice && fee.category !== 'work_amount', 422, 'invalidFeeItem'); requireOk((await resolve(c, d.companyId, 'AED', fee.data.revenueId)).kind === 'income', 422, 'feeIncomeMappingRequired'); await evidence(c, m, d.companyId, d.contractEvidenceId); requireOk(!d.enabled, 403, 'financialActivationRequired'); const key = randomUUID(); return save(c, cipher, s, 'fees', { ...d, id: key, enabled: false }); }));
+    app.patch(base + '/fees/:id', route(async (c: any, m: any, s: any, req: any) => { const d = feeSchema.parse(req.body), key = id.parse(req.params.id); need(m, 'configure', d.companyId); const old = await packageRecord(c, cipher, 'fees:' + d.companyId + ':' + key); requireOk(old && old.revision === d.revision, 409, 'revisionConflict'); requireOk(d.itemId === old.itemId && d.feeItemId === old.feeItemId && d.unit === old.unit, 409, 'feeScopeImmutable'); requireOk(d.effectiveOn >= today(), 422, 'retroactiveFinancialRuleForbidden'); await evidence(c, m, d.companyId, d.contractEvidenceId); if (d.enabled) {
+        requireOk(m.actor.roleId === 'owner', 403, 'ownerOnly');
+        requireOk(await financialApproval(c, cipher, m, d.companyId, 'fees'), 403, 'financialActivationRequired');
+    } const history = [...(old.history || []), { revision: old.revision, effectiveOn: old.effectiveOn, amount: old.amount, delayMonths: old.delayMonths, repeat: old.repeat, updatedBy: old.updatedBy, updatedAt: old.updatedAt }]; return save(c, cipher, s, 'fees', { ...d, id: key, history, eligibleFrom: old.eligibleFrom || old.effectiveOn }, old); }));
+    app.post(base + '/fees/:id/preview', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id }).strict().parse(req.body); need(m, 'view', d.companyId); const r = await packageRecord(c, cipher, 'fees:' + d.companyId + ':' + id.parse(req.params.id)); requireOk(r, 404, 'notFound'); const rows = await feePlan(c, cipher, m, d.companyId, { ...r, enabled: true }, today()); return { rows, rule: r, simulation: true, financiallyEnabled: r.enabled && await financialApproval(c, cipher, m, d.companyId, 'fees'), digest: sha(JSON.stringify(rows)), asOf: today() }; }));
+    app.post(base + '/fees/:id/apply', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id, digest: z.string().length(64), confirm: z.literal(true) }).strict().parse(req.body); need(m, 'invoice_create', d.companyId); requireOk(await financialApproval(c, cipher, m, d.companyId, 'fees'), 403, 'financialActivationRequired'); const r = await packageRecord(c, cipher, 'fees:' + d.companyId + ':' + id.parse(req.params.id)); requireOk(r?.enabled, 409, 'ruleDisabled'); await evidence(c, m, d.companyId, r.contractEvidenceId); const rows = await feePlan(c, cipher, m, d.companyId, r, today()); requireOk(sha(JSON.stringify(rows)) === d.digest, 409, 'revisionConflict'); const created = []; for (const p of rows) {
+        const v = await invoice(c, cipher, m, s, { ...p, currency: 'AED', issuedOn: today(), description: r.notes || 'Administrative follow-up fee', mode: 'automatic' });
+        await save(c, cipher, s, 'fee-links', { id: v.id, companyId: d.companyId, invoiceId: v.id, ...p });
+        created.push(v.id);
+    } return { invoiceIds: created, issued: created.length }; }));
+    app.post(base + '/relations', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id, customerId: id, vehicleId: id.nullish(), itemId: id, amount: positive.optional(), currency: z.string().regex(/^[A-Z]{3}$/), effectiveOn: day, untilOn: day.optional(), dateBasis: z.enum(['relationship_start', 'vehicle_registration', 'specific']), anchorOn: day, proration: z.enum(['none', 'calendar_days']).default('none'), contractEvidenceId: id, notes: text, enabled: z.boolean().default(false), confirm: z.literal(true) }).strict().parse(req.body); need(m, 'configure', d.companyId); need(m, 'invoice_create', d.companyId); await customer(c, m, d.customerId, d.companyId, d.vehicleId || undefined); const it = await item(c, cipher, m, d.itemId, d.companyId); requireOk(it.data.recurrenceBinding === 'explicit' && it.data.invoice && it.data.recurrence !== 'contract' && !['work_amount', 'commission', 'finance', 'loan', 'investor', 'service', 'circular', 'insurance', 'gps'].includes(it.category), 422, 'explicitGeneralItemRequired'); d.amount = d.amount || it.data.recurringAmount; requireOk(L.units(d.amount) > 0n && it.data.methods.includes('automatic'), 422, 'entitlementAmountRequired'); await resolve(c, d.companyId, d.currency, it.data.receivableId); await resolve(c, d.companyId, d.currency, it.data.revenueId); requireOk(d.proration !== 'calendar_days' || it.data.recurrence === 'monthly', 422, 'contractProrationReviewRequired'); requireOk(d.effectiveOn >= today() && d.anchorOn >= d.effectiveOn && (!d.untilOn || d.untilOn >= d.anchorOn), 422, 'invalidDate'); if (d.dateBasis === 'relationship_start')
+        requireOk(d.anchorOn === d.effectiveOn, 422, 'invalidDate'); if (d.dateBasis === 'vehicle_registration') {
+        requireOk(d.vehicleId, 422, 'vehicleRequired');
+        const v = (await c.query('select payload_cipher from ab.vehicles where id=$1', [d.vehicleId])).rows[0];
+        const registered = cipher.open(v.payload_cipher).registeredOn;
+        requireOk(registered, 422, 'registrationDateRequired');
+        const count = (Number(d.anchorOn.slice(0, 4)) - Number(registered.slice(0, 4))) * 12 + (it.data.recurrence === 'annual' ? 0 : Number(d.anchorOn.slice(5, 7)) - Number(registered.slice(5, 7)));
+        requireOk((it.data.recurrence === 'none' ? registered : addCalendarMonths(registered, count)) === d.anchorOn, 422, 'registrationDateMismatch');
+    } await evidence(c, m, d.companyId, d.contractEvidenceId); if (d.enabled) {
+        requireOk(m.actor.roleId === 'owner', 403, 'ownerOnly');
+        requireOk(await financialApproval(c, cipher, m, d.companyId, 'recurring'), 403, 'financialActivationRequired');
+    } const existing = await records(c, cipher, 'relations', d.companyId); requireOk(!existing.some((r: any) => r.customerId === d.customerId && r.itemId === d.itemId && (it.data.recurrence === 'none' ? r.anchorOn === d.anchorOn : r.effectiveOn <= (d.untilOn || '9999-12-31') && d.effectiveOn <= (r.untilOn || '9999-12-31'))), 409, 'overlappingEntitlement'); return save(c, cipher, s, 'relations', { ...d, id: randomUUID() }); }));
+    app.post(base + '/relations/:id/status', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id, enabled: z.boolean(), revision: z.number().int(), confirm: z.literal(true) }).strict().parse(req.body); need(m, 'configure', d.companyId); const r = await packageRecord(c, cipher, 'relations:' + d.companyId + ':' + id.parse(req.params.id)); requireOk(r && r.revision === d.revision, 409, 'revisionConflict'); if (d.enabled) {
+        requireOk(m.actor.roleId === 'owner', 403, 'ownerOnly');
+        requireOk(await financialApproval(c, cipher, m, d.companyId, 'recurring'), 403, 'financialActivationRequired');
+    } return save(c, cipher, s, 'relations', { ...r, enabled: d.enabled }, r); }));
+    app.post(base + '/recurring/preview', route(async (c: any, m: any, s: any, req: any) => { const co = id.parse(req.body.companyId); need(m, 'view', co); const rows = []; for (const r of await records(c, cipher, 'relations', co)) {
+        const it = await item(c, cipher, m, r.itemId, co, true);
+        rows.push(...planRecurring({ ...r, enabled: true }, it, today()));
+    } return { rows, simulation: true }; }));
+    // Unified read model: native authoritative documents, no second financial ledger.
+    app.get(base + '/documents', route(async (c: any, m: any, s: any, req: any) => { const q = z.object({ companyId: id, type: z.enum(['Invoice', 'RV', 'Discount', 'PV', 'Deposit']).default('Invoice'), page: z.coerce.number().int().min(0).max(100000).default(0) }).strict().parse(req.query); need(m, 'view', q.companyId); const defs: any = { Invoice: ['vehicle_invoices', 'invoice_number'], RV: ['finance_receipts', 'receipt_number'], Discount: ['vehicle_invoice_adjustments', null], PV: ['finance_vouchers', 'number'], Deposit: ['finance_deposits', null] }; const [table, col] = defs[q.type]; const filter = q.type === 'Invoice' ? " and to_jsonb(t)->>'contracting_company_id' is null" : q.type === 'RV' || q.type === 'PV' ? " and to_jsonb(t)->>'contracting_company_id' is null" : q.type === 'Discount' ? " and kind='waiver'" : ''; const grouped = q.type === 'Discount' ? await discountPage(c,q.companyId,q.page) : q.type==='PV'?await paymentPage(c,m,q.companyId,q.page):null, count = grouped ? grouped.count : Number((await c.query('select count(*) n from ab.' + table + ' t where company_id=$1' + filter, [q.companyId])).rows[0].n); const native = grouped ? grouped.rows : (await c.query('select t.* from ab.' + table + ' t where company_id=$1' + filter + ' order by created_at desc,id limit 100 offset $2', [q.companyId, q.page * 100])).rows; const clientIds = [...new Set(native.map((r: any) => r.customer_id).filter(Boolean))], clients = clientIds.length ? (await c.query('select id,file_number,payload_cipher from ab.customers where id=any($1::uuid[])', [clientIds])).rows : [], vehicleIds = [...new Set(native.map((r: any) => r.vehicle_id).filter(Boolean))], vehicles = vehicleIds.length ? (await c.query('select id,payload_cipher from ab.vehicles where id=any($1::uuid[])', [vehicleIds])).rows : [], entries = native.length ? (await c.query("select value from ab.settings where (key like $1 or key like $4 or key like $5) and (key=any($2::text[]) or value->'index'->>'originInvoiceId'=any($3::text[]))", [prefix + 'documents:' + q.companyId + ':%', native.flatMap((r: any) => [prefix + 'documents:' + q.companyId + ':' + r.id, prefix + 'fee-links:' + q.companyId + ':' + r.id, prefix + 'recurrence-links:' + q.companyId + ':' + r.id]), q.type === 'Invoice' ? native.map((r: any) => r.id) : [], prefix + 'fee-links:' + q.companyId + ':%', prefix + 'recurrence-links:' + q.companyId + ':%'])).rows.map((r: any) => cipher.open(r.value.cipher)) : []; const financialRows = q.type === 'Invoice' ? await invoices(c, { companyId: q.companyId, invoiceIds:native.map((r:any)=>r.id) }) : [], latestEvents = native.length ? (await c.query('select distinct on(entity_id) entity_id,actor_id,created_at from ab.finance_events where company_id=$1 and entity_id=any($2::uuid[]) order by entity_id,created_at desc', [q.companyId, native.map((r: any) => r.id)])).rows : []; const rows = native.map((r: any) => { const data = r.payload_cipher ? cipher.open(r.payload_cipher) : {}, entry = entries.find((d: any) => d.nativeId === r.id), u = m.state.users.find((u: any) => u.id === r.created_by), client = clients.find((x: any) => x.id === r.customer_id), v = vehicles.find((x: any) => x.id === r.vehicle_id), company = m.state.companies.find((x: any) => x.id === q.companyId); const recurrenceOrigin = entries.find((x: any) => x.invoiceId === r.id && x.relationId); const feeOrigin = entries.find((x: any) => x.invoiceId === r.id && x.originInvoiceIds); const financial = financialRows.find((x: any) => x.id === r.id), last = latestEvents.find((x: any) => x.entity_id === r.id); return { id:r.id,sourceKind:r.source_kind||'native',rowKey:r.source_kind?r.source_kind+':'+r.id:null,canAnnotate:r.source_kind==='bank_operation'?financeRight(m,'finance_create',q.companyId):financeRight(m,'ledger_'+(r.source_kind==='cash_journal'?'petty_spend':({Invoice:'invoice_correct',RV:'collect',Discount:'invoice_correct',PV:'voucher_create',Deposit:'deposit'}as any)[q.type]),q.companyId),sourceJournalNumber:r.journal_number||null,contractBound: !!r.contract_id, customerId: r.customer_id || null, vehicleId: r.vehicle_id || null, type: q.type, number: col ? String(r[col] || entry?.number || '') : entry?.number || null, companyNameAr: company?.arabicName, companyNameEn: company?.englishName, date: data.issuedOn || data.effectiveOn || r.received_on || r.effective_on || r.issued_on || r.created_at, dueOn: r.due_on || null, amount: String(r.amount), recurrenceOrigin: recurrenceOrigin ? { period: recurrenceOrigin.period, anchorOn: recurrenceOrigin.anchorOn, proration: recurrenceOrigin.proration } : null, feeOrigin: feeOrigin ? { invoiceNumbers: feeOrigin.originInvoiceNumbers, baseOutstanding: feeOrigin.baseOutstanding, ruleRevision: feeOrigin.ruleRevision, unit: feeOrigin.unit } : null, currency: r.currency || null, customerNumber: client ? String(client.file_number) : null, customerName: client ? cipher.open(client.payload_cipher).fullName || cipher.open(client.payload_cipher).nameEn || cipher.open(client.payload_cipher).nameAr : null, plate: v ? cipher.open(v.payload_cipher).plate : null, beneficiary:data.beneficiary||r.beneficiary||null, description: data.description||data.reason||r.reason||data.notes||null, notes: entry?.notes || data.notes || null, revision: entry?.revision || 0, correctionJournalId: entry?.correctionJournalId || null, bankAccountId:r.bank_account_id||null,bankAccountName:m.bank.list().find((b:any)=>b.id===r.bank_account_id)?.accountName||null,sourceOfFunds:q.type==='Deposit'?m.state.users.find((u:any)=>u.id===r.holder_id)?.nameEn||null:null,paymentMethod:r.source_kind==='cash_journal'?'cash':r.payment_method||(r.cheque_id?'cheque':null), reference: data.reference || null, draftAmendable: q.type === 'Deposit' && r.status === 'Review' || q.type === 'PV' && r.status === 'Pending' && !r.cheque_id && String(r.source_key).startsWith('manual-pv:'), paid: financial?.paid || null, credited: financial?.credited || null, outstanding: financial?.outstanding || null, bookOutstanding: financial?.bookOutstanding || null, createdByName: u?.nameEn || u?.nameAr || u?.username || null, createdAt: r.created_at, approvedByName: m.state.users.find((u: any) => u.id === r.approved_by)?.nameEn || null, approvedAt: r.approved_at || null, sourceReference: r.source_key || data.sourceKey || null, lastModifiedByName: m.state.users.find((u: any) => u.id === (entry?.updatedBy || last?.actor_id || r.created_by))?.nameEn || null, lastModifiedAt: entry?.updatedAt || last?.created_at || r.created_at, adjustments: entries.filter((d: any) => d.originInvoiceId === r.id).map((d: any) => ({ number: d.number, kind: d.kind, amount: d.amount, reason: d.reason })), status: entries.some((d: any) => d.originInvoiceId === r.id && d.kind === 'Cancel') ? 'Cancelled' : financial && L.units(financial.written_off) > 0n ? (L.units(financial.bookOutstanding) > 0n ? 'PartiallyWrittenOff' : 'WrittenOff') : r.status || r.payment_state || entry?.kind || 'Recorded', originInvoiceId: r.invoice_id || null, originInvoiceIds: r.invoice_ids || null, allocationCount: r.allocationCount || 1 }; }); return { rows, count, page: q.page, pageSize: 100 }; }));
+    app.post(base + '/documents/notes', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id, type: z.enum(['Invoice', 'RV', 'Discount', 'PV', 'Deposit']), documentId: id, notes: text, revision: z.number().int().min(0), correctionJournalId:id.optional(),sourceKind:z.enum(['native','voucher','cash_journal','bank_operation']).default('native'),confirm:z.literal(true) }).strict().parse(req.body), defs: any = { Invoice: ['vehicle_invoices', 'invoice_correct'], RV: ['finance_receipts', 'collect'], Discount: ['vehicle_invoice_adjustments', 'invoice_correct'], PV: ['finance_vouchers', 'voucher_create'], Deposit: ['finance_deposits', 'deposit'] }; let [table,right]=defs[d.type];need(m,'view',d.companyId);if(d.type==='PV'&&d.sourceKind==='cash_journal'){table='finance_journals';right='petty_spend';}if(d.type==='PV'&&d.sourceKind==='bank_operation'){table='finance_operations';requireOk(financeRight(m,'finance_create',d.companyId)&&financeRight(m,'finance_view',d.companyId)&&m.bank.can('view',d.companyId));}else need(m,right,d.companyId);const native= (await c.query('select * from ab.' + table + ' where id=$1 and company_id=$2', [d.documentId, d.companyId])).rows[0]; requireOk(native&&!native.contracting_company_id&&(d.sourceKind!=='cash_journal'||String(native.source_key).startsWith('petty:'))&&(d.sourceKind!=='bank_operation'||native.kind==='payment'),404,'notFound'); if (d.correctionJournalId) {
+        need(m, 'journal_approve', d.companyId);
+        requireOk((await c.query("select 1 from ab.finance_journals where id=$1 and company_id=$2 and status='Posted'", [d.correctionJournalId, d.companyId])).rowCount, 422, 'invalidCorrectionJournal');
+    } const old = await packageRecord(c, cipher, 'documents:' + d.companyId + ':' + d.documentId); requireOk((old?.revision || 0) === d.revision, 409, 'revisionConflict'); return save(c, cipher, s, 'documents', { ...old, id: d.documentId, nativeId: d.documentId, companyId: d.companyId, notes: d.notes, type: d.type, correctionJournalId: d.correctionJournalId || old?.correctionJournalId || null, financialEffectChanged: false }, old); }));
+    const draftSchema = z.object({ companyId: id, type: z.enum(['PV', 'Deposit']), documentId: id, amount: positive, effectiveOn: day, beneficiary: text.optional(), bankAccountId: id.optional(), reference: text.optional(), notes: z.string().max(4000).default(''), confirm: z.literal(true) }).strict();
+    async function draftReview(c: any, m: any, d: any) { need(m,'view',d.companyId);need(m, d.type === 'PV' ? 'voucher_create' : 'deposit', d.companyId); const table = d.type === 'PV' ? 'finance_vouchers' : 'finance_deposits', r = (await c.query('select * from ab.' + table + ' where id=$1 and company_id=$2 for update', [d.documentId, d.companyId])).rows[0]; requireOk(r, 404, 'notFound'); if (d.type === 'PV') {
+        requireOk(r.status === 'Pending' && !r.cheque_id && !r.bank_account_id && r.source_key.startsWith('manual-pv:'), 409, 'postedDocumentCorrectionRequired');
+        const marker = await packageRecord(c, cipher, 'pv-drafts:' + d.companyId + ':' + r.id);
+        requireOk(marker, 409, 'postedDocumentCorrectionRequired');
+        requireOk(!(await c.query("select 1 from ab.finance_journals where company_id=$1 and source_key=$2", [d.companyId, 'voucher:' + r.id])).rowCount, 409, 'postedDocumentCorrectionRequired');
+        requireOk(d.beneficiary, 422, 'beneficiaryRequired');
+    }
+    else {
+        requireOk(r.status === 'Review' && !r.operation_id && !r.confirmed, 409, 'postedDocumentCorrectionRequired');
+        const bank = m.bank.list().find((b: any) => b.id === d.bankAccountId && b.companyId === d.companyId && b.currency === r.currency && b.status === 'Active');
+        requireOk(bank && d.reference, 422, 'inactiveBank');
+        const available = (await custody(c, d.companyId, r.holder_id, r.currency)).reduce((n: bigint, r: any) => n + L.units(r.amount), 0n);
+        requireOk(available >= L.units(d.amount), 409, 'insufficientCustody');
+    } await open(c, d.companyId, d.effectiveOn); return { r, digest: sha(JSON.stringify({ d, native: r })) }; }
+    app.post(base + '/drafts/preview', route(async (c: any, m: any, s: any, req: any) => { const d = draftSchema.parse(req.body), review = await draftReview(c, m, d); return { digest: review.digest, before: { amount: review.r.amount, status: review.r.status }, after: { amount: d.amount, status: review.r.status }, changesCash: false, requiresFinancialApproval: true }; }));
+    app.post(base + '/drafts/confirm', route(async (c: any, m: any, s: any, req: any) => { const raw = z.object({ data: draftSchema, digest: z.string().length(64) }).strict().parse(req.body), d = raw.data, review = await draftReview(c, m, d), r = review.r; requireOk(review.digest === raw.digest, 409, 'revisionConflict'); requireOk(m.actor.roleId === 'owner', 403, 'ownerOnly'); requireOk(await financialApproval(c, cipher, m, d.companyId, 'documents'), 403, 'financialActivationRequired'); const oldPayload = cipher.open(r.payload_cipher); if (d.type === 'PV') {
+        const guard = (await c.query("select pg_get_functiondef('ab.financial_voucher_guard()'::regprocedure) definition")).rows[0].definition;
+        requireOk(guard.includes('ab.financial_pv_draft'), 409, 'pvDraftGuardReviewRequired');
+        await c.query("select set_config('ab.financial_pv_draft',$1,true)", [r.id]);
+        await c.query('update ab.finance_vouchers set amount=$2,issued_on=$3,payload_cipher=$4,revision=revision+1 where id=$1', [r.id, d.amount, d.effectiveOn, cipher.seal({ ...oldPayload, amount: d.amount, issuedOn: d.effectiveOn, beneficiary: d.beneficiary, notes: d.notes })]);
+    }
+    else {
+        await c.query('update ab.finance_deposits set amount=$2,effective_on=$3,bank_account_id=$4,payload_cipher=$5 where id=$1', [r.id, d.amount, d.effectiveOn, d.bankAccountId, cipher.seal({ ...oldPayload, amount: d.amount, effectiveOn: d.effectiveOn, bankAccountId: d.bankAccountId, reference: d.reference, notes: d.notes })]);
+    } await event(c, cipher, s, d.companyId, r.id, 'financial_draft_amended', { amount: String(r.amount), status: r.status, payload: oldPayload }, { ...d, status: r.status, postedEffectChanged: false }); return { id: r.id, status: r.status, changesCash: false }; }));
+    const adjustment = z.object({ companyId: id, kind: z.enum(['Discount', 'Cancel', 'BadDebt']), items: z.array(z.object({ invoiceId: id, amount: positive }).strict()).min(1).max(100), reason: text, effectiveOn: day, writeOffAccountId: id.optional(), confirm: z.literal(true) }).strict();
+    async function review(c: any, m: any, d: any) { need(m,'view',d.companyId);need(m, 'invoice_correct', d.companyId); const all = await invoices(c, { companyId: d.companyId, invoiceIds:d.items.map((r:any)=>r.invoiceId) }), unique = new Set(d.items.map((r: any) => r.invoiceId)); requireOk(unique.size === d.items.length, 422, 'duplicate'); const rows = d.items.map((v: any) => { const r = all.find((r: any) => r.id === v.invoiceId); requireOk(r && !r.contracting_company_id && !r.contract_id && L.units(v.amount) <= L.units(d.kind === 'BadDebt' ? r.bookOutstanding : r.outstanding), 422, 'amountMismatch'); if (d.kind === 'Cancel')
+        requireOk(r.dueOn > today() && L.units(r.paid) === 0n && L.units(r.credited) === 0n && L.units(r.written_off) === 0n && L.units(v.amount) === L.units(r.amount), 409, 'unsafeInvoiceCancellation'); if (d.kind === 'BadDebt')
+        requireOk(r.dueOn <= today(), 422, 'invoiceNotDue'); if (d.kind === 'Discount')
+        requireOk(L.units(r.written_off) === 0n, 409, 'writeoffRecoveryAccountingReviewRequired'); return { id: r.id, customerId: r.customer_id, amount: r.amount, paid: r.paid, credited: r.credited, writtenOff: r.written_off, dueOn: r.dueOn, requestedAmount: v.amount, itemId: r.item_id, currency: r.currency }; }); requireOk(new Set(rows.map((r: any) => r.customerId)).size === 1 && new Set(rows.map((r: any) => r.currency)).size === 1, 422, 'mixedDocumentParty'); return rows; }
+    app.post(base + '/adjustments/preview', route(async (c: any, m: any, s: any, req: any) => { const d = adjustment.parse(req.body), rows = await review(c, m, d), digest = sha(JSON.stringify({ d, rows })); return { rows, digest, changesCash: false, requiresFinancialApproval: d.kind !== 'Discount' }; }));
+    app.post(base + '/adjustments/confirm', route(async (c: any, m: any, s: any, req: any) => { const raw = z.object({ data: adjustment, digest: z.string().length(64) }).strict().parse(req.body), d = raw.data, rows = await review(c, m, d); requireOk(sha(JSON.stringify({ d, rows })) === raw.digest, 409, 'revisionConflict'); if (d.kind !== 'Discount') {
+        requireOk(m.actor.roleId === 'owner', 403, 'ownerOnly');
+        requireOk(await financialApproval(c, cipher, m, d.companyId, 'documents'), 403, 'financialActivationRequired');
+    } const documentId = randomUUID(), documentNumber = 'DS-' + await number(c, s.tenant_id, 'financial_discount'), created = []; for (const r of rows) {
+        let key;
+        if (d.kind === 'BadDebt') {
+            need(m, 'journal_approve', d.companyId);
+            requireOk(d.writeOffAccountId, 422, 'writeOffAccountRequired');
+            await open(c, d.companyId, d.effectiveOn);
+            const it = await item(c, cipher, m, r.itemId, d.companyId, true), income = await resolve(c, d.companyId, r.currency, it.data.revenueId);
+            requireOk(income.kind === 'income', 422, 'thirdPartyRightsProtected');
+            const expense = await resolve(c, d.companyId, r.currency, d.writeOffAccountId!), ar = await resolve(c, d.companyId, r.currency, it.data.receivableId);
+            requireOk(expense.kind === 'expense', 422, 'writeOffAccountRequired');
+            key = randomUUID();
+            await c.query("insert into ab.vehicle_invoice_adjustments(id,tenant_id,company_id,invoice_id,kind,amount,payload_cipher,created_by)values($1,$2,$3,$4,'writeoff',$5,$6,$7)", [key, s.tenant_id, d.companyId, r.id, r.requestedAmount, cipher.seal({ reason: d.reason, documentId, documentNumber, accountingWriteoff: true, legalRelease: false }), s.user_id]);
+            await journal(c, cipher, s, d.companyId, d.effectiveOn, r.currency, 'credit:' + key, [line(expense, L.units(r.requestedAmount)), line(ar, -L.units(r.requestedAmount))], { invoiceId: r.id, reason: d.reason, legalRelease: false });
+        }
+        else {
+            const it = await item(c, cipher, m, r.itemId, d.companyId, true);
+            requireOk(it.category !== 'work_amount', 422, 'workAmountUnchanged');
+            key = (await correct(c, m, s, { params: { id: r.id }, packageDocument: true, body: { amount: r.requestedAmount, reason: d.reason, effectiveOn: d.effectiveOn } })).id;
+        }
+        await save(c, cipher, s, 'documents', { id: key, companyId: d.companyId, nativeId: key, number: documentNumber, documentId, kind: d.kind, originInvoiceId: r.id, reason: d.reason, amount: r.requestedAmount, ...(d.kind !== 'Discount' ? { approvedBy: s.user_id, approvedAt: new Date().toISOString() } : {}) });
+        created.push(key);
+    } return { id: documentId, number: documentNumber, adjustmentIds: created, changesCash: false }; }));
+}
