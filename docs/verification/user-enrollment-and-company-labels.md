@@ -12,8 +12,8 @@ a company UUID. IDs, company links and access scopes are unchanged.
 User enrollment previously called external Auth before inserting the application
 user, memberships and employee link. An SQL failure rolled back the local request
 receipt while leaving the external identity. A lost Auth response had the same
-ambiguity. Employee enrollment also silently overwrote the selected login email
-with the HR contact email. These failure modes are reproduced in isolated tests;
+ambiguity. The existing employee-first canonical identity/email policy is preserved.
+These cross-service failure modes are reproduced in isolated tests;
 the basic old employee-with-email path succeeds. **The particular reported hosted
 failure is not conclusively diagnosed without its protected Render/Auth logs.**
 Do not interpret synthetic fault injection as observation of that live incident.
@@ -43,7 +43,7 @@ created user, clearing stale register filters. Readback retry does not repeat PO
 
 ## Verification
 
-- PostgreSQL and API tests: employee email/contact separation, one-to-one link,
+- PostgreSQL and API tests: canonical employee email, one-to-one link,
   explicitly chosen role and company/unit scopes, duplicate username/link,
   concurrent retries, SQL failure after Auth, lost provider response, trusted
   recovery and refusal to adopt unknown identities; old roles/grants unchanged.
