@@ -1,3 +1,4 @@
+import {localTestPort,localTestContainer} from './setup.js';
 import {assertEncryptedBackupEnvelope} from './backup-envelope-assertions.js';
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -201,7 +202,7 @@ test("backup/restore: new database, encrypted file objects, IDs, links, policies
       "docker",
       [
         "exec",
-        "ab-postgres-foundation",
+        localTestContainer,
         "pg_dump",
         "-U",
         "postgres",
@@ -216,7 +217,7 @@ test("backup/restore: new database, encrypted file objects, IDs, links, policies
     );
     const dumpBytes = execFileSync("docker", [
       "exec",
-      "ab-postgres-foundation",
+      localTestContainer,
       "cat",
       dump,
     ]);
@@ -232,7 +233,7 @@ test("backup/restore: new database, encrypted file objects, IDs, links, policies
     const restoredArchive = restoreArchive(sealed, backupKey);
     execFileSync(
       "docker",
-      ["exec", "ab-postgres-foundation", "createdb", "-U", "postgres", db],
+      ["exec", localTestContainer, "createdb", "-U", "postgres", db],
       { stdio: "pipe" },
     );
     execFileSync(
@@ -240,7 +241,7 @@ test("backup/restore: new database, encrypted file objects, IDs, links, policies
       [
         "exec",
         "-i",
-        "ab-postgres-foundation",
+        localTestContainer,
         "pg_restore",
         "-U",
         "postgres",
@@ -251,7 +252,7 @@ test("backup/restore: new database, encrypted file objects, IDs, links, policies
       { stdio: "pipe", input: restoredArchive.database },
     );
     const restoreAdmin = new Pool({
-      connectionString: `postgres://postgres:${f.secret.admin}@127.0.0.1:5441/${db}`,
+      connectionString: `postgres://postgres:${f.secret.admin}@127.0.0.1:${localTestPort}/${db}`,
     });
     assert.deepEqual(
       await snapshot(restoreAdmin),
@@ -261,7 +262,7 @@ test("backup/restore: new database, encrypted file objects, IDs, links, policies
     await restoreAdmin.query("update ab.sessions set expires_at=now()");
     await restoreAdmin.end();
     restore = new Pool({
-      connectionString: `postgres://ab_runtime:${f.secret.runtime}@127.0.0.1:5441/${db}`,
+      connectionString: `postgres://ab_runtime:${f.secret.runtime}@127.0.0.1:${localTestPort}/${db}`,
     });
     const restoredObjects = new TestObjects();
     restoredObjects.rows = restoredArchive.objects;

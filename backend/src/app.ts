@@ -1,3 +1,4 @@
+import {userEnrollment} from './user-enrollment.js';
 import {securityRoleCompany} from './security-role-access.js';
 import {assertEmployeeLoginHierarchy} from './personnel-structure.js';
 import {syncEmployeeIdentity} from './personnel-directory.js';
@@ -161,7 +162,9 @@ export async function build(options: Options) {
       code = status >= 500 ? "unavailable" : "invalid";
     }
     if (status < 400 || status > 599) status = 422;
-    reply.code(status).send({ error: code, ...(e instanceof ApiError && (e as any).fieldErrors ? {fieldErrors:(e as any).fieldErrors}: {}) });
+    const enrollmentRequest=req.method==='POST'&&req.url.split('?')[0]==='/api/users';
+    if(enrollmentRequest){const sqlState=typeof e.code==='string'&&/^[0-9A-Z]{5}$/.test(e.code)?e.code:undefined,providerCode=['email_exists','user_already_exists','email_address_invalid','email_address_not_authorized','weak_password','unexpected_failure'].includes(e.providerCode)?e.providerCode:undefined;console.error(JSON.stringify({event:'user_enrollment_failed',reference:req.id,stage:(req as any).enrollmentStage||'request',code:sqlState||String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),providerCode,constraint:typeof e.constraint==='string'&&/^[a-z_0-9]{1,80}$/.test(e.constraint)?e.constraint:undefined}));if((req as any).enrollmentAuthCreated&&!(e instanceof ApiError)){code='enrollmentIncomplete';status=503;}}
+    reply.code(status).send({ error: code, ...(enrollmentRequest?{reference:req.id}:{}), ...(e instanceof ApiError && (e as any).fieldErrors ? {fieldErrors:(e as any).fieldErrors}: {}) });
   });
   const uuid = (v: any) => z.uuid().parse(v);
   const session = async (req: any,realOnly=false) => {
@@ -600,11 +603,14 @@ export async function build(options: Options) {
     }),
   );
   // User creation uses the shared scope/owner/escalation checks before any provider enrollment.
+  const enrollment=userEnrollment(pool,auth,cipher);
+  app.addHook('onClose',async()=>enrollment.close());
   const userSave = async (c: PoolClient, m: any, s: any, req: any) => {
+    req.enrollmentStage='validation';
     let input = bounded(req.body);
     const id = req.params.id ? uuid(req.params.id) : undefined;
     let employeeSource:any=null;
-    if(!id&&input.sourceEmployeeId){requireOk(m.actor.roleId==='owner',403,'ownerOnly');requireOk(input.confirmEmployeeLink===true,422,'employeeLinkConfirmationRequired');employeeSource=(await c.query('select * from ab.hr_employees where id=$1 for update',[uuid(input.sourceEmployeeId)])).rows[0];requireOk(employeeSource,404,'notFound');requireOk(!employeeSource.user_id,409,'loginAlreadyLinked');requireOk(!['Ended','Inactive'].includes(employeeSource.state),409,'employmentInactive');const source=cipher.open(employeeSource.payload_cipher);input={...input,nameAr:source.nameAr,nameEn:source.nameEn,phone:source.phone||'',email:source.email||'',jobTitle:employeeSource.job_title,hireDate:employeeSource.hired_on.toISOString().slice(0,10)};requireOk(input.companyIds?.includes(employeeSource.company_id),422,'invalidUserCompany');}
+    if(!id&&input.sourceEmployeeId){requireOk(m.actor.roleId==='owner',403,'ownerOnly');requireOk(input.confirmEmployeeLink===true,422,'employeeLinkConfirmationRequired');employeeSource=(await c.query('select * from ab.hr_employees where id=$1 for update',[uuid(input.sourceEmployeeId)])).rows[0];requireOk(employeeSource,404,'notFound');requireOk(!employeeSource.user_id,409,'loginAlreadyLinked');requireOk(!['Ended','Inactive'].includes(employeeSource.state),409,'employmentInactive');const source=cipher.open(employeeSource.payload_cipher);input={...input,nameAr:source.nameAr,nameEn:source.nameEn,phone:source.phone||'',email:input.email?.trim()||source.email||'',jobTitle:employeeSource.job_title,hireDate:employeeSource.hired_on.toISOString().slice(0,10)};requireOk(input.companyIds?.includes(employeeSource.company_id),422,'invalidUserCompany');}
     delete input.sourceEmployeeId;delete input.confirmEmployeeLink;
     let previous: any;
     if (id) {
@@ -626,7 +632,8 @@ export async function build(options: Options) {
     const saved = m.policy.update(s.user_id, id || null, input, [], {
       roleId: input.baseRole || "employee",
     });
-    let authId: string | undefined;
+    let authId: string | undefined,ticket:any;
+    if(!id){requireOk(!(await c.query('select 1 from ab.users where lower(username)=lower($1)or lower(auth_email)=lower($2)',[saved.username,saved.email])).rowCount,409,'duplicate');ticket=await enrollment.reserve(s,input,saved,employeeSource?.id);if(employeeSource)await assertEmployeeLoginHierarchy(c,cipher,employeeSource.id,ticket.record.userId);}
     if (!id) {
       const password = z.string().min(12).max(128).parse(input.password);
       requireOk(
@@ -638,10 +645,12 @@ export async function build(options: Options) {
         422,
         "weak",
       );
-      authId = await auth.create(saved.email, password);
+      req.enrollmentStage='authentication';
+      authId = await enrollment.authenticate(s,ticket,password);
+      req.enrollmentAuthCreated=true;
       uuid(authId);
     }
-    const realId = id || randomUUID();
+    const realId = id || ticket.record.userId;
     const {
       emiratesId,
       nationality,
@@ -660,6 +669,7 @@ export async function build(options: Options) {
     if(!id)delete payload.ownerCreatedTest;
     if(!id&&options.testUsersEnabled&&m.actor.roleId==="owner")payload.ownerCreatedTest={owner:s.user_id};
     if(id){if(previous?.ownerCreatedTest)payload.ownerCreatedTest=previous.ownerCreatedTest;else delete payload.ownerCreatedTest;}
+    req.enrollmentStage='persistence';
     if (!id)
       await c.query(
         "insert into ab.users(id,tenant_id,auth_id,auth_email,username,role_id,status,manager_id,data,private_cipher)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
@@ -701,7 +711,7 @@ export async function build(options: Options) {
       companyIds,
       departmentIds,
     ]);
-    if(employeeSource){await assertEmployeeLoginHierarchy(c,cipher,employeeSource.id,realId);await c.query('update ab.hr_employees set user_id=$2,revision=revision+1 where id=$1',[employeeSource.id,realId]);await syncEmployeeIdentity(c,cipher,realId,cipher.open(employeeSource.payload_cipher));await auditHR(c,cipher,s,employeeSource,'employee_login_linked',null,{userId:realId,confirmed:true,grantsChanged:false});}
+    if(employeeSource){req.enrollmentStage='employee-link';await assertEmployeeLoginHierarchy(c,cipher,employeeSource.id,realId);await c.query('update ab.hr_employees set user_id=$2,revision=revision+1 where id=$1',[employeeSource.id,realId]);await syncEmployeeIdentity(c,cipher,realId,cipher.open(employeeSource.payload_cipher));await auditHR(c,cipher,s,employeeSource,'employee_login_linked',null,{userId:realId,confirmed:true,grantsChanged:false});}
     if (status !== "Active") {
       await c.query(
         "update ab.sessions set expires_at=now() where user_id=$1",
@@ -725,6 +735,7 @@ export async function build(options: Options) {
           JSON.stringify(saved[k]) !== JSON.stringify(previous?.[k]),
       ),
     );
+    if(ticket)await enrollment.complete(c,s,ticket);
     return {
       id: realId,
       ...(!id && m.policy.can(s.user_id, "attachments", saved)

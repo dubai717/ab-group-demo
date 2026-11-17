@@ -6,13 +6,16 @@ import { build } from "../src/app.js";
 import { setupDatabase } from "./setup.js";
 export class TestAuth implements AuthProvider {
   accounts = new Map<string, { id: string; password: string }>();
+  enrollmentTickets=new Map<string,{id:string;tenant:string}>();
   tokens = new Map<string, string>();
-  async create(email: string, password: string) {
+  async create(email: string, password: string, enrollment?:{id:string;tenant:string}) {
     if (this.accounts.has(email)) throw new ApiError(409, "duplicate");
     const id = randomUUID();
     this.accounts.set(email, { id, password });
+    if(enrollment)this.enrollmentTickets.set(email,enrollment);
     return id;
   }
+  async recoverEnrollment(email:string,enrollment:{id:string;tenant:string}){const a=this.accounts.get(email);if(!a)return null;const prior=this.enrollmentTickets.get(email);if(prior?.id!==enrollment.id||prior?.tenant!==enrollment.tenant)throw new ApiError(409,'authIdentityNeedsReview');return{id:a.id,email,confirmed:true};}
   async inspect(id:string){for(const [email,a]of this.accounts)if(a.id===id)return {id,email,confirmed:true};throw new ApiError(404,'notFound');}
   async setPassword(id:string,password:string){for(const a of this.accounts.values())if(a.id===id){a.password=password;return;}throw new ApiError(404,'notFound');}
   async login(email: string, password: string) {

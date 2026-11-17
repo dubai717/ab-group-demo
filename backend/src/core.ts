@@ -74,7 +74,8 @@ export interface AuthProvider {
     password: string,
   ): Promise<{ id: string; token: string; expiresIn: number }>;
   verify(token: string): Promise<string>;
-  create(email: string, password: string): Promise<string>;
+  create(email: string, password: string, enrollment?:{id:string;tenant:string}): Promise<string>;
+  recoverEnrollment?(email:string,enrollment:{id:string;tenant:string}):Promise<{id:string;email:string;confirmed:boolean}|null>;
   logout(token: string, scope?: "local"): Promise<void>;
   inspect?(id:string):Promise<{id:string;email:string;confirmed:boolean}>;
   setPassword?(id:string,password:string):Promise<void>;
@@ -127,6 +128,7 @@ export function supabase(
     token: string,
     options: RequestInit = {},
     apiKey = key,
+    allowError = false,
   ) => {
     const r = await fetch(url + path, {
       ...options,
@@ -140,7 +142,7 @@ export function supabase(
         ...options.headers,
       },
     });
-    if (!r.ok)
+    if (!r.ok && !allowError)
       throw new ApiError(
         r.status === 400 || r.status === 401 ? 401 : 502,
         "providerUnavailable",
@@ -169,20 +171,31 @@ export function supabase(
       requireOk(d.id, 401, "loginRequired");
       return d.id;
     },
-    async create(email, password) {
-      requireOk(adminKey, 503, "enrollmentNotConfigured");
-      const r = await call(
-        "/auth/v1/admin/users",
-        adminKey,
-        {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ email, password, email_confirm: true }),
-        },
-        adminKey,
-      );
-      const d = (await r.json()) as any;
-      return d.id;
+    async recoverEnrollment(email,enrollment){
+      requireOk(adminKey,503,'enrollmentNotConfigured');
+      for(let page=1;page<=50;page++){
+        const r=await call('/auth/v1/admin/users?page='+page+'&per_page=100',adminKey,{},adminKey),d=await r.json() as any;
+        requireOk(Array.isArray(d.users),502,'authEnrollmentInvalid');
+        const user=d.users.find((u:any)=>typeof u.email==='string'&&u.email.toLowerCase()===email.toLowerCase());
+        if(user){requireOk(user.app_metadata?.ab_enrollment_id===enrollment.id&&user.app_metadata?.ab_enrollment_tenant===enrollment.tenant,409,'authIdentityNeedsReview');return{id:user.id,email:user.email,confirmed:!!user.email_confirmed_at};}
+        if(d.users.length<100)return null;
+      }
+      throw new ApiError(503,'enrollmentNeedsReview');
+    },
+    async create(email, password, enrollment) {
+      requireOk(adminKey,503,'enrollmentNotConfigured');
+      let r:Response;try{r=await call('/auth/v1/admin/users',adminKey,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email,password,email_confirm:true,...(enrollment?{app_metadata:{ab_enrollment_id:enrollment.id,ab_enrollment_tenant:enrollment.tenant}}:{})})},adminKey,true);}catch{throw new ApiError(503,'providerUnavailable');}
+      const d=await r.json().catch(()=>null) as any;
+      if(!r.ok){
+        const duplicate=['email_exists','user_already_exists','email_address_already_in_use'].includes(d?.code||d?.error_code);
+        if(duplicate&&enrollment){const found=await auth.recoverEnrollment!(email,enrollment);if(found)return found.id;}
+        const error=new ApiError(duplicate?409:r.status===400||r.status===422?422:503,duplicate?'authIdentityNeedsReview':r.status===400||r.status===422?'authRejected':'providerUnavailable');
+        if(['email_address_invalid','email_address_not_authorized'].includes(d?.code||d?.error_code)){(error as any).fieldErrors={email:'invalidEmail'};(error as any).enrollmentRejected=true;}
+        if((d?.code||d?.error_code)==='weak_password'){(error as any).fieldErrors={password:'weak'};(error as any).enrollmentRejected=true;}
+        if(/^[a-z_]{1,60}$/.test(d?.code||d?.error_code||''))(error as any).providerCode=d.code||d.error_code;
+        throw error;
+      }
+      requireOk(typeof d?.id==='string',502,'authEnrollmentInvalid');return d.id;
     },
     async inspect(id) {
       requireOk(adminKey&&/^[a-f0-9-]{36}$/.test(id),503,'providerUnavailable');
