@@ -65,9 +65,10 @@ session is forged, credentials extracted, or Auth identity inserted via SQL.
 
 ## Bundle and storage constraints
 
-This correction is to be combined with the vehicle-order requirements after
-their complete text is available. It must not independently deploy or change
-vehicle financing rules, historical money or existing permissions.
+The complete vehicle-order text was received and is implemented in this same
+PR. This correction is not deployed independently. The combined review is in
+`vehicle-request-workflow-review.md`; historical money and existing permissions
+remain unchanged.
 
 The legacy `/workspace` filesystem is full: Docker local volumes account for
 28.45 GB and there is no build cache to reclaim. Those volumes are retained.
