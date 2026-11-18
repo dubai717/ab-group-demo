@@ -1,3 +1,4 @@
+import {catalogueWith} from '../src/vehicle-catalog.js';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {customerFinancingTerms,customerFinancingSchedule} from '../src/customer-financing-terms.js';
 import {normalizeWorkflowTerms,requestWorkflow} from '../src/vehicle-request-workflow.js';
@@ -11,3 +12,5 @@ test('Explicit obligation, first and last installment settle exactly without alt
  const old:any={workflowVersion:2,expectedFunding:'10000',months:3,expectedMonthly:'3333.333'};assert.equal(normalizeWorkflowTerms(old).installmentTotal,'10000.000');
  const r={funding_state:'Approved'},v={id:'v',status:'Active',contract:true};assert.equal(requestWorkflow(r,base,[],[],v).stage,'closure_review');assert.equal(requestWorkflow(r,base,[{kind:'request_closed'}],[],v).stage,'completed');assert.equal(requestWorkflow(r,old,[],[],v).stage,'completed');
 });
+
+test('Catalogue additions treat reserved JavaScript property names as plain data',()=>{const result=catalogueWith([{make:'constructor',model:'Safe model'},{make:'__proto__',model:'Another model'}]);assert.deepEqual(result.constructor,['Safe model']);assert.deepEqual(result.__proto__,['Another model']);assert.equal(Object.getPrototypeOf(result),null);assert.equal(({} as any)['Safe model'],undefined);});
