@@ -1141,3 +1141,10 @@ form .record-field-control:disabled,form .record-field-control[readonly]{color:v
 .dashboard-security-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:.7rem}
 .dashboard-security-grid fieldset{min-width:0;border:1px solid var(--line);border-radius:8px;padding:.8rem}
 .dashboard-security-grid label{display:flex;gap:.5rem;align-items:center;margin:.5rem 0}
+
+/* Customer request and contact forms reuse the group identity and compact controls. */
+#cu-editor .contact-row>label:has(input[type=checkbox]){display:flex;align-items:center;gap:.45rem;align-self:center;min-inline-size:0}
+#cu-editor .contact-row input[type=checkbox]{inline-size:1rem;block-size:1rem;flex:0 0 1rem}
+#cu-editor .form-grid>label{min-inline-size:0;overflow-wrap:normal;word-break:normal}
+#ve-funding-decision .ve-choice{grid-column:1/-1}#ve-funding-decision .ve-choice>label{display:inline-flex;align-items:center;gap:.4rem;margin:.4rem}
+#ve-funding-decision .ve-choice input[type=checkbox]{inline-size:1rem;block-size:1rem}
