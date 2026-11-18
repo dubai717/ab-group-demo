@@ -51,6 +51,8 @@
         if (busy)
             return;
         busy = true;
+        const host=document.querySelector('.ld-section');if(host){host.inert=true;host.setAttribute('aria-busy','true');}
+        book=null;
         const n = epoch;
         try {
             cap = await api('capabilities');
@@ -66,12 +68,13 @@
             if (!co || !cap.companies.some(c => c.id === co))
                 co = cap.companies[0]?.id || '';
             if (cap.available && co) {
-                book = await api('workbench?companyId=' + co);book.package=await api('package/state?companyId='+co);
+                const nextBook = await api('workbench?companyId=' + co);nextBook.package=await api('package/state?companyId='+co);
                 await references();
                 if (context || tab === 'invoices')
                     bills = (await api('invoices?' + new URLSearchParams({ companyId: co, ...(context?.customerId ? { customerId: context.customerId } : {}), ...(context?.vehicleId ? { vehicleId: context.vehicleId } : {}) }))).rows;
                 if (tab === 'collect')
                     bills = context ? bills.filter(r => r.customer_id === context.customerId && r.vehicle_id === (context.vehicleId || null) && (!context.targetInvoiceId || r.id===context.targetInvoiceId)) : [];
+                book=nextBook;
             }
         }
         catch (err) {
@@ -149,7 +152,7 @@
             return `<section class="content-panel"><p>${t('الإدارة المالية تتطلب اتصال Backend الآمن؛ لا حفظ محلياً.', 'Financial management requires the secure backend; no local persistence.')}</p></section>`;
         if (!cap && !busy)
             queueMicrotask(load);
-        if (!cap || busy && !book)
+        if (!cap || busy)
             return '<section class="content-panel" role="status">' + t('جارٍ التحقق…', 'Checking…') + '</section>';
         if (!cap.available)
             return `<section class="content-panel"><h2>${t('الإدارة المالية', 'Financial management')}</h2><p>${message('ledgerSchemaPending')}</p></section>`;

@@ -48,7 +48,8 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         assert(index > 0);
         await p.locator('[data-item="' + item.id + '"] [data-fp=up]').click();
         await p.locator('#fp-priority [name=enabled]').check();
-        await p.locator('#fp-priority [type=submit]').click();
+        let unblock, observed;const blocked=new Promise(r=>unblock=r),refreshObserved=new Promise(r=>observed=r);let holdRefresh=true;await p.route('**/api/ledger/package/state?**',async route=>{if(holdRefresh){holdRefresh=false;observed();await blocked;}await route.continue();});
+        await p.locator('#fp-priority [type=submit]').click();await refreshObserved;await p.evaluate(()=>render());assert.equal(await p.locator('#fp-priority').count(),0,'no partially loaded financial model is interactive');unblock();await p.locator('#fp-priority').waitFor();await p.unroute('**/api/ledger/package/state?**');
         await p.waitForFunction(async (co) => !!(await ABCentral.api('ledger/package/state?companyId=' + co)).priority, f.companyId);
         const state = await p.evaluate(co => ABCentral.api('ledger/package/state?companyId=' + co), f.companyId);
         assert.equal(state.priority.itemIds[index - 1], item.id);
@@ -113,7 +114,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
             }
         }
         assert.deepEqual(errors, []);
-        console.log('PASS financial package actual UI: auto-code item save/readback, collapsed accounting mapping, priority reordering/draft gate, disabled fee rule/row/activation denial, Invoice/RV/Discount/PV/Deposit metadata, noncash discount, no noninvoice Cancel, AR/EN desktop/tablet/mobile.');
+        console.log('PASS financial package actual UI: atomic delayed model refresh, auto-code item save/readback, collapsed accounting mapping, priority reordering/draft gate, disabled fee rule/row/activation denial, Invoice/RV/Discount/PV/Deposit metadata, noncash discount, no noninvoice Cancel, AR/EN desktop/tablet/mobile.');
     }
     catch (e) {
         await p.screenshot({ path: 'work/financial-package-failure.png' });

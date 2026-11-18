@@ -1121,6 +1121,7 @@ function bindGlobalEvents() {
       const page = button.dataset.page;
       if(page==='bankAccounts'){BankAccounts.enterRegister();FinanceWorkbench.select('accounts',false);}
       if(page==='companies'){CompanyDocuments.centralSelect(null);app.state.companyFormOpen=false;}
+      if(page==='tasks'&&globalThis.ABCentral?.enabled)PersonnelUI.enterTasks();
       app.state.currentPage = page;
       if(page==='customers'){await CustomerUI.select('list',true);return;}
       if(page==='vehicles'){await VehicleUI.select('list');return;}
