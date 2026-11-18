@@ -1,0 +1,7 @@
+import {requestWorkflow}from'./vehicle-request-workflow.js';
+export async function vehicleWorkMetadata(c:any,cipher:any,ids:string[]){
+ const keys=[...new Set(ids.filter(v=>/^[a-f0-9-]{36}$/i.test(v)))];const result=new Map();if(!keys.length)return result;
+ const rows=(await c.query(`select r.*,cu.file_number,cu.payload_cipher customer_cipher,v.id vehicle_id,v.status vehicle_status,exists(select 1 from ab.vehicle_contracts ct where ct.vehicle_id=v.id) contracted,coalesce((select jsonb_agg(jsonb_build_object('state',f.state))from ab.vehicle_funds f where f.request_id=r.id),'[]')funds,coalesce((select jsonb_agg(jsonb_build_object('kind',e.kind,'after',e.payload_cipher)order by e.created_at,e.id)from ab.vehicle_events e where e.request_id=r.id),'[]')events from ab.vehicle_requests r join ab.customers cu on cu.id=r.customer_id left join ab.vehicles v on v.request_id=r.id where r.id=any($1::uuid[])`,[keys])).rows;
+ for(const r of rows){const p=cipher.open(r.payload_cipher),events=r.events.map((e:any)=>({kind:e.kind,...cipher.open(e.after)})),workflow=requestWorkflow(r,p,events,r.funds,r.vehicle_id?{id:r.vehicle_id,status:r.vehicle_status,contract:r.contracted}:null);result.set(r.id,{requestNumber:String(r.request_number),customerNumber:String(r.file_number),customerName:cipher.open(r.customer_cipher).fullName,requestType:'vehicle',requestSubtype:r.finance_type,requestStage:workflow.stage,requestApproval:workflow.approvalState,lastAction:events.at(-1)?.kind||'request_created'});}
+ return result;
+}

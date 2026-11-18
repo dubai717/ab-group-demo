@@ -1151,3 +1151,11 @@ form .record-field-control:disabled,form .record-field-control[readonly]{color:v
 /* Contact outcomes have semantic colors and visible text in both themes. */
 .contact-outcome{display:inline-block;border:1px solid currentColor;border-radius:.4rem;padding:.2rem .5rem;font-weight:600}.contact-outcome.closed{color:#b42318}.contact-outcome.busy{color:#994800}.contact-outcome.unanswered{color:#59636e}.contact-outcome.answered{color:#16713b}
 @media(prefers-color-scheme:dark){.contact-outcome.closed{color:#ffb4ab}.contact-outcome.busy{color:#ffc480}.contact-outcome.unanswered{color:#c0c6cd}.contact-outcome.answered{color:#8cdda9}}
+
+/* Compact staff company labels; complete authorized names remain selectable and in the title. */
+#hr-register .staff-company-cell{min-width:10rem;max-width:19rem;white-space:normal;overflow-wrap:anywhere;line-height:1.5;vertical-align:top}
+#hr-register th:nth-child(5){max-width:19rem}
+@media(max-width:900px){#hr-register .staff-company-cell{min-width:9rem;max-width:14rem}}
+
+#ve-request .reference-select-field:has(select[name="investorId"]){grid-column:1/-1;min-inline-size:0}
+#ve-request select[name="investorId"]{inline-size:100%;max-inline-size:100%}
