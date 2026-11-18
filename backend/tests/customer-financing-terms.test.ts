@@ -1,3 +1,4 @@
+import {vehicleWorkMetadata} from '../src/vehicle-work-metadata.js';
 import {catalogueWith} from '../src/vehicle-catalog.js';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {customerFinancingTerms,customerFinancingSchedule} from '../src/customer-financing-terms.js';
@@ -14,3 +15,5 @@ test('Explicit obligation, first and last installment settle exactly without alt
 });
 
 test('Catalogue additions treat reserved JavaScript property names as plain data',()=>{const result=catalogueWith([{make:'constructor',model:'Safe model'},{make:'__proto__',model:'Another model'}]);assert.deepEqual(result.constructor,['Safe model']);assert.deepEqual(result.__proto__,['Another model']);assert.equal(Object.getPrototypeOf(result),null);assert.equal(({} as any)['Safe model'],undefined);});
+
+test('Historical work details use the canonical financing source when the old display payload lacks it',async()=>{const id='00000000-0000-4000-8000-000000000001',rows=[{id,finance_type:'cash',funding_state:'Approved',request_number:1,file_number:2,payload_cipher:{},customer_cipher:{fullName:'Synthetic customer'},events:[],funds:[]}],metadata=await vehicleWorkMetadata({query:async()=>({rows})},{open:(value:any)=>value},[id]);assert.equal(metadata.get(id).requestSubtype,'cash');assert.equal(metadata.get(id).requestStage,'registration');});
