@@ -43,3 +43,9 @@ Reuses `tasks`, `collection_attempts`, native vehicle events, financial allocati
 - Supabase/Render used records were not changed. No genuine authorized hosted application session was available for a positive account/financial action test; none is claimed. The supplied real request numbers are not used to approve or alter live requests.
 
 Final local focused rerun also verifies default-own versus authorized-others views, rejects overriding fixed retry intervals or omitting answered-call notes, and tests explicit due-appointment no-show recording. Real browser runs additionally verify all four colored report rows.
+
+Final review also preserves every native funding-decision event in completion statistics, attributes it only through an existing employee link, tolerates a task assignee without login without inventing a notification recipient, and lets an authorized manual restart reuse the same unpaid claim after a chain ends. Existing active successors are returned instead of duplicating them.
+
+A complete isolated backend rerun passed 400/400, alongside the 170 static/controller checks. Later defensive task-only changes receive a focused rerun and the final exact-SHA native CI remains required.
+
+Vehicle browser regression passed both with and without the optional schema. Stage-assignment references now explicitly return unavailable instead of querying absent HR/task tables on older installations. The schedule-preview browser assertion is scoped to the open vehicle file, because the expanded request register now legitimately shows the same installment amount behind it. Exact financial schedule and issued-invoice assertions remain unchanged.
