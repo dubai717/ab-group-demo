@@ -3,7 +3,7 @@ import { requireOk } from './core.js';
 
 // A versioned policy on the ORIGINAL request, not another request or ledger.
 // Only newly composed requests opt in. Historical approved terms stay untouched.
-export const returnedFields = ['vehicleType','make','model','year','description','approximateValue','expectedFunding','months','expectedMonthly','downPayment','registrationMonthlyFee','documentIds'] as const;
+export const returnedFields = ['vehicleType','make','model','year','description','notes','approximateValue','expectedFunding','months','expectedMonthly','downPayment','registrationMonthlyFee','documentIds'] as const;
 export function normalizeWorkflowTerms(p: any) {
   if (p.workflowVersion !== 2) return p;
   if (p.financeType === 'cash') {
