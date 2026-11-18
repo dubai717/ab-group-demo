@@ -2,7 +2,7 @@
 (function (root) {
     'use strict';
     const t = (a, b) => getLocale() === 'ar' ? a : b, e = v => WorkspaceUI.esc(v ?? ''), date = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dubai' }).format(new Date());
-    let ctx = null, docType = 'Invoice', docPage = 0, docResult = null, docLoading = false, docError = '', docContext = '';
+    let ctx = null, docType = 'Invoice', docPage = 0, docResult = null, docLoading = false, docError = '', docContext = '', docRequest = 0;
     const names = { priorities: ['إدارة أولويات توزيع التحصيلات', 'Collection allocation priorities'], compliance: ['المصاريف الإدارية لعدم الالتزام بالمتطلبات', 'Administrative noncompliance expenses'], entitlements: ['علاقات الاستحقاق والدورية', 'Entitlements and recurrence'], documents: ['المستندات المالية', 'Financial documents'] };
     const categories = { number_fee: ['رسوم اللوحات', 'Plate fees'], card: ['تسوية بطاقات', 'Card settlement'], intercompany: ['تحويلات بين الشركات', 'Intercompany transfers'], commission: ['عمولات — تصنيف قائم', 'Commissions — existing classification'], circular: ['رسوم التعميم', 'Circular fees'], insurance: ['التأمين', 'Insurance'], gps: ['خدمات التتبع', 'Tracking services'], service: ['إيرادات الخدمات', 'Service revenue'], expense: ['مصروفات', 'Expenses'], loan: ['أصل تمويل / مستحق عميل', 'Financing principal / customer receivable'], finance: ['تمويل تعاقدي', 'Contractual financing'], work_amount: ['أمانات ومبالغ محصلة نيابة عن العميل', 'Amounts held/collected for customers'], registration: ['رسوم تسجيل', 'Registration fees'], salik: ['سالك — مبالغ مستردة', 'Salik recoverable charges'], fine: ['مخالفات — مبالغ مستردة', 'Recoverable fines'], investor: ['مستحقات المستثمرين', 'Investor entitlements'], general: ['بنود خدمات أخرى', 'Other service items'] };
     const statusWords = { Unpaid: ['غير مسدد', 'Unpaid'], Partial: ['سداد جزئي', 'Partially paid'], Paid: ['مسدد', 'Paid'], Pending: ['معلق', 'Pending'], Review: ['قيد المراجعة', 'In review'], Approved: ['معتمد', 'Approved'], Cleared: ['محصل فعلياً', 'Cleared'], Cancelled: ['ملغى', 'Cancelled'], Corrected: ['مصحح', 'Corrected'], WrittenOff: ['مشطوب دفترياً — دون تنازل قانوني', 'Written off — no legal waiver'], PartiallyWrittenOff: ['شطب دفتري جزئي', 'Partial accounting write-off'], Discount: ['خصم غير نقدي', 'Noncash discount'], Posted:['مرحّل','Posted'],Recorded: ['مسجل', 'Recorded'] };
@@ -75,25 +75,27 @@
             return intro + (can('configure') ? button('relation-new', t('ربط استحقاق فعلي', 'Link actual entitlement')) : '') + button('relation-preview', t('معاينة الاستحقاقات', 'Preview entitlements')) + table('relations', state.relations.map(r => ({ ...r, customerName: ctx.customers.find(c => c.id === r.customerId)?.name || t('غير متاح في نطاق العرض', 'Unavailable in scope'), itemName: ctx.book.finance_items.find(x => x.id === r.itemId) ? itemName(ctx.book.finance_items.find(x => x.id === r.itemId)) : t('غير متاح', 'Unavailable'), state: r.enabled ? t('مفعل', 'Enabled') : t('معطل', 'Disabled') })), [['itemName', t('البند', 'Item')], ['customerName', t('العميل', 'Customer')], ['amount', t('المبلغ', 'Amount')], ['anchorOn', t('بداية الاستحقاق', 'First due date')], ['untilOn', t('نهاية العلاقة', 'Relationship end')], ['state', t('الحالة', 'State')]], r => can('configure') ? button('relation-status', r.enabled ? t('تعطيل', 'Disable') : t('تفعيل', 'Enable'), r.id) : '', true);
         if (tab === 'documents') {
             const key = ctx.co + ':' + docType + ':' + docPage + ':' + ABCentral.actor.id;
-            if (docContext !== key && !docLoading) {
+            if (docContext !== key) {
                 docContext = key;
                 docResult = null;
                 docError = '';
                 docLoading = true;
-                const owner = ABCentral.actor.id;
+                const owner = ABCentral.actor.id, request = ++docRequest, api = ctx.api, query = new URLSearchParams({ companyId: ctx.co, type: docType, page: docPage });
+                const current = () => request === docRequest && owner === ABCentral.actor?.id && docContext === key;
                 queueMicrotask(async () => { try {
-                    const r = await call('documents?' + new URLSearchParams({ companyId: ctx.co, type: docType, page: docPage }));
-                    if (owner === ABCentral.actor.id && docContext === key)
+                    const r = await api('package/documents?' + query);
+                    if (current())
                         docResult = r;
                 }
                 catch (err) {
-                    if (docContext === key)
+                    if (current())
                         docError = msg(err);
                 }
                 finally {
-                    docLoading = false;
-                    if (docContext === key && app.state.currentPage === 'financialManagement')
-                        render();
+                    if (current()) {
+                        docLoading = false;
+                        if (app.state.currentPage === 'financialManagement') render();
+                    }
                 } });
             }
             return `<label>${t('نوع المستند', 'Document type')}<select class="input" id="fp-document-type">${['Invoice', 'RV', 'Discount', 'PV', 'Deposit'].map(k => `<option ${docType === k ? 'selected' : ''} value="${k}">${e(({ Invoice: t('فاتورة', 'Invoice'), RV: t('سند قبض', 'Receipt voucher'), Discount: t('خصم', 'Discount'), PV: t('سند صرف', 'Payment voucher'), Deposit: t('سند إيداع', 'Deposit') })[k])}</option>`).join('')}</select></label>${docError ? '<p role="alert">' + e(docError) + '</p>' : docLoading ? '<p role="status">' + t('جارٍ تحميل المستندات...', 'Loading documents...') + '</p>' : table('documents', (docResult?.rows || []).map(r => ({ ...r,id:r.rowKey||r.id,number: r.number || t('غير مسجل', 'Not recorded'), status: statusLabel(r.status), companyName: getLocale() === 'ar' ? r.companyNameAr : r.companyNameEn })), [['number', t('رقم المستند', 'Document number')], ['companyName', t('الشركة', 'Company')], ['customerName', t('العميل', 'Customer')], ['amount', t('المبلغ', 'Amount')], ['status', t('الحالة', 'State')], ['createdByName', t('أنشأه', 'Created by')]], () => '', true)}<p>${t('عدد النتائج', 'Result count')}: ${docResult?.count ?? '—'}</p>${button('doc-prev', t('السابق', 'Previous'))}${button('doc-next', t('التالي', 'Next'))}`;
@@ -269,5 +271,5 @@
             }
         }
     } }
-    root.FinancialPackageUI = { names, body, bind, itemPanel, reset() { ctx = null; docContext = ''; docResult = null; docLoading = false; } };
+    root.FinancialPackageUI = { names, body, bind, itemPanel, reset() { ++docRequest; ctx = null; docContext = ''; docResult = null; docLoading = false; } };
 })(globalThis);
