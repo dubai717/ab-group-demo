@@ -1,3 +1,4 @@
+import {validateVehicleTaskReassignment} from './vehicle-task-stages.js';
 import {registerPersonnelOrganization} from './personnel-organization.js';
 import {registerPersonnelPositions,personnelPositions,checkEmployeeStructure} from './personnel-structure.js';
 import {internationalPhone,validateNewPhone} from './phone.js';
@@ -89,7 +90,7 @@ export function registerPersonnel(app: any, call: any, cipher: any, options: any
         requireOk(e.user_id !== m.actor.id || m.actor.roleId === 'owner', 403, 'independentReviewRequired');
     } if (d.action === 'reassign') {
         requireOk(d.employeeId, 422, 'required');
-        await employeeIn(c, d.employeeId, t.company_id);
+        await employeeIn(c, d.employeeId, t.company_id);const vehicleTransfer=await validateVehicleTaskReassignment(c,m,cipher,t,d.employeeId);if(vehicleTransfer)await c.query("insert into ab.finance_notifications(id,tenant_id,company_id,user_id,action,event_key,entity_id)values($1,$2,$3,$4,'vehicle:registration_reassigned',$5,$6)on conflict(tenant_id,user_id,event_key)do nothing",[randomUUID(),s.tenant_id,t.company_id,vehicleTransfer.userId,'vehicle-task-reassign:'+t.id+':'+t.revision,vehicleTransfer.requestId]);
         assignee = d.employeeId;
     } if (d.action === 'complete') {
         requireOk(t.state === 'Review', 409, 'reviewRequired');
