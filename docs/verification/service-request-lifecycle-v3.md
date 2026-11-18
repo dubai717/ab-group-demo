@@ -24,3 +24,7 @@ Base merged and deployed release: `0a7c08309a5fb6753c135d0f176c9bb445f45f84` (PR
 Final test counts, CI URLs, source/merge commits and protected deployment status are recorded in the PR and delivery report. Local integration/browser fixtures use isolated synthetic databases and fake Auth/object providers; they never approve actual requests or move hosted money. Render release verification must match the intended merge SHA. A merged PR alone is not deployment evidence.
 
 The existing main-branch controller, policy checks and `staging-owner-approval` remain authoritative. No old deployment is approved or bypassed by this work.
+
+## Post-merge document-loading regression
+
+The merge CI exposed a pre-existing financial document list race: changing document type while the prior request was loading suppressed the new request and left a spinner. A deterministic browser regression holds an Invoice response while selecting Discount; it failed before the fix and passed after. Each document request now captures its actor, scope, type and generation; only the current response can update loading/data. This is a read-only loading fix with no ledger changes.

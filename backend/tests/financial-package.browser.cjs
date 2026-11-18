@@ -84,10 +84,18 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         let edit = p.locator('dialog[open]').last();
         await edit.locator('[name=amount]').fill('10');
         await edit.locator('[name=reason]').fill('Synthetic verified noncash discount');
+        let releaseInvoice, invoiceObserved; const delayedInvoice = new Promise(r => releaseInvoice = r), invoiceStarted = new Promise(r => invoiceObserved = r); let holdInvoice = true;
+        await p.route('**/api/ledger/package/documents?**', async route => { const url = new URL(route.request().url()); if (holdInvoice && url.searchParams.get('type') === 'Invoice') { holdInvoice = false; const response = await route.fetch(); invoiceObserved(); await delayedInvoice; await route.fulfill({response}); } else await route.continue(); });
         await edit.locator('[type=submit]').click();
         await edit.waitFor({ state: 'detached' });
-        await p.locator('#fp-document-type').selectOption('Discount');
-        await p.waitForFunction(() => document.querySelector('[data-ft-table="package:documents"] tbody')?.innerText.includes('DS-'));
+        await invoiceStarted;
+        try {
+            await p.locator('#fp-document-type').selectOption('Discount');
+            await p.waitForFunction(() => document.querySelector('[data-ft-table="package:documents"] tbody')?.innerText.includes('DS-'));
+        } finally { releaseInvoice(); }
+        await p.unrouteAll({behavior:'wait'});
+        await p.waitForFunction(() => document.querySelector('#fp-document-type')?.value === 'Discount' && document.querySelector('[data-ft-table="package:documents"] tbody')?.innerText.includes('DS-'));
+
         const documents = await p.evaluate(co => ABCentral.api('ledger/package/documents?companyId=' + co + '&type=Discount'), f.companyId);
         assert.equal(documents.rows.length, 1);
         assert(documents.rows[0].number.startsWith('DS-'));
@@ -114,11 +122,11 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
             }
         }
         assert.deepEqual(errors, []);
-        console.log('PASS financial package actual UI: atomic delayed model refresh, auto-code item save/readback, collapsed accounting mapping, priority reordering/draft gate, disabled fee rule/row/activation denial, Invoice/RV/Discount/PV/Deposit metadata, noncash discount, no noninvoice Cancel, AR/EN desktop/tablet/mobile.');
+        console.log('PASS financial package actual UI: delayed Invoice to Discount switch ignores stale response, atomic delayed model refresh, auto-code item save/readback, collapsed accounting mapping, priority reordering/draft gate, disabled fee rule/row/activation denial, Invoice/RV/Discount/PV/Deposit metadata, noncash discount, no noninvoice Cancel, AR/EN desktop/tablet/mobile.');
     }
     catch (e) {
         await p.screenshot({ path: 'work/financial-package-failure.png' });
-        console.error('FAIL FINANCIAL_PACKAGE:', e.message);
+        console.error('FAIL FINANCIAL_PACKAGE:', e.stack);
         console.error(await p.locator('[role=alert],#ld-notice').allTextContents());
         process.exitCode = 1;
     }
