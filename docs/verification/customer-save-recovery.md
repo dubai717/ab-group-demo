@@ -5,7 +5,7 @@
 - Customer notices were written to `#cu-notice` outside the modal dialog. API/policy failures therefore left the editor open without an actionable visible message.
 - A browser reproduction of a failed create followed by a lost, already-committed response left the save button disabled even though `OperationUI.active()` was zero, the form had no `centralBusy` flag, and `inert` was false. The shared operation indicator and the customer form competed for ownership of the button lock. Customer requests now keep the shared progress indicator but leave control locking to the existing customer form guard.
 - Customer requests had no timeout, and finalization awaited draft persistence, record readback, register refresh and summary refresh. A blocked network operation could hold the UI indefinitely. Customer requests now abort after 30 seconds; timeout means an uncertain outcome, never proof of rollback.
-- The default successful action returned to the register. It now opens the saved customer in readonly view with the server-confirmed file number. Summary refresh failure cannot turn a committed save into an unconfirmed creation.
+- The default successful action returned to the register. It now opens the saved customer in readonly view with the server-confirmed file number. Summary refresh failure cannot turn a committed save into an unconfirmed creation. The form-owned lock is released before the saved readonly file appears; background summary refresh neither blocks immediate tab navigation nor redraws a newly selected tab/editor. Refresh results are applied only to the same saved customer.
 
 ## Recovery and validation
 
