@@ -162,9 +162,10 @@ export async function build(options: Options) {
       code = status >= 500 ? "unavailable" : "invalid";
     }
     if (status < 400 || status > 599) status = 422;
+    const customerSaveRequest=['POST','PATCH'].includes(req.method)&&/^\/api\/customers(?:\/[0-9a-f-]+)?(?:\?|$)/i.test(req.url);const customerRequest=/^\/api\/(?:customers|customer-drafts)(?:[/?]|$)/.test(req.url);if(customerRequest)console.error(JSON.stringify({event:customerSaveRequest?'customer_save_failed':'customer_request_failed',reference:req.id,stage:req.url.includes('/files')?'attachment':req.method==='GET'?'read':customerSaveRequest?'save':'validation',status,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),sqlState:typeof e.code==='string'&&/^[0-9A-Z]{5}$/.test(e.code)?e.code:undefined}));
     const enrollmentRequest=req.method==='POST'&&req.url.split('?')[0]==='/api/users';
     if(enrollmentRequest){const sqlState=typeof e.code==='string'&&/^[0-9A-Z]{5}$/.test(e.code)?e.code:undefined,providerCode=['email_exists','user_already_exists','email_address_invalid','email_address_not_authorized','weak_password','unexpected_failure'].includes(e.providerCode)?e.providerCode:undefined;console.error(JSON.stringify({event:'user_enrollment_failed',reference:req.id,stage:(req as any).enrollmentStage||'request',code:sqlState||String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),providerCode,constraint:typeof e.constraint==='string'&&/^[a-z_0-9]{1,80}$/.test(e.constraint)?e.constraint:undefined}));if((req as any).enrollmentAuthCreated&&!(e instanceof ApiError)){code='enrollmentIncomplete';status=503;}}
-    const vehicleDecisionRequest=req.method==='POST'&&/^\/api\/vehicle-requests\/[0-9a-f-]+\/funding-decision(?:\?|$)/i.test(req.url);const collectionAttemptRequest=req.method==='POST'&&/^\/api\/collections\/tasks\/[0-9a-f-]+\/attempts(?:\?|$)/i.test(req.url);if(collectionAttemptRequest)console.error(JSON.stringify({event:'collection_attempt_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),status}));if(vehicleDecisionRequest)console.error(JSON.stringify({event:'vehicle_decision_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),status}));reply.code(status).send({ error: code, ...(enrollmentRequest||vehicleDecisionRequest||collectionAttemptRequest?{reference:req.id}:{}), ...(e instanceof ApiError && (e as any).fieldErrors ? {fieldErrors:(e as any).fieldErrors}: {}) });
+    const vehicleDecisionRequest=req.method==='POST'&&/^\/api\/vehicle-requests\/[0-9a-f-]+\/funding-decision(?:\?|$)/i.test(req.url);const collectionAttemptRequest=req.method==='POST'&&/^\/api\/collections\/tasks\/[0-9a-f-]+\/attempts(?:\?|$)/i.test(req.url);if(collectionAttemptRequest)console.error(JSON.stringify({event:'collection_attempt_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),status}));if(vehicleDecisionRequest)console.error(JSON.stringify({event:'vehicle_decision_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),status}));reply.code(status).send({ error: code, ...(customerRequest||enrollmentRequest||vehicleDecisionRequest||collectionAttemptRequest?{reference:req.id}:{}), ...(e instanceof ApiError && (e as any).fieldErrors ? {fieldErrors:(e as any).fieldErrors}: {}) });
   });
   const uuid = (v: any) => z.uuid().parse(v);
   const session = async (req: any,realOnly=false) => {
@@ -222,6 +223,10 @@ export async function build(options: Options) {
         );
         if (key) {
           uuid(key);
+          // A retry can overlap a still-running customer creation after response loss.
+          // Serialize its existing receipt before reading the cache, without changing other domains.
+          if (['POST','PATCH'].includes(req.method) && /^\/api\/customers(?:\/[0-9a-f-]+)?(?:\?|$)/i.test(req.url))
+            await c.query('select pg_advisory_xact_lock(hashtext($1))',['customer-save-receipt:'+s.user_id+':'+key]);
           const cached = (
             await c.query(
               "select fingerprint,response from ab.request_dedup where actor_id=$1 and key=$2",

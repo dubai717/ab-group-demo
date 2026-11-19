@@ -29,9 +29,10 @@
           "'": "&#39;",
         })[c],
     );
-  async function api(path, method = "GET", body, key) {
+  async function api(path, method = "GET", body, key, options = {}) {
     if((C.viewAs||C.previewUncertain)&&!["GET","HEAD"].includes(method)&&!["view-as/start","view-as/stop","logout","central-reports/preview","central-reports/export","personnel/export","communication-templates/preview","communications/from-template/preview"].includes(path.split("?")[0]))throw Error("viewAsReadOnly");
-    const finish=globalThis.OperationUI?.begin(path,method);try{
+    const controller=options.timeoutMs?new AbortController():null, timeout=controller?setTimeout(()=>controller.abort(),options.timeoutMs):null;
+    const finish=globalThis.OperationUI?.begin(path,method,{control:options.control});try{
     if (key) {
       const digest = new Uint8Array(
         await crypto.subtle.digest(
@@ -55,6 +56,7 @@
     }
     const r = await fetch("/api/" + path, {
       method,
+      ...(controller?{signal:controller.signal}:{}),
       credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
@@ -66,12 +68,12 @@
     });
     if (!r.ok) {
       const d = await r.json().catch(() => ({ error: "unavailable" }));
-      throw Object.assign(Error(d.error || "unavailable"),{fields:d.fieldErrors,reference:d.reference});
+      throw Object.assign(Error(d.error || "unavailable"),{fields:d.fieldErrors,reference:d.reference,status:r.status});
     }
     const result=await r.json();
     if(!["GET","HEAD"].includes(method))globalThis.DashboardUI?.invalidate();
     return result;
-    }finally{finish?.();}
+    }catch(error){if(controller?.signal.aborted)throw Object.assign(Error("requestTimeout"),{reference:"client-"+crypto.randomUUID()});if(options.timeoutMs&&error instanceof TypeError)throw Object.assign(Error("requestUnavailable"),{reference:"client-"+crypto.randomUUID()});throw error;}finally{clearTimeout(timeout);finish?.();}
   }
   C.api=api;
   C.openUser=async id=>{if(!await WorkspaceUI.leave())return;activeUser=id;app.state.currentPage='users';await readDocuments({userId:id}).catch(()=>[]);await load();};
