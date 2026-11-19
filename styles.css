@@ -1177,7 +1177,7 @@ form .record-field-control:disabled,form .record-field-control[readonly]{color:v
 .customer-basic-grid>label:first-child{grid-column:span 2}
 .customer-basic-grid input,.customer-basic-grid select,.customer-basic-grid .searchable-select{width:100%;min-width:0}
 .customer-document-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.customer-document-card{border:1px solid var(--line);border-radius:9px;padding:10px;min-width:0;background:var(--warm-paper)}
+.customer-document-card{border:1px solid var(--line);border-radius:9px;padding:10px;min-width:0;background:var(--panel)}
 .customer-document-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .customer-document-fields>label:first-child,.customer-document-fields>small{grid-column:1/-1}
 .customer-document-media{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-height:112px}
@@ -1225,3 +1225,5 @@ form .record-field-control:disabled,form .record-field-control[readonly]{color:v
 .customer-document-card .record-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-block:6px}
 .customer-financial-group .record-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
 @media(max-width:650px){.customer-hero>.record-fields,.customer-hero>.customer-score{grid-column:1/-1}.customer-hero>.record-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+@media(prefers-color-scheme:dark){.customer-box h3,.customer-document-card h3,.customer-score strong,.customer-avatar{color:var(--text)}}
