@@ -14,7 +14,7 @@ export async function investorFundingGuard(c:any,cipher:any,request:any,disburse
  if(request.finance_type!=='investor'||!(await c.query("select to_regclass('ab.investor_funding_requests') ok")).rows[0].ok)return;
  const r=(await c.query('select f.*,a.state agreement_state from ab.investor_funding_requests f join ab.investor_agreements a on a.id=f.agreement_id where f.request_id=$1 for update of f,a',[request.id])).rows[0];
  requireOk(r&&r.state==='Accepted'&&r.financing_state==='Active'&&r.agreement_state==='Active',409,'investorFundingAcceptanceRequired');
- requireOk(disbursement?.method!=='cash'&&disbursement?.paymentOperationId,409,'investorPostedDisbursementRequired');
+ const terms=cipher.open(request.payload_cipher),cashHandover=terms.serviceCycleVersion===1&&terms.reviewSchemaVersion===1&&disbursement?.method==='cash'&&disbursement.cashJournalId&&disbursement.cashFundId&&disbursement.documentVersionId&&disbursement.cashConfirmed===true;requireOk(cashHandover||disbursement?.method!=='cash'&&disbursement?.paymentOperationId,409,'investorPostedDisbursementRequired');
  const cash=await capital(c,r.agreement_id);requireOk(cash.received+cash.recycled-cash.spent-cash.withdrawn>=V.units(r.amount),409,'investorActualFundsRequired');
 }
 async function capital(c:any,agreement:string){
