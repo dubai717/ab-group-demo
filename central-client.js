@@ -73,7 +73,7 @@
     const result=await r.json();
     if(!["GET","HEAD"].includes(method))globalThis.DashboardUI?.invalidate();
     return result;
-    }catch(error){if(controller?.signal.aborted)throw Object.assign(Error("requestTimeout"),{reference:"client-"+crypto.randomUUID()});if(error instanceof TypeError)throw Object.assign(Error("requestUnavailable"),{reference:"client-"+crypto.randomUUID()});throw error;}finally{clearTimeout(timeout);finish?.();}
+    }catch(error){if(controller?.signal.aborted)throw Object.assign(Error("requestTimeout"),{reference:"client-"+crypto.randomUUID()});if(options.timeoutMs&&error instanceof TypeError)throw Object.assign(Error("requestUnavailable"),{reference:"client-"+crypto.randomUUID()});throw error;}finally{clearTimeout(timeout);finish?.();}
   }
   C.api=api;
   C.openUser=async id=>{if(!await WorkspaceUI.leave())return;activeUser=id;app.state.currentPage='users';await readDocuments({userId:id}).catch(()=>[]);await load();};

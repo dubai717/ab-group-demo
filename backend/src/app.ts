@@ -223,6 +223,10 @@ export async function build(options: Options) {
         );
         if (key) {
           uuid(key);
+          // A retry can overlap a still-running customer creation after response loss.
+          // Serialize its existing receipt before reading the cache, without changing other domains.
+          if (['POST','PATCH'].includes(req.method) && /^\/api\/customers(?:\/[0-9a-f-]+)?(?:\?|$)/i.test(req.url))
+            await c.query('select pg_advisory_xact_lock(hashtext($1))',['customer-save-receipt:'+s.user_id+':'+key]);
           const cached = (
             await c.query(
               "select fingerprint,response from ab.request_dedup where actor_id=$1 and key=$2",
