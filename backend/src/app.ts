@@ -1230,6 +1230,7 @@ export async function build(options: Options) {
       "vehicles.js",
       "customer-policy.js",
       "customers.js",
+      "customer-workspace-ui.js",
       "customer-requests-ui.js",
       "finance-policy.js",
       "finance-workbench.js",
