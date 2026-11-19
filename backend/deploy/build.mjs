@@ -15,3 +15,5 @@ await copyFile('backend/src/document-text-worker.mjs','backend-build/src/documen
 await import(new URL('../../backend-build/reset/gateway.js',import.meta.url));
 console.log('PASS: compiled runtime module graph loads without provider connections');
 console.log('PASS: staging JavaScript build complete; no migrations or cloud connections');
+
+await copyFile('backend/src/receipt-ocr-worker.mjs','backend-build/src/receipt-ocr-worker.mjs');
