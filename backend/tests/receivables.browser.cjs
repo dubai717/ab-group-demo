@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict');
+exports.exercise=async(p,f)=>{
+ const bills=await p.evaluate(async({co,customer,item})=>{const rows=[];for(const amount of ['300','500'])rows.push(await ABCentral.api('ledger/invoices','POST',{companyId:co,customerId:customer,itemId:item,amount,currency:'AED',issuedOn:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dubai'}).format(new Date()),dueOn:'2026-12-01',sourceKey:'receivables-browser-'+crypto.randomUUID()},crypto.randomUUID()));return rows;},{co:f.companyId,customer:f.customerId,item:f.itemId});
+ await p.evaluate(async id=>ReceivablesUI.open(id),f.customerId);await p.locator('[data-rb=collect]').waitFor();await p.locator('[data-receivables] .rb-table tbody tr[data-rb-row]').first().waitFor();
+ await p.locator('[data-rb=collect]').click();const form=p.locator('[data-rb-collect]');await form.waitFor();await form.locator('[name=companyId]').selectOption(f.companyId);
+ for(const b of bills)await form.locator('[name=invoice][value="'+b.id+'"]').check();await form.locator('[name="amount-'+bills[1].id+'"]').fill('100');await form.locator('[name=actualCashReceived]').check();
+ const response=p.waitForResponse(r=>r.url().endsWith('/api/ledger/collections/invoices')&&r.request().method()==='POST');await form.locator('[type=submit],button.primary-btn').click();const result=await response;assert.equal(result.status(),200);const saved=await result.json();assert.equal(saved.receipts.length,2);assert.equal(new Set(saved.receipts.map(x=>x.number)).size,2);await form.waitFor({state:'detached'});
+ await p.locator('[data-rb=statement]').click();await p.locator('[data-rb-statement]').waitFor();assert(await p.locator('[data-receivables] tbody tr').count()>2);await p.locator('[data-rb=statement-back]').click();await p.locator('[data-rb=age]').click();
+ for(const width of [1440,768,390]){await p.setViewportSize({width,height:900});assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'receivables horizontal overflow '+width);await p.locator('[data-action=toggle-language]').click();await p.locator('[data-rb=collect]').waitFor();}
+ await p.setViewportSize({width:1440,height:1000});console.log('PASS receivables browser: original invoices, independent RVs per invoice, partial payment, statement, ageing, AR/EN desktop/tablet/phone');
+};

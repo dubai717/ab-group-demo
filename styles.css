@@ -1235,3 +1235,8 @@ form .record-field-control:disabled,form .record-field-control[readonly]{color:v
 .vehicle-catalogue-actions{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:8px}
 .vehicle-catalogue-actions>button{width:auto;white-space:normal}.vehicle-catalogue-actions>p{margin:0}
 @media(max-width:650px){.vehicle-catalogue-grid{grid-template-columns:1fr}}
+
+/* Existing AB brown palette and compact financial navigation. */
+.rb-panel{border:1px solid #d7c6b8;border-radius:10px;padding:12px;min-width:0}.rb-panel .form-grid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));align-items:end}.rb-table{width:100%;border-collapse:collapse;font-size:.88rem}.rb-table th,.rb-table td{padding:7px;border:1px solid #dfd3c9;text-align:start}.rb-table th{background:#f1e9e1}.rb-table tr[data-rb-row]{cursor:pointer}.rb-table tr[data-rb-row]:focus{outline:2px solid #8b5e3c;outline-offset:-2px}.rb-invoice{display:flex;gap:8px;align-items:center;padding:8px;border-block-end:1px solid #dfd3c9}.rb-invoice[hidden]{display:none}.rb-invoice .input{width:140px;margin-inline-start:auto}.rb-panel .table-wrap{overflow:auto}dialog.workspace-dialog:has([data-rb-collect]){max-width:850px;width:94vw}@media(max-width:650px){.rb-invoice{flex-wrap:wrap}.rb-panel{padding:8px}}
+
+.rb-panel{max-width:100%}.rb-panel .table-wrap{width:100%;max-width:100%}@media print{body:has(.rb-print-dialog)>*:not(.rb-print-dialog){display:none!important}.rb-print-dialog{position:static;display:block;width:100%;max-width:none;max-height:none;overflow:visible;border:0}.rb-print-dialog button{display:none!important}.rb-print-dialog::backdrop{display:none}}

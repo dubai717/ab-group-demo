@@ -43,6 +43,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         await p.locator('#ld-company').selectOption(f.companyId);
         await p.locator('[data-ld="tab"][data-id="invoices"]').click();
         await p.getByRole('cell', { name: '400.001', exact: true }).waitFor();
+        await require('./receivables.browser.cjs').exercise(p,f);
         for (const tab of ['custody', 'deposits', 'vouchers', 'funds', 'cards', 'journals', 'setup', 'reports', 'closing', 'reconciliation', 'work', 'intercompany']) {
             await p.locator('[data-ld="tab"][data-id="' + tab + '"]').click();
             await p.locator('.ld-section').waitFor();
