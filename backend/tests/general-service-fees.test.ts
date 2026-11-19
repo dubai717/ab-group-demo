@@ -1,3 +1,4 @@
+import {approveService} from './service-request-test-helpers.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
@@ -10,10 +11,11 @@ test('General service fees: zero, AED, audited amendment, invoice equality, immu
  assert.equal((await f.req('POST',root,body)).id,created.id);
  let r=await f.req('GET',path);assert.equal(r.expectedAmount,'0');assert.equal(r.finance.billed,'0.000');assert.equal(r.finance.collected,'0.000');
  await f.req('POST',root,{...body,clientKey:randomUUID(),currency:'USD'},422);
- await f.req('POST',path+'/invoice',{itemId:f.items.loan,amount:'1',issuedOn:f.date,dueOn:f.date,confirm:true},422);
+ await f.req('POST',path+'/invoice',{itemId:f.items.loan,amount:'1',issuedOn:f.date,dueOn:f.date,confirm:true},409);
  await f.req('POST',path+'/service-fee',{expectedAmount:'250',reason:'Explicit new service price agreed before billing',revision:0});
  r=await f.req('GET',path);assert.equal(r.expectedAmount,'250');assert.equal(r.history[0].before.expectedAmount,'0');assert.equal(r.history[0].reason,'Explicit new service price agreed before billing');
  await f.req('POST',path+'/service-fee',{expectedAmount:'99',reason:'Stale concurrent amendment',revision:0},409);
+ await approveService(f,path,true);
  await f.req('POST',path+'/invoice',{itemId:f.items.loan,amount:'249',issuedOn:f.date,dueOn:f.date,confirm:true},422);
  const invoice=await f.req('POST',path+'/invoice',{itemId:f.items.loan,amount:'250',issuedOn:f.date,dueOn:f.date,confirm:true});
  r=await f.req('GET',path);assert.equal(r.finance.billed,'250.000');assert.equal(r.finance.collected,'0.000');

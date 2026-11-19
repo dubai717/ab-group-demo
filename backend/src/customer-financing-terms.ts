@@ -11,6 +11,11 @@ export function customerFinancingTerms(p:any){
  requireOk(Number.isInteger(p.months)&&p.months>0&&p.months<=600,422,'invalidSchedule');
  const total:bigint=V.units(p.totalObligation||'0'),due:bigint=total-down,monthly:bigint=V.units(p.expectedMonthly||'0');
  requireOk(principal>0n&&due>=principal&&monthly>0n,422,'installmentsBelowPrincipal');
+ if(p.installmentPolicy==='first_balance'){
+  const first=due-monthly*BigInt(p.months-1);requireOk(first>0n,422,'invalidFirstInstallment');
+  requireOk(p.firstInstallment===undefined||p.firstInstallment===''||V.units(p.firstInstallment)===first,422,'installmentTotalMismatch');
+  return{totalObligation:V.money(total),installmentTotal:V.money(due),firstInstallment:V.money(first),lastInstallment:V.money(p.months===1?first:monthly),contractualSpread:V.money(due-principal),distributionDifference:'0.000'};
+ }
  const first:bigint=p.firstInstallment===undefined||p.firstInstallment===''?monthly:V.units(p.firstInstallment);
  const last=p.months===1?due:due-first-monthly*BigInt(p.months-2);
  requireOk(first>0n&&last>0n&&(p.months!==1||first===due),422,'invalidSchedule');

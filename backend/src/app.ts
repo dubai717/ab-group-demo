@@ -65,6 +65,7 @@ import {
 import {registerLedger} from './ledger.js';
 import {registerPersonnel} from './personnel.js';
 import {registerVehicles} from './vehicles.js';
+import {registerRequestDrafts} from './request-drafts.js';
 import {registerCustomers} from './customers.js';
 import {registerFinance,bankNotice} from "./finance.js";
 export interface Options {
@@ -225,7 +226,7 @@ export async function build(options: Options) {
           uuid(key);
           // A retry can overlap a still-running customer creation after response loss.
           // Serialize its existing receipt before reading the cache, without changing other domains.
-          if (['POST','PATCH'].includes(req.method) && /^\/api\/customers(?:\/[0-9a-f-]+)?(?:\?|$)/i.test(req.url))
+          if (['POST','PATCH'].includes(req.method) && (/^\/api\/customers(?:\/[0-9a-f-]+)?(?:\?|$)/i.test(req.url)||/^\/api\/customers\/[0-9a-f-]+\/request-drafts(?:\/[0-9a-f-]+\/submit)?(?:\?|$)/i.test(req.url)))
             await c.query('select pg_advisory_xact_lock(hashtext($1))',['customer-save-receipt:'+s.user_id+':'+key]);
           const cached = (
             await c.query(
@@ -261,6 +262,7 @@ export async function build(options: Options) {
     };
   registerPermissionAdmin(app,call,cipher);registerSecurityRoles(app,call,cipher);
   registerFinance(app,call,cipher);
+  (options as any).requestCreators={};
   registerCustomers(app,call,cipher,options);
   registerCollectionFollowup(app,call,cipher);
   registerDocumentCenter(app,call,cipher,options);
@@ -276,6 +278,7 @@ export async function build(options: Options) {
   registerCentralDashboard(app,call,cipher);
   registerCommunications(app,call,cipher,options);
   registerVehicles(app,call,cipher,options);
+  registerRequestDrafts(app,call,cipher,(options as any).requestCreators);
   registerRegisters(app,call,cipher);
   registerLedger(app,call,cipher);
   registerPersonnel(app,call,cipher,options);
