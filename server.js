@@ -20,7 +20,7 @@ const MIME_TYPES = {
 
 // Only application assets are public. In particular, never expose backend/.env,
 // migration SQL, test fixtures, source-control metadata or installed packages.
-const PUBLIC_FILES = new Set(['index.html','app.js','styles.css','runtime-config.js','central-client.js','register-tools.js','attachment-viewer.js',
+const PUBLIC_FILES = new Set(['customer-workspace-ui.js','index.html','app.js','styles.css','runtime-config.js','central-client.js','register-tools.js','attachment-viewer.js',
   'area-reference.js','company-documents.js','bank-accounts.js','demo-credentials.js',
   'user-management.js','finance-policy.js','finance-workbench.js','ledger-policy.js','ledger-ui.js','financial-package-ui.js','workspace-ui.js','auth-flows.js','data/uae-areas.js','assets/Untitled.png','assets/logo.svg','assets/libphonenumber-max.js']);
 const server = http.createServer((req, res) => {
