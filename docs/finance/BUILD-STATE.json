@@ -5,22 +5,21 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "shared supplier expense allocations extending native commitments",
+    "module": "local petty cash evidence extraction in original funds UI",
     "files": [
-      "backend/src/shared-commitments.ts",
-      "backend/src/financial-commitments.ts",
-      "backend/tests/shared-commitments.test.ts",
-      "backend/tests/shared-commitments.browser.cjs"
+      "backend/src/petty-cash-review.ts",
+      "backend/tests/petty-cash-review.test.ts",
+      "backend/tests/petty-cash-review.browser.cjs"
     ],
     "acceptance": [
-      "37 targeted native tests passed plus consolidation acceptance",
-      "172 static checks passed",
-      "TypeScript and portable runtime build passed",
-      "Independent shared-expense browser passed AR/EN desktop/tablet/mobile",
-      "VAT and full settlement acceptance remain partial; no assumed tax classification",
-      "cumulative PR115 stays draft, build-only"
+      "52 combined native financial tests passed, including existing image OCR and actual PDF facts",
+      "Independent petty browser passed exact PDF review, manual item retained and actual synthetic cash spend",
+      "Content hash duplicate guard is prospective; historical backfill not performed",
+      "All five financial browser suites passed on fresh independent fixtures: original package, completion, monthly Salik, shared commitments and petty receipt review",
+      "No deployment and no provider financial writes",
+      "172 static regressions, TypeScript and portable runtime build passed"
     ],
-    "next": "Owner personal-card cycle and petty cash evidence/reconciliation; continue independent tax and collection work"
+    "next": "Owner personal-card ownership, explicit classifications and independent reimbursement/custody cycle; retain unresolved tax/legal decisions"
   },
   "nextIndependentWork": [
     "shared expense allocation/intercompany accounting and monthly Salik import grouping; do not reimplement the completed advance workflow",
@@ -51,7 +50,7 @@
   "checklistCounts": {
     "منفذ جزئياً": 50,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 5,
-    "لم يُنفذ": 13
+    "مكتمل وغير منشور": 6,
+    "لم يُنفذ": 12
   }
 }

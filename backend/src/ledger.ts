@@ -1,3 +1,4 @@
+import {reviewPettyReceipt,assertPettyEvidenceUnused,reservePettyEvidence} from './petty-cash-review.js';
 import {registerMonthlySalikImport,commitMonthlySalik} from './monthly-salik-import.js';
 import {assertEmployeeAdvanceVoucher,assertAdvanceAccountSeparation} from './employee-advances.js';
 import {assertCommitmentVoucher} from './financial-commitments.js';
@@ -539,6 +540,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         await event(c, cipher, s, d.companyId, key, 'fund_created', null, d);
         return { id: key };
     }));
+    app.post('/api/ledger/funds/:id/receipt-review',route(async(c:any,m:any,s:any,req:any)=>{const d=z.object({documentVersionId:id,amount:positive,effectiveOn:day}).strict().parse(req.body),fund=(await c.query('select * from ab.finance_funds where id=$1',[id.parse(req.params.id)])).rows[0];requireOk(fund&&fund.active,404,'notFound');need(m,'petty_spend',fund.company_id);requireOk(fund.holder_id===s.user_id||financeRight(m,'ledger_fund_manage',fund.company_id));return reviewPettyReceipt(c,m,cipher,options.objects,fund,d);}));
     app.post('/api/ledger/funds/:id/spend', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ itemId: id, amount: positive, reason: text, effectiveOn: day, documentVersionId: opt }).strict().parse(req.body), f = (await c.query('select * from ab.finance_funds where id=$1 for update', [id.parse(req.params.id)])).rows[0];
         requireOk(f && f.active, 404, 'notFound');
@@ -546,10 +548,10 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         requireOk(f.holder_id === s.user_id || financeRight(m, 'ledger_fund_manage', f.company_id));
         const it = await item(c, cipher, m, d.itemId, f.company_id), cash = await chart(c, f.company_id, f.currency, f.chart_id, 'asset'), expense = await resolve(c, f.company_id, f.currency, it.data.expenseId);
         requireOk(it.data.payment && expense.kind === 'expense' && await balance(c, f.chart_id) >= L.units(d.amount), 422, 'insufficientFund');
-        if (d.documentVersionId)
-            await evidence(c, m, f.company_id, d.documentVersionId, false);
+        const receiptDocument=d.documentVersionId?await assertPettyEvidenceUnused(c,m,cipher,f.company_id,d.documentVersionId):null;
         const key = await journal(c, cipher, s, f.company_id, d.effectiveOn, f.currency, 'petty:' + req.headers['idempotency-key'], [line(expense, L.units(d.amount)), line(cash, -L.units(d.amount))], { fundId: f.id, ...d });
         await recordFinancialDocument(c,cipher,s,f.company_id,key,'PV',{sourceKind:'cash_journal',fundId:f.id});
+        if(receiptDocument)await reservePettyEvidence(c,cipher,s,f.company_id,receiptDocument,key,d.documentVersionId!);
         const remaining = await balance(c, f.chart_id);
         if (remaining < L.units(f.threshold))
             await notify(c, s, f.company_id, f.id, 'ledger:refill', 'refill:' + key);
