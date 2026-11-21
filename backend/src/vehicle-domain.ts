@@ -1,3 +1,4 @@
+import {serviceBillingProjection,dueMonthPolicy,serviceFeeAmendments} from './vehicle-service-billing.js';
 import {securityRoleRight} from './security-role-access.js';
 import {facilitySummary} from './facility-summary.js';
 import {createRequire} from 'node:module';
@@ -14,7 +15,14 @@ export async function recurring(c:any,cipher:any,s:any,co:string,asOf=today()){
  let issued=0;const year=Number(asOf.slice(0,4))+(asOf.slice(5,7)==='12'?1:0);
  const rows=(await c.query("select * from ab.vehicles where company_id=$1 and status in('Active','Pending')",[co])).rows;
  for(const v of rows){const contracts=(await c.query('select * from ab.vehicle_contracts where vehicle_id=$1 order by created_at desc,id desc limit 1',[v.id])).rows;const contract=contracts[0];if(contract){const d=cipher.open(contract.payload_cipher);if(d.startOn){
- for(const date of V.serviceMonths(d.startOn,year)){const before=(await c.query('select count(*) n from ab.vehicle_invoices where vehicle_id=$1',[v.id])).rows[0].n;await issue(c,cipher,s,v,'service','service:'+date,date,d.serviceMonthly,{contractId:contract.id,recurring:true},contract.id);const after=(await c.query('select count(*) n from ab.vehicle_invoices where vehicle_id=$1',[v.id])).rows[0].n;if(Number(after)>Number(before))issued++;}
+ if(d.serviceBillingPolicy===dueMonthPolicy){
+ const eligible=v.status==='Active'&&(await c.query("select 1 from ab.customers where id=$1 and status='Active'",[v.customer_id])).rowCount;
+ if(eligible)for(const row of serviceBillingProjection(d,asOf,await serviceFeeAmendments(c,cipher,v.id,contract.id)).due){
+  await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',['vehicle-service:'+v.id+':'+row.period]);
+  if((await c.query('select 1 from ab.vehicle_invoices where vehicle_id=$1 and source_key=$2',[v.id,row.sourceKey])).rowCount)continue;
+  await issue(c,cipher,s,v,'service',row.sourceKey,row.dueOn,row.amount,{contractId:contract.id,recurring:true,billingPolicy:dueMonthPolicy,rateRevision:row.rateRevision},contract.id);issued++;
+ }
+}else for(const date of V.serviceMonths(d.startOn,year)){const before=(await c.query('select count(*) n from ab.vehicle_invoices where vehicle_id=$1',[v.id])).rows[0].n;await issue(c,cipher,s,v,'service','service:'+date,date,d.serviceMonthly,{contractId:contract.id,recurring:true},contract.id);const after=(await c.query('select count(*) n from ab.vehicle_invoices where vehicle_id=$1',[v.id])).rows[0].n;if(Number(after)>Number(before))issued++;}
  }}
  const circulars=(await c.query('select * from ab.vehicle_circulars where company_id=$1 and effective_on<=$2',[co,asOf])).rows;
  for(const circular of circulars){const r=cipher.open(circular.payload_cipher);if(r.types.length&&!r.types.includes(cipher.open(v.payload_cipher).vehicleType))continue;if(!r.feeStart||!r.monthlyFee||V.units(r.monthlyFee)===0n||!r.legalBasis||!r.notificationEvidence)continue;const result=(await c.query('select state from ab.vehicle_circular_results where vehicle_id=$1 and circular_id=$2 order by created_at desc,id desc limit 1',[v.id,circular.id])).rows[0];if(result&&['Completed','Exempted'].includes(result.state))continue;let cursor=r.feeStart;let safety=0;while(cursor<=asOf&&++safety<240){const old=(await c.query('select id from ab.vehicle_invoices where vehicle_id=$1 and source_key=$2',[v.id,'circular:'+circular.id+':'+cursor])).rows[0];await issue(c,cipher,s,v,'circular','circular:'+circular.id+':'+cursor,cursor,r.monthlyFee,{circularId:circular.id,legalBasis:r.legalBasis});if(!old)issued++;cursor=V.month(cursor,1);}
