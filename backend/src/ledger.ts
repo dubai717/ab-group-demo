@@ -1,3 +1,4 @@
+import {invoiceImportTemplate} from './invoice-import-template.js';
 import {costCentreSnapshot} from './cost-centres.js';
 import {reviewDepositReceipt} from './deposit-review.js';
 import {registerReceivables} from './receivables.js';
@@ -699,6 +700,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         await event(c, cipher, s, r.to_company_id, r.id, 'intercompany_deposited', null, { operationId: op, ...d });
         return { id: r.id, operationId: op };
     }));
+    app.get('/api/ledger/invoice-imports/template',route(async(c:any,m:any,s:any,req:any)=>{const q=z.object({companyId:id,format:z.enum(['csv','xlsx']).default('xlsx')}).strict().parse(req.query);need(m,'invoice_import',q.companyId);return invoiceImportTemplate(q.format);}));
     app.post('/api/ledger/invoice-imports', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ companyId: id, name: z.string().min(1).max(200), format: z.enum(['csv', 'xlsx']), base64: z.string().min(4).max(7000000), mapping: z.object({ sourceKey: text, customerNumber: text, vehicleNumber: z.string().max(100).default(''), plate: z.string().max(100).default(''), itemCode: text, amount: text, currency: text, dueOn: text }).strict() }).strict().parse(req.body);
         need(m, 'invoice_import', d.companyId);
