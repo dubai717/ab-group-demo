@@ -8,6 +8,8 @@ import {discountNotice} from './discount-notices.js';
 import {registerOwnerCardRepayment} from './owner-card-repayment.js';
 import {assertCardStatementReconciled,cardStatementMatchAmounts} from './card-reconciliation.js';
 import {issuerPaymentReference,issuerPaymentReady,verifiedIssuerPayment,registerIssuerPaymentReview} from './card-issuer-reconciliation.js';
+import {executeFundRefill} from './fund-refill-domain.js';
+import {registerPettyFundHandover,pettyFundRequiresReceipt,markFundReceiptRequired} from './petty-fund-handover.js';
 import {registerOwnerChequeCustody} from './owner-cheque-custody.js';
 import {registerOwnerCardSettlements,assertOwnerReimbursementVoucher,recordOwnerVoucherState} from './owner-card-settlements.js';
 import {personalCardOwnership,createPersonalCardOwnership,decorateCardOwnership,recordPersonalCardCharge,assertPersonalCardOperator,hiddenPersonalCardIds,registerPersonalCardOptions,assertNotOwnerPayableItem} from './personal-owner-card.js';
@@ -85,7 +87,8 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         }
     });
     registerReceivables(app,route,cipher);
-    registerPettyExpenseApproval(app,route,cipher,options.objects);registerOwnerCustomerDisbursements(app,route,cipher);registerOwnerWalletConsumption(app,route,cipher);registerMonthlySalikImport(app,route,cipher);registerPersonalCardOptions(app,route,cipher);registerOwnerCardSettlements(app,route,cipher);registerOwnerFinanceReports(app,route,cipher);registerOwnerChequeCustody(app,route,cipher);registerOwnerCardRepayment(app,route,cipher);
+    registerPettyExpenseApproval(app,route,cipher,options.objects);
+    registerPettyFundHandover(app,route,cipher);registerOwnerCustomerDisbursements(app,route,cipher);registerOwnerWalletConsumption(app,route,cipher);registerMonthlySalikImport(app,route,cipher);registerPersonalCardOptions(app,route,cipher);registerOwnerCardSettlements(app,route,cipher);registerOwnerFinanceReports(app,route,cipher);registerOwnerChequeCustody(app,route,cipher);registerOwnerCardRepayment(app,route,cipher);
     app.post('/api/ledger/deposit-receipt-review',route(async(c:any,m:any,s:any,req:any)=>{const d=z.object({companyId:id,bankAccountId:id,documentVersionId:id,amount:positive,effectiveOn:day,reference:text}).strict().parse(req.body);need(m,'deposit',d.companyId);return reviewDepositReceipt(c,m,cipher,options.objects,d);}));
     const companyIds = (m: any, right = 'view') => m.state.companies.filter((co: any) => financeRight(m, 'ledger_' + right, co.id)).map((co: any) => co.id);
     app.get('/api/ledger/capabilities', call(async (c: any, m: any) => ({ available: !!(await c.query("select to_regclass('ab.finance_journals') ok")).rows[0].ok, companies: m.state.companies.filter((co: any) => companyIds(m).includes(co.id)), rights: L.rights, ocr: true, ocrMode:'local-image-or-PDF-text-review-only',bankFeed: false, whatsapp: false, cloudMigrationsAppliedByThisFeature: false })));
@@ -569,6 +572,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
             const equity = await chart(c, d.companyId, d.currency, d.openingEquityId!, 'equity');
             await journal(c, cipher, s, d.companyId, d.effectiveOn, d.currency, 'fund-opening:' + key, [line(account, L.units(d.openingBalance)), line(equity, -L.units(d.openingBalance))], { fundId: key, explicitOpening: true });
         }
+        if(d.kind==='petty'&&d.currency==='AED'&&d.holderId!==s.user_id&&L.units(d.openingBalance)===0n)await markFundReceiptRequired(c,cipher,s,key,d.companyId);
         await event(c, cipher, s, d.companyId, key, 'fund_created', null, d);
         return { id: key };
     }));
@@ -592,12 +596,9 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         return { id: key, balance: L.money(remaining), refill: L.money(L.units(f.ceiling) - remaining) };
     }));
     app.post('/api/ledger/funds/:id/refill', route(async(c:any,m:any,s:any,req:any)=>{
-        const d=z.object({sourceFundId:id,amount:positive,effectiveOn:day,reason:text}).strict().parse(req.body),targetId=id.parse(req.params.id);
-        await c.query('select id from ab.finance_funds where id=any($1::uuid[]) order by id for update',[[targetId,d.sourceFundId].sort()]);
-        const f=(await c.query('select * from ab.finance_funds where id=$1',[targetId])).rows[0],source=(await c.query('select * from ab.finance_funds where id=$1',[d.sourceFundId])).rows[0];
-        requireOk(f&&source&&source.id!==f.id&&source.company_id===f.company_id&&source.currency===f.currency,422,'invalidReference');need(m,'fund_manage',f.company_id);
-        const remaining=await balance(c,f.chart_id),available=await balance(c,source.chart_id);requireOk(L.units(d.amount)===L.units(f.ceiling)-remaining&&available>=L.units(d.amount),422,'amountMismatch');
-        return{id:await journal(c,cipher,s,f.company_id,d.effectiveOn,f.currency,'refill:'+req.headers['idempotency-key'],[line(await chart(c,f.company_id,f.currency,f.chart_id),L.units(d.amount)),line(await chart(c,f.company_id,f.currency,source.chart_id),-L.units(d.amount))],{...d,fundId:f.id,expense:false})};
+        const d=z.object({sourceFundId:id,amount:positive,effectiveOn:day,reason:text}).strict().parse(req.body),targetId=id.parse(req.params.id),f=(await c.query('select company_id from ab.finance_funds where id=$1',[targetId])).rows[0];requireOk(f,404,'notFound');need(m,'fund_manage',f.company_id);
+        requireOk(!(await pettyFundRequiresReceipt(c,cipher,targetId)),409,'fundRecipientConfirmationRequired');
+        return executeFundRefill(c,cipher,s,targetId,d,'refill:'+req.headers['idempotency-key']);
     }));
     app.post('/api/ledger/journals', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id, currency, effectiveOn: day, reason: text, costCentreId: id.optional(), lines: z.array(z.object({ chartId: id, debit: money, credit: money }).strict()).min(2).max(100) }).strict().parse(req.body); need(m, 'journal_create', d.companyId); return { id: await journal(c, cipher, s, d.companyId, d.effectiveOn, d.currency, 'manual:' + req.headers['idempotency-key'], d.lines.map(l => ({ ...l, companyId: d.companyId, currency: d.currency })), { reason: d.reason, manual: true, ...(d.costCentreId ? {costCentre:await costCentreSnapshot(c,cipher,d.companyId,d.costCentreId)} : {}) }, false) }; }));
     app.post('/api/ledger/journals/:id/post', route(async (c: any, m: any, s: any, req: any) => { const r = (await c.query('select * from ab.finance_journals where id=$1', [id.parse(req.params.id)])).rows[0]; requireOk(r, 404, 'notFound'); need(m, 'journal_approve', r.company_id); await post(c, s, r.id); await event(c, cipher, s, r.company_id, r.id, 'manual_journal_approved', { status: r.status }, { status: 'Posted' }); return { id: r.id }; }));

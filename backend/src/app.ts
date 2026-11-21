@@ -1248,6 +1248,7 @@ export async function build(options: Options) {
       "financial-package-ui.js",
       "owner-finance-ui.js",
       "petty-review-ui.js",
+      "petty-fund-ui.js",
       "card-statement-import-ui.js",
       "personnel-policy.js",
       "personnel-ui.js",

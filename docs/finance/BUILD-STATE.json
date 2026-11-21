@@ -5,19 +5,18 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Original independently verified personal issuer-payment matching",
+    "module": "Employee petty fund actual receipt and prospective adjustable ceiling using original funds and tasks",
     "acceptance": [
-      "33 related native tests passed, including schema-off and unknown-guard refusals, retained source row and grants, partial statement guard and actual verified bank proof matching once",
-      "Original three-actor Owner settlement and issuer reconciliation browser passed, including AR/EN, stale preview invalidation, Excel/PDF and unchanged GL/PV/AR",
-      "TypeScript, 172 static checks and portable build passed; next cumulative run to follow saved checkpoint"
+      "33 related native tests passed; 3 expanded cases passed including 500 receipt once, 50 refill only, unchanged grants, scoped financial manager, source inactivity, clearance and 500→700 prospective cap with subsequent 200 actual receipt",
+      "Actual two-actor original fund browser passed: retained 499 field/reference, immediate removal of stale pending view, one history detail only, own task, actual 500 balance; AR/EN at three widths; cap UI rejects 100 then accepts 700 without changing held 500 or old receipt",
+      "TypeScript, 172 static checks and portable build passed; original independent petty-review and financial-package browser regressions passed. Cumulative rerun follows saved checkpoint."
     ],
-    "next": "Cumulative acceptance, then independent original petty fund handover/employee acknowledgment and remaining shared VAT/tax requirements; no deployment"
+    "next": "Save petty checkpoint and cumulative acceptance, then continue original noncash non-sales receivables and remaining shared/VAT/tax requirements without deployment"
   },
   "nextIndependentWork": [
-    "Original card statement CSV/XLSX mapping, exact preview/dedup and source classification; no posting from import",
+    "Original noncash employee/external receivable claims using approved actual bank operations and original RV/collection/report sources",
     "Shared-expense reviewed VAT and intercompany settlement acceptance",
-    "Owner-card statement import and exceptional personal requests; documented supplier refund/correction policy",
-    "Petty receipt ambiguity review tasks using existing original tasks",
+    "Owner-card broad classification and exceptional personal requests; supplier refund/correction review",
     "Tax source completeness, credit documents and offline e-invoicing/provider infrastructure",
     "Integrated 95-requirement acceptance and one protected release"
   ],
@@ -42,32 +41,32 @@
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
   "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
   "checklistCounts": {
-    "منفذ جزئياً": 28,
+    "منفذ جزئياً": 27,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 39,
+    "مكتمل وغير منشور": 40,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "5f40f98d5ccf9621a4b7000905089f1d7b3c5978",
-  "lastRemoteTree": "f9cef7197ef12a3fe0ca958269fe9ebf6392e423",
+  "lastRemoteCommit": "d3ce610921b4c407e67fa6738b5cbcb58cf61665",
+  "lastRemoteTree": "86c36e6349e0220bd9a35263c0a98a16501b1aee",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44951303824",
-    "head": "5f40f98d5ccf9621a4b7000905089f1d7b3c5978",
-    "status": "in_progress",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44952518254",
+    "head": "d3ce610921b4c407e67fa6738b5cbcb58cf61665",
+    "status": "success",
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44949901545",
-    "head": "b367f106ec82a1965a9090c23bb150b520c6d750",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44952518254",
+    "head": "d3ce610921b4c407e67fa6738b5cbcb58cf61665",
     "status": "success",
-    "includes": "Original CSV/XLSX/BOM card-import checkpoint, all earlier features",
+    "includes": "Verified personal issuer payment and all prior checkpoints, including exact partial reconciliation and original CSV/XLSX import",
     "deployment": false
   },
   "lastCumulativeAcceptance": {
-    "localCommit": "96a971d",
-    "remoteCommit": "b367f106ec82a1965a9090c23bb150b520c6d750",
-    "tree": "4edce3587798e9e1866ca452e885e85127ca4bd1",
-    "result": "502 passed, 0 failed; saved card CSV/XLSX/BOM template checkpoint",
-    "log": "/workspace/ab-test-tmp/financial-card-import-cumulative.log",
+    "localCommit": "b21ab36",
+    "remoteCommit": "d3ce610921b4c407e67fa6738b5cbcb58cf61665",
+    "tree": "86c36e6349e0220bd9a35263c0a98a16501b1aee",
+    "result": "506 passed, 0 failed; saved original verified issuer-payment matching checkpoint",
+    "log": "/workspace/ab-test-tmp/financial-issuer-reconciliation-cumulative.log",
     "noHostedOperations": true
   },
   "lastCumulativeAttempt": {
