@@ -1,3 +1,4 @@
+import {assertEmployeeAdvanceVoucher,assertAdvanceAccountSeparation} from './employee-advances.js';
 import {assertCommitmentVoucher} from './financial-commitments.js';
 import {invoiceImportTemplate} from './invoice-import-template.js';
 import {costCentreSnapshot} from './cost-centres.js';
@@ -74,7 +75,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
     app.get('/api/ledger/receipt-batches/:id', route(async (c: any, m: any, s: any, req: any) => { const r = (await c.query('select * from ab.finance_receipt_batches where id=$1', [id.parse(req.params.id)])).rows[0]; requireOk(r, 404, 'notFound'); need(m, 'view', r.company_id); return { id: r.id, chequeId: r.cheque_id, operationId: r.operation_id }; }));
     app.get('/api/ledger/card-charges/:id', route(async (c: any, m: any, s: any, req: any) => { const r = (await c.query('select * from ab.finance_card_charges where id=$1', [id.parse(req.params.id)])).rows[0]; requireOk(r, 404, 'notFound'); need(m, 'cards', r.company_id); const rows = (await c.query('select * from ab.finance_card_splits where charge_id=$1', [r.id])).rows.filter((x: any) => financeRight(m, 'ledger_view', x.company_id)); return { id: r.id, splits: rows }; }));
     app.get('/api/ledger/preferences', route(async (c: any, m: any, s: any) => { const r = (await c.query('select value from ab.settings where key=$1', ['ledger-prefs:' + s.user_id])).rows[0]; return r ? cipher.open(r.value.cipher) : {}; }));
-    app.post('/api/ledger/preferences', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id, tab: z.enum(['dashboard', 'invoices', 'collect', 'custody', 'deposits', 'vouchers', 'funds', 'cards', 'journals', 'reports', 'setup', 'import', 'closing', 'work', 'intercompany', 'reconciliation','priorities','compliance','entitlements','documents','receivables','commitments','cost-centres','taxes']), columns: z.array(z.string().max(60)).max(30).default([]) }).strict().parse(req.body); need(m, 'view', d.companyId); await c.query('insert into ab.settings values($1,$2,$3)on conflict(tenant_id,key)do update set value=excluded.value', [s.tenant_id, 'ledger-prefs:' + s.user_id, { cipher: cipher.seal(d) }]); return { saved: true }; }));
+    app.post('/api/ledger/preferences', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id, tab: z.enum(['dashboard', 'invoices', 'collect', 'custody', 'deposits', 'vouchers', 'funds', 'cards', 'journals', 'reports', 'setup', 'import', 'closing', 'work', 'intercompany', 'reconciliation','priorities','compliance','entitlements','documents','receivables','employee-advances','commitments','cost-centres','taxes']), columns: z.array(z.string().max(60)).max(30).default([]) }).strict().parse(req.body); need(m, 'view', d.companyId); await c.query('insert into ab.settings values($1,$2,$3)on conflict(tenant_id,key)do update set value=excluded.value', [s.tenant_id, 'ledger-prefs:' + s.user_id, { cipher: cipher.seal(d) }]); return { saved: true }; }));
     app.post('/api/ledger/accounts', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ code: z.string().trim().min(1).max(30), nameAr: text, nameEn: text, kind: z.enum(['asset', 'liability', 'equity', 'income', 'expense']), parentId: opt, eliminate: z.boolean().default(false), cashFlow: z.enum(['operating', 'investing', 'financing']).nullish(), companyIds: z.array(id).min(1).max(100), currency, bankAccountId: opt }).strict().parse(req.body);
         for (const co of d.companyIds) {
@@ -131,6 +132,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         for (const k of ['receivableId', 'revenueId', 'expenseId', 'payableId', 'taxAccountId'])
             if (d[k])
                 {requireOk((await c.query('select 1 from ab.finance_accounts where id=$1 and active', [d[k]])).rowCount,422,'accountMappingRequired');for(const co of d.companyIds)requireOk((await c.query('select 1 from ab.finance_chart where definition_id=$1 and company_id=$2 and active',[d[k],co])).rowCount,422,'accountMappingRequired');}
+        if(d.invoice&&d.receivableId)for(const co of [...new Set<string>(d.companyIds)].sort()){const rows=(await c.query('select id from ab.finance_chart where company_id=$1 and definition_id=$2',[co,d.receivableId])).rows;await assertAdvanceAccountSeparation(c,cipher,co,rows.map((r:any)=>r.id));}
         requireOk(!d.invoice || d.receivableId && d.revenueId, 422, 'accountMappingRequired');
         requireOk(!d.payment || d.expenseId && d.payableId, 422, 'accountMappingRequired');
         requireOk(L.units(d.taxRate) === 0n || !!d.taxAccountId, 422, 'taxAccountRequired');
@@ -166,6 +168,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         need(m, 'configure', d.companyId);
         for (const key of ['custodyAccountId', 'chequeTransitAccountId', 'customerCreditAccountId'])
             await chart(c, d.companyId, d.currency, (d as any)[key], key === 'customerCreditAccountId' ? 'liability' : 'asset');
+        await assertAdvanceAccountSeparation(c,cipher,d.companyId,[d.custodyAccountId,d.chequeTransitAccountId,d.customerCreditAccountId]);
         if (d.automaticFinanceJobs)
             need(m, 'invoice_create', d.companyId);
         const before = await config(c, cipher, d.companyId);
@@ -417,13 +420,13 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
     const voucherSchema = z.object({ companyId: id, itemId: id, customerId: opt, amount: positive, currency, issuedOn: day, beneficiary: text, reason: text, sourceKey: z.string().min(1).max(160).default(()=>'manual-pv:'+randomUUID()) }).strict();
     const voucher=(c:any,m:any,s:any,d:any,details:any={})=>createFinancialVoucher(c,cipher,m,s,d,details);
     app.post('/api/ledger/vouchers',route(async(c:any,m:any,s:any,req:any)=>{const d=voucherSchema.parse(req.body),result=await voucher(c,m,s,d);if(d.sourceKey.startsWith('manual-pv:'))await registerManualVoucher(c,cipher,s,d.companyId,result.id);return result;}));
-    app.post('/api/ledger/vouchers/:id/prepare', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ bankAccountId: id, chequeNumber: text, issuedOn: day, dueOn: day, documentVersionId: id }).strict().parse(req.body), r = (await c.query('select * from ab.finance_vouchers where id=$1 for update', [id.parse(req.params.id)])).rows[0]; requireOk(r, 404, 'notFound'); need(m, 'voucher_create', r.company_id); need(m, 'cheques', r.company_id); await assertCommitmentVoucher(c,cipher,r);await assertServiceRequestVoucher(c,cipher,m,s,{...r,bank_account_id:d.bankAccountId}); requireOk(r.status === 'Pending' && !r.cheque_id, 409, 'invalidTransition'); requireOk(d.dueOn >= d.issuedOn && d.issuedOn >= r.issued_on.toISOString().slice(0, 10), 422, 'invalidDate'); const b = m.bank.list().find((b: any) => b.id === d.bankAccountId && b.companyId === r.company_id && b.currency === r.currency && b.status === 'Active'); requireOk(b, 422, 'inactiveBank'); await evidence(c, m, r.company_id, d.documentVersionId, false); const ch = randomUUID(), details = cipher.open(r.payload_cipher); await c.query("insert into ab.finance_cheques(id,tenant_id,company_id,bank_account_id,direction,number,beneficiary,amount,currency,issued_on,due_on,status,integration_refs,document_version_id,created_by)values($1,$2,$3,$4,'outgoing',$5,$6,$7,$8,$9,$10,'Issued',$11,$12,$13)", [ch, s.tenant_id, r.company_id, b.id, d.chequeNumber, details.beneficiary, r.amount, r.currency, d.issuedOn, d.dueOn, { voucherId: r.id }, d.documentVersionId, s.user_id]); await c.query('update ab.finance_vouchers set bank_account_id=$2,cheque_id=$3,revision=revision+1 where id=$1', [r.id, b.id, ch]); await event(c, cipher, s, r.company_id, r.id, 'voucher_cheque_prepared', null, { ...d, chequeId: ch }); return { id: r.id, chequeId: ch }; }));
+    app.post('/api/ledger/vouchers/:id/prepare', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ bankAccountId: id, chequeNumber: text, issuedOn: day, dueOn: day, documentVersionId: id }).strict().parse(req.body), r = (await c.query('select * from ab.finance_vouchers where id=$1 for update', [id.parse(req.params.id)])).rows[0]; requireOk(r, 404, 'notFound'); need(m, 'voucher_create', r.company_id); need(m, 'cheques', r.company_id); await assertCommitmentVoucher(c,cipher,r);await assertEmployeeAdvanceVoucher(c,cipher,r);await assertServiceRequestVoucher(c,cipher,m,s,{...r,bank_account_id:d.bankAccountId}); requireOk(r.status === 'Pending' && !r.cheque_id, 409, 'invalidTransition'); requireOk(d.dueOn >= d.issuedOn && d.issuedOn >= r.issued_on.toISOString().slice(0, 10), 422, 'invalidDate'); const b = m.bank.list().find((b: any) => b.id === d.bankAccountId && b.companyId === r.company_id && b.currency === r.currency && b.status === 'Active'); requireOk(b, 422, 'inactiveBank'); await evidence(c, m, r.company_id, d.documentVersionId, false); const ch = randomUUID(), details = cipher.open(r.payload_cipher); await c.query("insert into ab.finance_cheques(id,tenant_id,company_id,bank_account_id,direction,number,beneficiary,amount,currency,issued_on,due_on,status,integration_refs,document_version_id,created_by)values($1,$2,$3,$4,'outgoing',$5,$6,$7,$8,$9,$10,'Issued',$11,$12,$13)", [ch, s.tenant_id, r.company_id, b.id, d.chequeNumber, details.beneficiary, r.amount, r.currency, d.issuedOn, d.dueOn, { voucherId: r.id }, d.documentVersionId, s.user_id]); await c.query('update ab.finance_vouchers set bank_account_id=$2,cheque_id=$3,revision=revision+1 where id=$1', [r.id, b.id, ch]); await event(c, cipher, s, r.company_id, r.id, 'voucher_cheque_prepared', null, { ...d, chequeId: ch }); return { id: r.id, chequeId: ch }; }));
     app.post('/api/ledger/vouchers/approval-preview', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ ids: z.array(id).min(1).max(100), signedEvidence: z.literal(true) }).strict().parse(req.body), unique = [...new Set(d.ids)], rows = (await c.query('select * from ab.finance_vouchers where id=any($1::uuid[])order by id', [unique])).rows;
         requireOk(rows.length === unique.length, 422, 'invalidReference');
         const totals: any = {};
         for (const r of rows) {
-            need(m, 'voucher_approve', r.company_id);await assertCommitmentVoucher(c,cipher,r);
+            need(m, 'voucher_approve', r.company_id);await assertCommitmentVoucher(c,cipher,r);await assertEmployeeAdvanceVoucher(c,cipher,r);
             if (rows.length > 1)
                 need(m, 'voucher_batch', r.company_id);
             requireOk(r.status === 'Pending' && r.cheque_id, 409, 'voucherNotReady');
@@ -442,7 +445,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         const snapshot = cipher.open(b.payload_cipher);
         for (const expected of snapshot) {
             const r = (await c.query('select * from ab.finance_vouchers where id=$1 for update', [expected.id])).rows[0];
-            need(m, 'voucher_approve', r.company_id);await assertCommitmentVoucher(c,cipher,r);
+            need(m, 'voucher_approve', r.company_id);await assertCommitmentVoucher(c,cipher,r);await assertEmployeeAdvanceVoucher(c,cipher,r);
             if (snapshot.length > 1)
                 need(m, 'voucher_batch', r.company_id);
             requireOk(r.status === 'Pending' && r.revision === expected.revision, 409, 'revisionConflict');
@@ -465,7 +468,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
     app.post('/api/ledger/vouchers/:id/settle', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ effectiveOn: day, bankConfirmation: text }).strict().parse(req.body), r = (await c.query('select * from ab.finance_vouchers where id=$1 for update', [id.parse(req.params.id)])).rows[0];
         requireOk(r, 404, 'notFound');
-        need(m, 'settle', r.company_id);await assertCommitmentVoucher(c,cipher,r);
+        need(m, 'settle', r.company_id);await assertCommitmentVoucher(c,cipher,r);await assertEmployeeAdvanceVoucher(c,cipher,r);
         await assertServiceRequestVoucher(c,cipher,m,s,r,true);
         requireOk(r.status === 'Approved' && r.cheque_id && !r.operation_id, 409, 'invalidTransition');
         await assertInvestorPayoutEligible(c,cipher,r.id);
@@ -520,7 +523,8 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
     }));
     app.post('/api/ledger/funds', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ companyId: id, name: text, kind: z.enum(['cash', 'petty']), holderId: id, chartId: id, currency, ceiling: positive.default('1000'), threshold: money.default('200'), openingBalance: money.default('0'), openingEquityId: opt, effectiveOn: day }).strict().parse(req.body);
-        need(m, 'fund_manage', d.companyId);
+        if(d.kind==='petty'&&req.body.ceiling===undefined)d.ceiling='500';
+        need(m, 'fund_manage', d.companyId);await assertAdvanceAccountSeparation(c,cipher,d.companyId,[d.chartId]);
         requireOk(m.state.users.some((u: any) => u.id === d.holderId && u.status === 'Active'), 422, 'invalidReference');
         const account = await chart(c, d.companyId, d.currency, d.chartId, 'asset');
         requireOk(L.units(d.threshold) <= L.units(d.ceiling) && L.units(d.openingBalance) <= L.units(d.ceiling), 422, 'amountMismatch');

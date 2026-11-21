@@ -5,21 +5,23 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "native commitments and recurring obligations",
+    "module": "employee advances using native payment and payroll/bank source recovery",
     "files": [
-      "backend/src/financial-commitments.ts",
-      "backend/tests/financial-commitments.test.ts",
-      "backend/tests/financial-commitments.browser.cjs"
+      "backend/src/employee-advances.ts",
+      "backend/tests/employee-advances.test.ts",
+      "backend/tests/employee-advances.browser.cjs"
     ],
     "acceptance": [
-      "26 ledger/commitment tests passed including final provenance guard",
+      "29 native ledger/commitment/advance tests including approved payroll recovery and self-approval denial passed",
       "172 static checks passed",
       "TypeScript and compiled runtime graph passed",
-      "responsive AR/EN desktop/tablet/mobile financial-package browser passed"
-    ]
+      "independent financial-completion AR/EN desktop/tablet/mobile browser passed",
+      "original financial-package browser passed with fresh independent fixture"
+    ],
+    "next": "review monthly Salik grouping and transaction-time responsibility, then shared expenses and personal Owner card"
   },
   "nextIndependentWork": [
-    "employee advance requests, actual receipt and non-sales recovery with native journal references",
+    "complete cash-only employee advance flows and approved exceptional settlements; preserve existing payroll legal controls",
     "shared expense allocation and intercompany liabilities",
     "owner personal-card reconciliation and reimbursement custody",
     "monthly Salik aggregation with transaction-time responsibility",
@@ -41,5 +43,6 @@
     "do not stop the whole build for a blocked independent module",
     "no real cloud financial test transactions",
     "do not consider this progress file a completion report"
-  ]
+  ],
+  "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115"
 }

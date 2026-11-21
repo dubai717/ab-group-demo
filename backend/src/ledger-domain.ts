@@ -175,6 +175,11 @@ export async function createFinancialVoucher(c: any, cipher:any, m: any, s: any,
         requireOk(it.data.payment, 403, 'denied');
         if (d.customerId)
             await customer(c, m, d.customerId, d.companyId);
+        if(d.sourceKey.startsWith('employee-advance-v1:')){
+            requireOk(details.employeeAdvanceId&&details.alreadyAccrued===true&&details.noExpenseAccrual===true,409,'advanceApprovalRequired');
+            const stored=(await c.query('select value from ab.settings where key=$1',['employee-advances-v1:records:'+d.companyId+':'+details.employeeAdvanceId])).rows[0],r=stored?cipher.open(stored.value.cipher):null;
+            requireOk(r?.status==='Approved'&&r.companyId===d.companyId&&r.mapping.itemId===d.itemId&&r.currency===d.currency&&L.units(r.amount)===L.units(d.amount)&&r.mapping.pendingChartId===details.payableOverrideId&&d.sourceKey==='employee-advance-v1:'+r.id+':'+((r.paymentAttempt||0)+1),409,'advanceApprovalRequired');
+        }
         if(d.sourceKey.startsWith('commitment-v1:')){
             requireOk(details.commitmentId&&details.alreadyAccrued===true&&details.accrualJournalId,409,'commitmentApprovalRequired');
             const stored=(await c.query('select value from ab.settings where key=$1',['financial-commitments-v1:records:'+d.companyId+':'+details.commitmentId])).rows[0],r=stored?cipher.open(stored.value.cipher):null;
