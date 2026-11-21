@@ -5,13 +5,15 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Original card statement CSV/XLSX mapping, preview and exact native statement recovery",
+    "module": "Exact original card reconciliation and remaining issuer-payment source matching",
     "acceptance": [
-      "28 related native cases passed; 6 final card/template native cases passed including actual generated BOM invoice template",
-      "Actual original card-import browser passed: CSV/XLSX, precision, changed inputs, duplicate-row review, original source names, AR/EN at three widths",
-      "172 static checks, TypeScript and portable build passed; new cumulative run in progress"
+      "Before-fix native case proved partial line 30.001/100 was incorrectly approved",
+      "30 related native cases passed after exact-source validation; 5 expanded cases passed including Owner partial-report and reimbursement/issuer separation",
+      "Actual original communication/PDF master journey passed locally; prior intermittent CI failure has additional safe failure-only diagnostics, no claimed root fix",
+      "502 cumulative acceptance refers to the saved card import checkpoint; newer matching changes require their own acceptance",
+      "Final original reconciliation browser and original CSV/XLSX import browser passed AR/EN at three widths; visible server reference and retained partial state; 172 static checks/typecheck/portable build passed"
     ],
-    "next": "Investigate draft CI original communication PDF preview failure, then extend issuer repayment matching and remaining shared/tax requirements without deployment"
+    "next": "Complete actual reconciliation UI acceptance, save checkpoint, then extend original issuer repayment proof matching without a parallel store or deployment"
   },
   "nextIndependentWork": [
     "Original card statement CSV/XLSX mapping, exact preview/dedup and source classification; no posting from import",
@@ -46,13 +48,12 @@
     "مكتمل وغير منشور": 38,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "7a7beaea21fce8b4711e36e8666ed148818a862c",
-  "lastRemoteTree": "e6e6fa662872d5d17a1f86a4cd6b58acd8b21680",
+  "lastRemoteCommit": "b367f106ec82a1965a9090c23bb150b520c6d750",
+  "lastRemoteTree": "4edce3587798e9e1866ca452e885e85127ca4bd1",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44946709850",
-    "head": "7a7beaea21fce8b4711e36e8666ed148818a862c",
-    "status": "failure",
-    "reason": "Original master-package communication attachment modal canvas did not appear; investigation pending. No finance browser step reached.",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44949901545",
+    "head": "b367f106ec82a1965a9090c23bb150b520c6d750",
+    "status": "in_progress",
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
@@ -63,11 +64,11 @@
     "deployment": false
   },
   "lastCumulativeAcceptance": {
-    "localCommit": "eebceda",
-    "remoteCommit": "d1a0d306d9abcb5a9eecaa2a0455e3b1e74d5474",
-    "tree": "d0558d0e370a4fcee17fe1b4701d08df6287f364",
-    "result": "498 passed, 0 failed; saved independent petty review/duplicate/reassignment checkpoint",
-    "log": "/workspace/ab-test-tmp/financial-petty-approval-cumulative.log",
+    "localCommit": "96a971d",
+    "remoteCommit": "b367f106ec82a1965a9090c23bb150b520c6d750",
+    "tree": "4edce3587798e9e1866ca452e885e85127ca4bd1",
+    "result": "502 passed, 0 failed; saved card CSV/XLSX/BOM template checkpoint",
+    "log": "/workspace/ab-test-tmp/financial-card-import-cumulative.log",
     "noHostedOperations": true
   },
   "lastCumulativeAttempt": {
