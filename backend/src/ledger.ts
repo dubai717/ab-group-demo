@@ -1,3 +1,4 @@
+import {discountNotice} from './discount-notices.js';
 import {registerOwnerCardRepayment} from './owner-card-repayment.js';
 import {registerOwnerChequeCustody} from './owner-cheque-custody.js';
 import {registerOwnerCardSettlements,assertOwnerReimbursementVoucher,recordOwnerVoucherState} from './owner-card-settlements.js';
@@ -146,7 +147,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         requireOk(!d.payment || d.expenseId && d.payableId, 422, 'accountMappingRequired');
         requireOk(L.units(d.taxRate) === 0n || !!d.taxAccountId, 422, 'taxAccountRequired');
     }
-    app.post('/api/ledger/items', route(async (c: any, m: any, s: any, req: any) => {
+    const createFinancialItem=async (c: any, m: any, s: any, req: any) => {
         const d = itemSchema.parse(req.body);
         if(!d.code){await c.query("insert into ab.vehicle_numbers(tenant_id,kind,next_number)select $1,'financial_item',coalesce(max(substring(code from 4)::bigint),0)+1 from ab.finance_items where code ~ '^FI-[0-9]{1,18}$' on conflict(tenant_id,kind)do update set next_number=greatest(ab.vehicle_numbers.next_number,excluded.next_number)",[s.tenant_id]);d.code='FI-'+String(await number(c,s.tenant_id,'financial_item')).padStart(6,'0');}d.recurrenceBinding='explicit';
         await validateItem(c, m, d);
@@ -155,7 +156,8 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         for (const co of d.companyIds)
             await event(c, cipher, s, co, key, 'item_created', null, d);
         return { id: key };
-    }));
+    };
+    app.post('/api/ledger/items',route(createFinancialItem));
     app.patch('/api/ledger/items/:id', route(async (c: any, m: any, s: any, req: any) => {
         const old = (await c.query('select * from ab.finance_items where id=$1', [id.parse(req.params.id)])).rows[0];
         requireOk(old, 404, 'notFound');
@@ -198,6 +200,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         requireOk(rows.length<=20000,422,'registerTooLarge');return {rows,truncated:false,complete:true};
     }));
     const correctInvoice=async (c: any, m: any, s: any, req: any) => {
+        const invoiceId=id.parse(req.params.id);await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':invoice-allocation:'+invoiceId]);
         const d = z.object({ amount: positive, reason: text, effectiveOn: day }).strict().parse(req.body), i = (await c.query('select i.*,l.item_id from ab.vehicle_invoices i join ab.finance_invoice_links l on l.invoice_id=i.id where i.id=$1', [id.parse(req.params.id)])).rows[0];
         requireOk(i, 404, 'notFound');
         need(m, 'invoice_correct', i.company_id);
@@ -214,10 +217,11 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
             lines.push(line(await resolve(c, i.company_id, i.currency, it.data.taxAccountId), tax));
         await journal(c, cipher, s, i.company_id, d.effectiveOn, i.currency, 'credit:' + key, lines, { invoiceId: i.id, taxAmount: L.money(tax), ...d });
         if(!req.packageDocument)await recordFinancialDocument(c,cipher,s,i.company_id,key,'Discount',{originInvoiceId:i.id,reason:d.reason});
+        if(!req.packageDocumentKind||req.packageDocumentKind==='Discount')await discountNotice(c,cipher,s,i,key,d);
         return { id: key };
     };
     app.post('/api/ledger/invoices/:id/correct',route(correctInvoice));
-    registerFinancialPackage(app,route,cipher,correctInvoice);
+    registerFinancialPackage(app,route,cipher,correctInvoice,createFinancialItem);
     const collection = z.object({ allocations:z.array(z.object({invoiceId:id,amount:positive}).strict()).min(1).max(100).optional(),targetInvoiceId:id.optional(),companyId: id, customerId: id.optional(), contractingCompanyId:id.optional(), vehicleId: opt, currency, receivedOn: day, method: z.enum(['cash', 'cheque', 'transfer']), mode: z.enum(['manual', 'automatic']), amount: positive, items: z.array(z.object({ itemId: id, amount: positive }).strict()).max(100).default([]), overridePriority: z.boolean().default(false), reason: z.string().max(2000).default(''), operationId: opt, cheque: z.object({ number: text, bankAccountId: id, beneficiary: text, issuedOn: day, dueOn: day }).strict().optional() }).strict().refine(exactFinancialParty,'financialPartyRequired');
     async function collect(c: any, m: any, s: any, d: any, legacyPolicy=false, invoiceRows:any[]=[]) {
         need(m, 'collect', d.companyId);
@@ -311,13 +315,18 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         return { id: batchId, chequeId, receipts: result };
     }
     app.post('/api/ledger/collections/invoices',route(async(c:any,m:any,s:any,req:any)=>{
-        const d=z.object({companyId:id,customerId:id,currency:z.literal('AED'),receivedOn:day,actualCashReceived:z.literal(true),invoices:z.array(z.object({invoiceId:id,amount:positive}).strict()).min(1).max(100)}).strict().parse(req.body);
+        const d=z.object({companyId:id,customerId:id,currency:z.literal('AED'),receivedOn:day,actualCashReceived:z.literal(true),invoices:z.array(z.object({invoiceId:id,amount:money,discountAmount:money.default('0'),discountReason:z.string().trim().max(2000).default('')}).strict()).min(1).max(100)}).strict().parse(req.body);
         need(m,'collect',d.companyId);await customer(c,m,d.customerId,d.companyId);requireOk(d.receivedOn<=today(),422,'invalidDate');
         await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':customer-collection:'+d.customerId]);
         // Invoices are immutable: serialize allocation without requesting UPDATE privileges.
         for(const invoiceId of d.invoices.map(x=>x.invoiceId).sort())await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':invoice-allocation:'+invoiceId]);
-        const amount=L.money(d.invoices.reduce((n,x)=>n+L.units(x.amount),0n));
-        return collect(c,m,s,{companyId:d.companyId,customerId:d.customerId,currency:d.currency,receivedOn:d.receivedOn,method:'cash',mode:'manual',amount,items:[],reason:'Explicit invoice collection; actual cash confirmed'},false,d.invoices);
+        requireOk(new Set(d.invoices.map(x=>x.invoiceId)).size===d.invoices.length,422,'duplicate');
+        const amount=L.money(d.invoices.reduce((n,x)=>n+L.units(x.amount),0n));requireOk(L.units(amount)>0n,422,'actualCollectionRequired');
+        const available=await invoices(c,{companyId:d.companyId,customerId:d.customerId}),discounts=[];
+        for(const x of d.invoices){const original=available.find((i:any)=>i.id===x.invoiceId);requireOk(original&&original.customer_id===d.customerId&&!original.contracting_company_id&&original.currency==='AED'&&L.units(x.amount)+L.units(x.discountAmount)<=L.units(original.outstanding)&&L.units(x.amount)+L.units(x.discountAmount)>0n,L.units(x.discountAmount)>0n?422:409,L.units(x.discountAmount)>0n?'amountMismatch':'allocationChanged');if(L.units(x.discountAmount)>0n){requireOk(!original.contract_id,409,'contractScheduleDiscountReviewRequired');need(m,'invoice_correct',d.companyId);requireOk(x.discountReason,422,'discountReasonRequired');const it=await item(c,cipher,m,original.item_id,d.companyId,true);requireOk(it.category!=='work_amount',422,'workAmountUnchanged');requireOk(L.units(original.written_off||'0')===0n,409,'writeoffRecoveryAccountingReviewRequired');}}
+        for(const x of d.invoices)if(L.units(x.discountAmount)>0n){const result=await correctInvoice(c,m,s,{params:{id:x.invoiceId},body:{amount:x.discountAmount,reason:x.discountReason,effectiveOn:d.receivedOn}});discounts.push({id:result.id,invoiceId:x.invoiceId,amount:L.money(L.units(x.discountAmount))});}
+        const result=await collect(c,m,s,{companyId:d.companyId,customerId:d.customerId,currency:d.currency,receivedOn:d.receivedOn,method:'cash',mode:'manual',amount,items:[],reason:'Explicit invoice collection; actual cash confirmed'},false,d.invoices.filter(x=>L.units(x.amount)>0n).map(x=>({invoiceId:x.invoiceId,amount:x.amount})));
+        return {...result,discounts,discountTotal:L.money(discounts.reduce((n,x)=>n+L.units(x.amount),0n)),cashTotal:amount};
     }));
     app.post('/api/ledger/collections', route(async (c: any, m: any, s: any, req: any) => collect(c, m, s, collection.parse(req.body))));
     app.post('/api/ledger/cheques/:id/resolve', route(async (c: any, m: any, s: any, req: any) => {

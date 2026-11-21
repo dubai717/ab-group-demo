@@ -70,11 +70,11 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         const rules = await p.evaluate(co => ABCentral.api('ledger/package/state?companyId=' + co), f.companyId);
         assert.equal(rules.feeRules.length, 1);
         const rule = rules.feeRules[0];
-        assert.equal(rule.enabled, false);
+        assert.equal(rule.enabled, false);assert.equal(rule.debtCategory,'salik');assert.deepEqual(rule.sourceItemIds,[f.itemId]);
         await p.locator('[data-fp-open="' + rule.id + '"]').locator('xpath=ancestor::tr').locator('td').first().click();
         dialog = p.locator('dialog[open]').last();
         assert.equal(await dialog.locator('[name=amount]').inputValue(), '10');
-        assert.equal(await dialog.locator('[name=unit]').inputValue(), 'customer_item');
+        assert.equal(await dialog.locator('[name=unit]').inputValue(), 'vehicle_category');
         await dialog.locator('[data-cancel]').click();
         await p.locator('[data-fp=fee-status]').click();
         await p.locator('#ld-notice').filter({ hasText: /موافقة|approval/ }).waitFor();
@@ -129,8 +129,8 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         console.log('PASS financial package actual UI: delayed Invoice to Discount switch ignores stale response, atomic delayed model refresh, auto-code item save/readback, collapsed accounting mapping, priority reordering/draft gate, disabled fee rule/row/activation denial, Invoice/RV/Discount/PV/Deposit metadata, noncash discount, no noninvoice Cancel, AR/EN desktop/tablet/mobile.');
     }
     catch (e) {
-        await p.screenshot({ path: 'work/financial-package-failure.png' });
         console.error('FAIL FINANCIAL_PACKAGE:', e.stack);
+        await p.screenshot({ path: 'work/financial-package-failure.png',timeout:5000 }).catch(error=>console.error('Failure screenshot unavailable:',error.name));
         console.error(await p.locator('[role=alert],#ld-notice').allTextContents());
         process.exitCode = 1;
     }

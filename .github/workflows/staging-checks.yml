@@ -241,7 +241,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for suite in financial-package financial-completion monthly-salik shared-commitments petty-cash-review personal-owner-card owner-settlements; do
+          for suite in financial-package financial-completion monthly-salik shared-commitments petty-cash-review personal-owner-card owner-settlements collection-discounts logical-followup-categories; do
             if test "$suite" = owner-settlements; then
               export AB_OWNER_SETTLEMENT_FIXTURE=1
             else

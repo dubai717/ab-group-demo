@@ -31,7 +31,7 @@ if(process.env.AB_OWNER_SETTLEMENT_FIXTURE==='1'){
 }
 await f.app.close();
 const app = await build({ pool: f.runtime, key: f.secret.key, origin: 'http://127.0.0.1:3646', secureCookies: false, auth: f.auth, objects: f.objects, scan: async () => 'clean' });
-await app.listen({ host: '127.0.0.1', port: 3646 });
 await writeFile('work/financial-package-fixture.json', JSON.stringify({ ownerSettlementFixture,ownerId:f.org.user,personalLiabilityChartId:personalLiability.charts.find((x:any)=>x.companyId===f.co1).id,ownerWalletDefinitionId:ownerWallet.id,pettyProofId:pettyProof.versionId,sharedCompanyId:f.co2,sharedDueFromDefinitionId:f.accounts.duefrom.id,sharedDueToDefinitionId:f.accounts.dueto.id,salikVehicleNumber,salikCustomerNumber,advanceCashFundId:advanceCashFund.id,advanceEmployeeId:advanceEmployee.id,advanceReceivableId,advancePendingId,bankAccountId:bank.id,username: f.username, password: f.password, companyId: f.co1, financeVehicleId:financeVehicle.id, customerId: f.client, invoiceId: bill.id, itemId: f.items.salik, expenseItemId:f.items.expense, proofId: proof, receivableId: f.accounts.ar.id, incomeId: f.accounts.income.id }), { mode: 0o600 });
+await app.listen({ host: '127.0.0.1', port: 3646 });
 console.log('SYNTHETIC_FINANCIAL_PACKAGE_READY');
 process.on('SIGTERM', async () => { await app.close(); await f.close(); process.exit(0); });

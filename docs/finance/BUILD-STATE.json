@@ -5,24 +5,21 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "signed Owner settlement / native outgoing cheque / physical custody / independent issuer proof",
+    "module": "logical Salik/traffic multi-item categories and standard two-item setup",
     "files": [
-      "backend/src/owner-card-settlements.ts",
-      "backend/src/owner-cheque-custody.ts",
-      "backend/src/owner-card-repayment.ts",
-      "backend/src/owner-work-projections.ts",
-      "owner-finance-ui.js"
+      "backend/src/vehicle-followup-policy.ts",
+      "backend/src/financial-package.ts",
+      "backend/tests/logical-followup-categories.test.ts",
+      "backend/tests/logical-followup-categories.browser.cjs"
     ],
     "acceptance": [
-      "13 related integration/regression tests passed",
-      "172 static checks, TypeScript and portable runtime build passed",
-      "Three-user Owner/delegate/reviewer browser passed full native workflow and AR/EN desktop/tablet/mobile layouts",
-      "A failed amount input stays in the form; customer invoice remains 450 AED outstanding",
-      "Stopped-cheque dual return and safe replacement preserve original Owner debt and completed task history",
-      "Cumulative backend regression: 461 passed, zero failures on Owner bundle runtime; foundation GitHub CI 44906529281 also succeeded",
-      "No deployment, original Supabase writes, historical migrations or automatic permission changes"
+      "18 related native policy/configuration/financial/discount cases passed",
+      "Existing financial-package browser passed with the logical category default",
+      "Dedicated category browser passed item setup, reviewed tax mapping, multiple original items, immutable scope and value history; AR/EN responsive",
+      "No original Supabase writes or actual fee activation",
+      "Full cumulative backend baseline 461 predates the discount/category bundles; final cumulative acceptance remains required"
     ],
-    "next": "logical Salik/traffic debt categories and collection discounts/Owner notice; then wallet consumption and remaining tax/claims/report acceptance"
+    "next": "Owner-cycle financial reports and wallet consumption; noncustomer claims and tax/legal/provider-dependent work remain in the master checklist"
   },
   "nextIndependentWork": [
     "Full wallet consumption and exceptional personal requests",
@@ -48,10 +45,19 @@
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
   "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
   "checklistCounts": {
-    "منفذ جزئياً": 48,
+    "منفذ جزئياً": 44,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 16,
-    "لم يُنفذ": 4
+    "مكتمل وغير منشور": 22,
+    "لم يُنفذ": 2
   },
-  "lastRemoteCommit": "db622dc6e4a40922e3faecc8fd7f05ee3b8d7bc2"
+  "lastRemoteCommit": "d0fb2af7f41727c541f7288f5c961fde7ae5f8e4",
+  "lastRemoteTree": "0b0d561dca82c33b0524f1c574abf6d1c14dc2c4",
+  "lastDraftCi": {
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44919869235",
+    "head": "d0fb2af7f41727c541f7288f5c961fde7ae5f8e4",
+    "status": "failed",
+    "failedStep": "repeated financial-package browser; screenshot timeout masked original error",
+    "followup": "publish synthetic fixture metadata before health readiness; log original error before bounded screenshot; wait for normal CI on next draft push",
+    "protectedRunsTouched": false
+  }
 }
