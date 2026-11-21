@@ -5,16 +5,16 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Independent prospective petty-document approval in original tasks and native PV",
+    "module": "Acceptance of existing monthly follow-up/collection transaction serialization",
     "acceptance": [
-      "26 related native tests passed; expanded rejection, reassignment and different-scan duplicate scenario passed",
-      "Actual new and original petty browser journeys passed; evidence preview, original task, no posting on approval, retained mismatch inputs, AR/EN responsive",
-      "172 static checks, TypeScript and portable build passed"
+      "New native synchronization case passed: actual PG waiting lock, assessment-first and collection-first, parallel month replay, unchanged principal/grants",
+      "No production code changes; original tenant transaction mutex already covers worker and API",
+      "498 cumulative native tests passed at previous saved petty checkpoint; additional concurrency test passed separately"
     ],
-    "next": "Save exact tree and run full cumulative acceptance; continue remaining shared VAT, Owner statements, fees concurrency and tax/e-invoicing infrastructure"
+    "next": "Continue original card-statement CSV/XLSX preview/import and remaining shared VAT/Owner/tax requirements without deploying"
   },
   "nextIndependentWork": [
-    "Serialize and accept monthly follow-up fee creation against actual collection without changing the 60-day policy",
+    "Original card statement CSV/XLSX mapping, exact preview/dedup and source classification; no posting from import",
     "Shared-expense reviewed VAT and intercompany settlement acceptance",
     "Owner-card statement import and exceptional personal requests; documented supplier refund/correction policy",
     "Petty receipt ambiguity review tasks using existing original tasks",
@@ -41,18 +41,17 @@
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
   "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
   "checklistCounts": {
-    "منفذ جزئياً": 30,
+    "منفذ جزئياً": 29,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 37,
+    "مكتمل وغير منشور": 38,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "4e1e7ccf624c7508f02fe94d46796ca9d53b9434",
-  "lastRemoteTree": "67045a6fa81e730836585d775c6b42e415eecb2c",
+  "lastRemoteCommit": "d1a0d306d9abcb5a9eecaa2a0455e3b1e74d5474",
+  "lastRemoteTree": "d0558d0e370a4fcee17fe1b4701d08df6287f364",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44943381763",
-    "head": "4e1e7ccf624c7508f02fe94d46796ca9d53b9434",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44945734150",
+    "head": "d1a0d306d9abcb5a9eecaa2a0455e3b1e74d5474",
     "status": "in_progress",
-    "followup": "New source fixture requires explicit isolated schema rehearsal flags; workflow glue added in current build only. Protected delivery unchanged.",
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
@@ -63,11 +62,11 @@
     "deployment": false
   },
   "lastCumulativeAcceptance": {
-    "localCommit": "d55bc80",
-    "remoteCommit": "4e1e7ccf624c7508f02fe94d46796ca9d53b9434",
-    "tree": "67045a6fa81e730836585d775c6b42e415eecb2c",
-    "result": "497 passed, 0 failed; original employee advance/task/report integration and local restore cleanup",
-    "log": "/workspace/ab-test-tmp/financial-advance-chain-cumulative.log",
+    "localCommit": "eebceda",
+    "remoteCommit": "d1a0d306d9abcb5a9eecaa2a0455e3b1e74d5474",
+    "tree": "d0558d0e370a4fcee17fe1b4701d08df6287f364",
+    "result": "498 passed, 0 failed; saved independent petty review/duplicate/reassignment checkpoint",
+    "log": "/workspace/ab-test-tmp/financial-petty-approval-cumulative.log",
     "noHostedOperations": true
   },
   "lastCumulativeAttempt": {
@@ -75,5 +74,11 @@
     "result": "496 tests: 494 passed; 2 failed only at isolated pg_restore index creation with No space left on device",
     "log": "/workspace/ab-test-tmp/financial-owner-unbilled-cumulative.log",
     "followup": "Resolved: 10 affected/resource cases passed, then 497/497 cumulative tests passed at d55bc80. No cloud operations."
+  },
+  "priorDraftCiFailure": {
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44943381763",
+    "head": "4e1e7ccf624c7508f02fe94d46796ca9d53b9434",
+    "reason": "Actual advance browser correctly refused absent reviewed schema marker (advanceCollectionSchemaReviewRequired); loop omitted synthetic fixture flags",
+    "fix": "eebceda sets both rehearsal flags only for isolated employee-advance-chain fixture; no hosted migration, bypass or protected run changes"
   }
 }
