@@ -5,16 +5,17 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Native non-sales claim drafts, Owner-reviewed accrual, actual RV/custody and partial handover; review-only guard extension",
+    "module": "Original contact chain adapter and party-separated reports for non-sales claims",
     "acceptance": [
-      "Three native non-sales claim cases passed, actual bilingual responsive browser passed",
-      "17 related native claim/wallet/original bank-receipt regression cases passed after correcting a development guard placement",
-      "Earlier cumulative 491-case run had 489 pass and two late guard-placement failures; these were corrected and passed targeted; not reported as an immutable full pass",
-      "172 static/typecheck/portable build are being repeated for the new checkpoint"
+      "9 targeted native cases passed including legacy invoice source preservation",
+      "Actual existing task-center/collector four-result chain browser passed; native RV party/claim details browser passed",
+      "172 static checks, TypeScript and portable build passed",
+      "Previous saved claims checkpoint: 494 cumulative native tests passed; new chain acceptance is additional"
     ],
-    "next": "Preserve checkpoint and run cumulative acceptance; integrate claim task/contact chain into existing task source without a parallel task system; continue independent tax/Owner/unbilled/report work"
+    "next": "Preserve exact tree; cumulative check; continue unbilled/adjusted Owner customer disbursements, staff-advance collection queue, reviewed tax/shared expenses and provider infrastructure"
   },
   "nextIndependentWork": [
+    "Extend actual Owner-card customer disbursements with explicitly reviewed new unbilled assets; do not invent invoices or reinvest principal",
     "Manual noncustomer claims and party-separated collection reports",
     "Unbilled/adjusted non-toll customer disbursements and exceptional Owner personal requests",
     "Shared-expense reviewed VAT cases and intercompany settlement acceptance",
@@ -45,8 +46,8 @@
     "مكتمل وغير منشور": 33,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "b14d2e4a51a1441623fd4b877fd1670c025985e4",
-  "lastRemoteTree": "df1b2173807915e010a8ac946cbfbf1d4b4a9ae9",
+  "lastRemoteCommit": "f1a17a432b4a95880ba33ca55727a8231ae2d7ab",
+  "lastRemoteTree": "1d644f2bc3fbb396964c612af45a9b6725bfe9b5",
   "lastDraftCi": {
     "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44929789986",
     "head": "518565a8f08837a0abf156b7790771f49d580519",
@@ -56,10 +57,18 @@
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44922007590",
-    "head": "bc58b87206a39661c82226b34acbb1038f5af920",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44934299806",
+    "head": "b14d2e4a51a1441623fd4b877fd1670c025985e4",
     "status": "success",
-    "includes": "Owner settlement, collection discounts and logical follow-up categories",
+    "includes": "Investor agency integration, numbering, original financier captions, safe synthetic test cleanup",
     "deployment": false
+  },
+  "lastCumulativeAcceptance": {
+    "localCommit": "7214e53",
+    "remoteCommit": "f1a17a432b4a95880ba33ca55727a8231ae2d7ab",
+    "tree": "1d644f2bc3fbb396964c612af45a9b6725bfe9b5",
+    "result": "494 passed, 0 failed; committed native claims checkpoint",
+    "log": "/workspace/ab-test-tmp/financial-claims-cumulative.log",
+    "noHostedOperations": true
   }
 }

@@ -237,6 +237,8 @@ jobs:
             wait "$fixture_pid"
             trap - EXIT
           done
+      - name: Non-sales follow-up reuses original task and contact history in isolated reviewed schema
+        run: node backend/tests/manual-claim-chain-suite.browser.cjs
       - name: Non-sales claims use isolated reviewed custody proposal only
         run: node backend/tests/manual-claims-suite.browser.cjs
       - name: Investor agency proposal uses isolated synthetic schema and providers only
