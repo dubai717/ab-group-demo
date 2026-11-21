@@ -5,12 +5,14 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Reviewed investor agency integration, original financier captions and isolated test resource lifecycle",
+    "module": "Native non-sales claim drafts, Owner-reviewed accrual, actual RV/custody and partial handover; review-only guard extension",
     "acceptance": [
-      "Targeted native agency tests and actual multilingual browser acceptance recorded in integration review",
-      "Full immutable cumulative acceptance remains required"
+      "Three native non-sales claim cases passed, actual bilingual responsive browser passed",
+      "17 related native claim/wallet/original bank-receipt regression cases passed after correcting a development guard placement",
+      "Earlier cumulative 491-case run had 489 pass and two late guard-placement failures; these were corrected and passed targeted; not reported as an immutable full pass",
+      "172 static/typecheck/portable build are being repeated for the new checkpoint"
     ],
-    "next": "Complete cumulative regression and preserve checkpoint; continue manual noncustomer claims, reviewed shared VAT and remaining legal/provider work without deployment"
+    "next": "Preserve checkpoint and run cumulative acceptance; integrate claim task/contact chain into existing task source without a parallel task system; continue independent tax/Owner/unbilled/report work"
   },
   "nextIndependentWork": [
     "Manual noncustomer claims and party-separated collection reports",
@@ -24,7 +26,8 @@
     "approved tax treatment and deductibility by supply/item/company",
     "investor agency 028 migration and contractual principal recovery/return policy",
     "authorized e-invoicing provider and credentials",
-    "no historical balance migration without separate reconciliation/approval"
+    "no historical balance migration without separate reconciliation/approval",
+    "specific approval and isolated rehearsal of non-sales native RV custody guard extension; no hosted activation"
   ],
   "resumeRules": [
     "read RELEASE-HOLD.md first",
@@ -42,8 +45,8 @@
     "مكتمل وغير منشور": 33,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "518565a8f08837a0abf156b7790771f49d580519",
-  "lastRemoteTree": "a73cb11a00ebfb25465fdbe571fedbaa3435d45e",
+  "lastRemoteCommit": "b14d2e4a51a1441623fd4b877fd1670c025985e4",
+  "lastRemoteTree": "df1b2173807915e010a8ac946cbfbf1d4b4a9ae9",
   "lastDraftCi": {
     "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44929789986",
     "head": "518565a8f08837a0abf156b7790771f49d580519",
