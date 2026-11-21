@@ -1,3 +1,5 @@
+import {registerOwnerWalletConsumption} from './owner-wallet-consumption.js';
+import {assertWalletAccountUse,assertWalletChartUse} from './wallet-posting-guards.js';
 import {registerOwnerFinanceReports} from './owner-finance-reports.js';
 import {discountNotice} from './discount-notices.js';
 import {registerOwnerCardRepayment} from './owner-card-repayment.js';
@@ -76,7 +78,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         }
     });
     registerReceivables(app,route,cipher);
-    registerMonthlySalikImport(app,route,cipher);registerPersonalCardOptions(app,route,cipher);registerOwnerCardSettlements(app,route,cipher);registerOwnerFinanceReports(app,route,cipher);registerOwnerChequeCustody(app,route,cipher);registerOwnerCardRepayment(app,route,cipher);
+    registerOwnerWalletConsumption(app,route,cipher);registerMonthlySalikImport(app,route,cipher);registerPersonalCardOptions(app,route,cipher);registerOwnerCardSettlements(app,route,cipher);registerOwnerFinanceReports(app,route,cipher);registerOwnerChequeCustody(app,route,cipher);registerOwnerCardRepayment(app,route,cipher);
     app.post('/api/ledger/deposit-receipt-review',route(async(c:any,m:any,s:any,req:any)=>{const d=z.object({companyId:id,bankAccountId:id,documentVersionId:id,amount:positive,effectiveOn:day,reference:text}).strict().parse(req.body);need(m,'deposit',d.companyId);return reviewDepositReceipt(c,m,cipher,options.objects,d);}));
     const companyIds = (m: any, right = 'view') => m.state.companies.filter((co: any) => financeRight(m, 'ledger_' + right, co.id)).map((co: any) => co.id);
     app.get('/api/ledger/capabilities', call(async (c: any, m: any) => ({ available: !!(await c.query("select to_regclass('ab.finance_journals') ok")).rows[0].ok, companies: m.state.companies.filter((co: any) => companyIds(m).includes(co.id)), rights: L.rights, ocr: true, ocrMode:'local-image-or-PDF-text-review-only',bankFeed: false, whatsapp: false, cloudMigrationsAppliedByThisFeature: false })));
@@ -140,6 +142,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         for (const co of d.companyIds)
             need(m, 'item_manage', co);
         await assertNotOwnerPayableItem(c,cipher,d);
+        for(const co of d.companyIds)await assertWalletAccountUse(c,co,[d.receivableId,d.revenueId,d.expenseId,d.payableId,d.taxAccountId].filter(Boolean));
         for (const k of ['receivableId', 'revenueId', 'expenseId', 'payableId', 'taxAccountId'])
             if (d[k])
                 {requireOk((await c.query('select 1 from ab.finance_accounts where id=$1 and active', [d[k]])).rowCount,422,'accountMappingRequired');for(const co of d.companyIds)requireOk((await c.query('select 1 from ab.finance_chart where definition_id=$1 and company_id=$2 and active',[d[k],co])).rowCount,422,'accountMappingRequired');}
@@ -178,6 +181,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
     app.post('/api/ledger/configuration', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ companyId: id, currency, custodyAccountId: id, chequeTransitAccountId: id, customerCreditAccountId: id, workdays: z.array(z.number().int().min(0).max(6)).min(1).max(7).default([1, 2, 3, 4, 5]), holidays: z.array(day).max(400).default([]), depositDays: z.number().int().min(1).max(30).default(1), automaticFinanceJobs: z.boolean().default(false) }).strict().parse(req.body);
         need(m, 'configure', d.companyId);
+        await assertWalletChartUse(c,d.companyId,[d.custodyAccountId,d.chequeTransitAccountId,d.customerCreditAccountId]);
         for (const key of ['custodyAccountId', 'chequeTransitAccountId', 'customerCreditAccountId'])
             await chart(c, d.companyId, d.currency, (d as any)[key], key === 'customerCreditAccountId' ? 'liability' : 'asset');
         await assertAdvanceAccountSeparation(c,cipher,d.companyId,[d.custodyAccountId,d.chequeTransitAccountId,d.customerCreditAccountId]);
@@ -543,7 +547,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
     app.post('/api/ledger/funds', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ companyId: id, name: text, kind: z.enum(['cash', 'petty']), holderId: id, chartId: id, currency, ceiling: positive.default('1000'), threshold: money.default('200'), openingBalance: money.default('0'), openingEquityId: opt, effectiveOn: day }).strict().parse(req.body);
         if(d.kind==='petty'&&req.body.ceiling===undefined)d.ceiling='500';
-        need(m, 'fund_manage', d.companyId);await assertAdvanceAccountSeparation(c,cipher,d.companyId,[d.chartId]);
+        need(m, 'fund_manage', d.companyId);await assertWalletChartUse(c,d.companyId,[d.chartId]);await assertAdvanceAccountSeparation(c,cipher,d.companyId,[d.chartId]);
         requireOk(m.state.users.some((u: any) => u.id === d.holderId && u.status === 'Active'), 422, 'invalidReference');
         const account = await chart(c, d.companyId, d.currency, d.chartId, 'asset');
         requireOk(L.units(d.threshold) <= L.units(d.ceiling) && L.units(d.openingBalance) <= L.units(d.ceiling), 422, 'amountMismatch');

@@ -1,3 +1,4 @@
+import {guardWalletPosting} from './wallet-posting-guards.js';
 import {guardOwnerPayablePayment} from './owner-payable-guards.js';
 import {reversalCostCentre} from './cost-centres.js';
 import {contractingParty,exactFinancialParty} from './contracting-access.js';
@@ -66,7 +67,7 @@ export async function journal(c: any, cipher: any, s: any, co: string, date: str
     await event(c, cipher, s, co, id, posted ? 'journal_posted' : 'journal_draft', null, { date, key, lines, ...payload });
     return id;
 }
-export async function post(c: any, s: any, id: string) { const r = (await c.query('select * from ab.finance_journals where id=$1 for update', [id])).rows[0]; requireOk(r && r.status === 'Draft', 409, 'invalidTransition'); await open(c, r.company_id, r.effective_on.toISOString().slice(0, 10)); await c.query("update ab.finance_journals set status='Posted',approved_by=$2,posted_at=now()where id=$1", [id, s.user_id]); }
+export async function post(c: any, s: any, id: string) { const r = (await c.query('select * from ab.finance_journals where id=$1 for update', [id])).rows[0]; requireOk(r && r.status === 'Draft', 409, 'invalidTransition'); await open(c, r.company_id, r.effective_on.toISOString().slice(0, 10)); await guardWalletPosting(c,(await c.query('select chart_id,debit::text,credit::text from ab.finance_entries where journal_id=$1',[id])).rows,r.effective_on.toISOString().slice(0,10)); await c.query("update ab.finance_journals set status='Posted',approved_by=$2,posted_at=now()where id=$1", [id, s.user_id]); }
 export async function reverse(c: any, cipher: any, s: any, key: string, date: string, reason: string) { const j = (await c.query('select * from ab.finance_journals where id=$1', [key])).rows[0]; requireOk(j && j.status === 'Posted', 422, 'invalidReference'); requireOk(!(await c.query('select 1 from ab.finance_journals where reversal_of=$1', [key])).rowCount, 409, 'duplicate'); const rows = (await c.query('select * from ab.finance_entries where journal_id=$1', [key])).rows; return journal(c, cipher, s, j.company_id, date, j.currency, 'reverse:' + key, rows.map((r: any) => ({ companyId: r.company_id, chartId: r.chart_id, currency: r.currency, debit: r.credit, credit: r.debit })), { reason, originalId: key, ...reversalCostCentre(cipher.open(j.payload_cipher),j.company_id) }, true, key); }
 export async function evidence(c: any, m: any, co: string, id: string, clean = true) {
     requireOk(m.company.canFiles() || m.bank.can('view_documents', co));
@@ -137,6 +138,7 @@ export async function bankPosting(c: any, cipher: any, m: any, s: any, d: any) {
     const id = randomUUID(), op = { id, company_id: d.companyId, bank_account_id: b.id, kind: d.kind, amount: d.amount, currency: d.currency, counterpart_id: counter.id, direction: 'credit' };
     await c.query("insert into ab.finance_operations(id,tenant_id,company_id,kind,bank_account_id,amount,currency,effective_on,direction,reason,reference,counterpart_id,cheque_id,integration_refs,created_by,payment_method)values($1,$2,$3,$4,$5,$6,$7,$8,'credit',$9,$10,$11,$12,$13,$14,$15)", [id, s.tenant_id, d.companyId, d.kind, b.id, d.amount, d.currency, d.effectiveOn, d.reason, d.reference, counter.id, d.chequeId || null, d.integrationRefs || {}, s.user_id, d.chequeId ? 'cheque' : 'electronic']);
     const rows = P.journal(op, m.state.bankAccounts, (await c.query('select * from ab.finance_chart')).rows);
+    await guardWalletPosting(c,rows,d.effectiveOn);
     for (const l of rows)
         await c.query('insert into ab.finance_entries(id,tenant_id,operation_id,company_id,chart_id,bank_account_id,debit,credit,currency)values($1,$2,$3,$4,$5,$6,$7,$8,$9)', [randomUUID(), s.tenant_id, id, l.company_id, l.chart_id, l.bank_account_id, l.debit, l.credit, l.currency]);
     await c.query("update ab.finance_operations set status='Approved',approved_by=$2,approved_at=now()where id=$1", [id, s.user_id]);

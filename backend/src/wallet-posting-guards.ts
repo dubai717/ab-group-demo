@@ -1,0 +1,18 @@
+// Only explicitly configured prospective prepaid-wallet assets use these shared native posting locks.
+import {createRequire} from 'node:module';import {requireOk} from './core.js';
+const L=createRequire(import.meta.url)('../../ledger-policy.js');
+export async function lockWalletAssets(c:any,chartIds:string[]){
+ const ids=[...new Set(chartIds)].sort();if(!ids.length)return[];
+ const rows=(await c.query("select value->'index' meta from ab.settings where key like 'owner-wallet-config-v1:%' and ((value->'index'->>'walletChartId')=any($1::text[]) or(value->'index'->>'unbilledChartId')=any($1::text[])) limit 1001",[ids])).rows;requireOk(rows.length<=1000,422,'registerTooLarge');
+ const selected=[...new Set<string>(rows.flatMap((r:any)=>[r.meta?.walletChartId,r.meta?.unbilledChartId]).filter((id:string)=>ids.includes(id)))].sort();for(const id of selected)await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',['wallet-asset:'+id]);return selected;
+}
+export async function guardWalletPosting(c:any,lines:any[],effectiveOn:string){
+ const chart=(r:any)=>r.chartId||r.chart_id,ids=await lockWalletAssets(c,lines.map(chart));
+ for(const id of ids){const delta=lines.filter(r=>chart(r)===id).reduce((n:bigint,r:any)=>n+L.units(r.debit)-L.units(r.credit),0n);if(delta>=0n)continue;
+  // A later top-up cannot fund an earlier spend. Check every effective-date boundary after this posting too.
+  const r=(await c.query("with daily as(select coalesce(o.effective_on,j.effective_on) as effective_date,sum(e.debit-e.credit) amount from ab.finance_entries e left join ab.finance_operations o on o.id=e.operation_id left join ab.finance_journals j on j.id=e.journal_id where e.chart_id=$1 and(o.status='Approved'or j.status='Posted') group by 1),at_date as(select coalesce(sum(amount),0) amount from daily where effective_date<=$2),future as(select (select amount from at_date)+sum(amount)over(order by effective_date) amount from daily where effective_date>$2)select least((select amount from at_date),coalesce((select min(amount)from future),(select amount from at_date)))::text amount",[id,effectiveOn])).rows[0];requireOk(L.units(r.amount)+delta>=0n,409,'insufficientWalletAssetBalance');
+ }
+}
+export async function lockWalletRoleConfiguration(c:any,co:string){await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',['wallet-account-roles:'+co]);}
+export async function assertWalletAccountUse(c:any,co:string,definitions:string[],allowed:string[]=[]){await lockWalletRoleConfiguration(c,co);const ids=definitions.filter(Boolean);if(!ids.length)return;const rows=(await c.query("select value->'index' meta from ab.settings where key like 'owner-wallet-config-v1:%' and value->'index'->>'companyId'=$1 and ((value->'index'->>'walletDefinitionId')=any($2::text[])or(value->'index'->>'unbilledDefinitionId')=any($2::text[])) limit 1001",[co,ids])).rows;requireOk(rows.length<=1000,422,'registerTooLarge');for(const row of rows){if(ids.includes(row.meta.walletDefinitionId))requireOk(allowed.includes('wallet'),422,'reservedPrepaidAsset');if(ids.includes(row.meta.unbilledDefinitionId))requireOk(allowed.includes('unbilled'),422,'reservedPrepaidAsset');}}
+export async function assertWalletChartUse(c:any,co:string,chartIds:string[],allowed:string[]=[]){if(!chartIds.length)return;const definitions=(await c.query('select definition_id from ab.finance_chart where id=any($1::uuid[]) and company_id=$2',[chartIds,co])).rows.map((r:any)=>r.definition_id).filter(Boolean);await assertWalletAccountUse(c,co,definitions,allowed);}

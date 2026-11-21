@@ -5,29 +5,29 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "VAT control-account workpaper and complete-source corporate profit bridge",
+    "module": "Prospective prepaid Salik wallet consumption and native original-invoice clearance",
     "files": [
-      "backend/src/vat-workpaper.ts",
-      "backend/src/company-tax-preparation.ts",
-      "backend/tests/vat-workpaper.test.ts",
-      "backend/tests/vat-workpaper.browser.cjs"
+      "backend/src/owner-wallet-consumption.ts",
+      "backend/src/wallet-posting-guards.ts",
+      "backend/tests/owner-wallet-consumption.test.ts",
+      "backend/tests/wallet-posting-guards.test.ts",
+      "backend/tests/owner-wallet-consumption.browser.cjs"
     ],
     "acceptance": [
-      "468 backend regressions passed before this tax bundle; the small collection read-model addition was separately covered by 17 targeted cases",
-      "Four tax/control cases passed in the supported serial isolated test mode",
-      "Actual VAT browser passed reviewed setup, invoice/credit/input-control reconciliation, no tax-due/recovery/filing assumption, Excel/PDF and AR/EN responsive",
-      "TypeScript passed; static/runtime build results are separately recorded",
-      "No filing, tax-rate mutation, source Supabase write or historical migration"
+      "10 related native tests passed before final role-configuration serialization refinement",
+      "Actual wallet browser passed AR/EN, overdraw error with retained form, corrected retry and responsive history",
+      "172 static cases passed",
+      "No new Owner payable/customer receipt/revenue for wallet consumption",
+      "Prospective only; hosted data and live grants unchanged"
     ],
-    "next": "wallet consumption and claims/source completion; reviewed investor agency integration and remaining tax/provider decisions must not be silently activated"
+    "next": "Run cumulative checks and continue noncustomer claims, shared VAT/source work, reviewed investor integration and remaining provider/legal decisions"
   },
   "nextIndependentWork": [
-    "Reviewed wallet consumption against prepaid asset and original Salik source without creating another Owner payable/customer receipt",
-    "VAT workpaper and corporate bridge reconciliation against approved bank operations without filing or changing tax rates",
-    "Full wallet consumption and exceptional personal requests",
-    "Shared-expense approved VAT cases and intercompany settlement acceptance",
-    "Manual noncustomer claims, logical debt-category fee/collection discount acceptance",
-    "VAT subledger/credit documents/e-invoicing with reviewed legal treatment",
+    "Manual noncustomer claims and party-separated collection reports",
+    "Unbilled/adjusted non-toll customer disbursements and exceptional Owner personal requests",
+    "Shared-expense reviewed VAT cases and intercompany settlement acceptance",
+    "Reviewed investor agency integration without applying protected 028 migration",
+    "Tax source completeness, credit documents and e-invoicing provider decisions",
     "Integrated 95-requirement acceptance and one protected release"
   ],
   "financialDecisionsNotAssumed": [
@@ -47,19 +47,17 @@
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
   "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
   "checklistCounts": {
-    "منفذ جزئياً": 43,
+    "منفذ جزئياً": 42,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 24,
+    "مكتمل وغير منشور": 25,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "bc58b87206a39661c82226b34acbb1038f5af920",
-  "lastRemoteTree": "e105f52c109b8eee8f307dbe91c34f6736d4f4bb",
+  "lastRemoteCommit": "8d31d11a78f7aca72e9fcc9ebb58666240c684f9",
+  "lastRemoteTree": "293f6be639b2a0c006391e953c6d07b32f116460",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44919869235",
-    "head": "d0fb2af7f41727c541f7288f5c961fde7ae5f8e4",
-    "status": "failed",
-    "failedStep": "repeated financial-package browser; screenshot timeout masked original error",
-    "followup": "publish synthetic fixture metadata before health readiness; log original error before bounded screenshot; wait for normal CI on next draft push; a retained open report form was reproduced locally and the test now opens only the required direct summary when hidden",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44925376071",
+    "head": "8d31d11a78f7aca72e9fcc9ebb58666240c684f9",
+    "status": "in_progress at read",
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
