@@ -5,31 +5,30 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "local petty cash evidence extraction in original funds UI",
+    "module": "personal Owner card native accounting foundation",
     "files": [
-      "backend/src/petty-cash-review.ts",
-      "backend/tests/petty-cash-review.test.ts",
-      "backend/tests/petty-cash-review.browser.cjs"
+      "backend/src/personal-owner-card.ts",
+      "backend/tests/personal-owner-card.test.ts",
+      "backend/tests/personal-owner-card.browser.cjs"
     ],
     "acceptance": [
-      "52 combined native financial tests passed, including existing image OCR and actual PDF facts",
-      "Independent petty browser passed exact PDF review, manual item retained and actual synthetic cash spend",
-      "Content hash duplicate guard is prospective; historical backfill not performed",
-      "All five financial browser suites passed on fresh independent fixtures: original package, completion, monthly Salik, shared commitments and petty receipt review",
-      "No deployment and no provider financial writes",
-      "172 static regressions, TypeScript and portable runtime build passed"
+      "53 combined native financial tests passed",
+      "Personal Owner card browser passed creation, wallet setup, mixed expense/personal payment, owner-payable drilldown and AR/EN responsive views",
+      "All six independent financial browsers passed; full backend regression still running",
+      "TypeScript, portable runtime and 172 static checks passed before the final label-only refinement",
+      "No company bank or customer receipt; dedicated owner liability is protected",
+      "Not completion of phase 7: reimbursement, cheque custody, deposits and dual closure remain pending"
     ],
-    "next": "Owner personal-card ownership, explicit classifications and independent reimbursement/custody cycle; retain unresolved tax/legal decisions"
+    "next": "native Owner reimbursement request/signature/voucher and delegate cheque custody; then unresolved taxes, claims and collection acceptance"
   },
   "nextIndependentWork": [
-    "shared expense allocation/intercompany accounting and monthly Salik import grouping; do not reimplement the completed advance workflow",
-    "shared expense allocation and intercompany liabilities",
-    "owner personal-card reconciliation and reimbursement custody",
-    "monthly Salik aggregation with transaction-time responsibility",
-    "logical debt-category followup rules and authorized collection discount",
-    "VAT subledger and credit documents with explicit reviewed treatment",
-    "petty cash OCR and reconciliation reports",
-    "integrated acceptance and one final protected release"
+    "Owner reimbursement request/signature/native cheque and delegate custody",
+    "Personal account deposit verification and separate card-payment proof closure",
+    "Full wallet consumption and exceptional personal requests",
+    "Shared-expense approved VAT cases and intercompany settlement acceptance",
+    "Manual noncustomer claims, logical debt-category fee/collection discount acceptance",
+    "VAT subledger/credit documents/e-invoicing with reviewed legal treatment",
+    "Integrated 95-requirement acceptance and one protected release"
   ],
   "financialDecisionsNotAssumed": [
     "approved tax treatment and deductibility by supply/item/company",
@@ -48,9 +47,9 @@
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
   "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
   "checklistCounts": {
-    "منفذ جزئياً": 50,
+    "منفذ جزئياً": 51,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 6,
-    "لم يُنفذ": 12
+    "مكتمل وغير منشور": 8,
+    "لم يُنفذ": 9
   }
 }
