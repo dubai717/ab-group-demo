@@ -125,6 +125,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
                 assert(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), locale + ' priorities ' + width);
             }
         }
+        await require('./financial-commitments.browser.cjs')(p,f);
         assert.deepEqual(errors, []);
         console.log('PASS financial package actual UI: delayed Invoice to Discount switch ignores stale response, atomic delayed model refresh, auto-code item save/readback, collapsed accounting mapping, priority reordering/draft gate, disabled fee rule/row/activation denial, Invoice/RV/Discount/PV/Deposit metadata, noncash discount, no noninvoice Cancel, AR/EN desktop/tablet/mobile.');
     }
