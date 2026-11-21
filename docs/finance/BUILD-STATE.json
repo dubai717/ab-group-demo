@@ -1,20 +1,20 @@
 {
-  "updatedOn": "2026-11-21",
+  "updatedOn": "2026-11-22",
   "branch": "feature/finance-completion-build",
   "baseContent": "PR114 head 6405eff7d933a37f018e16ac0893387c5b6a4bad",
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Original employee advances in unified collection tasks and financial party reports",
+    "module": "Independent prospective petty-document approval in original tasks and native PV",
     "acceptance": [
-      "7 related native tests and 4 original chain regressions passed (overlapping cases)",
-      "Actual task-center assignment, four outcomes, future appointment, reports and AR/EN responsive browser passed",
-      "172 static checks, TypeScript and portable build passed",
-      "No hosted activation; review-only SQL verifies exact original guard"
+      "26 related native tests passed; expanded rejection, reassignment and different-scan duplicate scenario passed",
+      "Actual new and original petty browser journeys passed; evidence preview, original task, no posting on approval, retained mismatch inputs, AR/EN responsive",
+      "172 static checks, TypeScript and portable build passed"
     ],
-    "next": "Freeze and rerun cumulative acceptance; continue remaining tax/shared expense/Owner statement/petty review requirements"
+    "next": "Save exact tree and run full cumulative acceptance; continue remaining shared VAT, Owner statements, fees concurrency and tax/e-invoicing infrastructure"
   },
   "nextIndependentWork": [
+    "Serialize and accept monthly follow-up fee creation against actual collection without changing the 60-day policy",
     "Shared-expense reviewed VAT and intercompany settlement acceptance",
     "Owner-card statement import and exceptional personal requests; documented supplier refund/correction policy",
     "Petty receipt ambiguity review tasks using existing original tasks",
@@ -41,40 +41,39 @@
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
   "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
   "checklistCounts": {
-    "منفذ جزئياً": 31,
+    "منفذ جزئياً": 30,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 36,
+    "مكتمل وغير منشور": 37,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "ecc356e678157fc4424c2d65a97a5b7227e5cb93",
-  "lastRemoteTree": "120e7ffaa47207848b4d22bacdd2408df64cba1f",
+  "lastRemoteCommit": "4e1e7ccf624c7508f02fe94d46796ca9d53b9434",
+  "lastRemoteTree": "67045a6fa81e730836585d775c6b42e415eecb2c",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44937627058",
-    "head": "a591a933dee5de46df0fb6e2970e2412d213ab55",
-    "status": "failed",
-    "failedStep": "Personnel directory browser waited for an arbitrary offscreen lazy PDF canvas",
-    "followup": "Read clean synthetic PDF metadata, scroll its exact host into view, then assert canvas; local isolated personnel browser passed. Product lazy loading and protected runs untouched.",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44943381763",
+    "head": "4e1e7ccf624c7508f02fe94d46796ca9d53b9434",
+    "status": "in_progress",
+    "followup": "New source fixture requires explicit isolated schema rehearsal flags; workflow glue added in current build only. Protected delivery unchanged.",
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44935799871",
-    "head": "f1a17a432b4a95880ba33ca55727a8231ae2d7ab",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44942125783",
+    "head": "ecc356e678157fc4424c2d65a97a5b7227e5cb93",
     "status": "success",
-    "includes": "Investor agency and native non-sales claims; no deployment",
+    "includes": "Owner unbilled customer outlays and personnel lazy PDF acceptance fix",
     "deployment": false
   },
   "lastCumulativeAcceptance": {
-    "localCommit": "b53718c",
-    "remoteCommit": "a591a933dee5de46df0fb6e2970e2412d213ab55",
-    "tree": "00d84713e288b53183b9c2717636d520f9ee5bc2",
-    "result": "495 passed, 0 failed; saved original-chain adapter checkpoint",
-    "log": "/workspace/ab-test-tmp/financial-claim-chain-cumulative.log",
+    "localCommit": "d55bc80",
+    "remoteCommit": "4e1e7ccf624c7508f02fe94d46796ca9d53b9434",
+    "tree": "67045a6fa81e730836585d775c6b42e415eecb2c",
+    "result": "497 passed, 0 failed; original employee advance/task/report integration and local restore cleanup",
+    "log": "/workspace/ab-test-tmp/financial-advance-chain-cumulative.log",
     "noHostedOperations": true
   },
   "lastCumulativeAttempt": {
     "localCommit": "af9306d",
     "result": "496 tests: 494 passed; 2 failed only at isolated pg_restore index creation with No space left on device",
     "log": "/workspace/ab-test-tmp/financial-owner-unbilled-cumulative.log",
-    "followup": "Verified idle synthetic restore copies cleaned in limited batches; only newly created vehicle/ledger restore targets now disposed in finally. 10 resource/affected cases passed; cumulative rerun pending."
+    "followup": "Resolved: 10 affected/resource cases passed, then 497/497 cumulative tests passed at d55bc80. No cloud operations."
   }
 }

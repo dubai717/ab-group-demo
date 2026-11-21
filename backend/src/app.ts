@@ -1247,6 +1247,7 @@ export async function build(options: Options) {
       "receivables-ui.js",
       "financial-package-ui.js",
       "owner-finance-ui.js",
+      "petty-review-ui.js",
       "personnel-policy.js",
       "personnel-ui.js",
       "business-centers.js",

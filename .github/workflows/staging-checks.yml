@@ -247,11 +247,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for suite in financial-package financial-completion monthly-salik shared-commitments petty-cash-review personal-owner-card owner-customer-disbursements employee-advance-chain owner-settlements collection-discounts logical-followup-categories vat-workpaper owner-wallet-consumption bank-lender-registry account-numbering commitment-scheduler; do
+          for suite in financial-package financial-completion monthly-salik shared-commitments petty-cash-review petty-expense-approval personal-owner-card owner-customer-disbursements employee-advance-chain owner-settlements collection-discounts logical-followup-categories vat-workpaper owner-wallet-consumption bank-lender-registry account-numbering commitment-scheduler; do
             if test "$suite" = owner-settlements; then
               export AB_OWNER_SETTLEMENT_FIXTURE=1
             else
               export AB_OWNER_SETTLEMENT_FIXTURE=0
+            fi
+            # Review-only source extensions are rehearsed only in the isolated synthetic fixture.
+            export AB_TEST_MANUAL_CLAIM_COLLECTION_SCHEMA=0 AB_TEST_EMPLOYEE_ADVANCE_COLLECTION_SCHEMA=0
+            if test "$suite" = employee-advance-chain; then
+              export AB_TEST_MANUAL_CLAIM_COLLECTION_SCHEMA=1 AB_TEST_EMPLOYEE_ADVANCE_COLLECTION_SCHEMA=1
             fi
             node --import tsx backend/tests/serve-financial-package-fixture.ts > work/financial-completion-browser.log 2>&1 &
             fixture_pid=$!

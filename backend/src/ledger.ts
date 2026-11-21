@@ -1,3 +1,4 @@
+import {registerPettyExpenseApproval,approvedPettyExpense,recordPettyExpenseApproval} from './petty-expense-approval.js';
 import {registerOwnerCustomerDisbursements,clearOwnerCustomerDisbursement,ownerOutlayDiscountExpense} from './owner-customer-disbursements.js';
 import {registerOwnerWalletConsumption} from './owner-wallet-consumption.js';
 import {assertWalletAccountUse,assertWalletChartUse} from './wallet-posting-guards.js';
@@ -81,7 +82,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         }
     });
     registerReceivables(app,route,cipher);
-    registerOwnerCustomerDisbursements(app,route,cipher);registerOwnerWalletConsumption(app,route,cipher);registerMonthlySalikImport(app,route,cipher);registerPersonalCardOptions(app,route,cipher);registerOwnerCardSettlements(app,route,cipher);registerOwnerFinanceReports(app,route,cipher);registerOwnerChequeCustody(app,route,cipher);registerOwnerCardRepayment(app,route,cipher);
+    registerPettyExpenseApproval(app,route,cipher,options.objects);registerOwnerCustomerDisbursements(app,route,cipher);registerOwnerWalletConsumption(app,route,cipher);registerMonthlySalikImport(app,route,cipher);registerPersonalCardOptions(app,route,cipher);registerOwnerCardSettlements(app,route,cipher);registerOwnerFinanceReports(app,route,cipher);registerOwnerChequeCustody(app,route,cipher);registerOwnerCardRepayment(app,route,cipher);
     app.post('/api/ledger/deposit-receipt-review',route(async(c:any,m:any,s:any,req:any)=>{const d=z.object({companyId:id,bankAccountId:id,documentVersionId:id,amount:positive,effectiveOn:day,reference:text}).strict().parse(req.body);need(m,'deposit',d.companyId);return reviewDepositReceipt(c,m,cipher,options.objects,d);}));
     const companyIds = (m: any, right = 'view') => m.state.companies.filter((co: any) => financeRight(m, 'ledger_' + right, co.id)).map((co: any) => co.id);
     app.get('/api/ledger/capabilities', call(async (c: any, m: any) => ({ available: !!(await c.query("select to_regclass('ab.finance_journals') ok")).rows[0].ok, companies: m.state.companies.filter((co: any) => companyIds(m).includes(co.id)), rights: L.rights, ocr: true, ocrMode:'local-image-or-PDF-text-review-only',bankFeed: false, whatsapp: false, cloudMigrationsAppliedByThisFeature: false })));
@@ -570,16 +571,18 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
     }));
     app.post('/api/ledger/funds/:id/receipt-review',route(async(c:any,m:any,s:any,req:any)=>{const d=z.object({documentVersionId:id,amount:positive,effectiveOn:day}).strict().parse(req.body),fund=(await c.query('select * from ab.finance_funds where id=$1',[id.parse(req.params.id)])).rows[0];requireOk(fund&&fund.active,404,'notFound');need(m,'petty_spend',fund.company_id);requireOk(fund.holder_id===s.user_id||financeRight(m,'ledger_fund_manage',fund.company_id));return reviewPettyReceipt(c,m,cipher,options.objects,fund,d);}));
     app.post('/api/ledger/funds/:id/spend', route(async (c: any, m: any, s: any, req: any) => {
-        const d = z.object({ itemId: id, amount: positive, reason: text, effectiveOn: day, documentVersionId: opt }).strict().parse(req.body), f = (await c.query('select * from ab.finance_funds where id=$1 for update', [id.parse(req.params.id)])).rows[0];
+        const d = z.object({ itemId: id, amount: positive, reason: text, effectiveOn: day, documentVersionId: opt, reviewId:opt }).strict().parse(req.body), f = (await c.query('select * from ab.finance_funds where id=$1 for update', [id.parse(req.params.id)])).rows[0];
         requireOk(f && f.active, 404, 'notFound');
         need(m, 'petty_spend', f.company_id);
         requireOk(f.holder_id === s.user_id || financeRight(m, 'ledger_fund_manage', f.company_id));
+        const reviewed=await approvedPettyExpense(c,m,cipher,f,d);if(reviewed?.state==='Posted'){const remaining=await balance(c,f.chart_id);return{id:reviewed.journalId,balance:L.money(remaining),refill:L.money(L.units(f.ceiling)-remaining),existing:true};}
         const it = await item(c, cipher, m, d.itemId, f.company_id), cash = await chart(c, f.company_id, f.currency, f.chart_id, 'asset'), expense = await resolve(c, f.company_id, f.currency, it.data.expenseId);
         requireOk(it.data.payment && expense.kind === 'expense' && await balance(c, f.chart_id) >= L.units(d.amount), 422, 'insufficientFund');
         const receiptDocument=d.documentVersionId?await assertPettyEvidenceUnused(c,m,cipher,f.company_id,d.documentVersionId):null;
         const key = await journal(c, cipher, s, f.company_id, d.effectiveOn, f.currency, 'petty:' + req.headers['idempotency-key'], [line(expense, L.units(d.amount)), line(cash, -L.units(d.amount))], { fundId: f.id, ...d });
         await recordFinancialDocument(c,cipher,s,f.company_id,key,'PV',{sourceKind:'cash_journal',fundId:f.id});
         if(receiptDocument)await reservePettyEvidence(c,cipher,s,f.company_id,receiptDocument,key,d.documentVersionId!);
+        await recordPettyExpenseApproval(c,cipher,s,reviewed,key);
         const remaining = await balance(c, f.chart_id);
         if (remaining < L.units(f.threshold))
             await notify(c, s, f.company_id, f.id, 'ledger:refill', 'refill:' + key);
