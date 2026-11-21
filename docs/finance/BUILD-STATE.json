@@ -5,21 +5,20 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "employee advances: bank/cash disbursement, staff RV recovery, payroll credit matching and HR financial clearance",
+    "module": "monthly Salik grouping in existing invoice importer",
     "files": [
-      "backend/src/employee-advances.ts",
-      "backend/tests/employee-advances.test.ts",
-      "backend/tests/employee-advances.browser.cjs"
+      "backend/src/monthly-salik-import.ts",
+      "backend/tests/monthly-salik-import.test.ts",
+      "backend/tests/monthly-salik.browser.cjs"
     ],
     "acceptance": [
-      "30 native ledger/commitment/advance tests passed, including concurrent cash-fund exhaustion, partial/full recovery and self-approval denial",
+      "28 native template/import/ledger tests passed",
       "172 static checks passed",
       "TypeScript and compiled runtime graph passed",
-      "independent financial-completion AR/EN desktop/tablet/mobile browser passed including cash forms",
-      "original package browser verified on the preceding isolated fixture; existing suite retained",
-      "full GitHub CI at ca389ffd3963d4f9ca2cbd5d485152d86ff921fa passed before cash extension; new cash head CI still required"
+      "Independent monthly CSV preview/commit/template/detail browser passed AR/EN desktop/tablet/mobile",
+      "full cumulative CI required before final release"
     ],
-    "next": "review monthly Salik grouping and transaction-time responsibility, then shared expenses and personal Owner card"
+    "next": "shared expense allocation/intercompany liabilities, then Owner personal-card workflow"
   },
   "nextIndependentWork": [
     "shared expense allocation/intercompany accounting and monthly Salik import grouping; do not reimplement the completed advance workflow",
@@ -46,5 +45,11 @@
     "do not consider this progress file a completion report"
   ],
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
-  "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer."
+  "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
+  "checklistCounts": {
+    "منفذ جزئياً": 50,
+    "مكتمل ومنشور": 27,
+    "مكتمل وغير منشور": 5,
+    "لم يُنفذ": 13
+  }
 }

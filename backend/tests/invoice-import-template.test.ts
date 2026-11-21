@@ -24,3 +24,5 @@ test('template download uses existing import authority without changing financia
   await f.req('GET','/api/ledger/invoice-imports/template?companyId='+f.co2,undefined,403);
  }finally{await f.close();}
 });
+
+test('monthly Salik templates are empty and require each original transaction date',async()=>{const csv=invoiceImportTemplate('csv',true),xlsx=invoiceImportTemplate('xlsx',true);assert.equal(csv.filename,'monthly-salik-template.csv');assert.equal(csv.fields.find(f=>f.key==='vehicleNumber')?.required,true);assert.ok(csv.fields.some(f=>f.key==='occurredOn'&&f.required));assert.ok(!csv.fields.some(f=>f.key==='plate'));assert.deepEqual(await customerSpreadsheet(Buffer.from(xlsx.base64,'base64'),'sourceKey'),[]);});

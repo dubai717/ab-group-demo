@@ -1,3 +1,4 @@
+import {registerMonthlySalikImport,commitMonthlySalik} from './monthly-salik-import.js';
 import {assertEmployeeAdvanceVoucher,assertAdvanceAccountSeparation} from './employee-advances.js';
 import {assertCommitmentVoucher} from './financial-commitments.js';
 import {invoiceImportTemplate} from './invoice-import-template.js';
@@ -67,6 +68,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         }
     });
     registerReceivables(app,route,cipher);
+    registerMonthlySalikImport(app,route,cipher);
     app.post('/api/ledger/deposit-receipt-review',route(async(c:any,m:any,s:any,req:any)=>{const d=z.object({companyId:id,bankAccountId:id,documentVersionId:id,amount:positive,effectiveOn:day,reference:text}).strict().parse(req.body);need(m,'deposit',d.companyId);return reviewDepositReceipt(c,m,cipher,options.objects,d);}));
     const companyIds = (m: any, right = 'view') => m.state.companies.filter((co: any) => financeRight(m, 'ledger_' + right, co.id)).map((co: any) => co.id);
     app.get('/api/ledger/capabilities', call(async (c: any, m: any) => ({ available: !!(await c.query("select to_regclass('ab.finance_journals') ok")).rows[0].ok, companies: m.state.companies.filter((co: any) => companyIds(m).includes(co.id)), rights: L.rights, ocr: true, ocrMode:'local-image-or-PDF-text-review-only',bankFeed: false, whatsapp: false, cloudMigrationsAppliedByThisFeature: false })));
@@ -712,7 +714,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         await event(c, cipher, s, r.to_company_id, r.id, 'intercompany_deposited', null, { operationId: op, ...d });
         return { id: r.id, operationId: op };
     }));
-    app.get('/api/ledger/invoice-imports/template',route(async(c:any,m:any,s:any,req:any)=>{const q=z.object({companyId:id,format:z.enum(['csv','xlsx']).default('xlsx')}).strict().parse(req.query);need(m,'invoice_import',q.companyId);return invoiceImportTemplate(q.format);}));
+    app.get('/api/ledger/invoice-imports/template',route(async(c:any,m:any,s:any,req:any)=>{const q=z.object({companyId:id,format:z.enum(['csv','xlsx']).default('xlsx'),mode:z.enum(['rows','monthly_salik']).default('rows')}).strict().parse(req.query);need(m,'invoice_import',q.companyId);company(m,q.companyId);return invoiceImportTemplate(q.format,q.mode==='monthly_salik');}));
     app.post('/api/ledger/invoice-imports', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ companyId: id, name: z.string().min(1).max(200), format: z.enum(['csv', 'xlsx']), base64: z.string().min(4).max(7000000), mapping: z.object({ sourceKey: text, customerNumber: text, vehicleNumber: z.string().max(100).default(''), plate: z.string().max(100).default(''), itemCode: text, amount: text, currency: text, dueOn: text }).strict() }).strict().parse(req.body);
         need(m, 'invoice_import', d.companyId);
@@ -741,6 +743,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
                 const parsed = invoiceSchema.parse({ companyId: d.companyId, customerId: cu.id, vehicleId: vid, itemId: it.id, issuedOn: today(), dueOn: value.dueOn, currency: value.currency, amount: value.amount, sourceKey: value.sourceKey });
                 const itemRow = await item(c, cipher, m, it.id, d.companyId);
                 requireOk(itemRow.data.invoice && itemRow.data.methods.includes('bulk'), 403, 'denied');
+                requireOk(itemRow.category!=='salik',422,'salikMonthlyImportRequired');
                 if (seen.has(value.sourceKey) || (await c.query('select 1 from ab.finance_invoice_links where company_id=$1 and source_key=$2', [d.companyId, value.sourceKey])).rowCount)
                     error = 'duplicate';
                 seen.add(value.sourceKey);
@@ -757,7 +760,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
     }));
     app.post('/api/ledger/invoice-imports/:id/commit', route(async (c: any, m: any, s: any, req: any) => {
         const r = (await c.query('select * from ab.finance_invoice_imports where id=$1 for update', [id.parse(req.params.id)])).rows[0];
-        requireOk(r?.status === 'Preview', 409, 'invalidTransition');
+        requireOk(r,404,'notFound');const monthly=cipher.open(r.payload_cipher);if(monthly.mode==='monthly_salik_v1')return commitMonthlySalik(c,m,s,cipher,r,monthly);requireOk(r.status === 'Preview',409,'invalidTransition');
         need(m, 'invoice_import', r.company_id);
         need(m, 'invoice_create', r.company_id);
         const d = cipher.open(r.payload_cipher), result = { created: [] as any[], duplicate: 0, rejected: 0 };

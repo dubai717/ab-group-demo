@@ -241,7 +241,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for suite in financial-package financial-completion; do
+          for suite in financial-package financial-completion monthly-salik; do
             node --import tsx backend/tests/serve-financial-package-fixture.ts > work/financial-completion-browser.log 2>&1 &
             fixture_pid=$!
             trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
