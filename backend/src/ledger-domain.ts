@@ -1,3 +1,4 @@
+import {assertReceivableFundSeparation} from './fund-account-roles.js';
 import {guardWalletPosting} from './wallet-posting-guards.js';
 import {guardOwnerPayablePayment} from './owner-payable-guards.js';
 import {reversalCostCentre} from './cost-centres.js';
@@ -106,6 +107,7 @@ export async function linkInvoice(c: any, cipher: any, m: any, s: any, id: strin
     if(await classifyMonthlyInvoice(c,cipher,m,s,i,it))return id;
     const ar = await resolve(c, i.company_id, i.currency, it.data.receivableId), income = await resolve(c, i.company_id, i.currency, it.data.revenueId);
     requireOk(ar.kind === 'asset' && ['income', 'liability'].includes(income.kind), 422, 'accountMappingRequired');
+    await assertReceivableFundSeparation(c,cipher,i.company_id,it.data.receivableId);
     const rate = L.units(it.data.taxRate || '0'), tax = rate ? (L.units(i.amount) * rate + (100000n + rate) / 2n) / (100000n + rate) : 0n, lines = [line(ar, L.units(i.amount)), line(income, -(L.units(i.amount) - tax))];
     if (tax) {
         const taxAccount = await resolve(c, i.company_id, i.currency, it.data.taxAccountId);

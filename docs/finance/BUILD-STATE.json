@@ -5,13 +5,13 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Employee petty fund actual receipt and prospective adjustable ceiling using original funds and tasks",
+    "module": "Prospective cash / bank / customer-AR role separation using original accounts, funds and item links",
     "acceptance": [
-      "33 related native tests passed; 3 expanded cases passed including 500 receipt once, 50 refill only, unchanged grants, scoped financial manager, source inactivity, clearance and 500→700 prospective cap with subsequent 200 actual receipt",
-      "Actual two-actor original fund browser passed: retained 499 field/reference, immediate removal of stale pending view, one history detail only, own task, actual 500 balance; AR/EN at three widths; cap UI rejects 100 then accepts 700 without changing held 500 or old receipt",
-      "TypeScript, 172 static checks and portable build passed; original independent petty-review and financial-package browser regressions passed. Cumulative rerun follows saved checkpoint."
+      "Five new native cases; 32 targeted native tests passed",
+      "Original bilingual form failure retains inputs and trace with no financial side effect; original two-actor handover browser passed",
+      "TypeScript and 172 static/regression checks passed; no checklist promotion from a guard alone"
     ],
-    "next": "Save petty checkpoint and cumulative acceptance, then continue original noncash non-sales receivables and remaining shared/VAT/tax requirements without deployment"
+    "next": "Save guard checkpoint and rerun cumulative acceptance; continue original approved-bank non-sales recovery and remaining shared/VAT/tax modules without deployment"
   },
   "nextIndependentWork": [
     "Original noncash employee/external receivable claims using approved actual bank operations and original RV/collection/report sources",
@@ -46,27 +46,28 @@
     "مكتمل وغير منشور": 40,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "d3ce610921b4c407e67fa6738b5cbcb58cf61665",
-  "lastRemoteTree": "86c36e6349e0220bd9a35263c0a98a16501b1aee",
+  "lastRemoteCommit": "0f31b6c30620cf191ffc84814149c02df1f5c9f1",
+  "lastRemoteTree": "db2f17dd01430aaea293a34ccac859da591c49f3",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44952518254",
-    "head": "d3ce610921b4c407e67fa6738b5cbcb58cf61665",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44956810832",
+    "head": "0f31b6c30620cf191ffc84814149c02df1f5c9f1",
     "status": "success",
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44952518254",
-    "head": "d3ce610921b4c407e67fa6738b5cbcb58cf61665",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44956810832",
+    "head": "0f31b6c30620cf191ffc84814149c02df1f5c9f1",
     "status": "success",
-    "includes": "Verified personal issuer payment and all prior checkpoints, including exact partial reconciliation and original CSV/XLSX import",
+    "protectedRunsTouched": false,
+    "includes": "Actual employee fund handover, adjustable ceiling and all prior checkpoints",
     "deployment": false
   },
   "lastCumulativeAcceptance": {
-    "localCommit": "b21ab36",
-    "remoteCommit": "d3ce610921b4c407e67fa6738b5cbcb58cf61665",
-    "tree": "86c36e6349e0220bd9a35263c0a98a16501b1aee",
-    "result": "506 passed, 0 failed; saved original verified issuer-payment matching checkpoint",
-    "log": "/workspace/ab-test-tmp/financial-issuer-reconciliation-cumulative.log",
+    "localCommit": "ec9980f09eed2873f9ab5add0465790db5b14c20",
+    "remoteCommit": "0f31b6c30620cf191ffc84814149c02df1f5c9f1",
+    "tree": "db2f17dd01430aaea293a34ccac859da591c49f3",
+    "result": "509 passed, 0 failed; saved actual petty employee receipt/ceiling checkpoint",
+    "log": "/workspace/ab-test-tmp/financial-petty-handover-cumulative.log",
     "noHostedOperations": true
   },
   "lastCumulativeAttempt": {
