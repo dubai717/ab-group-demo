@@ -5,23 +5,24 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "employee advances using native payment and payroll/bank source recovery",
+    "module": "employee advances: bank/cash disbursement, staff RV recovery, payroll credit matching and HR financial clearance",
     "files": [
       "backend/src/employee-advances.ts",
       "backend/tests/employee-advances.test.ts",
       "backend/tests/employee-advances.browser.cjs"
     ],
     "acceptance": [
-      "29 native ledger/commitment/advance tests including approved payroll recovery and self-approval denial passed",
+      "30 native ledger/commitment/advance tests passed, including concurrent cash-fund exhaustion, partial/full recovery and self-approval denial",
       "172 static checks passed",
       "TypeScript and compiled runtime graph passed",
-      "independent financial-completion AR/EN desktop/tablet/mobile browser passed",
-      "original financial-package browser passed with fresh independent fixture"
+      "independent financial-completion AR/EN desktop/tablet/mobile browser passed including cash forms",
+      "original package browser verified on the preceding isolated fixture; existing suite retained",
+      "full GitHub CI at ca389ffd3963d4f9ca2cbd5d485152d86ff921fa passed before cash extension; new cash head CI still required"
     ],
     "next": "review monthly Salik grouping and transaction-time responsibility, then shared expenses and personal Owner card"
   },
   "nextIndependentWork": [
-    "complete cash-only employee advance flows and approved exceptional settlements; preserve existing payroll legal controls",
+    "shared expense allocation/intercompany accounting and monthly Salik import grouping; do not reimplement the completed advance workflow",
     "shared expense allocation and intercompany liabilities",
     "owner personal-card reconciliation and reimbursement custody",
     "monthly Salik aggregation with transaction-time responsibility",
@@ -44,5 +45,6 @@
     "no real cloud financial test transactions",
     "do not consider this progress file a completion report"
   ],
-  "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115"
+  "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
+  "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer."
 }

@@ -1,3 +1,4 @@
+import {businessCentersFixture} from './business-centers-fixture.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {personnelFixture} from './personnel-fixture.js';
@@ -45,5 +46,24 @@ test('even an explicitly authorized approver cannot approve or verify their own 
   await f.req('POST','/api/users/'+user.id+'/grants',{action:'ledger_journal_approve',scope:{type:'company',id:f.co1},delegable:false});await f.login(user.username,user.password);
   const denied=await f.req('POST','/api/ledger/employee-advances/'+advance.id+'/approve',{companyId:f.co1,reason:'Cannot self-approve',confirm:true},403);assert.equal(denied.error,'independentVerifierRequired');
   const receive=await f.req('POST','/api/ledger/employee-advances/'+advance.id+'/receive',{companyId:f.co1,receivedAmount:'50',documentVersionId:proof,reason:'Cannot self-verify',actualDeliveryVerified:true},403);assert.equal(receive.error,'independentVerifierRequired');
+ }finally{await f.close();}
+});
+test('cash advances and staff RV recovery post assets only, serialize available funds and preserve original cash documents',async()=>{
+ const f=await businessCentersFixture();try{
+  const e=await f.req('POST','/api/personnel/employees',{companyId:f.co1,nameAr:'موظف نقدي وهمي',nameEn:'Synthetic cash advance employee',jobTitle:'Operations',hiredOn:'2024-01-01'}),proof=await f.proof();
+  const make=async(code:string)=>(await f.req('POST','/api/ledger/accounts',{code,nameAr:'حساب سلف نقدية وهمي',nameEn:'Synthetic '+code,kind:'asset',companyIds:[f.co1],currency:'AED'})).charts[0].id,ar=await make('cash_staff_ar'),pending=await make('cash_staff_pending');
+  await f.req('POST','/api/ledger/employee-advances/configuration',{companyId:f.co1,itemId:f.items.expense,receivableChartId:ar,pendingChartId:pending,revision:0,reason:'Dedicated staff accounts'});
+  const fund=await f.req('POST','/api/ledger/funds',{companyId:f.co1,name:'Synthetic cash box',kind:'cash',holderId:f.org.user,chartId:f.accounts.cash.charts[f.co1],currency:'AED',ceiling:'500',threshold:'100',openingBalance:'100',openingEquityId:f.accounts.equity.charts[f.co1],effectiveOn:today()});
+  const create=async()=>{const r=await f.req('POST','/api/ledger/employee-advances',{companyId:f.co1,employeeId:e.id,amount:'70',documentVersionId:proof,reason:'Synthetic cash request'});await f.req('POST','/api/ledger/employee-advances/'+r.id+'/approve',{companyId:f.co1,reason:'Independent cash review',confirm:true});return r;},a=await create(),b=await create(),body={companyId:f.co1,fundId:fund.id,receivedAmount:'70',documentVersionId:proof,reason:'Actual synthetic signed delivery',actualDeliveryVerified:true};
+  const concurrent=await Promise.allSettled([f.req('POST','/api/ledger/employee-advances/'+a.id+'/cash-delivery',body),f.req('POST','/api/ledger/employee-advances/'+b.id+'/cash-delivery',body)]),successful=concurrent.filter((x:any)=>x.status==='fulfilled'),failed=concurrent.filter((x:any)=>x.status==='rejected');assert.equal(successful.length,1);assert.equal(failed.length,1);assert.match((failed[0] as any).reason.message,/insufficientFundBalance/);const delivery=(successful[0] as any).value,targetId=delivery.id;assert.match(delivery.number,/^CPV-/);assert.equal((await f.req('POST','/api/ledger/employee-advances/'+targetId+'/cash-delivery',body)).journalId,delivery.journalId);
+  const blocked=await f.req('GET','/api/personnel/employees/'+e.id+'/clearance');assert.equal(blocked.employeeAdvances.blocked,true);assert.equal(blocked.financiallyClear,false);
+  const source=await f.req('GET','/api/ledger/package/documents?companyId='+f.co1+'&type=PV');assert(source.rows.some((r:any)=>r.id===delivery.journalId&&r.number===delivery.number));
+  const recovery={companyId:f.co1,fundId:fund.id,amount:'20',reference:'SYN-STAFF-CASH-REPAY',documentVersionId:proof,reason:'Actual synthetic cash received in cash box',actualCashReceived:true};
+  const [r,s]=await Promise.all([f.req('POST','/api/ledger/employee-advances/'+targetId+'/recover-cash',recovery),f.req('POST','/api/ledger/employee-advances/'+targetId+'/recover-cash',recovery)]);assert.equal(r.receiptId,s.receiptId);assert.equal(r.outstanding,'50.000');
+  const rv=(await f.admin.query('select * from ab.finance_receipts where id=$1',[r.receiptId])).rows[0];assert.equal(rv.customer_id,null);assert.equal(rv.item_id,null);assert.equal(rv.vehicle_id,null);assert.equal(rv.payment_state,'Cleared');assert.equal((await f.admin.query('select count(*)::int n from ab.vehicle_invoices')).rows[0].n,0);
+  assert.equal((await f.admin.query('select sum(e.debit-e.credit)::text amount from ab.finance_entries e where e.chart_id=$1',[f.accounts.cash.charts[f.co1]])).rows[0].amount,'50.000');
+  assert.equal((await f.admin.query("select count(*)::int n from ab.finance_entries e join ab.finance_chart c on c.id=e.chart_id where c.kind in('income','expense')")).rows[0].n,0);
+  const state=await f.req('GET','/api/ledger/employee-advances?companyId='+f.co1);assert.equal(state.reconciliation[0].reviewRequired,false);
+  const paid=await f.req('POST','/api/ledger/employee-advances/'+targetId+'/recover-cash',{...recovery,amount:'50',reference:'SYN-STAFF-CASH-FULL'});assert.equal(paid.outstanding,'0.000');assert.equal((await f.req('GET','/api/personnel/employees/'+e.id+'/clearance')).employeeAdvances.blocked,false);await f.req('POST','/api/ledger/employee-advances/'+targetId+'/recover-cash',{...recovery,amount:'1',reference:'SYN-STAFF-OVERPAY'},422);assert.equal((await f.admin.query('select sum(e.debit-e.credit)::text amount from ab.finance_entries e where e.chart_id=$1',[ar])).rows[0].amount,'0.000');
  }finally{await f.close();}
 });

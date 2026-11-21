@@ -11,9 +11,10 @@ const financeRequest=await f.request();await f.fund(financeRequest.id);const fin
 const advanceEmployee=await f.req('POST','/api/personnel/employees',{companyId:f.co1,nameAr:'موظف سلفة متصفح وهمي',nameEn:'Synthetic browser advance employee',jobTitle:'Operations',hiredOn:'2024-01-01'});
 const advanceAccount=async(code:string)=>(await f.req('POST','/api/ledger/accounts',{code,nameAr:'حساب سلفة متصفح وهمي',nameEn:'Synthetic browser '+code,kind:'asset',companyIds:[f.co1],currency:'AED',eliminate:false})).charts[0].id;
 const advanceReceivableId=await advanceAccount('browser_staff_ar'),advancePendingId=await advanceAccount('browser_advance_pending');
+const advanceCashFund=await f.req('POST','/api/ledger/funds',{companyId:f.co1,name:'Synthetic browser cash box',kind:'cash',holderId:f.org.user,chartId:f.accounts.cash.charts[f.co1],currency:'AED',ceiling:'500',threshold:'100',openingBalance:'100',openingEquityId:f.accounts.equity.charts[f.co1],effectiveOn:today()});
 await f.app.close();
 const app = await build({ pool: f.runtime, key: f.secret.key, origin: 'http://127.0.0.1:3646', secureCookies: false, auth: f.auth, objects: f.objects, scan: async () => 'clean' });
 await app.listen({ host: '127.0.0.1', port: 3646 });
-await writeFile('work/financial-package-fixture.json', JSON.stringify({ advanceEmployeeId:advanceEmployee.id,advanceReceivableId,advancePendingId,bankAccountId:bank.id,username: f.username, password: f.password, companyId: f.co1, financeVehicleId:financeVehicle.id, customerId: f.client, invoiceId: bill.id, itemId: f.items.salik, expenseItemId:f.items.expense, proofId: proof, receivableId: f.accounts.ar.id, incomeId: f.accounts.income.id }), { mode: 0o600 });
+await writeFile('work/financial-package-fixture.json', JSON.stringify({ advanceCashFundId:advanceCashFund.id,advanceEmployeeId:advanceEmployee.id,advanceReceivableId,advancePendingId,bankAccountId:bank.id,username: f.username, password: f.password, companyId: f.co1, financeVehicleId:financeVehicle.id, customerId: f.client, invoiceId: bill.id, itemId: f.items.salik, expenseItemId:f.items.expense, proofId: proof, receivableId: f.accounts.ar.id, incomeId: f.accounts.income.id }), { mode: 0o600 });
 console.log('SYNTHETIC_FINANCIAL_PACKAGE_READY');
 process.on('SIGTERM', async () => { await app.close(); await f.close(); process.exit(0); });
