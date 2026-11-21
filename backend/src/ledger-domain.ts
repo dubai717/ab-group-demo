@@ -1,3 +1,4 @@
+import {reversalCostCentre} from './cost-centres.js';
 import {contractingParty,exactFinancialParty} from './contracting-access.js';
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
@@ -65,7 +66,7 @@ export async function journal(c: any, cipher: any, s: any, co: string, date: str
     return id;
 }
 export async function post(c: any, s: any, id: string) { const r = (await c.query('select * from ab.finance_journals where id=$1 for update', [id])).rows[0]; requireOk(r && r.status === 'Draft', 409, 'invalidTransition'); await open(c, r.company_id, r.effective_on.toISOString().slice(0, 10)); await c.query("update ab.finance_journals set status='Posted',approved_by=$2,posted_at=now()where id=$1", [id, s.user_id]); }
-export async function reverse(c: any, cipher: any, s: any, key: string, date: string, reason: string) { const j = (await c.query('select * from ab.finance_journals where id=$1', [key])).rows[0]; requireOk(j && j.status === 'Posted', 422, 'invalidReference'); requireOk(!(await c.query('select 1 from ab.finance_journals where reversal_of=$1', [key])).rowCount, 409, 'duplicate'); const rows = (await c.query('select * from ab.finance_entries where journal_id=$1', [key])).rows; return journal(c, cipher, s, j.company_id, date, j.currency, 'reverse:' + key, rows.map((r: any) => ({ companyId: r.company_id, chartId: r.chart_id, currency: r.currency, debit: r.credit, credit: r.debit })), { reason, originalId: key }, true, key); }
+export async function reverse(c: any, cipher: any, s: any, key: string, date: string, reason: string) { const j = (await c.query('select * from ab.finance_journals where id=$1', [key])).rows[0]; requireOk(j && j.status === 'Posted', 422, 'invalidReference'); requireOk(!(await c.query('select 1 from ab.finance_journals where reversal_of=$1', [key])).rowCount, 409, 'duplicate'); const rows = (await c.query('select * from ab.finance_entries where journal_id=$1', [key])).rows; return journal(c, cipher, s, j.company_id, date, j.currency, 'reverse:' + key, rows.map((r: any) => ({ companyId: r.company_id, chartId: r.chart_id, currency: r.currency, debit: r.credit, credit: r.debit })), { reason, originalId: key, ...reversalCostCentre(cipher.open(j.payload_cipher),j.company_id) }, true, key); }
 export async function evidence(c: any, m: any, co: string, id: string, clean = true) {
     requireOk(m.company.canFiles() || m.bank.can('view_documents', co));
     const r = (await c.query('select v.scan_status,d.company_id,b.company_id bank_company from ab.document_versions v join ab.documents d on d.id=v.document_id left join ab.bank_accounts b on b.id=d.bank_account_id where v.id=$1', [id])).rows[0];

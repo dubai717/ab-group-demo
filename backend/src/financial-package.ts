@@ -1,3 +1,4 @@
+import {registerCostCentres,costCentres} from './cost-centres.js';
 import {registerCompanyTaxPreparation,companyTaxDraft} from './company-tax-preparation.js';
 import {vehicleFollowupPlan} from './vehicle-followup-policy.js';
 import {financeRight} from './finance.js';
@@ -135,8 +136,9 @@ async function paymentPage(c:any,m:any,co:string,page:number){
 
 export function registerFinancialPackage(app: any, route: any, cipher: any, correct: any) {
     registerCompanyTaxPreparation(app,route,cipher);
+    registerCostCentres(app,route,cipher);
     const base = '/api/ledger/package';
-    app.get(base + '/state', route(async (c: any, m: any, s: any, req: any) => { const co = id.parse(req.query.companyId); need(m, 'view', co); const approval = await packageRecord(c, cipher, 'approval:' + co); return { companyId: co, taxPreparation: await companyTaxDraft(c,cipher,co), priority: await priorityPolicy(c, cipher, co), feeRules: await records(c, cipher, 'fees', co), relations: await records(c, cipher, 'relations', co), approved: Object.fromEntries(await Promise.all(['priority', 'fees', 'recurring', 'documents'].map(async (f) => [f, await financialApproval(c, cipher, m, co, f, approval)]))), activation: 'specific owner financial review required; no automatic changes to existing balances' }; }));
+    app.get(base + '/state', route(async (c: any, m: any, s: any, req: any) => { const co = id.parse(req.query.companyId); need(m, 'view', co); const approval = await packageRecord(c, cipher, 'approval:' + co); return { companyId: co, costCentres: await costCentres(c,cipher,co), taxPreparation: await companyTaxDraft(c,cipher,co), priority: await priorityPolicy(c, cipher, co), feeRules: await records(c, cipher, 'fees', co), relations: await records(c, cipher, 'relations', co), approved: Object.fromEntries(await Promise.all(['priority', 'fees', 'recurring', 'documents'].map(async (f) => [f, await financialApproval(c, cipher, m, co, f, approval)]))), activation: 'specific owner financial review required; no automatic changes to existing balances' }; }));
     app.post(base + '/priority', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id, enabled: z.boolean(), itemIds: z.array(id).max(2000), revision: z.number().int().min(0), confirm: z.literal(true) }).strict().parse(req.body); need(m, 'configure', d.companyId); requireOk(new Set(d.itemIds).size === d.itemIds.length, 422, 'duplicate'); const old = await priorityPolicy(c, cipher, d.companyId); requireOk((old?.revision || 0) === d.revision, 409, 'revisionConflict'); for (const key of d.itemIds)
         await item(c, cipher, m, key, d.companyId, true); const active = await financialApproval(c, cipher, m, d.companyId, 'priority'); if (active)
         requireOk(m.actor.roleId === 'owner', 403, 'ownerOnly'); return save(c, cipher, s, 'priority', { ...d, id: 'current', enabled: active && d.enabled && m.actor.roleId === 'owner', requestedEnabled: d.enabled }, old); }));
