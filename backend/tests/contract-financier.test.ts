@@ -9,7 +9,7 @@ test('financier captions separate principal sources, cash and unresolved contrac
  assert.match(financierLabel('group',{nameAr:'الشركة الممولة',nameEn:'Funding Company'})!.labelEn,/Group financing.*Funding Company/);
  assert.match(financierLabel('bank',{nameEn:'Contract bank'})!.labelAr,/Contract bank/);
  assert.match(financierLabel('investor',{nameAr:'المستثمر الوهمي'})!.labelEn,/Investor financing/);
- assert.equal(financierLabel('investor',null)!.status,'ReviewRequired');assert.equal(financierLabel('bank',{})!.status,'ReviewRequired');
+ assert.match(financierLabel('investor',{nameAr:'مستثمر',profileNumber:'INV-001'})!.labelAr,/INV-001/);assert.equal(financierLabel('investor',null)!.status,'ReviewRequired');assert.equal(financierLabel('bank',{})!.status,'ReviewRequired');
 });
 test('contract disclosure uses original invoice contract and active allocations, never customer residence or latest contract',async()=>{
  const f=await ledgerFixture();try{
@@ -25,6 +25,7 @@ test('contract disclosure uses original invoice contract and active allocations,
   assert(statement.rows.filter((r:any)=>r.type==='Invoice'&&r.id!==invoice.id&&r.financier).every((r:any)=>r.financier.type==='group'));
   const collected=await f.req('POST','/api/ledger/collections/invoices',{companyId:f.co1,customerId:f.client,currency:'AED',receivedOn:f.date,invoices:[{invoiceId:invoice.id,amount:invoice.amount}],actualCashReceived:true});
   const receiptId=collected.receipts[0].id,source=await f.req('GET','/api/ledger/receivables/source/RV/'+receiptId);
+  const receiptDocument=await f.req('GET','/api/ledger/package/documents?companyId='+f.co1+'&type=RV'),invoiceDocument=await f.req('GET','/api/ledger/package/documents?companyId='+f.co1+'&type=Invoice');assert.match(receiptDocument.rows.find((r:any)=>r.id===receiptId).financierLabelEn,/Group financing.*Company A/);assert.match(invoiceDocument.rows.find((r:any)=>r.id===invoice.id).financierLabelEn,/Group financing.*Company A/);
   assert.equal(source.record.financingSources.length,1);assert.equal(source.record.financingSources[0].contractId,invoice.contract_id);assert.match(source.record.financierLabelEn,/Company A/);
   statement=await f.req('GET','/api/ledger/customer-statement?customerId='+f.client+'&companies='+f.co1);assert.equal(statement.rows.find((r:any)=>r.id===receiptId).financierLabelEn,source.record.financierLabelEn);
   assert.deepEqual((await f.admin.query('select id,payload_cipher from ab.vehicle_contracts order by id')).rows,before);

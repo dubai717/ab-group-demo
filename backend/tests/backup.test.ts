@@ -1,3 +1,4 @@
+import {disposeSyntheticRestoreCopy,disposeSyntheticDatabase} from './dispose-synthetic-database.js';
 import {localTestPort,localTestContainer} from './setup.js';
 import {assertEncryptedBackupEnvelope} from './backup-envelope-assertions.js';
 import { test } from "node:test";
@@ -11,7 +12,7 @@ import { build } from "../src/app.js";
 import { security, transaction } from "../src/core.js";
 test("backup/restore: new database, encrypted file objects, IDs, links, policies and fresh sessions", async () => {
   const f = await fixture("ab_backup_" + randomUUID().replaceAll("-", ""));
-  let restore: Pool | undefined, restoredApp: any;
+  let restore: Pool | undefined, restoredApp: any, ownedRestore:string|undefined;
   try {
     const request = async (
       app: any,
@@ -236,6 +237,7 @@ test("backup/restore: new database, encrypted file objects, IDs, links, policies
       ["exec", localTestContainer, "createdb", "-U", "postgres", db],
       { stdio: "pipe" },
     );
+    ownedRestore=db;
     execFileSync(
       "docker",
       [
@@ -364,8 +366,10 @@ test("backup/restore: new database, encrypted file objects, IDs, links, policies
   } finally {
     if (restoredApp) await restoredApp.close();
     if (restore) await restore.end();
+    if(ownedRestore)await disposeSyntheticRestoreCopy(f.adminUrl,f.sourceDatabase,ownedRestore);
     await f.app.close();
     await f.runtime.end();
     await f.admin.end();
+    await disposeSyntheticDatabase(f.adminUrl,f.sourceDatabase);
   }
 });
