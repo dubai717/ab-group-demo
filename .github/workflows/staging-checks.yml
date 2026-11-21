@@ -272,3 +272,5 @@ jobs:
             wait "$fixture_pid"
             trap - EXIT
           done
+      - name: Original personal issuer proof matching uses explicitly reviewed isolated schema only
+        run: node backend/tests/card-issuer-reconciliation-suite.browser.cjs

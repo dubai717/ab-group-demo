@@ -5,15 +5,13 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Exact original card reconciliation and remaining issuer-payment source matching",
+    "module": "Original independently verified personal issuer-payment matching",
     "acceptance": [
-      "Before-fix native case proved partial line 30.001/100 was incorrectly approved",
-      "30 related native cases passed after exact-source validation; 5 expanded cases passed including Owner partial-report and reimbursement/issuer separation",
-      "Actual original communication/PDF master journey passed locally; prior intermittent CI failure has additional safe failure-only diagnostics, no claimed root fix",
-      "502 cumulative acceptance refers to the saved card import checkpoint; newer matching changes require their own acceptance",
-      "Final original reconciliation browser and original CSV/XLSX import browser passed AR/EN at three widths; visible server reference and retained partial state; 172 static checks/typecheck/portable build passed"
+      "33 related native tests passed, including schema-off and unknown-guard refusals, retained source row and grants, partial statement guard and actual verified bank proof matching once",
+      "Original three-actor Owner settlement and issuer reconciliation browser passed, including AR/EN, stale preview invalidation, Excel/PDF and unchanged GL/PV/AR",
+      "TypeScript, 172 static checks and portable build passed; next cumulative run to follow saved checkpoint"
     ],
-    "next": "Complete actual reconciliation UI acceptance, save checkpoint, then extend original issuer repayment proof matching without a parallel store or deployment"
+    "next": "Cumulative acceptance, then independent original petty fund handover/employee acknowledgment and remaining shared VAT/tax requirements; no deployment"
   },
   "nextIndependentWork": [
     "Original card statement CSV/XLSX mapping, exact preview/dedup and source classification; no posting from import",
@@ -30,7 +28,8 @@
     "no historical balance migration without separate reconciliation/approval",
     "specific approval and isolated rehearsal of non-sales native RV custody guard extension; no hosted activation",
     "Supplier refund/cancellation of an actually paid customer outlay requires explicit recoverability decision; original source reversal remains protected",
-    "Explicit reviewed employee-advance contact-source schema extension before hosted activation; no historical rewriting"
+    "Explicit reviewed employee-advance contact-source schema extension before hosted activation; no historical rewriting",
+    "Explicit review of card-issuer-payment-match.review-only.sql and reader compatibility before hosted activation; no old-reader rollback after new source records"
   ],
   "resumeRules": [
     "read RELEASE-HOLD.md first",
@@ -43,24 +42,24 @@
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
   "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
   "checklistCounts": {
-    "منفذ جزئياً": 29,
+    "منفذ جزئياً": 28,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 38,
+    "مكتمل وغير منشور": 39,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "b367f106ec82a1965a9090c23bb150b520c6d750",
-  "lastRemoteTree": "4edce3587798e9e1866ca452e885e85127ca4bd1",
+  "lastRemoteCommit": "5f40f98d5ccf9621a4b7000905089f1d7b3c5978",
+  "lastRemoteTree": "f9cef7197ef12a3fe0ca958269fe9ebf6392e423",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44949901545",
-    "head": "b367f106ec82a1965a9090c23bb150b520c6d750",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44951303824",
+    "head": "5f40f98d5ccf9621a4b7000905089f1d7b3c5978",
     "status": "in_progress",
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44945734150",
-    "head": "d1a0d306d9abcb5a9eecaa2a0455e3b1e74d5474",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44949901545",
+    "head": "b367f106ec82a1965a9090c23bb150b520c6d750",
     "status": "success",
-    "includes": "Independent petty evidence review, previous Owner outlays and advance collection fixture flags",
+    "includes": "Original CSV/XLSX/BOM card-import checkpoint, all earlier features",
     "deployment": false
   },
   "lastCumulativeAcceptance": {
