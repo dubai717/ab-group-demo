@@ -5,25 +5,26 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "personal Owner card native accounting foundation",
+    "module": "signed Owner settlement / native outgoing cheque / physical custody / independent issuer proof",
     "files": [
-      "backend/src/personal-owner-card.ts",
-      "backend/tests/personal-owner-card.test.ts",
-      "backend/tests/personal-owner-card.browser.cjs"
+      "backend/src/owner-card-settlements.ts",
+      "backend/src/owner-cheque-custody.ts",
+      "backend/src/owner-card-repayment.ts",
+      "backend/src/owner-work-projections.ts",
+      "owner-finance-ui.js"
     ],
     "acceptance": [
-      "53 combined native financial tests passed",
-      "Personal Owner card browser passed creation, wallet setup, mixed expense/personal payment, owner-payable drilldown and AR/EN responsive views",
-      "All six independent financial browsers passed; full backend regression still running",
-      "TypeScript, portable runtime and 172 static checks passed before the final label-only refinement",
-      "No company bank or customer receipt; dedicated owner liability is protected",
-      "Not completion of phase 7: reimbursement, cheque custody, deposits and dual closure remain pending"
+      "13 related integration/regression tests passed",
+      "172 static checks, TypeScript and portable runtime build passed",
+      "Three-user Owner/delegate/reviewer browser passed full native workflow and AR/EN desktop/tablet/mobile layouts",
+      "A failed amount input stays in the form; customer invoice remains 450 AED outstanding",
+      "Stopped-cheque dual return and safe replacement preserve original Owner debt and completed task history",
+      "Cumulative backend regression: 461 passed, zero failures on Owner bundle runtime; foundation GitHub CI 44906529281 also succeeded",
+      "No deployment, original Supabase writes, historical migrations or automatic permission changes"
     ],
-    "next": "native Owner reimbursement request/signature/voucher and delegate cheque custody; then unresolved taxes, claims and collection acceptance"
+    "next": "logical Salik/traffic debt categories and collection discounts/Owner notice; then wallet consumption and remaining tax/claims/report acceptance"
   },
   "nextIndependentWork": [
-    "Owner reimbursement request/signature/native cheque and delegate custody",
-    "Personal account deposit verification and separate card-payment proof closure",
     "Full wallet consumption and exceptional personal requests",
     "Shared-expense approved VAT cases and intercompany settlement acceptance",
     "Manual noncustomer claims, logical debt-category fee/collection discount acceptance",
@@ -47,9 +48,10 @@
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
   "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
   "checklistCounts": {
-    "منفذ جزئياً": 51,
+    "منفذ جزئياً": 48,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 8,
-    "لم يُنفذ": 9
-  }
+    "مكتمل وغير منشور": 16,
+    "لم يُنفذ": 4
+  },
+  "lastRemoteCommit": "db622dc6e4a40922e3faecc8fd7f05ee3b8d7bc2"
 }

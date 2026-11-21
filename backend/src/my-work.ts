@@ -17,8 +17,8 @@ export function registerMyWork(app:any,call:any,cipher:any){app.get('/api/my-wor
  const vehicleRows=[...(all||[]).filter((r:any)=>r.sourceType?.startsWith('vehicle_')),...approvals.filter((r:any)=>r.sourcePage==='vehicles'),...doneApprovals.filter((r:any)=>r.sourcePage==='vehicles')],metadata=await vehicleWorkMetadata(c,cipher,vehicleRows.map((r:any)=>r.sourceId));for(const row of vehicleRows){const details=metadata.get(row.sourceId);if(details)Object.assign(row,details);row.assigneeName=row.employeeId?cipher.open(employees.find((e:any)=>e.id===row.employeeId)?.payload_cipher).nameAr||'':m.actor.fullName||m.actor.username;}for(const row of decisions){const details=metadata.get(row.sourceId);if(details)Object.assign(row,details);}
  // Owner delivery is operational work, not another approval decision. Project it
  // from the same source record even when the owner has no employee profile.
- for(const r of approvals.filter((r:any)=>['vehicle_delivery','vehicle_stage_assignment'].includes(r.type))){
-  const sourceType=r.type==='vehicle_stage_assignment'?'vehicle_registration_assignment':'vehicle_disbursement';
+ for(const r of approvals.filter((r:any)=>['vehicle_delivery','vehicle_stage_assignment'].includes(r.type)||r.sourceType==='owner_settlement'&&r.operational)){
+  const sourceType=r.sourceType==='owner_settlement'?'owner_settlement':r.type==='vehicle_stage_assignment'?'vehicle_registration_assignment':'vehicle_disbursement';
   if(q.view==='others'||!actorDepartmentMatches||q.employeeId&&q.employeeId!==actorEmployee?.id||q.type&&q.type!==sourceType||q.state&&q.state!==r.state||r.completedBy&&r.completedBy!==m.actor.id||q.priority&&q.priority!=='normal')continue;
   const dueOn=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dubai'}).format(new Date(r.createdAt));
   if(q.dueOn&&q.dueOn!==dueOn||q.from&&dueOn<q.from||q.to&&dueOn>q.to||(all||[]).some((t:any)=>t.sourceType===sourceType&&t.sourceId===r.sourceId))continue;

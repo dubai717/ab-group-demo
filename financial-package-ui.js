@@ -3,7 +3,7 @@
     'use strict';
     const t = (a, b) => getLocale() === 'ar' ? a : b, e = v => WorkspaceUI.esc(v ?? ''), date = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dubai' }).format(new Date());
     let ctx = null, docType = 'Invoice', docPage = 0, docResult = null, docLoading = false, docError = '', docContext = '', docRequest = 0;
-    const names = { 'employee-advances':['سلف الموظفين والذمم','Employee advances and receivables'], commitments:['الالتزامات والمصروفات المتكررة','Commitments and recurring expenses'], 'cost-centres':['مراكز التكلفة','Cost centres'], taxes: ['إعداد الضرائب والمراجعة', 'Tax preparation and review'], priorities: ['إدارة أولويات توزيع التحصيلات', 'Collection allocation priorities'], compliance: ['المصاريف الإدارية لعدم الالتزام بالمتطلبات', 'Administrative noncompliance expenses'], entitlements: ['علاقات الاستحقاق والدورية', 'Entitlements and recurrence'], documents: ['المستندات المالية', 'Financial documents'] };
+    const names = { 'owner-settlements':['تسويات المالك وعهد الشيكات','Owner settlements and cheque custody'], 'employee-advances':['سلف الموظفين والذمم','Employee advances and receivables'], commitments:['الالتزامات والمصروفات المتكررة','Commitments and recurring expenses'], 'cost-centres':['مراكز التكلفة','Cost centres'], taxes: ['إعداد الضرائب والمراجعة', 'Tax preparation and review'], priorities: ['إدارة أولويات توزيع التحصيلات', 'Collection allocation priorities'], compliance: ['المصاريف الإدارية لعدم الالتزام بالمتطلبات', 'Administrative noncompliance expenses'], entitlements: ['علاقات الاستحقاق والدورية', 'Entitlements and recurrence'], documents: ['المستندات المالية', 'Financial documents'] };
     const categories = { number_fee: ['رسوم اللوحات', 'Plate fees'], card: ['تسوية بطاقات', 'Card settlement'], intercompany: ['تحويلات بين الشركات', 'Intercompany transfers'], commission: ['عمولات — تصنيف قائم', 'Commissions — existing classification'], circular: ['رسوم التعميم', 'Circular fees'], insurance: ['التأمين', 'Insurance'], gps: ['خدمات التتبع', 'Tracking services'], service: ['إيرادات الخدمات', 'Service revenue'], expense: ['مصروفات', 'Expenses'], loan: ['أصل تمويل / مستحق عميل', 'Financing principal / customer receivable'], finance: ['تمويل تعاقدي', 'Contractual financing'], work_amount: ['أمانات ومبالغ محصلة نيابة عن العميل', 'Amounts held/collected for customers'], registration: ['رسوم تسجيل', 'Registration fees'], salik: ['سالك — مبالغ مستردة', 'Salik recoverable charges'], fine: ['مخالفات — مبالغ مستردة', 'Recoverable fines'], investor: ['مستحقات المستثمرين', 'Investor entitlements'], general: ['بنود خدمات أخرى', 'Other service items'] };
     const statusWords = { Unpaid: ['غير مسدد', 'Unpaid'], Partial: ['سداد جزئي', 'Partially paid'], Paid: ['مسدد', 'Paid'], Pending: ['معلق', 'Pending'], Review: ['قيد المراجعة', 'In review'], Approved: ['معتمد', 'Approved'], Cleared: ['محصل فعلياً', 'Cleared'], Cancelled: ['ملغى', 'Cancelled'], Corrected: ['مصحح', 'Corrected'], WrittenOff: ['مشطوب دفترياً — دون تنازل قانوني', 'Written off — no legal waiver'], PartiallyWrittenOff: ['شطب دفتري جزئي', 'Partial accounting write-off'], Discount: ['خصم غير نقدي', 'Noncash discount'], Posted:['مرحّل','Posted'],Recorded: ['مسجل', 'Recorded'] };
     const statusLabel = v => statusWords[v] ? t(...statusWords[v]) : v;
@@ -60,6 +60,7 @@
     function body(tab, context) {
         ctx = context;
         const state = ctx.book.package;
+        if(tab==='owner-settlements')return OwnerFinanceUI.body(ctx);
         if (!names[tab])
             return null;
         const intro = `<p class="notice">${t('إعدادات ومعاينات؛ تفعيل الأثر المالي الجديد يحتاج موافقة المالك المحددة. الحفظ لا يعيد توزيع تحصيلات سابقة.', 'Configuration and previews. New financial effects require specific owner approval. Saving does not reallocate previous collections.')}</p>`;
@@ -156,6 +157,7 @@
         if (!host)
             return;
         CenterForms.bindSnapshots(host);
+        OwnerFinanceUI.bind(host,ctx);
         host.querySelectorAll('[data-fp-open]').forEach(opener => opener.onclick = () => openRow(opener.dataset.kind, opener.dataset.fpOpen));
         host.querySelectorAll('[data-fp]').forEach(b => b.onclick = async (ev) => { ev.stopPropagation(); if (b.disabled)
             return; const action = b.dataset.fp, key = b.dataset.id; b.disabled = true; try {

@@ -1,3 +1,4 @@
+import {guardOwnerPayablePayment} from './owner-payable-guards.js';
 import {reversalCostCentre} from './cost-centres.js';
 import {contractingParty,exactFinancialParty} from './contracting-access.js';
 import { randomUUID } from 'node:crypto';
@@ -131,6 +132,7 @@ export async function bankPosting(c: any, cipher: any, m: any, s: any, d: any) {
     requireOk(d.effectiveOn >= b.openedAt, 422, 'invalidDate');
     await open(c, d.companyId, d.effectiveOn);
     const counter = await chart(c, d.companyId, d.currency, d.counterpartId);
+    if(d.kind==='payment')await guardOwnerPayablePayment(c,cipher,d.companyId,counter.id,d.amount,d.nativeSignedOwnerSettlement===true);
     requireOk(counter.kind !== 'bank', 422, 'accountMappingRequired');
     const id = randomUUID(), op = { id, company_id: d.companyId, bank_account_id: b.id, kind: d.kind, amount: d.amount, currency: d.currency, counterpart_id: counter.id, direction: 'credit' };
     await c.query("insert into ab.finance_operations(id,tenant_id,company_id,kind,bank_account_id,amount,currency,effective_on,direction,reason,reference,counterpart_id,cheque_id,integration_refs,created_by,payment_method)values($1,$2,$3,$4,$5,$6,$7,$8,'credit',$9,$10,$11,$12,$13,$14,$15)", [id, s.tenant_id, d.companyId, d.kind, b.id, d.amount, d.currency, d.effectiveOn, d.reason, d.reference, counter.id, d.chequeId || null, d.integrationRefs || {}, s.user_id, d.chequeId ? 'cheque' : 'electronic']);
@@ -180,6 +182,7 @@ export async function createFinancialVoucher(c: any, cipher:any, m: any, s: any,
             const stored=(await c.query('select value from ab.settings where key=$1',['employee-advances-v1:records:'+d.companyId+':'+details.employeeAdvanceId])).rows[0],r=stored?cipher.open(stored.value.cipher):null;
             requireOk(r?.status==='Approved'&&r.companyId===d.companyId&&r.mapping.itemId===d.itemId&&r.currency===d.currency&&L.units(r.amount)===L.units(d.amount)&&r.mapping.pendingChartId===details.payableOverrideId&&d.sourceKey==='employee-advance-v1:'+r.id+':'+((r.paymentAttempt||0)+1),409,'advanceApprovalRequired');
         }
+        if(d.sourceKey.startsWith('owner-card-reimbursement-v1:')){const stored=details.ownerReimbursementId?(await c.query('select value from ab.settings where key=$1',['owner-card-settlement-v1:records:'+d.companyId+':'+details.ownerReimbursementId])).rows[0]:null,r=stored?cipher.open(stored.value.cipher):null;requireOk(r?.status==='Approved'&&r.companyId===d.companyId&&r.itemId===d.itemId&&r.currency===d.currency&&L.units(r.amount)===L.units(d.amount)&&details.alreadyAccrued===true&&details.payableOverrideId===r.payableChartId&&details.ownerId===r.ownerId&&details.signatureDigest===r.signature?.digest&&d.beneficiary===(r.ownerNameEn||r.ownerNameAr)&&d.sourceKey==='owner-card-reimbursement-v1:'+r.id+':'+((r.paymentAttempt||0)+1),409,'ownerSignatureRequired');}
         if(d.sourceKey.startsWith('commitment-v1:')){
             requireOk(details.commitmentId&&details.alreadyAccrued===true&&details.accrualJournalId,409,'commitmentApprovalRequired');
             const stored=(await c.query('select value from ab.settings where key=$1',['financial-commitments-v1:records:'+d.companyId+':'+details.commitmentId])).rows[0],r=stored?cipher.open(stored.value.cipher):null;
