@@ -5,14 +5,13 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Original contact chain adapter and party-separated reports for non-sales claims",
+    "module": "Actual Owner-card unbilled customer outlays and exact original invoice clearance",
     "acceptance": [
-      "9 targeted native cases passed including legacy invoice source preservation",
-      "Actual existing task-center/collector four-result chain browser passed; native RV party/claim details browser passed",
-      "172 static checks, TypeScript and portable build passed",
-      "Previous saved claims checkpoint: 494 cumulative native tests passed; new chain acceptance is additional"
+      "7 related native tests passed; expanded two-vehicle/two-company source test passed",
+      "Actual new and existing personal-card browser journeys passed, AR/EN and responsive",
+      "Cumulative 495-pass result is previous checkpoint only; rerun after saving this module"
     ],
-    "next": "Preserve exact tree; cumulative check; continue unbilled/adjusted Owner customer disbursements, staff-advance collection queue, reviewed tax/shared expenses and provider infrastructure"
+    "next": "Run cumulative native acceptance and continue employee advance collection integration and remaining independent requirements"
   },
   "nextIndependentWork": [
     "Extend actual Owner-card customer disbursements with explicitly reviewed new unbilled assets; do not invent invoices or reinvest principal",
@@ -28,7 +27,8 @@
     "investor agency 028 migration and contractual principal recovery/return policy",
     "authorized e-invoicing provider and credentials",
     "no historical balance migration without separate reconciliation/approval",
-    "specific approval and isolated rehearsal of non-sales native RV custody guard extension; no hosted activation"
+    "specific approval and isolated rehearsal of non-sales native RV custody guard extension; no hosted activation",
+    "Supplier refund/cancellation of an actually paid customer outlay requires explicit recoverability decision; original source reversal remains protected"
   ],
   "resumeRules": [
     "read RELEASE-HOLD.md first",
@@ -41,34 +41,34 @@
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
   "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
   "checklistCounts": {
-    "منفذ جزئياً": 34,
+    "منفذ جزئياً": 32,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 33,
+    "مكتمل وغير منشور": 35,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "f1a17a432b4a95880ba33ca55727a8231ae2d7ab",
-  "lastRemoteTree": "1d644f2bc3fbb396964c612af45a9b6725bfe9b5",
+  "lastRemoteCommit": "a591a933dee5de46df0fb6e2970e2412d213ab55",
+  "lastRemoteTree": "00d84713e288b53183b9c2717636d520f9ee5bc2",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44929789986",
-    "head": "518565a8f08837a0abf156b7790771f49d580519",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44937627058",
+    "head": "a591a933dee5de46df0fb6e2970e2412d213ab55",
     "status": "failed",
-    "failedStep": "Old bank-arrangement browser selector expected removed free-text bankName field",
-    "followup": "Use original registered-bank select; full funding review/task/V3 browser acceptance passed locally",
+    "failedStep": "Personnel directory browser waited for an arbitrary offscreen lazy PDF canvas",
+    "followup": "Read clean synthetic PDF metadata, scroll its exact host into view, then assert canvas; local isolated personnel browser passed. Product lazy loading and protected runs untouched.",
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44934299806",
-    "head": "b14d2e4a51a1441623fd4b877fd1670c025985e4",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44935799871",
+    "head": "f1a17a432b4a95880ba33ca55727a8231ae2d7ab",
     "status": "success",
-    "includes": "Investor agency integration, numbering, original financier captions, safe synthetic test cleanup",
+    "includes": "Investor agency and native non-sales claims; no deployment",
     "deployment": false
   },
   "lastCumulativeAcceptance": {
-    "localCommit": "7214e53",
-    "remoteCommit": "f1a17a432b4a95880ba33ca55727a8231ae2d7ab",
-    "tree": "1d644f2bc3fbb396964c612af45a9b6725bfe9b5",
-    "result": "494 passed, 0 failed; committed native claims checkpoint",
-    "log": "/workspace/ab-test-tmp/financial-claims-cumulative.log",
+    "localCommit": "b53718c",
+    "remoteCommit": "a591a933dee5de46df0fb6e2970e2412d213ab55",
+    "tree": "00d84713e288b53183b9c2717636d520f9ee5bc2",
+    "result": "495 passed, 0 failed; saved original-chain adapter checkpoint",
+    "log": "/workspace/ab-test-tmp/financial-claim-chain-cumulative.log",
     "noHostedOperations": true
   }
 }
