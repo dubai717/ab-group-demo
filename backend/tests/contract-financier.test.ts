@@ -18,6 +18,8 @@ test('contract disclosure uses original invoice contract and active allocations,
   const before=(await f.admin.query('select id,payload_cipher from ab.vehicle_contracts order by id')).rows;
   // Native financing rows need an approved item link to be collected by the ledger UI. Fixture-only link.
   await f.admin.query('insert into ab.finance_invoice_links(id,tenant_id,company_id,invoice_id,item_id,source_key,issued_on,created_by)values($1,$2,$3,$4,$5,$6,$7,$8)',[randomUUID(),f.org.tenant,f.co1,invoice.id,f.items.loan,'synthetic-contract-disclosure',f.date,f.org.user]);
+  const dues=await f.req('GET','/api/ledger/receivables?customerId='+f.client+'&companies='+f.co1+'&level=invoice');assert.match(dues.rows.find((r:any)=>r.id===invoice.id).financierLabelEn,/Group financing.*Company A/);
+  await f.req('POST','/api/ledger/collections/invoices',{companyId:f.co1,customerId:f.client,currency:'AED',receivedOn:f.date,invoices:[{invoiceId:invoice.id,amount:invoice.amount}],actualCashReceived:true,financierId:randomUUID()},422);
   let statement=await f.req('GET','/api/ledger/customer-statement?customerId='+f.client+'&companies='+f.co1);
   const row=statement.rows.find((r:any)=>r.id===invoice.id);assert.match(row.financierLabelEn,/Group financing.*Company A/);
   assert(statement.rows.filter((r:any)=>r.type==='Invoice'&&r.id!==invoice.id&&r.financier).every((r:any)=>r.financier.type==='group'));

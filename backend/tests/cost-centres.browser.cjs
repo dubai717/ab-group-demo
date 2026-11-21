@@ -11,8 +11,8 @@ module.exports=async function(p,f){
   await p.locator('tr').filter({has:p.locator('[data-fp-open="'+centre.id+'"]')}).click();d=p.locator('dialog[open]').last();assert.equal(await d.locator('[name=nameEn]').inputValue(),'Browser cost centre');await d.locator('[data-cancel]').click();
  }}
  await p.setViewportSize({width:1440,height:1000});await p.evaluate(()=>setLocale('ar'));
- await p.locator('[data-ld=tab][data-id="journals"]').click();await p.locator('details.ld-form-section summary').first().click();await p.locator('[name=costCentreId]').selectOption(centre.id);assert.equal(await p.locator('[name=costCentreId]').inputValue(),centre.id);
- await p.locator('[data-ld=tab][data-id="reports"]').click();await p.locator('details.ld-form-section summary').first().click();await p.locator('[name=kind]').selectOption('cost-centres');
+ await p.locator('[data-ld=tab][data-id="journals"]').click();const journal=p.locator('[data-ld-form=journal]');await journal.waitFor({state:'attached'});if(!await journal.isVisible())await journal.locator('xpath=ancestor::details[1]').locator(':scope > summary').click();await journal.locator('[name=costCentreId]').selectOption(centre.id);assert.equal(await p.locator('[name=costCentreId]').inputValue(),centre.id);
+ await p.locator('[data-ld=tab][data-id="reports"]').click();const report=p.locator('[data-ld-form=report]');await report.waitFor({state:'attached'});if(!await report.isVisible())await report.locator('xpath=ancestor::details[1]').locator(':scope > summary').click();await report.locator('[name=kind]').selectOption('cost-centres');
  await p.locator('[data-ld-form=report] [type=submit]').click();
  await p.waitForFunction(()=>document.querySelector('.ld-section')?.textContent.includes('explicit cost centre'));
 };

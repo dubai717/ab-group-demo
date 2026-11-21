@@ -5,23 +5,25 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "logical Salik/traffic multi-item categories and standard two-item setup",
+    "module": "VAT control-account workpaper and complete-source corporate profit bridge",
     "files": [
-      "backend/src/vehicle-followup-policy.ts",
-      "backend/src/financial-package.ts",
-      "backend/tests/logical-followup-categories.test.ts",
-      "backend/tests/logical-followup-categories.browser.cjs"
+      "backend/src/vat-workpaper.ts",
+      "backend/src/company-tax-preparation.ts",
+      "backend/tests/vat-workpaper.test.ts",
+      "backend/tests/vat-workpaper.browser.cjs"
     ],
     "acceptance": [
-      "18 related native policy/configuration/financial/discount cases passed",
-      "Existing financial-package browser passed with the logical category default",
-      "Dedicated category browser passed item setup, reviewed tax mapping, multiple original items, immutable scope and value history; AR/EN responsive",
-      "No original Supabase writes or actual fee activation",
-      "Full cumulative backend baseline 461 predates the discount/category bundles; final cumulative acceptance remains required"
+      "468 backend regressions passed before this tax bundle; the small collection read-model addition was separately covered by 17 targeted cases",
+      "Four tax/control cases passed in the supported serial isolated test mode",
+      "Actual VAT browser passed reviewed setup, invoice/credit/input-control reconciliation, no tax-due/recovery/filing assumption, Excel/PDF and AR/EN responsive",
+      "TypeScript passed; static/runtime build results are separately recorded",
+      "No filing, tax-rate mutation, source Supabase write or historical migration"
     ],
-    "next": "Owner-cycle financial reports and wallet consumption; noncustomer claims and tax/legal/provider-dependent work remain in the master checklist"
+    "next": "wallet consumption and claims/source completion; reviewed investor agency integration and remaining tax/provider decisions must not be silently activated"
   },
   "nextIndependentWork": [
+    "Reviewed wallet consumption against prepaid asset and original Salik source without creating another Owner payable/customer receipt",
+    "VAT workpaper and corporate bridge reconciliation against approved bank operations without filing or changing tax rates",
     "Full wallet consumption and exceptional personal requests",
     "Shared-expense approved VAT cases and intercompany settlement acceptance",
     "Manual noncustomer claims, logical debt-category fee/collection discount acceptance",
@@ -45,19 +47,26 @@
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
   "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
   "checklistCounts": {
-    "منفذ جزئياً": 44,
+    "منفذ جزئياً": 43,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 22,
-    "لم يُنفذ": 2
+    "مكتمل وغير منشور": 24,
+    "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "d0fb2af7f41727c541f7288f5c961fde7ae5f8e4",
-  "lastRemoteTree": "0b0d561dca82c33b0524f1c574abf6d1c14dc2c4",
+  "lastRemoteCommit": "bc58b87206a39661c82226b34acbb1038f5af920",
+  "lastRemoteTree": "e105f52c109b8eee8f307dbe91c34f6736d4f4bb",
   "lastDraftCi": {
     "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44919869235",
     "head": "d0fb2af7f41727c541f7288f5c961fde7ae5f8e4",
     "status": "failed",
     "failedStep": "repeated financial-package browser; screenshot timeout masked original error",
-    "followup": "publish synthetic fixture metadata before health readiness; log original error before bounded screenshot; wait for normal CI on next draft push",
+    "followup": "publish synthetic fixture metadata before health readiness; log original error before bounded screenshot; wait for normal CI on next draft push; a retained open report form was reproduced locally and the test now opens only the required direct summary when hidden",
     "protectedRunsTouched": false
+  },
+  "lastSuccessfulDraftCi": {
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44922007590",
+    "head": "bc58b87206a39661c82226b34acbb1038f5af920",
+    "status": "success",
+    "includes": "Owner settlement, collection discounts and logical follow-up categories",
+    "deployment": false
   }
 }

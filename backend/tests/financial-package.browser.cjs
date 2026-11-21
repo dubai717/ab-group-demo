@@ -1,8 +1,8 @@
 const { chromium } = require('playwright'), assert = require('node:assert/strict'), fs = require('node:fs');
 (async () => {
-    const f = JSON.parse(fs.readFileSync('work/financial-package-fixture.json')), browser = await chromium.launch({ executablePath: process.env.AB_BROWSER_EXECUTABLE || '/usr/bin/chromium', headless: true, args: ['--no-sandbox'] }), p = await browser.newPage({ viewport: { width: 1440, height: 1000 } }), errors = [];
+    const f = JSON.parse(fs.readFileSync('work/financial-package-fixture.json')), browser = await chromium.launch({ executablePath: process.env.AB_BROWSER_EXECUTABLE || '/usr/bin/chromium', headless: true, args: ['--no-sandbox'] }), p = await browser.newPage({ viewport: { width: 1440, height: 1000 } }), errors = [],failedResponses=[],alerts=[];
     p.on('pageerror', e => errors.push(e.message));
-    p.on('dialog', d => d.accept());
+    p.on('dialog', d => {if(d.type()==='alert')alerts.push(d.message().slice(0,180));return d.accept();});p.on('response',r=>{if(r.status()>=400)failedResponses.push({status:r.status(),path:new URL(r.url()).pathname.replace(/[a-f0-9]{8}-[a-f0-9-]{27}/g,':id')});});
     const tab = async (id) => { await p.locator('[data-ld=tab][data-id="' + id + '"]').click(); await p.locator('.ld-section').waitFor(); const ready = { setup: '[data-fp=new-item]', priorities: '#fp-priority', compliance: '[data-fp=fee-new]', documents: '#fp-document-type' }[id]; if (ready)
         await p.locator(ready).waitFor(); };
     try {
@@ -129,7 +129,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         console.log('PASS financial package actual UI: delayed Invoice to Discount switch ignores stale response, atomic delayed model refresh, auto-code item save/readback, collapsed accounting mapping, priority reordering/draft gate, disabled fee rule/row/activation denial, Invoice/RV/Discount/PV/Deposit metadata, noncash discount, no noninvoice Cancel, AR/EN desktop/tablet/mobile.');
     }
     catch (e) {
-        console.error('FAIL FINANCIAL_PACKAGE:', e.stack);
+        console.error('FAIL FINANCIAL_PACKAGE:', e.stack);console.error({failedResponses,alerts});
         await p.screenshot({ path: 'work/financial-package-failure.png',timeout:5000 }).catch(error=>console.error('Failure screenshot unavailable:',error.name));
         console.error(await p.locator('[role=alert],#ld-notice').allTextContents());
         process.exitCode = 1;

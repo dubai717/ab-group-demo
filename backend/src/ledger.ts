@@ -1,3 +1,4 @@
+import {registerOwnerFinanceReports} from './owner-finance-reports.js';
 import {discountNotice} from './discount-notices.js';
 import {registerOwnerCardRepayment} from './owner-card-repayment.js';
 import {registerOwnerChequeCustody} from './owner-cheque-custody.js';
@@ -75,7 +76,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         }
     });
     registerReceivables(app,route,cipher);
-    registerMonthlySalikImport(app,route,cipher);registerPersonalCardOptions(app,route,cipher);registerOwnerCardSettlements(app,route,cipher);registerOwnerChequeCustody(app,route,cipher);registerOwnerCardRepayment(app,route,cipher);
+    registerMonthlySalikImport(app,route,cipher);registerPersonalCardOptions(app,route,cipher);registerOwnerCardSettlements(app,route,cipher);registerOwnerFinanceReports(app,route,cipher);registerOwnerChequeCustody(app,route,cipher);registerOwnerCardRepayment(app,route,cipher);
     app.post('/api/ledger/deposit-receipt-review',route(async(c:any,m:any,s:any,req:any)=>{const d=z.object({companyId:id,bankAccountId:id,documentVersionId:id,amount:positive,effectiveOn:day,reference:text}).strict().parse(req.body);need(m,'deposit',d.companyId);return reviewDepositReceipt(c,m,cipher,options.objects,d);}));
     const companyIds = (m: any, right = 'view') => m.state.companies.filter((co: any) => financeRight(m, 'ledger_' + right, co.id)).map((co: any) => co.id);
     app.get('/api/ledger/capabilities', call(async (c: any, m: any) => ({ available: !!(await c.query("select to_regclass('ab.finance_journals') ok")).rows[0].ok, companies: m.state.companies.filter((co: any) => companyIds(m).includes(co.id)), rights: L.rights, ocr: true, ocrMode:'local-image-or-PDF-text-review-only',bankFeed: false, whatsapp: false, cloudMigrationsAppliedByThisFeature: false })));
