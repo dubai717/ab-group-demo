@@ -357,11 +357,12 @@
     {
       "id": "5.5",
       "requirement": "قالب Excel قابل للتنزيل ومطابقة الأعمدة الأصلية",
-      "status": "منفذ جزئياً",
+      "status": "مكتمل وغير منشور",
       "evidence": [
-        "E1"
+        "E1",
+        "E13"
       ],
-      "note": "ربط الأعمدة قائم؛ قالب فواتير جماعية مخصص قابل للتنزيل غير مثبت."
+      "note": "قالب Excel/CSV فارغ قابل للتنزيل مع إرشادات ثنائية اللغة، وإعادة استخدام مطابقة الأعمدة الحالية. منفذ ومختبر في الحزمة التالية؛ لم ينشر."
     },
     {
       "id": "5.6",
@@ -897,7 +898,7 @@
   "pendingDeployment": {
     "pr": 112,
     "commit": "f878bdcfecd8426b54b8e21eac56109bdf15e412",
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44894669381",
-    "gate": "merge CI then protected delivery"
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44895952744",
+    "gate": "protected delivery"
   }
 }

@@ -16,6 +16,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         await require('./company-tax.browser.cjs')(p,f);
         await require('./cost-centres.browser.cjs')(p,f);
         await require('./contract-financier.browser.cjs')(p,f);
+        await require('./invoice-import-template.browser.cjs')(p);
         await tab('setup');
         assert.equal(await p.locator('[data-ft-search]').count(), 1, 'one shared search for accounts and financial items');
         assert.equal(await p.locator('.ld-section table').count(), await p.locator('.ld-section [data-ft-table] table').count(), 'all setup tables use the financial adapter');
