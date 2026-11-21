@@ -175,6 +175,17 @@ export async function createFinancialVoucher(c: any, cipher:any, m: any, s: any,
         requireOk(it.data.payment, 403, 'denied');
         if (d.customerId)
             await customer(c, m, d.customerId, d.companyId);
+        if(d.sourceKey.startsWith('employee-advance-v1:')){
+            requireOk(details.employeeAdvanceId&&details.alreadyAccrued===true&&details.noExpenseAccrual===true,409,'advanceApprovalRequired');
+            const stored=(await c.query('select value from ab.settings where key=$1',['employee-advances-v1:records:'+d.companyId+':'+details.employeeAdvanceId])).rows[0],r=stored?cipher.open(stored.value.cipher):null;
+            requireOk(r?.status==='Approved'&&r.companyId===d.companyId&&r.mapping.itemId===d.itemId&&r.currency===d.currency&&L.units(r.amount)===L.units(d.amount)&&r.mapping.pendingChartId===details.payableOverrideId&&d.sourceKey==='employee-advance-v1:'+r.id+':'+((r.paymentAttempt||0)+1),409,'advanceApprovalRequired');
+        }
+        if(d.sourceKey.startsWith('commitment-v1:')){
+            requireOk(details.commitmentId&&details.alreadyAccrued===true&&details.accrualJournalId,409,'commitmentApprovalRequired');
+            const stored=(await c.query('select value from ab.settings where key=$1',['financial-commitments-v1:records:'+d.companyId+':'+details.commitmentId])).rows[0],r=stored?cipher.open(stored.value.cipher):null;
+            requireOk(r?.status==='Approved'&&r.companyId===d.companyId&&r.itemId===d.itemId&&r.currency===d.currency&&L.units(r.amount)===L.units(d.amount)&&r.accrualJournalId===details.accrualJournalId&&r.payableChartId===details.payableOverrideId&&d.sourceKey==='commitment-v1:'+r.id+':'+((r.paymentAttempt||0)+1),409,'commitmentApprovalRequired');
+            requireOk((await c.query("select 1 from ab.finance_journals j where j.id=$1 and j.company_id=$2 and j.status='Posted' and not exists(select 1 from ab.finance_journals r where r.reversal_of=j.id)",[r.accrualJournalId,r.companyId])).rowCount,409,'commitmentApprovalRequired');
+        }
         const key = randomUUID(), n = await number(c, s.tenant_id, 'voucher');
         await c.query('insert into ab.finance_vouchers(id,tenant_id,company_id,item_id,customer_id,number,source_key,amount,currency,issued_on,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)', [key, s.tenant_id, d.companyId, it.id, d.customerId || null, n, d.sourceKey, d.amount, d.currency, d.issuedOn, cipher.seal({ ...d, ...details }), s.user_id]);
         await event(c, cipher, s, d.companyId, key, 'voucher_created', null, { ...d, ...details });

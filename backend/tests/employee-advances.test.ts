@@ -1,0 +1,49 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {personnelFixture} from './personnel-fixture.js';
+import {today} from '../src/vehicle-domain.js';
+import {advanceOutstanding} from '../src/employee-advances.js';
+import {randomUUID} from 'node:crypto';
+test('employee debt exists only after actual delivery, exact repayments are not income',()=>{assert.equal(advanceOutstanding({status:'Approved',amount:'100',recoveries:[]}),'0.000');assert.equal(advanceOutstanding({status:'Received',amount:'100.001',recoveries:[{amount:'25.001'}]}),'75.000');});
+test('advance uses native payment assets, signed delivery, approved bank recovery and unchanged sales/permissions',async()=>{
+ const f=await personnelFixture();try{
+  const e=await f.req('POST','/api/personnel/employees',{companyId:f.co1,nameAr:'موظف سلفة وهمي',nameEn:'Synthetic advance employee',jobTitle:'Operations',hiredOn:'2024-01-01'}),proof=await f.proof(),bank=await f.bank(),grants=(await f.admin.query('select * from ab.permission_grants order by id')).rows;
+  const makeAccount=async(code:string)=>(await f.req('POST','/api/ledger/accounts',{code,nameAr:'حساب سلفة وهمي',nameEn:'Synthetic advance '+code,kind:'asset',companyIds:[f.co1],currency:'AED',eliminate:false})).charts[0].id;
+  const ar=await makeAccount('staff_ar'),pending=await makeAccount('advance_pending'),cfg={companyId:f.co1,itemId:f.items.expense,receivableChartId:ar,pendingChartId:pending,revision:0,reason:'Explicit synthetic mapping'};
+  await f.req('POST','/api/ledger/employee-advances/configuration',{...cfg,receivableChartId:f.accounts.custody.charts[f.co1]},422);
+  await f.req('POST','/api/ledger/employee-advances/configuration',{...cfg,receivableChartId:f.accounts.ar.charts[f.co1]},422);
+  await f.req('POST','/api/ledger/employee-advances/configuration',cfg);
+  await f.req('POST','/api/ledger/funds',{companyId:f.co1,name:'Cannot mix staff debt with cash',kind:'petty',holderId:f.org.user,chartId:ar,currency:'AED',effectiveOn:today()},422);
+  const body={companyId:f.co1,employeeId:e.id,amount:'100.001',documentVersionId:proof,reason:'Synthetic request only'};await f.req('POST','/api/ledger/employee-advances',{...body,companyId:f.co2},422);const key=randomUUID(),a=await f.req('POST','/api/ledger/employee-advances',body,200,key);assert.equal((await f.req('POST','/api/ledger/employee-advances',body,200,key)).id,a.id);
+  const approve={companyId:f.co1,reason:'Reviewed synthetic advance',confirm:true},action={companyId:f.co1,confirm:true};await f.req('POST','/api/ledger/employee-advances/'+a.id+'/voucher',action,409);await f.req('POST','/api/ledger/employee-advances/'+a.id+'/approve',approve);
+  const [v,w]=await Promise.all([f.req('POST','/api/ledger/employee-advances/'+a.id+'/voucher',action),f.req('POST','/api/ledger/employee-advances/'+a.id+'/voucher',action)]);assert.equal(v.id,w.id);
+  const receive={companyId:f.co1,receivedAmount:'100.001',documentVersionId:proof,reason:'Independent signed delivery review',actualDeliveryVerified:true};await f.req('POST','/api/ledger/employee-advances/'+a.id+'/receive',receive,409);
+  await f.req('POST','/api/ledger/vouchers/'+v.id+'/prepare',{bankAccountId:bank.id,chequeNumber:'SYN-ADV-ONLY',issuedOn:today(),dueOn:today(),documentVersionId:proof});const review=await f.req('POST','/api/ledger/vouchers/approval-preview',{ids:[v.id],signedEvidence:true});await f.req('POST','/api/ledger/vouchers/approval-confirm',{batchId:review.id,digest:review.digest,confirm:true});
+  assert.equal((await f.admin.query('select count(*)::int n from ab.finance_journals')).rows[0].n,0,'no expense or staff debt is booked merely by payment approval');
+  await f.req('POST','/api/ledger/vouchers/'+v.id+'/settle',{effectiveOn:today(),bankConfirmation:'Synthetic bank clearing'});
+  let state=await f.req('GET','/api/ledger/employee-advances?companyId='+f.co1);assert.equal(state.rows[0].outstanding,'0.000');assert.equal(state.rows[0].fundsAwaitingDelivery,'100.001');
+  await f.req('POST','/api/ledger/employee-advances/'+a.id+'/receive',{...receive,receivedAmount:'99'},422);
+  const [r,s]=await Promise.all([f.req('POST','/api/ledger/employee-advances/'+a.id+'/receive',receive),f.req('POST','/api/ledger/employee-advances/'+a.id+'/receive',receive)]);assert.equal(r.journalId,s.journalId);
+  const receipt=await f.req('POST','/api/finance/operations',{companyId:f.co1,kind:'receipt',bankAccountId:bank.id,amount:'40.001',currency:'AED',effectiveOn:today(),reason:'Synthetic staff repayment',reference:'SYN-STAFF-REPAY',counterpartId:ar,documentVersionId:proof,integrationRefs:{employeeReference:e.id}});
+  const recovery={companyId:f.co1,kind:'bank',sourceId:receipt.id,amount:'40.001',documentVersionId:proof,reason:'Match actual approved repayment',confirm:true};assert.equal((await f.req('GET','/api/ledger/employee-advances/'+a.id+'/recovery-sources?companyId='+f.co1)).rows.length,0);await f.req('POST','/api/ledger/employee-advances/'+a.id+'/recover',recovery,422);await f.req('POST','/api/finance/operations/'+receipt.id+'/approve',{revision:1});
+  assert.equal((await f.req('GET','/api/ledger/employee-advances/'+a.id+'/recovery-sources?companyId='+f.co1)).rows[0].available,'40.001');await f.req('POST','/api/ledger/employee-advances/'+a.id+'/recover',recovery);await f.req('POST','/api/ledger/employee-advances/'+a.id+'/recover',recovery);state=await f.req('GET','/api/ledger/employee-advances?companyId='+f.co1);assert.equal(state.rows[0].outstanding,'60.000');assert.equal(state.reconciliation[0].reviewRequired,false);assert.equal(state.reconciliation[0].ledgerBalance,'60.000');
+  assert.equal((await f.admin.query('select count(*)::int n from ab.vehicle_invoices')).rows[0].n,0);assert.equal((await f.admin.query("select count(*)::int n from ab.finance_entries e join ab.finance_chart ch on ch.id=e.chart_id where ch.kind in('income','expense')")).rows[0].n,0);
+  assert.deepEqual((await f.admin.query('select * from ab.permission_grants order by id')).rows,grants);
+  const month=today().slice(0,7)+'-01',hrCfg=(await f.req('GET','/api/personnel/settings/'+f.co1)).config;await f.req('POST','/api/personnel/settings/'+f.co1,{...hrCfg,payrollItemId:f.items.expense,legalDeductionMaxBps:2000});await f.req('POST','/api/personnel/employees/'+e.id+'/compensation',{companyId:f.co1,effectiveOn:month,currency:'AED',basic:'100',allowances:'0',allocations:[{companyId:f.co1,bps:10000}],reason:'Synthetic approved salary'});
+  const arDefinition=(await f.admin.query('select definition_id from ab.finance_chart where id=$1',[ar])).rows[0].definition_id,decision=await f.req('POST','/api/personnel/employees/'+e.id+'/decisions',{companyId:f.co1,month,kind:'deduction',amount:'20',reference:'SYN-ADVANCE-SALARY',reason:'Synthetic voluntary repayment',legalBasis:'Explicit fictional repayment agreement and reviewed limit',evidenceVersionId:proof,counterpartDefinitionId:arDefinition});await f.req('POST','/api/personnel/decisions/'+decision.id+'/approve',{approve:true,reason:'Synthetic legal review'});const payroll=await f.req('POST','/api/personnel/employees/'+e.id+'/payroll',{month});await f.req('POST','/api/personnel/payroll/'+payroll.id+'/approve',{confirm:true});const source=(await f.admin.query('select id from ab.finance_journals where source_key=$1',['payroll:'+payroll.id])).rows[0].id;
+  state=await f.req('GET','/api/ledger/employee-advances?companyId='+f.co1);assert.equal(state.reconciliation[0].reviewRequired,true,'unallocated payroll credit is explicitly reported');const entriesBefore=(await f.admin.query('select count(*)::int n from ab.finance_entries')).rows[0].n;
+  await f.req('POST','/api/ledger/employee-advances/'+a.id+'/recover',{...recovery,kind:'payroll',sourceId:source,amount:'20'});state=await f.req('GET','/api/ledger/employee-advances?companyId='+f.co1);assert.equal(state.rows[0].outstanding,'40.000');assert.equal(state.reconciliation[0].reviewRequired,false);assert.equal((await f.admin.query('select count(*)::int n from ab.finance_entries')).rows[0].n,entriesBefore,'payroll credit is not posted twice');
+  await f.req('POST','/api/ledger/employee-advances/'+a.id+'/recover',{...recovery,kind:'payroll',sourceId:source,amount:'10'},409);
+  const user=await f.employee();await f.login(user.username,user.password);await f.req('POST','/api/ledger/employee-advances',body,403);await f.req('GET','/api/ledger/employee-advances?companyId='+f.co1,undefined,403);
+ }finally{await f.close();}
+});
+test('even an explicitly authorized approver cannot approve or verify their own employee advance',async()=>{
+ const f=await personnelFixture();try{
+  const user=await f.employee(),e=await f.req('POST','/api/personnel/employees',{companyId:f.co1,nameAr:'موظف مراجعة وهمي',nameEn:'Synthetic self-review employee',jobTitle:'Operations',hiredOn:'2024-01-01'});
+  await f.req('POST','/api/personnel/employees/'+e.id+'/login-link',{userId:user.id,revision:1,confirm:true});
+  const proof=await f.proof(),advance=await f.req('POST','/api/ledger/employee-advances',{companyId:f.co1,employeeId:e.id,amount:'50',documentVersionId:proof,reason:'Self-review must be denied'});
+  await f.req('POST','/api/users/'+user.id+'/grants',{action:'ledger_journal_approve',scope:{type:'company',id:f.co1},delegable:false});await f.login(user.username,user.password);
+  const denied=await f.req('POST','/api/ledger/employee-advances/'+advance.id+'/approve',{companyId:f.co1,reason:'Cannot self-approve',confirm:true},403);assert.equal(denied.error,'independentVerifierRequired');
+  const receive=await f.req('POST','/api/ledger/employee-advances/'+advance.id+'/receive',{companyId:f.co1,receivedAmount:'50',documentVersionId:proof,reason:'Cannot self-verify',actualDeliveryVerified:true},403);assert.equal(receive.error,'independentVerifierRequired');
+ }finally{await f.close();}
+});

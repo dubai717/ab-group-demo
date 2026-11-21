@@ -1,0 +1,48 @@
+{
+  "updatedOn": "2026-11-21",
+  "branch": "feature/finance-completion-build",
+  "baseContent": "PR114 head 6405eff7d933a37f018e16ac0893387c5b6a4bad",
+  "releaseHold": true,
+  "all95Complete": false,
+  "currentWork": {
+    "module": "employee advances using native payment and payroll/bank source recovery",
+    "files": [
+      "backend/src/employee-advances.ts",
+      "backend/tests/employee-advances.test.ts",
+      "backend/tests/employee-advances.browser.cjs"
+    ],
+    "acceptance": [
+      "29 native ledger/commitment/advance tests including approved payroll recovery and self-approval denial passed",
+      "172 static checks passed",
+      "TypeScript and compiled runtime graph passed",
+      "independent financial-completion AR/EN desktop/tablet/mobile browser passed",
+      "original financial-package browser passed with fresh independent fixture"
+    ],
+    "next": "review monthly Salik grouping and transaction-time responsibility, then shared expenses and personal Owner card"
+  },
+  "nextIndependentWork": [
+    "complete cash-only employee advance flows and approved exceptional settlements; preserve existing payroll legal controls",
+    "shared expense allocation and intercompany liabilities",
+    "owner personal-card reconciliation and reimbursement custody",
+    "monthly Salik aggregation with transaction-time responsibility",
+    "logical debt-category followup rules and authorized collection discount",
+    "VAT subledger and credit documents with explicit reviewed treatment",
+    "petty cash OCR and reconciliation reports",
+    "integrated acceptance and one final protected release"
+  ],
+  "financialDecisionsNotAssumed": [
+    "approved tax treatment and deductibility by supply/item/company",
+    "investor agency 028 migration and contractual principal recovery/return policy",
+    "authorized e-invoicing provider and credentials",
+    "no historical balance migration without separate reconciliation/approval"
+  ],
+  "resumeRules": [
+    "read RELEASE-HOLD.md first",
+    "do not merge or dispatch deployment per PR",
+    "keep evidence/status changes conservative",
+    "do not stop the whole build for a blocked independent module",
+    "no real cloud financial test transactions",
+    "do not consider this progress file a completion report"
+  ],
+  "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115"
+}

@@ -237,3 +237,22 @@ jobs:
             wait "$fixture_pid"
             trap - EXIT
           done
+      - name: Financial package and completion use independent rate-limited fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          for suite in financial-package financial-completion; do
+            node --import tsx backend/tests/serve-financial-package-fixture.ts > work/financial-completion-browser.log 2>&1 &
+            fixture_pid=$!
+            trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
+            for attempt in $(seq 1 90); do
+              if curl --fail --silent http://127.0.0.1:3646/api/health >/dev/null; then break; fi
+              if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
+              sleep 1
+            done
+            curl --fail --silent http://127.0.0.1:3646/api/health >/dev/null
+            node "backend/tests/$suite.browser.cjs"
+            kill "$fixture_pid"
+            wait "$fixture_pid"
+            trap - EXIT
+          done
