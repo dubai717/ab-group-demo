@@ -13,6 +13,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         await p.locator('.stats-grid').waitFor();
         await p.locator('[data-page=financialManagement]').click();
         await p.locator('#ld-company').selectOption(f.companyId);
+        await require('./company-tax.browser.cjs')(p,f);
         await tab('setup');
         assert.equal(await p.locator('[data-ft-search]').count(), 1, 'one shared search for accounts and financial items');
         assert.equal(await p.locator('.ld-section table').count(), await p.locator('.ld-section [data-ft-table] table').count(), 'all setup tables use the financial adapter');

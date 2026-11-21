@@ -1,3 +1,4 @@
+import {disposeSyntheticDatabase} from './dispose-synthetic-database.js';
 import {normalizeWorkflowTerms}from'../src/vehicle-request-workflow.js';
 import {security} from '../src/core.js';
 import {number,V} from '../src/vehicle-domain.js';
@@ -17,4 +18,4 @@ async function fund(rid:string){await req('POST','/api/vehicle-requests/'+rid+'/
 async function contract(vid:string,patch:any={}){const proof=await file(vid);return req('POST','/api/vehicles/'+vid+'/contracts',{principal:'100',total:'110',months:3,startOn:'2026-03-01',serviceMonthly:'10',fileId:proof,legalBasis:'Synthetic signed agreement only',...patch});}
 async function employee(roleId='employee'){const username='vehicle_'+randomUUID().slice(0,8),password='Synthetic-Vehicle@2026',u=await req('POST','/api/users',{nameAr:'موظف مركبات وهمي',nameEn:'Synthetic vehicle employee',username,email:username+'@example.test',phone:'',status:'Active',jobTitle:'Test',hireDate:'2026-01-01',managerId:f.org.user,companyIds:[co1],departmentIds:[],password,baseRole:roleId});return {id:u.id,username,password};}
 const grant=(user:string,action:string)=>req('POST','/api/users/'+user+'/grants',{action:'vehicle_'+action,scope:{type:'company',id:co1},delegable:false});
-const close=async()=>{await f.app.close();await f.runtime.end();await f.admin.end();};return {...f,req,login,co1,co2,client,client2,request,register,file,read,fund,contract,employee,grant,close};}
+const close=async()=>{await f.app.close();await f.runtime.end();await f.admin.end();await disposeSyntheticDatabase(f.adminUrl,f.sourceDatabase);};return {...f,req,login,co1,co2,client,client2,request,register,file,read,fund,contract,employee,grant,close};}
