@@ -23,7 +23,7 @@ export async function contractFinanciers(c:any,m:any,cipher:any,rows:any[]){
  const byContract=new Map(contracts.map((r:any)=>[r.id+':'+r.company_id+':'+r.vehicle_id,r]));
  for(const row of targets){const contract:any=byContract.get(row.contractId+':'+row.companyId+':'+row.vehicleId);if(!contract)continue;
   const terms=cipher.open(contract.payload_cipher),request=cipher.open(contract.request_payload),co=m.state.companies.find((r:any)=>r.id===row.companyId);
-  const party=terms.financeType==='group'?{nameAr:co?.arabicName,nameEn:co?.englishName}:terms.financeType==='bank'?{nameAr:terms.bankContract?.lender,nameEn:terms.bankContract?.lender}:investors.get(row.companyId+':'+request.investorAgreementId);
+  const party=terms.financeType==='group'?{nameAr:co?.arabicName,nameEn:co?.englishName}:terms.financeType==='bank'?{nameAr:terms.bankContract?.lenderSnapshot?.nameAr||terms.bankContract?.lender,nameEn:terms.bankContract?.lenderSnapshot?.nameEn||terms.bankContract?.lender}:investors.get(row.companyId+':'+request.investorAgreementId);
   result.set(row.id,financierLabel(terms.financeType,party));
  }
  return result;

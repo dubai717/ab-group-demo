@@ -89,11 +89,12 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
     app.get('/api/ledger/preferences', route(async (c: any, m: any, s: any) => { const r = (await c.query('select value from ab.settings where key=$1', ['ledger-prefs:' + s.user_id])).rows[0]; return r ? cipher.open(r.value.cipher) : {}; }));
     app.post('/api/ledger/preferences', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id, tab: z.enum(['dashboard', 'invoices', 'collect', 'custody', 'deposits', 'vouchers', 'funds', 'cards', 'journals', 'reports', 'setup', 'import', 'closing', 'work', 'intercompany', 'reconciliation','priorities','compliance','entitlements','documents','receivables','employee-advances','owner-settlements','commitments','cost-centres','taxes']), columns: z.array(z.string().max(60)).max(30).default([]) }).strict().parse(req.body); need(m, 'view', d.companyId); await c.query('insert into ab.settings values($1,$2,$3)on conflict(tenant_id,key)do update set value=excluded.value', [s.tenant_id, 'ledger-prefs:' + s.user_id, { cipher: cipher.seal(d) }]); return { saved: true }; }));
     app.post('/api/ledger/accounts', route(async (c: any, m: any, s: any, req: any) => {
-        const d = z.object({ code: z.string().trim().min(1).max(30), nameAr: text, nameEn: text, kind: z.enum(['asset', 'liability', 'equity', 'income', 'expense']), parentId: opt, eliminate: z.boolean().default(false), cashFlow: z.enum(['operating', 'investing', 'financing']).nullish(), companyIds: z.array(id).min(1).max(100), currency, bankAccountId: opt }).strict().parse(req.body);
+        const d = z.object({ code: z.string().trim().min(1).max(30).optional(), nameAr: text, nameEn: text, kind: z.enum(['asset', 'liability', 'equity', 'income', 'expense']), parentId: opt, eliminate: z.boolean().default(false), cashFlow: z.enum(['operating', 'investing', 'financing']).nullish(), companyIds: z.array(id).min(1).max(100), currency, bankAccountId: opt }).strict().parse(req.body);
         for (const co of d.companyIds) {
             need(m, 'account_manage', co);
             company(m, co);
         }
+        if(!d.code){await c.query("insert into ab.vehicle_numbers(tenant_id,kind,next_number)select $1,'finance_account',coalesce(max(substring(code from 4)::bigint),0)+1 from ab.finance_accounts where code ~ '^AC-[0-9]{1,18}$' on conflict(tenant_id,kind)do update set next_number=greatest(ab.vehicle_numbers.next_number,excluded.next_number)",[s.tenant_id]);d.code='AC-'+String(await number(c,s.tenant_id,'finance_account')).padStart(6,'0');}
         if (d.parentId)
             requireOk((await c.query('select 1 from ab.finance_accounts where id=$1', [d.parentId])).rowCount, 422, 'invalidReference');
         const key = randomUUID();
@@ -120,7 +121,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
             }
             await event(c, cipher, s, co, key, 'account_created', null, d);
         }
-        return { id: key, charts };
+        return { id: key, code:d.code, charts };
     }));
     app.patch('/api/ledger/accounts/:id', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ nameAr: text, nameEn: text, active: z.boolean() }).strict().parse(req.body), r = (await c.query('select * from ab.finance_accounts where id=$1', [id.parse(req.params.id)])).rows[0];

@@ -5,22 +5,17 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Prospective prepaid Salik wallet consumption and native original-invoice clearance",
-    "files": [
-      "backend/src/owner-wallet-consumption.ts",
-      "backend/src/wallet-posting-guards.ts",
-      "backend/tests/owner-wallet-consumption.test.ts",
-      "backend/tests/wallet-posting-guards.test.ts",
-      "backend/tests/owner-wallet-consumption.browser.cjs"
-    ],
+    "module": "Original bank directory links, automatic account numbers, prospective recurring drafts and serialized PDF acceptance",
     "acceptance": [
-      "10 related native tests passed before final role-configuration serialization refinement",
-      "Actual wallet browser passed AR/EN, overdraw error with retained form, corrected retry and responsive history",
-      "172 static cases passed",
-      "No new Owner payable/customer receipt/revenue for wallet consumption",
-      "Prospective only; hosted data and live grants unchanged"
+      "472 cumulative backend cases passed at the wallet checkpoint; later bank/scheduler changes have their own targeted coverage",
+      "16 related bank/native lifecycle cases passed; bank-directory browser passed",
+      "Automatic numbering concurrency/legacy/native scope case and actual browser passed",
+      "Seven recurring/shared/worker cases passed; explicit Owner scheduler browser passed",
+      "Fresh monthly XLSX 3.303 grouping and CSV/XLSX duplicate source tests passed",
+      "Owner complete settlement/report/Excel/real PDF browser passed after removing duplicate simultaneous Chromium print jobs; VAT PDF browser passed too",
+      "172 static checks, TypeScript and portable build passed; cumulative acceptance will be repeated for the immutable checkpoint"
     ],
-    "next": "Run cumulative checks and continue noncustomer claims, shared VAT/source work, reviewed investor integration and remaining provider/legal decisions"
+    "next": "Preserve this checkpoint; review and integrate approved investor-agency work without applying 028 or changing protected controllers; continue independent claims/tax/provider tasks"
   },
   "nextIndependentWork": [
     "Manual noncustomer claims and party-separated collection reports",
@@ -47,17 +42,19 @@
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
   "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
   "checklistCounts": {
-    "منفذ جزئياً": 42,
+    "منفذ جزئياً": 37,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 25,
+    "مكتمل وغير منشور": 30,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "8d31d11a78f7aca72e9fcc9ebb58666240c684f9",
-  "lastRemoteTree": "293f6be639b2a0c006391e953c6d07b32f116460",
+  "lastRemoteCommit": "8e2c81a50f12cd0048423c1e7156d08c65843e46",
+  "lastRemoteTree": "a4360f7dcbb6a8f07f0883f43c75ce1b97185699",
   "lastDraftCi": {
     "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44925376071",
     "head": "8d31d11a78f7aca72e9fcc9ebb58666240c684f9",
-    "status": "in_progress at read",
+    "status": "failed",
+    "failedStep": "Owner report browser invoked OS print and Page.printToPDF concurrently",
+    "followup": "Observe browser OS print intent, then create one actual Chromium PDF; both Owner and VAT local browser acceptance passed. Do not rerun/cancel existing protected runs.",
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
