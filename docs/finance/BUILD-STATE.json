@@ -5,13 +5,13 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Prospective cash / bank / customer-AR role separation using original accounts, funds and item links",
+    "module": "Non-sales original bank receipt attribution, original RV and task integration with per-account reconciliation",
     "acceptance": [
-      "Five new native cases; 32 targeted native tests passed",
-      "Original bilingual form failure retains inputs and trace with no financial side effect; original two-actor handover browser passed",
-      "TypeScript and 172 static/regression checks passed; no checklist promotion from a guard alone"
+      "Six new cases plus original claims/task regressions: 10 native passed; actual employee and external bank recoveries, mixed bank/cash, safe replay, deferred source guard and original task closure",
+      "Actual native claim/RV browser passed: reference preview, retained trace/input, stale source invalidation, one RV and no GL/cash custody; AR/EN at three widths",
+      "TypeScript, all 172 static checks and portable runtime-graph build passed; fresh saved-source cumulative run follows"
     ],
-    "next": "Save guard checkpoint and rerun cumulative acceptance; continue original approved-bank non-sales recovery and remaining shared/VAT/tax modules without deployment"
+    "next": "Save E43 checkpoint; freeze source for cumulative acceptance, then continue independently reviewable shared-expense, tax and Owner exception requirements without deployment"
   },
   "nextIndependentWork": [
     "Original noncash employee/external receivable claims using approved actual bank operations and original RV/collection/report sources",
@@ -28,7 +28,8 @@
     "specific approval and isolated rehearsal of non-sales native RV custody guard extension; no hosted activation",
     "Supplier refund/cancellation of an actually paid customer outlay requires explicit recoverability decision; original source reversal remains protected",
     "Explicit reviewed employee-advance contact-source schema extension before hosted activation; no historical rewriting",
-    "Explicit review of card-issuer-payment-match.review-only.sql and reader compatibility before hosted activation; no old-reader rollback after new source records"
+    "Explicit review of card-issuer-payment-match.review-only.sql and reader compatibility before hosted activation; no old-reader rollback after new source records",
+    "Explicit review of manual-claim-bank-receipts.review-only.sql before hosted activation; retain compatible claim-balance readers after the first bank RV"
   ],
   "resumeRules": [
     "read RELEASE-HOLD.md first",
@@ -46,12 +47,12 @@
     "مكتمل وغير منشور": 40,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "0f31b6c30620cf191ffc84814149c02df1f5c9f1",
-  "lastRemoteTree": "db2f17dd01430aaea293a34ccac859da591c49f3",
+  "lastRemoteCommit": "1c31863ce4af63edda7934906045800fa227401d",
+  "lastRemoteTree": "c88abdced357002825c541412c874b618738f987",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44956810832",
-    "head": "0f31b6c30620cf191ffc84814149c02df1f5c9f1",
-    "status": "success",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44959551655",
+    "head": "1c31863ce4af63edda7934906045800fa227401d",
+    "status": "in_progress; exact-source native/RLS/restore, portable image and baseline UI stages passed at last read",
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
@@ -81,5 +82,10 @@
     "head": "4e1e7ccf624c7508f02fe94d46796ca9d53b9434",
     "reason": "Actual advance browser correctly refused absent reviewed schema marker (advanceCollectionSchemaReviewRequired); loop omitted synthetic fixture flags",
     "fix": "eebceda sets both rehearsal flags only for isolated employee-advance-chain fixture; no hosted migration, bypass or protected run changes"
+  },
+  "lastWorkingTreeCumulative": {
+    "result": "514 passed, 0 failed",
+    "log": "/workspace/ab-test-tmp/financial-account-roles-cumulative.log",
+    "qualification": "E43 source was edited during the run. Do not attribute this to an immutable E43 commit. Exact E42 CI native stage separately passed."
   }
 }
