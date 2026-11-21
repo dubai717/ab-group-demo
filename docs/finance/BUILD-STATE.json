@@ -5,20 +5,22 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "monthly Salik grouping in existing invoice importer",
+    "module": "shared supplier expense allocations extending native commitments",
     "files": [
-      "backend/src/monthly-salik-import.ts",
-      "backend/tests/monthly-salik-import.test.ts",
-      "backend/tests/monthly-salik.browser.cjs"
+      "backend/src/shared-commitments.ts",
+      "backend/src/financial-commitments.ts",
+      "backend/tests/shared-commitments.test.ts",
+      "backend/tests/shared-commitments.browser.cjs"
     ],
     "acceptance": [
-      "28 native template/import/ledger tests passed",
+      "37 targeted native tests passed plus consolidation acceptance",
       "172 static checks passed",
-      "TypeScript and compiled runtime graph passed",
-      "Independent monthly CSV preview/commit/template/detail browser passed AR/EN desktop/tablet/mobile",
-      "full cumulative CI required before final release"
+      "TypeScript and portable runtime build passed",
+      "Independent shared-expense browser passed AR/EN desktop/tablet/mobile",
+      "VAT and full settlement acceptance remain partial; no assumed tax classification",
+      "cumulative PR115 stays draft, build-only"
     ],
-    "next": "shared expense allocation/intercompany liabilities, then Owner personal-card workflow"
+    "next": "Owner personal-card cycle and petty cash evidence/reconciliation; continue independent tax and collection work"
   },
   "nextIndependentWork": [
     "shared expense allocation/intercompany accounting and monthly Salik import grouping; do not reimplement the completed advance workflow",
