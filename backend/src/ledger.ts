@@ -1,3 +1,4 @@
+import {nativeFundReport} from './financial-fund-report.js';
 import {registerCardStatementImport,cardStatementSchema,canonicalCardStatement,existingCardStatement} from './card-statement-import.js';
 import {registerPettyExpenseApproval,approvedPettyExpense,recordPettyExpenseApproval} from './petty-expense-approval.js';
 import {registerOwnerCustomerDisbursements,clearOwnerCustomerDisbursement,ownerOutlayDiscountExpense} from './owner-customer-disbursements.js';
@@ -50,6 +51,7 @@ export async function ledgerWorkbench(c:any,m:any,s:any,cipher:any,companyId:str
         const tables = ['finance_accounts', 'finance_items', 'finance_chart', 'finance_funds', 'finance_vouchers', 'finance_deposits', 'finance_custody_transfers', 'finance_journals', 'finance_periods', 'finance_cards', 'finance_card_charges', 'finance_statements', 'finance_intercompany', 'finance_kpi_facts'];
         const out: any = { companyId: co, rights: L.rights.filter((r: string) => financeRight(m, r, co)), config: await config(c, cipher, co), banks: m.bank.list().filter((b: any) => b.companyId === co), users: m.state.users.filter((u: any) => u.status === 'Active').map((u: any) => ({ id: u.id, name: u.nameEn || u.fullName || u.username })), scope: 'posted ledger only; no inferred opening balances; currencies kept separate' };
         for (const tab of tables) {
+            if(tab==='finance_funds'){out[tab]=await nativeFundReport(c,m,s,[co]);continue;}
             const global = ['finance_accounts', 'finance_items'].includes(tab);
             let rows = (await c.query('select * from ab.' + tab + (global ? '' : ' where company_id=$1') + ' order by created_at desc limit 20001', global ? [] : [co])).rows;
             requireOk(rows.length<=20000,422,'registerTooLarge');
@@ -65,11 +67,6 @@ export async function ledgerWorkbench(c:any,m:any,s:any,cipher:any,companyId:str
         if(!financeRight(m,'ledger_audit',co))out.finance_custody_transfers=out.finance_custody_transfers.filter((r:any)=>r.sender_id===s.user_id||r.receiver_id===s.user_id);
         if(!financeRight(m,'ledger_audit',co)&&!financeRight(m,'ledger_deposit_verify',co))out.finance_deposits=out.finance_deposits.filter((r:any)=>r.holder_id===s.user_id);
         out.custody = (await c.query('select m.holder_id,m.currency,r.kind,sum(m.amount)::text amount from ab.finance_custody_moves m join ab.finance_receipts r on r.id=m.receipt_id where m.company_id=$1 group by m.holder_id,m.currency,r.kind having sum(m.amount)<>0', [co])).rows.filter((r: any) => r.holder_id === s.user_id || financeRight(m, 'ledger_audit', co));
-        for (const f of out.finance_funds) {
-            f.balance = L.money(await balance(c, f.chart_id));
-            f.refill = L.money(L.units(f.ceiling) - L.units(f.balance));
-            f.needsRefill = L.units(f.balance) < L.units(f.threshold);
-        }
         requireOk(out.receipts.length<=20000,422,'registerTooLarge');out.complete=true;return out;
 }
 export function registerLedger(app: any, call: any, cipher: any, options:any={}) {
@@ -990,11 +987,8 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
             scope = 'actual receipt confirmations minus dated cheque reversals; credit applications are not new money';
         }
         else if (q.kind === 'funds') {
-            const fs = (await c.query('select id,company_id,name,kind,holder_id,chart_id,currency,ceiling,threshold from ab.finance_funds where company_id=any($1::uuid[])', [selected])).rows;
-            for (const f of fs) {
-                const b = L.units((await c.query("select coalesce(sum(e.debit-e.credit),0)::text amount from ab.finance_entries e left join ab.finance_operations o on o.id=e.operation_id left join ab.finance_journals j on j.id=e.journal_id where e.chart_id=$1 and(o.status='Approved'or j.status='Posted')and coalesce(o.effective_on,j.effective_on)<=$2", [f.chart_id, q.to])).rows[0].amount);
-                rows.push({ ...f, balance: L.money(b), refill: L.money(L.units(f.ceiling) - b) });
-            }
+            rows=await nativeFundReport(c,m,s,selected,q);
+            scope='Original cash/petty fund accounts only; posted balances through period end. Existing fund management/audit scope or own custody; currencies separate. Collection custody, advances and cheque instruments are not added to these balances.';
         }
         else if (['deposits', 'cheques', 'intercompany', 'installments', 'adjustments'].includes(q.kind)) {
             const defs: any = { deposits: ['finance_deposits', 'effective_on'], cheques: ['finance_cheques', 'due_on'], intercompany: ['finance_intercompany', 'created_at'], installments: ['vehicle_invoices', 'due_on'], adjustments: ['vehicle_invoice_adjustments', 'created_at'] };

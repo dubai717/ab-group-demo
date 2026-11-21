@@ -5,15 +5,16 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Non-sales original bank receipt attribution, original RV and task integration with per-account reconciliation",
+    "module": "Original cash/petty fund workbench/report scope and batched actual balances",
     "acceptance": [
-      "Six new cases plus original claims/task regressions: 10 native passed; actual employee and external bank recoveries, mixed bank/cash, safe replay, deferred source guard and original task closure",
-      "Actual native claim/RV browser passed: reference preview, retained trace/input, stale source invalidation, one RV and no GL/cash custody; AR/EN at three widths",
-      "TypeScript, all 172 static checks and portable runtime-graph build passed; fresh saved-source cumulative run follows"
+      "Two new native cases and 44 related native tests passed; own fund only, explicitly scoped manager, same export scope, one query, Draft/date cutoff, archived holder, two companies and distinct currencies",
+      "Actual ordinary-user fund/report browser passed with named holder/company and no raw IDs or unauthorized cash actions; original two-actor handover browser passed, AR/EN at three widths",
+      "TypeScript, 172 static checks and portable runtime graph passed; no checklist promotion from this guard/report improvement alone"
     ],
-    "next": "Save E43 checkpoint; freeze source for cumulative acceptance, then continue independently reviewable shared-expense, tax and Owner exception requirements without deployment"
+    "next": "Save E44; fix the unregistered ledger_print output gate using the existing export authorization, then continue remaining tax/shared-expense/Owner exception requirements. No deployment."
   },
   "nextIndependentWork": [
+    "Align ledger PDF/print authorization with the existing export catalog; no automatic grants or new parallel role",
     "Original noncash employee/external receivable claims using approved actual bank operations and original RV/collection/report sources",
     "Shared-expense reviewed VAT and intercompany settlement acceptance",
     "Owner-card broad classification and exceptional personal requests; supplier refund/correction review",
@@ -47,28 +48,28 @@
     "مكتمل وغير منشور": 40,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "1c31863ce4af63edda7934906045800fa227401d",
-  "lastRemoteTree": "c88abdced357002825c541412c874b618738f987",
+  "lastRemoteCommit": "68653b017d10af867501ffb49c580e64da71448f",
+  "lastRemoteTree": "857f10f16f5d00dc43d10dceb42c1ac49d44346d",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44959551655",
-    "head": "1c31863ce4af63edda7934906045800fa227401d",
-    "status": "in_progress; exact-source native/RLS/restore, portable image and baseline UI stages passed at last read",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44961309947",
+    "head": "68653b017d10af867501ffb49c580e64da71448f",
+    "status": "in_progress at last read",
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44956810832",
-    "head": "0f31b6c30620cf191ffc84814149c02df1f5c9f1",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44959551655",
+    "head": "1c31863ce4af63edda7934906045800fa227401d",
     "status": "success",
-    "protectedRunsTouched": false,
-    "includes": "Actual employee fund handover, adjustable ceiling and all prior checkpoints",
-    "deployment": false
+    "includes": "Cash / bank / customer-AR role separation and every earlier saved source",
+    "deployment": false,
+    "protectedRunsTouched": false
   },
   "lastCumulativeAcceptance": {
-    "localCommit": "ec9980f09eed2873f9ab5add0465790db5b14c20",
-    "remoteCommit": "0f31b6c30620cf191ffc84814149c02df1f5c9f1",
-    "tree": "db2f17dd01430aaea293a34ccac859da591c49f3",
-    "result": "509 passed, 0 failed; saved actual petty employee receipt/ceiling checkpoint",
-    "log": "/workspace/ab-test-tmp/financial-petty-handover-cumulative.log",
+    "localCommit": "e7dbd4f103808787884e78233aa9e43d06706c8c",
+    "remoteCommit": "68653b017d10af867501ffb49c580e64da71448f",
+    "tree": "857f10f16f5d00dc43d10dceb42c1ac49d44346d",
+    "result": "520 passed, 0 failed; source remained unchanged throughout the complete run",
+    "log": "/workspace/ab-test-tmp/financial-manual-bank-cumulative.log",
     "noHostedOperations": true
   },
   "lastCumulativeAttempt": {
