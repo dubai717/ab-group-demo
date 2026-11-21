@@ -5,13 +5,13 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Acceptance of existing monthly follow-up/collection transaction serialization",
+    "module": "Original card statement CSV/XLSX mapping, preview and exact native statement recovery",
     "acceptance": [
-      "New native synchronization case passed: actual PG waiting lock, assessment-first and collection-first, parallel month replay, unchanged principal/grants",
-      "No production code changes; original tenant transaction mutex already covers worker and API",
-      "498 cumulative native tests passed at previous saved petty checkpoint; additional concurrency test passed separately"
+      "28 related native cases passed; 6 final card/template native cases passed including actual generated BOM invoice template",
+      "Actual original card-import browser passed: CSV/XLSX, precision, changed inputs, duplicate-row review, original source names, AR/EN at three widths",
+      "172 static checks, TypeScript and portable build passed; new cumulative run in progress"
     ],
-    "next": "Continue original card-statement CSV/XLSX preview/import and remaining shared VAT/Owner/tax requirements without deploying"
+    "next": "Investigate draft CI original communication PDF preview failure, then extend issuer repayment matching and remaining shared/tax requirements without deployment"
   },
   "nextIndependentWork": [
     "Original card statement CSV/XLSX mapping, exact preview/dedup and source classification; no posting from import",
@@ -46,19 +46,20 @@
     "مكتمل وغير منشور": 38,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "d1a0d306d9abcb5a9eecaa2a0455e3b1e74d5474",
-  "lastRemoteTree": "d0558d0e370a4fcee17fe1b4701d08df6287f364",
+  "lastRemoteCommit": "7a7beaea21fce8b4711e36e8666ed148818a862c",
+  "lastRemoteTree": "e6e6fa662872d5d17a1f86a4cd6b58acd8b21680",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44945734150",
-    "head": "d1a0d306d9abcb5a9eecaa2a0455e3b1e74d5474",
-    "status": "in_progress",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44946709850",
+    "head": "7a7beaea21fce8b4711e36e8666ed148818a862c",
+    "status": "failure",
+    "reason": "Original master-package communication attachment modal canvas did not appear; investigation pending. No finance browser step reached.",
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44942125783",
-    "head": "ecc356e678157fc4424c2d65a97a5b7227e5cb93",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44945734150",
+    "head": "d1a0d306d9abcb5a9eecaa2a0455e3b1e74d5474",
     "status": "success",
-    "includes": "Owner unbilled customer outlays and personnel lazy PDF acceptance fix",
+    "includes": "Independent petty evidence review, previous Owner outlays and advance collection fixture flags",
     "deployment": false
   },
   "lastCumulativeAcceptance": {

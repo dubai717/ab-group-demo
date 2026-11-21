@@ -1,3 +1,4 @@
+import {registerCardStatementImport,cardStatementSchema,canonicalCardStatement,existingCardStatement} from './card-statement-import.js';
 import {registerPettyExpenseApproval,approvedPettyExpense,recordPettyExpenseApproval} from './petty-expense-approval.js';
 import {registerOwnerCustomerDisbursements,clearOwnerCustomerDisbursement,ownerOutlayDiscountExpense} from './owner-customer-disbursements.js';
 import {registerOwnerWalletConsumption} from './owner-wallet-consumption.js';
@@ -53,7 +54,7 @@ export async function ledgerWorkbench(c:any,m:any,s:any,cipher:any,companyId:str
                 rows = rows.filter((r: any) => r.employee_id === s.user_id);
             out[tab] = rows.map((r: any) => ({ ...r, ...(r.payload_cipher ? { details: cipher.open(r.payload_cipher) } : {}), payload_cipher: undefined }));
         }
-        await decorateCardOwnership(c,cipher,out.finance_cards);const hidden=await hiddenPersonalCardIds(c,m);out.finance_cards=out.finance_cards.filter((r:any)=>!hidden.has(r.id));out.finance_card_charges=out.finance_card_charges.filter((r:any)=>!hidden.has(r.card_id));out.finance_statements=out.finance_statements.filter((r:any)=>!hidden.has(r.card_id));
+        await decorateCardOwnership(c,cipher,out.finance_cards);const hidden=await hiddenPersonalCardIds(c,m);out.finance_cards=out.finance_cards.filter((r:any)=>!hidden.has(r.id));out.finance_card_charges=out.finance_card_charges.filter((r:any)=>!hidden.has(r.card_id));out.finance_statements=out.finance_statements.filter((r:any)=>!hidden.has(r.card_id));const statementCardNames=new Map<string,string>(out.finance_cards.map((r:any)=>[r.id,r.name])),statementBankNames=new Map<string,string>(m.bank.list().map((r:any)=>[r.id,r.accountName]));out.finance_statements=out.finance_statements.map((r:any)=>({...r,source_name:statementCardNames.get(r.card_id)||statementBankNames.get(r.bank_account_id)||''}));
         out.custodyRecipients=m.state.users.filter((u:any)=>u.status==='Active'&&u.id!==s.user_id&&financeRight({...m,actor:u},'ledger_receive',co)).map((u:any)=>({id:u.id,nameAr:u.nameAr||u.nameEn||u.username,nameEn:u.nameEn||u.nameAr||u.username}));
         out.receipts = (await c.query('select id,receipt_number,customer_id,vehicle_id,item_id,kind,amount::text,currency,holder_id,payment_state,received_on,batch_id from ab.finance_receipts where company_id=$1 and item_id is not null order by created_at desc limit 20001', [co])).rows;
         if(!financeRight(m,'ledger_audit',co))out.finance_custody_transfers=out.finance_custody_transfers.filter((r:any)=>r.sender_id===s.user_id||r.receiver_id===s.user_id);
@@ -645,27 +646,23 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
     }));
     app.get('/api/ledger/card-splits/:id/invoice-options',route(async(c:any,m:any,s:any,req:any)=>{const q=z.object({q:z.string().regex(/^\d{1,18}$/).optional()}).strict().parse(req.query),r=(await c.query('select sp.*,ch.card_id,ch.currency from ab.finance_card_splits sp join ab.finance_card_charges ch on ch.id=sp.charge_id where sp.id=$1',[id.parse(req.params.id)])).rows[0];requireOk(r?.customer_id&&!r.invoice_id,409,'invalidTransition');need(m,'cards',r.company_id);need(m,'view',r.company_id);await assertPersonalCardOperator(c,cipher,m,r.card_id);const matches=(await c.query('select i.id,i.invoice_number::text number,i.amount::text,i.due_on from ab.vehicle_invoices i join ab.finance_invoice_links l on l.invoice_id=i.id where i.company_id=$1 and i.customer_id=$2 and i.vehicle_id is not distinct from $3::uuid and l.item_id=$4 and i.currency=$5 and i.amount=$6 and($7::bigint is null or i.invoice_number=$7::bigint)and not exists(select 1 from ab.finance_card_splits sp where sp.invoice_id=i.id)order by i.invoice_number desc limit 201',[r.company_id,r.customer_id,r.vehicle_id,r.item_id,r.currency,r.amount,q.q||null])).rows;return{rows:matches.slice(0,200).map((i:any)=>({...i,dueOn:i.due_on.toISOString().slice(0,10)})),more:matches.length>200,sourceCompanyId:r.company_id};}));
     app.post('/api/ledger/card-splits/:id/invoice', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ invoiceId: id }).strict().parse(req.body), r = (await c.query('select s.*,ch.currency from ab.finance_card_splits s join ab.finance_card_charges ch on ch.id=s.charge_id where s.id=$1 for update of s', [id.parse(req.params.id)])).rows[0]; requireOk(r && r.customer_id && !r.invoice_id, 409, 'invalidTransition'); need(m, 'cards', r.company_id); const i = (await invoices(c, { companyId: r.company_id, customerId: r.customer_id, vehicleId: r.vehicle_id, currency: r.currency })).find((x: any) => x.id === d.invoiceId && x.item_id === r.item_id); requireOk(i && i.customer_id === r.customer_id && i.vehicle_id === r.vehicle_id && L.units(i.amount) === L.units(r.amount), 422, 'amountMismatch'); requireOk(!(await c.query('select 1 from ab.finance_card_splits where invoice_id=$1', [i.id])).rowCount, 409, 'duplicate'); await clearOwnerCustomerDisbursement(c,cipher,m,s,r.id,i);await c.query('update ab.finance_card_splits set invoice_id=$2,completed_by=$3,completed_at=now()where id=$1', [r.id, i.id, s.user_id]); await fact(c, cipher, s, r.company_id, s.user_id, 'missing_invoice_completed', 'card-invoice:' + r.id, r.amount, { createdAt: r.created_at, completedAt: new Date().toISOString(), invoiceId: i.id }); await event(c, cipher, s, r.company_id, r.id, 'card_invoice_completed', null, d); return { id: r.id }; }));
-    app.post('/api/ledger/cards/:id/statements', route(async (c: any, m: any, s: any, req: any) => {
-        const d = z.object({ periodFrom: day, periodTo: day, openingBalance: money, closingBalance: money, documentVersionId: id, lines: z.array(z.object({ date: day, amount: z.string().refine(x => {
-                    try {
-                        return L.units(x) !== 0n;
-                    }
-                    catch {
-                        return false;
-                    }
-                }), reference: z.string().max(200) }).strict()).min(1).max(1000) }).strict().parse(req.body), card = (await c.query('select * from ab.finance_cards where id=$1', [id.parse(req.params.id)])).rows[0];
+    const createCardStatement=async (c: any, m: any, s: any, req: any) => {
+        const d = cardStatementSchema.parse(req.body), card = (await c.query('select * from ab.finance_cards where id=$1', [id.parse(req.params.id)])).rows[0];
         requireOk(card, 404, 'notFound');
         need(m, 'statement_upload', card.company_id);await assertPersonalCardOperator(c,cipher,m,card.id);
         requireOk(d.periodTo >= d.periodFrom && d.lines.every(l => l.date >= d.periodFrom && l.date <= d.periodTo) && L.units(d.openingBalance) + d.lines.reduce((n: bigint, l) => n + L.units(l.amount), 0n) === L.units(d.closingBalance), 422, 'statementBalanceMismatch');
         await evidence(c, m, card.company_id, d.documentVersionId, false);
-        const key = randomUUID(), source = sha(JSON.stringify(d));
+        const duplicate=await existingCardStatement(c,card,d);if(duplicate)return{...duplicate,existing:true,ocr:false};
+        const key = randomUUID(), source = canonicalCardStatement(card.id,card.currency,d);
         await c.query('insert into ab.finance_statements(id,tenant_id,company_id,card_id,period_from,period_to,opening_balance,closing_balance,source_hash,document_version_id,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)', [key, s.tenant_id, card.company_id, card.id, d.periodFrom, d.periodTo, d.openingBalance, d.closingBalance, source, d.documentVersionId, s.user_id]);
         let n = 0;
         for (const l of d.lines)
             await c.query('insert into ab.finance_statement_lines(id,tenant_id,statement_id,line_no,effective_on,amount,reference)values($1,$2,$3,$4,$5,$6,$7)', [randomUUID(), s.tenant_id, key, ++n, l.date, l.amount, l.reference]);
         await event(c, cipher, s, card.company_id, key, 'card_statement_uploaded', null, { ...d, lines: d.lines.length });
         return { id: key, ocr: false, status: 'Review' };
-    }));
+    };
+    app.post('/api/ledger/cards/:id/statements',route(createCardStatement));
+    registerCardStatementImport(app,route,cipher,createCardStatement);
     app.post('/api/ledger/card-statements/:id/match', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ pairs: z.array(z.object({ lineId: id, chargeId: opt, voucherId: opt }).strict().refine(x => !!x.chargeId !== !!x.voucherId)).min(1).max(1000) }).strict().parse(req.body), st = (await c.query('select * from ab.finance_statements where id=$1', [id.parse(req.params.id)])).rows[0];
         requireOk(st?.card_id && st.status === 'Review', 409, 'invalidTransition');
