@@ -1,0 +1,72 @@
+import {readFile} from 'node:fs/promises';
+import {randomUUID} from 'node:crypto';
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {businessCentersFixture} from './business-centers-fixture.js';
+import {today} from '../src/vehicle-domain.js';
+
+test('original staff advance joins the existing contact chain without another debt, invoice or false repayment',async()=>{
+ const f=await businessCentersFixture();try{
+  const collector=await f.employee(),debtor=await f.employee();
+  const employee=async(u:any,name:string)=>f.req('POST','/api/personnel/employees',{companyId:f.co1,userId:u.id,nameAr:'موظف اختبار '+name,nameEn:'Synthetic '+name,jobTitle:'Synthetic operations',hiredOn:'2024-01-01'});
+  const ce=await employee(collector,'collector'),de=await employee(debtor,'advance recipient');
+  for(const u of [collector,debtor])for(const action of ['ledger_view','ledger_collect'])await f.req('POST','/api/users/'+u.id+'/grants',{action,scope:{type:'company',id:f.co1},delegable:false});
+  const proof=await f.proof(),make=async(name:string)=>(await f.req('POST','/api/ledger/accounts',{nameAr:'حساب سلفة اختباري',nameEn:name,kind:'asset',companyIds:[f.co1],currency:'AED'})).charts[0].id;
+  const ar=await make('Synthetic contact advance receivable'),pending=await make('Synthetic contact pending delivery');
+  await f.req('POST','/api/ledger/employee-advances/configuration',{companyId:f.co1,itemId:f.items.expense,receivableChartId:ar,pendingChartId:pending,revision:0,reason:'Dedicated non-sales advance accounts'});
+  const fund=await f.req('POST','/api/ledger/funds',{companyId:f.co1,name:'Synthetic contact cash box',kind:'cash',holderId:f.org.user,chartId:f.accounts.cash.charts[f.co1],currency:'AED',ceiling:'500',threshold:'100',openingBalance:'200',openingEquityId:f.accounts.equity.charts[f.co1],effectiveOn:today()});
+  const a=await f.req('POST','/api/ledger/employee-advances',{companyId:f.co1,employeeId:de.id,amount:'100.001',documentVersionId:proof,reason:'Synthetic cash advance'}),assignment={companyId:f.co1,employeeId:ce.id,dueOn:today()};
+  assert.equal((await f.req('POST','/api/collections/advances/'+a.id+'/tasks',assignment,409)).error,'advanceCollectionSchemaReviewRequired');
+  const grants=(await f.admin.query('select * from ab.permission_grants order by id')).rows;
+  await f.admin.query(await readFile('docs/proposals/manual-claim-collection.review-only.sql','utf8'));
+  const proposal=await readFile('docs/proposals/employee-advance-collection.review-only.sql','utf8');
+  await f.admin.query('begin');await f.admin.query("create or replace function ab.collection_attempt_source_valid()returns trigger language plpgsql as $$begin raise exception 'Synthetic unknown guard';end$$");
+  await assert.rejects(f.admin.query(proposal),(e:any)=>e.code==='23514');await f.admin.query('rollback');
+  assert.equal((await f.admin.query("select count(*)::int n from information_schema.columns where table_schema='ab' and table_name='collection_attempts' and column_name='employee_advance_id'")).rows[0].n,0);
+  await f.admin.query(proposal);
+  await f.req('POST','/api/collections/advances/'+a.id+'/tasks',assignment,409);
+  await f.req('POST','/api/ledger/employee-advances/'+a.id+'/approve',{companyId:f.co1,reason:'Independent synthetic approval',confirm:true});
+  await f.req('POST','/api/ledger/employee-advances/'+a.id+'/cash-delivery',{companyId:f.co1,fundId:fund.id,receivedAmount:'100.001',documentVersionId:proof,reason:'Actual synthetic signed delivery',actualDeliveryVerified:true});
+  await f.req('POST','/api/collections/advances/'+a.id+'/tasks',{...assignment,employeeId:de.id},422);
+  const first=await f.req('POST','/api/collections/advances/'+a.id+'/tasks',assignment);
+  assert.equal((await f.req('POST','/api/collections/advances/'+a.id+'/tasks',assignment)).id,first.id);
+  const before=(await f.admin.query('select id,debit::text,credit::text from ab.finance_entries order by id')).rows;
+  await f.login(collector.username,collector.password);let current=first.id;const ids=[current];
+  for(const [outcome,minutes] of [['off',60],['busy',30],['no_answer',30]] as const){
+   const start=Date.now(),body={chainVersion:2,contactReference:'Actual synthetic contact reference',outcome,note:'Performed contact only'},key=randomUUID();
+   const r=await f.req('POST','/api/collections/advance-tasks/'+current+'/attempts',body,200,key);
+   assert.equal(r.advanceSettled,false);assert.equal(r.financialBalanceChanged,false);
+   assert.equal((await f.req('POST','/api/collections/advance-tasks/'+current+'/attempts',body,200,key)).nextTaskId,r.nextTaskId);
+   await f.req('POST','/api/collections/advance-tasks/'+current+'/attempts',body,409);
+   assert(new Date(r.nextAt).getTime()>=start+minutes*60000);assert(new Date(r.nextAt).getTime()<=Date.now()+minutes*60000+1000);
+   current=r.nextTaskId;ids.push(current);
+  }
+  const due=new Date(Date.now()+2*86400000).toISOString();
+  const answered=await f.req('POST','/api/collections/advance-tasks/'+current+'/attempts',{chainVersion:2,contactReference:'Actual promise reference',outcome:'answered',note:'Repay after two days; not yet collected',followupType:'payment',nextAt:due});current=answered.nextTaskId;ids.push(current);
+  const detail=await f.req('GET','/api/collections/tasks/'+current);assert.equal(detail.advance.outstanding,'100.001');assert.equal(detail.invoice,undefined);assert.equal(detail.claim,undefined);assert.equal(detail.customer,undefined);assert.equal(detail.attempts.length,4);assert.equal(detail.task.dueAt,due);
+  const done=await f.req('GET','/api/my-work?view=own&bucket=completedCollections');assert.equal(done.rows.filter((r:any)=>ids.includes(r.id)).length,4);
+  assert(!(await f.req('GET','/api/my-work?view=own&bucket=collections')).rows.some((r:any)=>r.id===current));
+  assert.deepEqual((await f.admin.query('select id,debit::text,credit::text from ab.finance_entries order by id')).rows,before);
+  assert.equal((await f.admin.query('select count(*)::int n from ab.vehicle_invoices')).rows[0].n,0);
+  await f.login(debtor.username,debtor.password);await f.req('GET','/api/collections/tasks/'+current,undefined,403);
+  await f.login();
+  const mismatch=await f.req('POST','/api/ledger/journals',{companyId:f.co1,currency:'AED',effectiveOn:today(),reason:'Synthetic unmatched staff credit must block contact action',lines:[{chartId:f.accounts.equity.charts[f.co1],debit:'1',credit:'0'},{chartId:ar,debit:'0',credit:'1'}]});
+  await f.req('POST','/api/ledger/journals/'+mismatch.id+'/post',{});
+  assert.equal((await f.req('GET','/api/collections/report?companyId='+f.co1,undefined,409)).error,'advanceCollectionReconciliationRequired');
+  await f.login(collector.username,collector.password);
+  const blocked=await f.req('POST','/api/collections/advance-tasks/'+current+'/attempts',{chainVersion:2,contactReference:'Synthetic actual contact',outcome:'off',note:'Must retain open task on reconciliation error'},409);assert.equal(blocked.error,'advanceCollectionReconciliationRequired');
+  assert.equal((await f.admin.query('select state from ab.tasks where id=$1',[current])).rows[0].state,'Open');
+  await f.login();await f.req('POST','/api/ledger/journals/'+mismatch.id+'/reverse',{effectiveOn:today(),reason:'Restore isolated synthetic unmatched credit through native reversal'});
+  const repay=async(amount:string,reference:string)=>f.req('POST','/api/ledger/employee-advances/'+a.id+'/recover-cash',{companyId:f.co1,fundId:fund.id,amount,reference,documentVersionId:proof,reason:'Actual synthetic staff repayment',actualCashReceived:true});
+  await repay('25.001','ADV-CONTACT-PARTIAL');
+  let report=await f.req('GET','/api/collections/report?companyId='+f.co1),balances=report.balances.find((r:any)=>r.financialParty==='employee_advance');assert.equal(balances.collected,'25.001');assert.equal(balances.outstanding,'75.000');assert.equal(balances.overdue,'0.000','no invented contractual due date');
+  await repay('75','ADV-CONTACT-FINAL');
+  const state=await f.req('GET','/api/ledger/employee-advances?companyId='+f.co1),recovery=state.rows.find((r:any)=>r.id===a.id).recoveries.at(-1),money=(await f.admin.query('select count(*)::int n from ab.finance_entries')).rows[0].n;
+  await f.login(collector.username,collector.password);
+  await f.req('POST','/api/collections/advance-tasks/'+current+'/attempts',{chainVersion:2,contactReference:'Actual synthetic final recovery',outcome:'answered',note:'Linked original approved repayment',recoveryId:randomUUID()},422);
+  const paid=await f.req('POST','/api/collections/advance-tasks/'+current+'/attempts',{chainVersion:2,contactReference:'Actual synthetic final recovery',outcome:'answered',note:'Linked original approved repayment',recoveryId:recovery.id});assert.equal(paid.advanceSettled,true);assert.equal(paid.nextTaskId,null);
+  assert.equal((await f.admin.query('select count(*)::int n from ab.finance_entries')).rows[0].n,money);assert.equal((await f.admin.query('select count(*)::int n from ab.finance_receipts')).rows[0].n,2);
+  assert.deepEqual((await f.admin.query('select * from ab.permission_grants order by id')).rows,grants);
+  await f.login();report=await f.req('GET','/api/collections/report?companyId='+f.co1);assert.equal(report.counts.attempts,4);assert.equal(report.balances.find((r:any)=>r.financialParty==='employee_advance').outstanding,'0.000');
+ }finally{await f.close();}
+});

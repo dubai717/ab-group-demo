@@ -5,21 +5,20 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Actual Owner-card unbilled customer outlays and exact original invoice clearance",
+    "module": "Original employee advances in unified collection tasks and financial party reports",
     "acceptance": [
-      "7 related native tests passed; expanded two-vehicle/two-company source test passed",
-      "Actual new and existing personal-card browser journeys passed, AR/EN and responsive",
-      "Cumulative 495-pass result is previous checkpoint only; rerun after saving this module"
+      "7 related native tests and 4 original chain regressions passed (overlapping cases)",
+      "Actual task-center assignment, four outcomes, future appointment, reports and AR/EN responsive browser passed",
+      "172 static checks, TypeScript and portable build passed",
+      "No hosted activation; review-only SQL verifies exact original guard"
     ],
-    "next": "Run cumulative native acceptance and continue employee advance collection integration and remaining independent requirements"
+    "next": "Freeze and rerun cumulative acceptance; continue remaining tax/shared expense/Owner statement/petty review requirements"
   },
   "nextIndependentWork": [
-    "Extend actual Owner-card customer disbursements with explicitly reviewed new unbilled assets; do not invent invoices or reinvest principal",
-    "Manual noncustomer claims and party-separated collection reports",
-    "Unbilled/adjusted non-toll customer disbursements and exceptional Owner personal requests",
-    "Shared-expense reviewed VAT cases and intercompany settlement acceptance",
-    "Reviewed investor agency integration without applying protected 028 migration",
-    "Tax source completeness, credit documents and e-invoicing provider decisions",
+    "Shared-expense reviewed VAT and intercompany settlement acceptance",
+    "Owner-card statement import and exceptional personal requests; documented supplier refund/correction policy",
+    "Petty receipt ambiguity review tasks using existing original tasks",
+    "Tax source completeness, credit documents and offline e-invoicing/provider infrastructure",
     "Integrated 95-requirement acceptance and one protected release"
   ],
   "financialDecisionsNotAssumed": [
@@ -28,7 +27,8 @@
     "authorized e-invoicing provider and credentials",
     "no historical balance migration without separate reconciliation/approval",
     "specific approval and isolated rehearsal of non-sales native RV custody guard extension; no hosted activation",
-    "Supplier refund/cancellation of an actually paid customer outlay requires explicit recoverability decision; original source reversal remains protected"
+    "Supplier refund/cancellation of an actually paid customer outlay requires explicit recoverability decision; original source reversal remains protected",
+    "Explicit reviewed employee-advance contact-source schema extension before hosted activation; no historical rewriting"
   ],
   "resumeRules": [
     "read RELEASE-HOLD.md first",
@@ -41,13 +41,13 @@
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
   "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
   "checklistCounts": {
-    "منفذ جزئياً": 32,
+    "منفذ جزئياً": 31,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 35,
+    "مكتمل وغير منشور": 36,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "a591a933dee5de46df0fb6e2970e2412d213ab55",
-  "lastRemoteTree": "00d84713e288b53183b9c2717636d520f9ee5bc2",
+  "lastRemoteCommit": "ecc356e678157fc4424c2d65a97a5b7227e5cb93",
+  "lastRemoteTree": "120e7ffaa47207848b4d22bacdd2408df64cba1f",
   "lastDraftCi": {
     "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44937627058",
     "head": "a591a933dee5de46df0fb6e2970e2412d213ab55",
@@ -70,5 +70,11 @@
     "result": "495 passed, 0 failed; saved original-chain adapter checkpoint",
     "log": "/workspace/ab-test-tmp/financial-claim-chain-cumulative.log",
     "noHostedOperations": true
+  },
+  "lastCumulativeAttempt": {
+    "localCommit": "af9306d",
+    "result": "496 tests: 494 passed; 2 failed only at isolated pg_restore index creation with No space left on device",
+    "log": "/workspace/ab-test-tmp/financial-owner-unbilled-cumulative.log",
+    "followup": "Verified idle synthetic restore copies cleaned in limited batches; only newly created vehicle/ledger restore targets now disposed in finally. 10 resource/affected cases passed; cumulative rerun pending."
   }
 }

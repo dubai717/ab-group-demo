@@ -7,6 +7,7 @@ import { today } from '../src/vehicle-domain.js';
 const f = await businessCentersFixture(), proof = await f.proof(), bank = await f.bank(), bill = await f.bill('500', f.items.salik);
 if(process.env.AB_TEST_MANUAL_CLAIM_SCHEMA==='1')await f.admin.query(await readFile('docs/proposals/manual-claim-receipts.review-only.sql','utf8'));
 if(process.env.AB_TEST_MANUAL_CLAIM_COLLECTION_SCHEMA==='1')await f.admin.query(await readFile('docs/proposals/manual-claim-collection.review-only.sql','utf8'));
+if(process.env.AB_TEST_EMPLOYEE_ADVANCE_COLLECTION_SCHEMA==='1')await f.admin.query(await readFile('docs/proposals/employee-advance-collection.review-only.sql','utf8'));
 await f.collection('50', { items: [{ itemId: f.items.salik, amount: '50' }] });
 await f.req('POST', '/api/ledger/vouchers', { companyId: f.co1, itemId: f.items.expense, customerId: f.client, amount: '20', currency: 'AED', issuedOn: today(), sourceKey: 'synthetic-package-pv', reason: 'Synthetic pending payment', beneficiary: 'Synthetic beneficiary' });
 await f.req('POST', '/api/ledger/deposits', { companyId: f.co1, bankAccountId: bank.id, currency: 'AED', amount: '20', effectiveOn: today(), documentVersionId: proof, reference: 'synthetic-package-deposit' });
