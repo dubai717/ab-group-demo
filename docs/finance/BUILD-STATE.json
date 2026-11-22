@@ -5,16 +5,19 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "E58 original shared obligation partial two-sided native bank settlements",
+    "module": "E60 original dated traffic-fine bulk source, native import replay and private source review",
     "acceptance": [
-      "15 targeted native cases passed;29 original bank/ledger regression cases passed; final5 source/control cases passed after hardening",
-      "Three final real browser suites passed: new AR/EN three-width partial settlement and503-after-commit recovery, original financial package and original supplier cash/bank",
-      "Original commitments, bank operations, posting, approval and audit reused; default financial activation off for both companies; VAT remains unassumed",
-      "Final TypeScript,172 static and portable build/module graph passed; no hosted operations"
+      "39/39 targeted native passed; final6/6 dated-fine cases passed",
+      "Actual dated-fine browser passed: uncertain server outcome recovered exactly once, file retention and stale context/input guards",
+      "Original financial package and dated Salik browser regressions passed",
+      "TypeScript,172/172 static cases and portable build passed",
+      "Full cumulative E60 acceptance pending; last frozen source E59 passed577/577",
+      "Original monthly Salik and ledger browser regressions with and without012 passed, including original partial receipts/statement/ageing"
     ],
-    "next": "Run573 cumulative native cases on frozen saved E58, then complete original-source shared settlement reporting and remaining independent financial work."
+    "next": "Freeze this source and execute complete native suite; next independent source/upload recovery review prepared separately during the run."
   },
   "nextIndependentWork": [
+    "Dated traffic-fine row imports: original responsibility source, review of unknown boundaries, safe replay and no silent current-customer attribution",
     "Complete scoped source reports/exports and original account workpapers for shared partial bank settlements without changing elimination policy",
     "Complete original-source scoped output for package registers and remaining dashboard drill-downs; preserve report/export rights and all filters",
     "Original noncash employee/external receivable claims using approved actual bank operations and original RV/collection/report sources",
@@ -54,12 +57,12 @@
     "مكتمل ومنشور": 27,
     "مكتمل وغير منشور": 45
   },
-  "lastRemoteCommit": "b8ff6c8747751a00fae8b0ea1481dc2e773070dd",
-  "lastRemoteTree": "a907784dde67f7e4cef019bf17df786e9d7fb49b",
+  "lastRemoteCommit": "052c9a0f5f62a4008640295747fab24041d8536d",
+  "lastRemoteTree": "c636a3adfd065c43cb9f9ae38d72428fcdae65e1",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44986796893",
-    "head": "b8ff6c8747751a00fae8b0ea1481dc2e773070dd",
-    "status": "completed success (entire unprivileged draft workflow, verified22Nov)",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44992177320",
+    "head": "052c9a0f5f62a4008640295747fab24041d8536d",
+    "status": "completed failure in card-reconciliation browser trace assertion; no protected delivery job",
     "deployment": false,
     "protectedRunsTouched": false
   },
@@ -71,10 +74,10 @@
     "protectedRunsTouched": false
   },
   "lastCumulativeAcceptance": {
-    "localCommit": "dc9a54b068a32c90b4efc310d7726e63bb66d376",
-    "tree": "d28d87bb4b44fdcff8e9ea277950767abd09e524",
-    "result": "568 passed,0 failed/skipped; exact tracked source unchanged throughout",
-    "log": "/workspace/ab-test-tmp/financial-einvoice-source-cumulative.log",
+    "localCommit": "e9571f66cb44a3ffec01553f03a76aec0abb2948",
+    "tree": "828e2f1961014b5283fd359711de28f43ff634eb",
+    "result": "577 passed,0 failed/skipped; exact tracked source unchanged throughout,925574ms",
+    "log": "/workspace/ab-test-tmp/financial-shared-source-report-cumulative.log",
     "noHostedOperations": true
   },
   "lastCumulativeAttempt": {
@@ -96,10 +99,10 @@
     "qualification": "E43 source was edited during the run. Do not attribute this to an immutable E43 commit. Exact E42 CI native stage separately passed."
   },
   "lastLocalSavedCheckpoint": {
-    "commit": "dc9a54b068a32c90b4efc310d7726e63bb66d376",
-    "tree": "d28d87bb4b44fdcff8e9ea277950767abd09e524",
-    "includes": "E57 source preparation;568/568 full frozen native acceptance,17 targeted native and four browser suites",
-    "remotePublication": "Not yet published; latest saved remote remains E56, no merge/delivery"
+    "commit": "e9571f66cb44a3ffec01553f03a76aec0abb2948",
+    "tree": "828e2f1961014b5283fd359711de28f43ff634eb",
+    "includes": "E59 original-source report and opt-in stale output guards;577/577 frozen cumulative and targeted real-browser acceptance",
+    "remotePublication": "Not yet published; latest remote E58 remains052c9a0f5f62a4008640295747fab24041d8536d"
   },
   "ciExecutionBudgetFix": "Reusable unprivileged staging-checks job budget increased from30 to90 minutes, all required tests retained. Protected controller, owner approval and cancel-in-progress:false unchanged. Old runs not restarted or cancelled.",
   "isolatedTestResourceRecovery": {
@@ -117,5 +120,15 @@
     "transmissionEnabled": false,
     "remaining": "Reviewed actual legal identities/units/supply treatment, pinned official validation resources and ASP sandbox acceptance; fresh official resource fetch was blocked by proxy403",
     "noApprovalOrCostActionPerformed": true
+  },
+  "lastDraftCiFailure": {
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44992177320",
+    "job": 137115447651,
+    "head": "052c9a0f5f62a4008640295747fab24041d8536d",
+    "native": "573/573 passed in GitHub;172 static passed",
+    "reason": "Test awaited409 HTTP arrival but read the notice before asynchronous page error rendering; empty notice failed req- assertion",
+    "fix": "Original real409/trace/retained approval assertions kept and strengthened to exact response reference, with deterministic held error delivery proving response-before-render ordering",
+    "localVerification": "Real original card browser passed after the harness fix; backend/financial behavior not changed",
+    "protectedRunsTouched": false
   }
 }

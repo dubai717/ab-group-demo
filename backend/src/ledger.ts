@@ -1,3 +1,4 @@
+import {prepareInvoiceRowImport,commitInvoiceRowImport,readVehicleChargeSource} from './invoice-row-import.js';
 import {assertDiscountAuthority} from './discount-policy-proposals.js';
 import {receiptContractFinanciers} from './contract-financier.js';
 import {nativeFundReport} from './financial-fund-report.js';
@@ -760,73 +761,14 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         return { id: r.id, operationId: op };
     }));
     app.get('/api/ledger/invoice-imports/template',route(async(c:any,m:any,s:any,req:any)=>{const q=z.object({companyId:id,format:z.enum(['csv','xlsx']).default('xlsx'),mode:z.enum(['rows','monthly_salik']).default('rows')}).strict().parse(req.query);need(m,'invoice_import',q.companyId);company(m,q.companyId);return invoiceImportTemplate(q.format,q.mode==='monthly_salik');}));
-    app.post('/api/ledger/invoice-imports', route(async (c: any, m: any, s: any, req: any) => {
-        const d = z.object({ companyId: id, name: z.string().min(1).max(200), format: z.enum(['csv', 'xlsx']), base64: z.string().min(4).max(7000000), mapping: z.object({ sourceKey: text, customerNumber: text, vehicleNumber: z.string().max(100).default(''), plate: z.string().max(100).default(''), itemCode: text, amount: text, currency: text, dueOn: text }).strict() }).strict().parse(req.body);
-        need(m, 'invoice_import', d.companyId);
-        const bytes = Buffer.from(d.base64, 'base64');
-        requireOk(bytes.length <= 5e6 && bytes.toString('base64') === d.base64, 422, 'invalidFile');
-        const records = d.format === 'csv' ? Csv.csv(bytes.toString('utf8'), d.mapping.sourceKey) : await customerSpreadsheet(bytes, d.mapping.sourceKey);
-        requireOk(records.length > 0 && records.length <= 1000, 422, 'importLimit');
-        const rows = [], seen = new Set();
-        for (let n = 0; n < records.length; n++) {
-            const r = records[n], value: any = Object.fromEntries(Object.entries(d.mapping).map(([k, v]) => [k, v ? r[v] : '']));
-            let error = '';
-            try {
-                const it = (await c.query('select id from ab.finance_items where code=$1 and active', [value.itemCode])).rows[0], cu = (await c.query('select * from ab.customers where file_number=$1 and status=\'Active\'', [String(value.customerNumber).match(/^\d{1,15}$/) ? value.customerNumber : '0'])).rows[0];
-                requireOk(it && cu && customerCan(m, 'view', cu.company_id), 422, 'unmatchedCustomerOrItem');
-                let vid = null;
-                if (value.vehicleNumber) {
-                    const v = (await c.query('select * from ab.vehicles where file_number=$1 and company_id=$2 and customer_id=$3', [/^\d{1,15}$/.test(value.vehicleNumber) ? value.vehicleNumber : '0', d.companyId, cu.id])).rows[0];
-                    requireOk(v, 422, 'unmatchedVehicle');
-                    if (value.plate)
-                        requireOk(normalize(cipher.open(v.payload_cipher).plate || '') === normalize(value.plate), 422, 'unmatchedPlate');
-                    vid = v.id;
-                }
-                else
-                    requireOk(!value.plate, 422, 'vehicleNumberRequiredForPlate');
-                Object.assign(value, { companyId: d.companyId, customerId: cu.id, vehicleId: vid, itemId: it.id, issuedOn: today() });
-                const parsed = invoiceSchema.parse({ companyId: d.companyId, customerId: cu.id, vehicleId: vid, itemId: it.id, issuedOn: today(), dueOn: value.dueOn, currency: value.currency, amount: value.amount, sourceKey: value.sourceKey });
-                const itemRow = await item(c, cipher, m, it.id, d.companyId);
-                requireOk(itemRow.data.invoice && itemRow.data.methods.includes('bulk'), 403, 'denied');
-                requireOk(itemRow.category!=='salik',422,'salikMonthlyImportRequired');
-                if (seen.has(value.sourceKey) || (await c.query('select 1 from ab.finance_invoice_links where company_id=$1 and source_key=$2', [d.companyId, value.sourceKey])).rowCount)
-                    error = 'duplicate';
-                seen.add(value.sourceKey);
-                rows.push({ line: n + 1, data: parsed, error });
-            }
-            catch (e: any) {
-                rows.push({ line: n + 1, error: e instanceof ApiError ? e.code || 'unmatched' : 'invalidRow', original: value });
-            }
-        }
-        const key = randomUUID(), hash = sha(bytes);
-        await c.query('insert into ab.finance_invoice_imports(id,tenant_id,company_id,source_hash,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6)', [key, s.tenant_id, d.companyId, hash, cipher.seal({ name: d.name, format: d.format, originalBase64: d.base64, mapping: d.mapping, rows }), s.user_id]);
-        await event(c, cipher, s, d.companyId, key, 'invoice_import_preview', null, { sourceHash: hash, rows: rows.length });
-        return { id: key, rows, originalStoredEncrypted: true };
+    app.post('/api/ledger/invoice-imports', route(async(c:any,m:any,s:any,req:any)=>{
+        const d=z.object({companyId:id,name:z.string().min(1).max(200),format:z.enum(['csv','xlsx']),base64:z.string().min(4).max(7000000),sourceResponsibilityReviewed:z.boolean().optional(),mapping:z.object({sourceKey:text,customerNumber:text,vehicleNumber:z.string().max(100).default(''),plate:z.string().max(100).default(''),itemCode:text,amount:text,currency:text,dueOn:text,occurredOn:z.string().max(100).default('')}).strict()}).strict().parse(req.body);
+        return prepareInvoiceRowImport(c,m,s,cipher,d,invoiceSchema);
     }));
-    app.post('/api/ledger/invoice-imports/:id/commit', route(async (c: any, m: any, s: any, req: any) => {
-        const r = (await c.query('select * from ab.finance_invoice_imports where id=$1 for update', [id.parse(req.params.id)])).rows[0];
-        requireOk(r,404,'notFound');const monthly=cipher.open(r.payload_cipher);if(monthly.mode==='monthly_salik_v1')return commitMonthlySalik(c,m,s,cipher,r,monthly);requireOk(r.status === 'Preview',409,'invalidTransition');
-        need(m, 'invoice_import', r.company_id);
-        need(m, 'invoice_create', r.company_id);
-        const d = cipher.open(r.payload_cipher), result = { created: [] as any[], duplicate: 0, rejected: 0 };
-        for (const row of d.rows) {
-            if (row.error) {
-                if (row.error === 'duplicate')
-                    result.duplicate++;
-                else
-                    result.rejected++;
-                continue;
-            }
-            if ((await c.query('select 1 from ab.finance_invoice_links where company_id=$1 and source_key=$2', [r.company_id, row.data.sourceKey])).rowCount) {
-                result.duplicate++;
-                continue;
-            }
-            result.created.push(await invoice(c, cipher, m, s, { ...row.data, mode: 'bulk' }));
-        }
-        await c.query("update ab.finance_invoice_imports set status='Completed'where id=$1", [r.id]);
-        await event(c, cipher, s, r.company_id, r.id, 'invoice_import_committed', null, result);
-        return result;
+    app.post('/api/ledger/invoice-imports/:id/commit',route(async(c:any,m:any,s:any,req:any)=>{
+        const r=(await c.query('select * from ab.finance_invoice_imports where id=$1 for update',[id.parse(req.params.id)])).rows[0];requireOk(r,404,'notFound');const d=cipher.open(r.payload_cipher);if(d.mode==='monthly_salik_v1')return commitMonthlySalik(c,m,s,cipher,r,d);return commitInvoiceRowImport(c,m,s,cipher,r,d);
     }));
+    app.get('/api/ledger/invoices/:id/vehicle-charge-source',route(async(c:any,m:any,s:any,req:any)=>readVehicleChargeSource(c,m,cipher,id.parse(req.params.id))));
     app.get('/api/ledger/invoice-imports/:id/source', route(async (c: any, m: any, s: any, req: any) => { const r = (await c.query('select * from ab.finance_invoice_imports where id=$1', [id.parse(req.params.id)])).rows[0]; requireOk(r, 404, 'notFound'); need(m, 'invoice_import', r.company_id); const d = cipher.open(r.payload_cipher); await event(c, cipher, s, r.company_id, r.id, 'invoice_import_source_read', null, { sourceHash: r.source_hash }); return { name: d.name, base64: d.originalBase64 }; }));
     app.get('/api/ledger/statements/:id', route(async (c: any, m: any, s: any, req: any) => { const st = (await c.query('select * from ab.finance_statements where id=$1', [id.parse(req.params.id)])).rows[0]; requireOk(st, 404, 'notFound'); need(m, 'reconcile', st.company_id);if(st.card_id)await assertPersonalCardOperator(c,cipher,m,st.card_id); const lines = (await c.query('select * from ab.finance_statement_lines where statement_id=$1 order by line_no', [st.id])).rows; if(st.card_id){const amounts=new Map((await cardStatementMatchAmounts(c,st.id)).map((x:any)=>[x.id,x]));for(const l of lines)Object.assign(l,amounts.get(l.id)||{});} const charges = st.card_id ? (await c.query('select ch.* from ab.finance_card_charges ch where ch.card_id=$1 and ch.paid_on between $2 and $3', [st.card_id, st.period_from, st.period_to])).rows : []; const matches = st.card_id ? (await c.query('select line_id,charge_id,voucher_id,to_jsonb(finance_card_matches)->>\'issuer_payment_source_key\' issuer_payment_source_key from ab.finance_card_matches where statement_id=$1', [st.id])).rows : []; const entries = st.bank_account_id ? (await c.query("select e.*,coalesce(o.effective_on,j.effective_on)effective_on from ab.finance_entries e left join ab.finance_operations o on o.id=e.operation_id left join ab.finance_journals j on j.id=e.journal_id where e.bank_account_id=$1 and(o.status='Approved'or j.status='Posted')and coalesce(o.effective_on,j.effective_on)between $2 and $3", [st.bank_account_id, st.period_from, st.period_to])).rows : []; const paymentVouchers = st.card_id&&!(await personalCardOwnership(c,cipher,st.card_id)) ? (await c.query("select v.id,v.company_id,v.amount,o.effective_on from ab.finance_vouchers v join ab.finance_card_settlements x on x.voucher_id=v.id join ab.finance_operations o on o.id=v.operation_id where x.card_id=$1 and v.status='Paid'and o.effective_on between $2 and $3", [st.card_id, st.period_from, st.period_to])).rows.filter((x: any) => financeRight(m, 'ledger_view', x.company_id)) : []; return { issuerPaymentMatching:!!st.card_id&&!!(await personalCardOwnership(c,cipher,st.card_id))&&await issuerPaymentReady(c),statement: st, lines, entries, paymentVouchers, charges: charges.map((x: any) => ({ ...x, payload_cipher: undefined })), matches, ocr: false, manualReviewAvailable: true }; }));
     async function closeReview(c: any, co: string, month: string) {

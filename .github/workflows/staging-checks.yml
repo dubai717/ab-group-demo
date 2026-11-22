@@ -307,3 +307,9 @@ jobs:
 
       - name: Original shared obligation two-sided bank settlement acceptance
         run: node backend/tests/shared-commitment-settlements-suite.browser.cjs
+
+      - name: Original shared settlement statement output and scope continuity
+        run: node backend/tests/shared-commitment-settlement-reports-suite.browser.cjs
+
+      - name: Original dated fine imports preserve source scope and uncertain-outcome recovery
+        run: node backend/tests/vehicle-charge-imports-suite.browser.cjs
