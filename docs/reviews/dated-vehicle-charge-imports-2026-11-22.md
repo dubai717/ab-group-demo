@@ -35,3 +35,7 @@ The original UI retains selected files in memory only. Mapping changes invalidat
 - Draft CI44992177320 passed573 native and172 static tests but failed an existing card-browser response-before-render race. Its fix waits for the exact real backend error reference, with a deterministic held-error test; the original card browser passed locally. No financial response, protection, assertion or permission was bypassed.
 
 Uncertain historical responsibility, inactive customer billing and final supply/VAT treatment remain explicit review boundaries. All95 requirements remain incomplete. No hosted query/write, migration, Reset/Restore, historical reclassification, new delivery request, protected run action, Render change or Production operation was performed.
+
+## Frozen cumulative acceptance
+
+The initial full run on the old local test disk exhausted space (PostgreSQL53100) and was stopped as a resource-failed attempt, not acceptance. No unknown old test database or backup was deleted. A fresh bounded768MB tmpfs PostgreSQL on loopback5442 preserved the original test container and all source data. Exact local `21feb2fcc73d3abe50cb932a68308955f710b163`, tree `3670d2fcce5cb1f6be25b3afb679c3351ec0b5c8`, then passed **583/583**,0 failed/skipped,892734.511723ms. No tracked source changed during this run. Log `/tmp/financial-dated-charge-isolated-cumulative.log`. Draft remote `fc370018f2fc92a1fa72f249d4aad58e3bae984b` contains that exact tree; remote workflow success must be verified separately.

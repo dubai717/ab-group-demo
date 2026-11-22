@@ -313,3 +313,12 @@ jobs:
 
       - name: Original dated fine imports preserve source scope and uncertain-outcome recovery
         run: node backend/tests/vehicle-charge-imports-suite.browser.cjs
+
+      - name: Financial evidence retains original company across file reads and late responses
+        run: node backend/tests/financial-evidence-context-suite.browser.cjs
+
+      - name: Original generic row imports recover uncertain outcomes without another invoice
+        run: node backend/tests/invoice-import-recovery-suite.browser.cjs
+
+      - name: Original credit source uses native document tax scope and safe output
+        run: node backend/tests/einvoice-credit-source-suite.browser.cjs

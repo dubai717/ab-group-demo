@@ -5,20 +5,19 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "E60 original dated traffic-fine bulk source, native import replay and private source review",
+    "module": "E63 original invoice credit tax/account source; E64 original credit-document review and feedback lease; E65 direct writeoff-review parity",
     "acceptance": [
-      "39/39 targeted native passed; final6/6 dated-fine cases passed",
-      "Actual dated-fine browser passed: uncertain server outcome recovered exactly once, file retention and stale context/input guards",
-      "Original financial package and dated Salik browser regressions passed",
-      "TypeScript,172/172 static cases and portable build passed",
-      "Full cumulative E60 acceptance pending; last frozen source E59 passed577/577",
-      "Original monthly Salik and ledger browser regressions with and without012 passed, including original partial receipts/statement/ageing"
+      "E61/E62 immutable805c09f/tree0478880 passed586/586,0 failed/skipped",
+      "E63 original bugs reproduced;34 targeted native, original financial package browser,172 static and build/type passed",
+      "E64 six new source cases and final40 native regressions passed; three shared feedback tests retain pre-disabled/saving/duplicate-click controls;175 static and build/type passed",
+      "E64 actual Owner/reader/exporter source browser passed AR/EN three widths, true source JSON and stale output denial; original invoice source, financial package and customer save/workspace/schema browsers also passed",
+      "E65 both old direct200 versus package409 cases reproduced;30 targeted native and TypeScript passed",
+      "Combined bf496c6/tree410ec5a passed frozen597/597 on local5442;175 static/type/build passed"
     ],
-    "next": "Freeze this source and execute complete native suite; next independent source/upload recovery review prepared separately during the run."
+    "next": "Continue E66 original group statement presentation/consolidated UI and integrated source acceptance in separate worktree. Save accepted source to the same draft; no release/delivery request."
   },
   "nextIndependentWork": [
-    "Dated traffic-fine row imports: original responsibility source, review of unknown boundaries, safe replay and no silent current-customer attribution",
-    "Complete scoped source reports/exports and original account workpapers for shared partial bank settlements without changing elimination policy",
+    "Complete original-source group reporting/closing acceptance across Owner, staff and managed investor flows without new elimination rules or financial activation",
     "Complete original-source scoped output for package registers and remaining dashboard drill-downs; preserve report/export rights and all filters",
     "Original noncash employee/external receivable claims using approved actual bank operations and original RV/collection/report sources",
     "Shared-expense reviewed VAT and intercompany settlement acceptance",
@@ -74,10 +73,10 @@
     "protectedRunsTouched": false
   },
   "lastCumulativeAcceptance": {
-    "localCommit": "e9571f66cb44a3ffec01553f03a76aec0abb2948",
-    "tree": "828e2f1961014b5283fd359711de28f43ff634eb",
-    "result": "577 passed,0 failed/skipped; exact tracked source unchanged throughout,925574ms",
-    "log": "/workspace/ab-test-tmp/financial-shared-source-report-cumulative.log",
+    "localCommit": "bf496c6dcf48fb090011e9b4587ac63b10243898",
+    "tree": "410ec5a09c954e9454defcc00f1c7bcfe33ced48",
+    "result": "597 passed,0 failed/skipped; exact tracked source unchanged throughout,888931.000649ms",
+    "log": "/tmp/financial-credit-source-cumulative.log",
     "noHostedOperations": true
   },
   "lastCumulativeAttempt": {
@@ -99,10 +98,10 @@
     "qualification": "E43 source was edited during the run. Do not attribute this to an immutable E43 commit. Exact E42 CI native stage separately passed."
   },
   "lastLocalSavedCheckpoint": {
-    "commit": "e9571f66cb44a3ffec01553f03a76aec0abb2948",
-    "tree": "828e2f1961014b5283fd359711de28f43ff634eb",
-    "includes": "E59 original-source report and opt-in stale output guards;577/577 frozen cumulative and targeted real-browser acceptance",
-    "remotePublication": "Not yet published; latest remote E58 remains052c9a0f5f62a4008640295747fab24041d8536d"
+    "commit": "bf496c6dcf48fb090011e9b4587ac63b10243898",
+    "tree": "410ec5a09c954e9454defcc00f1c7bcfe33ced48",
+    "includes": "E63 recorded credit source, E64 native credit-document review/feedback ownership and E65 direct writeoff-review parity; frozen597/597",
+    "remotePublication": "Local saved; remote fc370018f2fc92a1fa72f249d4aad58e3bae984b remains older E60 and passed entire draft CI44998596373"
   },
   "ciExecutionBudgetFix": "Reusable unprivileged staging-checks job budget increased from30 to90 minutes, all required tests retained. Protected controller, owner approval and cancel-in-progress:false unchanged. Old runs not restarted or cancelled.",
   "isolatedTestResourceRecovery": {
@@ -129,6 +128,42 @@
     "reason": "Test awaited409 HTTP arrival but read the notice before asynchronous page error rendering; empty notice failed req- assertion",
     "fix": "Original real409/trace/retained approval assertions kept and strengthened to exact response reference, with deterministic held error delivery proving response-before-render ordering",
     "localVerification": "Real original card browser passed after the harness fix; backend/financial behavior not changed",
+    "protectedRunsTouched": false
+  },
+  "isolatedTestRuntime": {
+    "container": "ab-finance-isolated-20261122",
+    "loopbackPort": 5442,
+    "dataStorage": "fresh bounded768MB tmpfs; min WAL32MB/max64MB; source/old databases untouched",
+    "browserContainer": "ab-finance-browser-20261122",
+    "browserLoopbackPort": 5443,
+    "browserDataStorage": "independent bounded256MB tmpfs",
+    "secrets": "existing ignored work/db-test-secrets.json; never output or commit",
+    "temporaryDirectory": "/tmp/ab-test-tmp-e60"
+  },
+  "e60ResourceAttempt": {
+    "source": "21feb2fcc73d3abe50cb932a68308955f710b163",
+    "tree": "3670d2fcce5cb1f6be25b3afb679c3351ec0b5c8",
+    "log": "/workspace/ab-test-tmp/financial-dated-charge-cumulative.log",
+    "result": "Interrupted own native test process tree after verified disk exhaustion; PostgreSQL53100 and cannot create file/directory; not acceptance",
+    "recovery": "No old unknown database/cache/source removed. Fresh loopback5442 bounded tmpfs used; same exact source then passed583/583. Only own verified native test process subtree stopped.",
+    "originalSupabaseTouched": false
+  },
+  "officialResourcesReview": {
+    "inventory": "docs/finance/EINVOICE-OFFICIAL-RESOURCE-REVIEW-20261122.json",
+    "freshPublicPagesReviewed": true,
+    "actualRulesDownloaded": false,
+    "blocker": "Direct official resource ZIP transport denied403 by proxy; web reader does not download ZIP",
+    "profileSelected": false,
+    "providerSelected": false,
+    "taxOrTransmissionApproved": false
+  },
+  "latestUnprivilegedDraftCi": {
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44998596373",
+    "head": "fc370018f2fc92a1fa72f249d4aad58e3bae984b",
+    "tree": "3670d2fcce5cb1f6be25b3afb679c3351ec0b5c8",
+    "status": "completed success (entire unprivileged draft workflow, verified22Nov)",
+    "native": "583/583,0 failed; decoded logs verified",
+    "deployment": false,
     "protectedRunsTouched": false
   }
 }

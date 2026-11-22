@@ -1,3 +1,4 @@
+import {originalInvoiceCorrectionSource} from './invoice-correction-source.js';
 import {prepareInvoiceRowImport,commitInvoiceRowImport,readVehicleChargeSource} from './invoice-row-import.js';
 import {assertDiscountAuthority} from './discount-policy-proposals.js';
 import {receiptContractFinanciers} from './contract-financier.js';
@@ -226,6 +227,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         need(m, 'invoice_correct', i.company_id);
         const outlayExpense=await ownerOutlayDiscountExpense(c,cipher,m,i,req.packageDocumentKind||'Discount');
         const b = (await invoices(c, { companyId: i.company_id })).find((x: any) => x.id === i.id);
+        requireOk(b,404,'notFound');requireOk(L.units(b.written_off||'0')===0n,409,'writeoffRecoveryAccountingReviewRequired');
         requireOk(L.units(d.amount) <= L.units(b.outstanding), 422, 'amountMismatch');
         await open(c, i.company_id, d.effectiveOn);
         const it = await item(c, cipher, m, i.item_id, i.company_id, true), ar = await resolve(c, i.company_id, i.currency, it.data.receivableId), income = await resolve(c, i.company_id, i.currency, it.data.revenueId), key = randomUUID();
@@ -233,13 +235,13 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         if(!req.packageDocumentKind||req.packageDocumentKind==='Discount')await assertDiscountAuthority(c,cipher,m,s,{...i,...b},d.amount);
         await c.query("insert into ab.vehicle_invoice_adjustments(id,tenant_id,company_id,invoice_id,kind,amount,payload_cipher,created_by)values($1,$2,$3,$4,'waiver',$5,$6,$7)", [key, s.tenant_id, i.company_id, i.id, d.amount, cipher.seal(d), s.user_id]);
         if(agency?.classified){await event(c,cipher,s,i.company_id,i.id,'monthly_agency_invoice_corrected',null,{adjustmentId:key,...d,ledgerReposted:false,ownedBy:'investor'});if(!req.packageDocument)await recordFinancialDocument(c,cipher,s,i.company_id,key,'Discount',{originInvoiceId:i.id,reason:d.reason});if(!req.packageDocumentKind||req.packageDocumentKind==='Discount')await discountNotice(c,cipher,s,i,key,d);return {id:key};}
-        const rate = L.units(it.data.taxRate || '0'), originalTax = rate ? (L.units(i.amount) * rate + (100000n + rate) / 2n) / (100000n + rate) : 0n;
+        const source=await originalInvoiceCorrectionSource(c,cipher,i,it,ar,income),originalTax=source.originalTaxAmount;
         const previous = (await c.query("select a.amount,j.payload_cipher from ab.vehicle_invoice_adjustments a left join ab.finance_journals j on j.source_key='credit:'||a.id::text and j.company_id=a.company_id and j.status='Posted'where a.invoice_id=$1 and a.id<>$2 and a.kind<>'writeoff'", [i.id, key])).rows;
-        requireOk(previous.every((r: any) => !!r.payload_cipher), 409, 'priorAdjustmentAccountingReviewRequired');
-        const creditedGross = previous.reduce((n: bigint, r: any) => n + L.units(r.amount), 0n), creditedTax = previous.reduce((n: bigint, r: any) => n + L.units(cipher.open(r.payload_cipher).taxAmount || '0'), 0n), tax = L.taxPortion(L.units(i.amount), originalTax, creditedGross, creditedTax, L.units(d.amount)), lines = [line(ar, -L.units(d.amount)), ...(L.units(d.amount) > tax ? [line(outlayExpense||income, L.units(d.amount) - tax)] : [])];
+        requireOk(previous.every((r: any) => {if(!r.payload_cipher)return false;const p=cipher.open(r.payload_cipher);if(p.invoiceId!==i.id||p.taxAmount==null)return false;try{return L.units(String(p.taxAmount))>=0n;}catch{return false;}}), 409, 'priorAdjustmentAccountingReviewRequired');
+        const creditedGross = previous.reduce((n: bigint, r: any) => n + L.units(r.amount), 0n), creditedTax = previous.reduce((n: bigint, r: any) => n + L.units(cipher.open(r.payload_cipher).taxAmount || '0'), 0n), tax = (requireOk(creditedGross>=0n&&creditedGross<=L.units(i.amount)&&creditedTax>=0n&&creditedTax<=originalTax&&originalTax-creditedTax<=L.units(i.amount)-creditedGross,409,'priorAdjustmentAccountingReviewRequired'),L.taxPortion(L.units(i.amount), originalTax, creditedGross, creditedTax, L.units(d.amount))), lines = [line(ar, -L.units(d.amount)), ...(L.units(d.amount) > tax ? [line(outlayExpense||income, L.units(d.amount) - tax)] : [])];
         if (tax)
-            lines.push(line(await resolve(c, i.company_id, i.currency, it.data.taxAccountId), tax));
-        await journal(c, cipher, s, i.company_id, d.effectiveOn, i.currency, 'credit:' + key, lines, { invoiceId: i.id, taxAmount: L.money(tax), ...d });
+            lines.push(line(source.taxChart, tax));
+        await journal(c, cipher, s, i.company_id, d.effectiveOn, i.currency, 'credit:' + key, lines, { invoiceId: i.id, taxAmount: L.money(tax), originalInvoiceJournalId:source.originalJournalId,originalInvoiceTaxRate:source.originalTaxRate,...d });
         if(!req.packageDocument)await recordFinancialDocument(c,cipher,s,i.company_id,key,'Discount',{originInvoiceId:i.id,reason:d.reason});
         if(!req.packageDocumentKind||req.packageDocumentKind==='Discount')await discountNotice(c,cipher,s,i,key,d);
         return { id: key };
@@ -762,7 +764,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
     }));
     app.get('/api/ledger/invoice-imports/template',route(async(c:any,m:any,s:any,req:any)=>{const q=z.object({companyId:id,format:z.enum(['csv','xlsx']).default('xlsx'),mode:z.enum(['rows','monthly_salik']).default('rows')}).strict().parse(req.query);need(m,'invoice_import',q.companyId);company(m,q.companyId);return invoiceImportTemplate(q.format,q.mode==='monthly_salik');}));
     app.post('/api/ledger/invoice-imports', route(async(c:any,m:any,s:any,req:any)=>{
-        const d=z.object({companyId:id,name:z.string().min(1).max(200),format:z.enum(['csv','xlsx']),base64:z.string().min(4).max(7000000),sourceResponsibilityReviewed:z.boolean().optional(),mapping:z.object({sourceKey:text,customerNumber:text,vehicleNumber:z.string().max(100).default(''),plate:z.string().max(100).default(''),itemCode:text,amount:text,currency:text,dueOn:text,occurredOn:z.string().max(100).default('')}).strict()}).strict().parse(req.body);
+        const d=z.object({companyId:id,name:z.string().min(1).max(200),format:z.enum(['csv','xlsx']),base64:z.string().min(4).max(7000000),resultRecoveryVersion:z.literal(2).optional(),sourceResponsibilityReviewed:z.boolean().optional(),mapping:z.object({sourceKey:text,customerNumber:text,vehicleNumber:z.string().max(100).default(''),plate:z.string().max(100).default(''),itemCode:text,amount:text,currency:text,dueOn:text,occurredOn:z.string().max(100).default('')}).strict()}).strict().parse(req.body);
         return prepareInvoiceRowImport(c,m,s,cipher,d,invoiceSchema);
     }));
     app.post('/api/ledger/invoice-imports/:id/commit',route(async(c:any,m:any,s:any,req:any)=>{
