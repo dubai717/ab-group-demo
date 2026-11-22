@@ -1,3 +1,5 @@
+import {assertDiscountAuthority} from './discount-policy-proposals.js';
+import {receiptContractFinanciers} from './contract-financier.js';
 import {nativeFundReport} from './financial-fund-report.js';
 import {registerCardStatementImport,cardStatementSchema,canonicalCardStatement,existingCardStatement} from './card-statement-import.js';
 import {registerPettyExpenseApproval,approvedPettyExpense,recordPettyExpenseApproval} from './petty-expense-approval.js';
@@ -67,7 +69,10 @@ export async function ledgerWorkbench(c:any,m:any,s:any,cipher:any,companyId:str
         if(!financeRight(m,'ledger_audit',co))out.finance_custody_transfers=out.finance_custody_transfers.filter((r:any)=>r.sender_id===s.user_id||r.receiver_id===s.user_id);
         if(!financeRight(m,'ledger_audit',co)&&!financeRight(m,'ledger_deposit_verify',co))out.finance_deposits=out.finance_deposits.filter((r:any)=>r.holder_id===s.user_id);
         out.custody = (await c.query('select m.holder_id,m.currency,r.kind,sum(m.amount)::text amount from ab.finance_custody_moves m join ab.finance_receipts r on r.id=m.receipt_id where m.company_id=$1 group by m.holder_id,m.currency,r.kind having sum(m.amount)<>0', [co])).rows.filter((r: any) => r.holder_id === s.user_id || financeRight(m, 'ledger_audit', co));
-        requireOk(out.receipts.length<=20000,422,'registerTooLarge');out.complete=true;return out;
+        requireOk(out.receipts.length<=20000,422,'registerTooLarge');
+        const financiers=await receiptContractFinanciers(c,m,cipher,co,out.receipts.map((r:any)=>r.id));
+        out.receipts=out.receipts.map((r:any)=>({...r,financierLabelAr:(financiers.get(r.id)||[]).map((x:any)=>x.labelAr).join(' · '),financierLabelEn:(financiers.get(r.id)||[]).map((x:any)=>x.labelEn).join(' · ')}));
+        out.complete=true;return out;
 }
 export function registerLedger(app: any, call: any, cipher: any, options:any={}) {
     const route = (fn: any) => call(async (c: any, m: any, s: any, req: any) => {
@@ -224,6 +229,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         await open(c, i.company_id, d.effectiveOn);
         const it = await item(c, cipher, m, i.item_id, i.company_id, true), ar = await resolve(c, i.company_id, i.currency, it.data.receivableId), income = await resolve(c, i.company_id, i.currency, it.data.revenueId), key = randomUUID();
         const agency=await monthlyFunding(c,cipher,i.id);if(agency?.classified)requireOk(m.actor.roleId==='owner',403,'agencyCorrectionRequiresOwner');
+        if(!req.packageDocumentKind||req.packageDocumentKind==='Discount')await assertDiscountAuthority(c,cipher,m,s,{...i,...b},d.amount);
         await c.query("insert into ab.vehicle_invoice_adjustments(id,tenant_id,company_id,invoice_id,kind,amount,payload_cipher,created_by)values($1,$2,$3,$4,'waiver',$5,$6,$7)", [key, s.tenant_id, i.company_id, i.id, d.amount, cipher.seal(d), s.user_id]);
         if(agency?.classified){await event(c,cipher,s,i.company_id,i.id,'monthly_agency_invoice_corrected',null,{adjustmentId:key,...d,ledgerReposted:false,ownedBy:'investor'});if(!req.packageDocument)await recordFinancialDocument(c,cipher,s,i.company_id,key,'Discount',{originInvoiceId:i.id,reason:d.reason});if(!req.packageDocumentKind||req.packageDocumentKind==='Discount')await discountNotice(c,cipher,s,i,key,d);return {id:key};}
         const rate = L.units(it.data.taxRate || '0'), originalTax = rate ? (L.units(i.amount) * rate + (100000n + rate) / 2n) / (100000n + rate) : 0n;

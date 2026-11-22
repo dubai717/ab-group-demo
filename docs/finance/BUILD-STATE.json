@@ -5,16 +5,16 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Original current treasury responsibility overview with distinct bases and original per-source authority",
+    "module": "Original dated Salik responsibility source proof, commit recheck and cached-preview compatibility",
     "acceptance": [
-      "39 native cases passed, including original Owner accounting/admin closure and original permanent fund handover",
-      "Actual treasury, corporate source, original financial package and original complete ledger-output browsers all passed; AR/EN and three widths",
-      "TypeScript, 172 static tests and portable build passed; no hosted operations"
+      "8 final native tests passed, including four new relation/date/source/preview-upgrade cases and original wallet/import source regressions",
+      "Actual cutoff import browser plus original monthly Salik, Owner wallet and full package browsers passed; AR/EN three widths; review errors preserve financial source",
+      "TypeScript, 172 static tests and portable runtime build passed"
     ],
-    "next": "Save E48 after original browsers; run frozen cumulative acceptance. Prepare future discount-policy extension and remaining independent requirements outside frozen source."
+    "next": "Save/preserve E49-E51 on draft115, then freeze cumulative acceptance (expected550). Prepare original-source exports for the remaining package registers outside frozen tracked source; no merge/deploy."
   },
   "nextIndependentWork": [
-    "Future versioned discount policy extension, retaining current unlimited authorized trial policy without activation",
+    "Complete original-source scoped output for package registers and remaining dashboard drill-downs; preserve report/export rights and all filters",
     "Original noncash employee/external receivable claims using approved actual bank operations and original RV/collection/report sources",
     "Shared-expense reviewed VAT and intercompany settlement acceptance",
     "Owner-card broad classification and exceptional personal requests; supplier refund/correction review",
@@ -31,7 +31,8 @@
     "Explicit reviewed employee-advance contact-source schema extension before hosted activation; no historical rewriting",
     "Explicit review of card-issuer-payment-match.review-only.sql and reader compatibility before hosted activation; no old-reader rollback after new source records",
     "Explicit review of manual-claim-bank-receipts.review-only.sql before hosted activation; retain compatible claim-balance readers after the first bank RV",
-    "Specific existing financial feature approval commitment_payments before enabling future cash/direct-bank supplier methods; no historical adoption or automatic source correction"
+    "Specific existing financial feature approval commitment_payments before enabling future cash/direct-bank supplier methods; no historical adoption or automatic source correction",
+    "Any future discount limit activation requires independent exact proposal/digest Owner financial approval; no activation endpoint or hosted approval is performed by the build."
   ],
   "resumeRules": [
     "read RELEASE-HOLD.md first",
@@ -44,17 +45,17 @@
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
   "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
   "checklistCounts": {
-    "منفذ جزئياً": 24,
+    "منفذ جزئياً": 22,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 43,
+    "مكتمل وغير منشور": 45,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "844d180393495673c549b96266d85c2f0404a6ad",
-  "lastRemoteTree": "4299cae8afdb39cd196806246b3f39f97f41cf06",
+  "lastRemoteCommit": "93888ba2eba3f29a7d19af80a1aee5ffe9983db9",
+  "lastRemoteTree": "3e038add96dd0040b3168a9dfbab5aef2fb72bda",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44970692562",
-    "head": "844d180393495673c549b96266d85c2f0404a6ad",
-    "status": "cancelled; no cancellation or protected run action initiated here",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44974441328",
+    "head": "93888ba2eba3f29a7d19af80a1aee5ffe9983db9",
+    "status": "in_progress at last read",
     "deployment": false,
     "protectedRunsTouched": false
   },
@@ -66,11 +67,11 @@
     "protectedRunsTouched": false
   },
   "lastCumulativeAcceptance": {
-    "localCommit": "f1ca0af925e5ece7f77e66e8955d916af7a7ba80",
-    "remoteCommit": "844d180393495673c549b96266d85c2f0404a6ad",
-    "tree": "4299cae8afdb39cd196806246b3f39f97f41cf06",
-    "result": "536 passed, 0 failed; tracked source unchanged throughout",
-    "log": "/workspace/ab-test-tmp/financial-corporate-source-cumulative.log",
+    "localCommit": "e0c3ffd6c64046fa14630a02ff4ffa1dbe682261",
+    "remoteCommit": "93888ba2eba3f29a7d19af80a1aee5ffe9983db9",
+    "tree": "3e038add96dd0040b3168a9dfbab5aef2fb72bda",
+    "result": "539 passed, 0 failed; tracked source unchanged throughout",
+    "log": "/workspace/ab-test-tmp/financial-treasury-overview-cumulative.log",
     "noHostedOperations": true
   },
   "lastCumulativeAttempt": {
@@ -89,5 +90,11 @@
     "result": "514 passed, 0 failed",
     "log": "/workspace/ab-test-tmp/financial-account-roles-cumulative.log",
     "qualification": "E43 source was edited during the run. Do not attribute this to an immutable E43 commit. Exact E42 CI native stage separately passed."
+  },
+  "lastLocalSavedCheckpoint": {
+    "commit": "8de6ec8705795793fc5d415efc8eba3292d86353",
+    "tree": "41cb8cc4aef714f8e1c834c9a6e9e11fe92462cc",
+    "includes": "E50 future discount capability; 20 native/three browser suites, 172 static/type/build passed",
+    "remotePublication": "pending cumulative E49-E51 checkpoint"
   }
 }

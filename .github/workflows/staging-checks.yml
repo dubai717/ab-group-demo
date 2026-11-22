@@ -243,6 +243,12 @@ jobs:
         run: node backend/tests/manual-claims-suite.browser.cjs
       - name: Original treasury responsibilities retain distinct bases and source permissions
         run: node backend/tests/treasury-responsibilities-suite.browser.cjs
+      - name: Original receipt financier captions in full output
+        run: node backend/tests/financier-receipt-output-suite.browser.cjs
+      - name: Future discount controls preserve current unlimited trial
+        run: node backend/tests/discount-policy-proposals-suite.browser.cjs
+      - name: Salik import rechecks original dated responsibility
+        run: node backend/tests/salik-responsibility-suite.browser.cjs
       - name: Corporate accounting revenue expense and original source output
         run: node backend/tests/corporate-tax-workpaper-suite.browser.cjs
       - name: Approved supplier cash and native bank settlement without repeated expense

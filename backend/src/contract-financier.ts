@@ -11,8 +11,10 @@ export function financierLabel(type:string,party:any){
  return{type,status:'ContractReference',labelAr:captions[type][0]+ar+(type==='investor'&&party?.profileNumber?' ('+party.profileNumber+')':''),labelEn:captions[type][1]+en+(type==='investor'&&party?.profileNumber?' ('+party.profileNumber+')':'')};
 }
 export async function contractFinanciers(c:any,m:any,cipher:any,rows:any[]){
- const targets=rows.filter(r=>r.contractId&&r.kind==='finance'),ids=[...new Set(targets.map(r=>r.contractId))],cos=[...new Set(targets.map(r=>r.companyId))];
- const result=new Map<string,any>();if(!ids.length)return result;requireOk(ids.length<=20000,422,'registerTooLarge');for(const co of cos)need(m,'view',co as string);
+ const targets=rows.filter(r=>r.kind==='finance'),ids=[...new Set(targets.map(r=>r.contractId).filter(Boolean))],cos=[...new Set(targets.map(r=>r.companyId))];
+ const result=new Map<string,any>();requireOk(targets.length<=20000,422,'registerTooLarge');for(const co of cos)need(m,'view',co as string);
+ for(const row of targets)if(!row.contractId)result.set(row.id,financierLabel('unresolved',null));
+ if(!ids.length)return result;
  const contracts=(await c.query('select ct.id,ct.company_id,ct.vehicle_id,ct.payload_cipher,r.id request_id,r.payload_cipher request_payload from ab.vehicle_contracts ct join ab.vehicles v on v.id=ct.vehicle_id and v.company_id=ct.company_id join ab.vehicle_requests r on r.id=v.request_id and r.company_id=v.company_id where ct.id=any($1::uuid[]) and ct.company_id=any($2::uuid[])',[ids,cos])).rows;
  const snapshots=new Map<string,any>();
  const requestIds=contracts.map((r:any)=>r.request_id);

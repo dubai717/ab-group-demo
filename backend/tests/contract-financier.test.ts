@@ -26,10 +26,13 @@ test('contract disclosure uses original invoice contract and active allocations,
   const collected=await f.req('POST','/api/ledger/collections/invoices',{companyId:f.co1,customerId:f.client,currency:'AED',receivedOn:f.date,invoices:[{invoiceId:invoice.id,amount:invoice.amount}],actualCashReceived:true});
   const receiptId=collected.receipts[0].id,source=await f.req('GET','/api/ledger/receivables/source/RV/'+receiptId);
   const receiptDocument=await f.req('GET','/api/ledger/package/documents?companyId='+f.co1+'&type=RV'),invoiceDocument=await f.req('GET','/api/ledger/package/documents?companyId='+f.co1+'&type=Invoice');assert.match(receiptDocument.rows.find((r:any)=>r.id===receiptId).financierLabelEn,/Group financing.*Company A/);assert.match(invoiceDocument.rows.find((r:any)=>r.id===invoice.id).financierLabelEn,/Group financing.*Company A/);
+  const workbench=await f.req('GET','/api/ledger/workbench?companyId='+f.co1);assert.equal(workbench.receipts.find((r:any)=>r.id===receiptId).financierLabelEn,source.record.financierLabelEn);
+  for(const format of ['print','excel']){const exported=await f.req('GET','/api/ledger/register-view?'+new URLSearchParams({companyId:f.co1,source:'receipts',columns:'receipt_number,financierLabelAr,financierLabelEn,amount,currency',format,full:'true'}));assert.equal(exported.rows.find((r:any)=>String(r.receipt_number)===String(source.record.number)).financierLabelEn,source.record.financierLabelEn);}
   assert.equal(source.record.financingSources.length,1);assert.equal(source.record.financingSources[0].contractId,invoice.contract_id);assert.match(source.record.financierLabelEn,/Company A/);
   statement=await f.req('GET','/api/ledger/customer-statement?customerId='+f.client+'&companies='+f.co1);assert.equal(statement.rows.find((r:any)=>r.id===receiptId).financierLabelEn,source.record.financierLabelEn);
   assert.deepEqual((await f.admin.query('select id,payload_cipher from ab.vehicle_contracts order by id')).rows,before);
   const cipher=security(f.secret.key),m={state:{companies:[{id:f.co1,arabicName:'الشركة',englishName:'Funding Company'}]},actor:{roleId:'owner',status:'Active'}};
+  const legacyId=randomUUID(),legacy=await contractFinanciers(f.admin,m,cipher,[{id:legacyId,companyId:f.co1,vehicleId:vehicle.id,contractId:null,kind:'finance'}]);assert.equal(legacy.get(legacyId).status,'ReviewRequired');assert.match(legacy.get(legacyId).labelEn,/contract review/);
   // An unrelated vehicle/company cannot borrow the contract's financing caption.
   const wrong=await contractFinanciers(f.admin,m,cipher,[{id:randomUUID(),companyId:f.co1,vehicleId:randomUUID(),contractId:invoice.contract_id,kind:'finance'}]);assert.equal(wrong.size,0);
  }finally{await f.close();}
