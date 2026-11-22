@@ -1,3 +1,4 @@
+import {registerTreasuryResponsibilities} from './treasury-responsibilities.js';
 import {assertOwnerOutlayCancellation} from './owner-customer-disbursements.js';
 import {registerManualReceivableClaims,manualClaimState} from './manual-receivable-claims.js';
 import {contractFinanciers,receiptContractFinanciers} from './contract-financier.js';
@@ -145,6 +146,7 @@ export function registerFinancialPackage(app: any, route: any, cipher: any, corr
     registerCostCentres(app,route,cipher);
     registerFinancialCommitments(app,route,cipher);
     registerEmployeeAdvances(app,route,cipher);
+    registerTreasuryResponsibilities(app,route,cipher);
     registerManualReceivableClaims(app,route,cipher);
     const base = '/api/ledger/package';
     app.get(base + '/state', route(async (c: any, m: any, s: any, req: any) => { const co = id.parse(req.query.companyId); need(m, 'view', co); const approval = await packageRecord(c, cipher, 'approval:' + co); return { companyId: co, manualClaims:await manualClaimState(c,cipher,co,m), ownerSettlements:financeRight(m,'ledger_card_settle',co)?{available:true,...await ownerSettlementState(c,cipher,co)}:{available:false,rows:[]},employeeAdvances:await employeeAdvanceState(c,cipher,co,m), commitments:await commitmentState(c,cipher,co,m), costCentres: await costCentres(c,cipher,co), taxPreparation: await companyTaxDraft(c,cipher,co), priority: await priorityPolicy(c, cipher, co), feeRules: await records(c, cipher, 'fees', co), relations: await records(c, cipher, 'relations', co), approved: Object.fromEntries(await Promise.all(['priority', 'fees', 'recurring', 'documents'].map(async (f) => [f, await financialApproval(c, cipher, m, co, f, approval)]))), activation: 'specific owner financial review required; no automatic changes to existing balances' }; }));

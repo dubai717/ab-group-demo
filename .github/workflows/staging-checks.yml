@@ -241,6 +241,8 @@ jobs:
         run: node backend/tests/manual-claim-chain-suite.browser.cjs
       - name: Non-sales claims use isolated reviewed custody proposal only
         run: node backend/tests/manual-claims-suite.browser.cjs
+      - name: Original treasury responsibilities retain distinct bases and source permissions
+        run: node backend/tests/treasury-responsibilities-suite.browser.cjs
       - name: Corporate accounting revenue expense and original source output
         run: node backend/tests/corporate-tax-workpaper-suite.browser.cjs
       - name: Approved supplier cash and native bank settlement without repeated expense
