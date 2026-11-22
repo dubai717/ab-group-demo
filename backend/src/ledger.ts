@@ -1,3 +1,5 @@
+import {configuredReciprocalReview,closingReciprocalSource} from './group-reciprocal-source.js';
+import {financialStatementPresentation,financialStatementFile} from './financial-statement-presentation.js';
 import {originalInvoiceCorrectionSource} from './invoice-correction-source.js';
 import {prepareInvoiceRowImport,commitInvoiceRowImport,readVehicleChargeSource} from './invoice-row-import.js';
 import {assertDiscountAuthority} from './discount-policy-proposals.js';
@@ -799,18 +801,21 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
     }
     app.get('/api/ledger/closing-review', route(async (c: any, m: any, s: any, req: any) => { const q = z.object({ companyId: id, month: day.refine(x => x.endsWith('-01')) }).strict().parse(req.query); need(m, 'close', q.companyId); return closeReview(c, q.companyId, q.month); }));
     app.post('/api/ledger/close', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id, month: day.refine(x => x.endsWith('-01')), confirm: z.literal(true) }).strict().parse(req.body); need(m, 'close', d.companyId); requireOk(d.month < today().slice(0, 7) + '-01', 422, 'periodNotEnded'); const report = await closeReview(c, d.companyId, d.month); requireOk(report.canClose, 409, 'closingChecklistIncomplete'); const key = randomUUID(); await c.query('insert into ab.finance_periods(id,tenant_id,company_id,month,closed_by,report_cipher,created_by)values($1,$2,$3,$4,$5,$6,$5)', [key, s.tenant_id, d.companyId, d.month, s.user_id, cipher.seal(report)]); await event(c, cipher, s, d.companyId, key, 'financial_period_closed', null, report); return { id: key, ...report }; }));
+    async function groupClosingReview(c:any,m:any,month:string){
+        const companies=m.state.companies.filter((co:any)=>co.status==='Active').map((co:any)=>co.id).sort();requireOk(companies.length,422,'allActiveCompaniesRequired');for(const co of companies)need(m,'group_close',co);
+        const until=new Date(month+'T00:00:00Z');until.setUTCMonth(until.getUTCMonth()+1);
+        const companyReviews=[];for(const co of companies){const report=await closeReview(c,co,month),period=(await c.query('select id from ab.finance_periods where company_id=$1 and month=$2',[co,month])).rows[0];companyReviews.push({...report,periodId:period?.id||null,companyNameAr:m.state.companies.find((r:any)=>r.id===co)?.arabicName,companyNameEn:m.state.companies.find((r:any)=>r.id===co)?.englishName});}
+        const source=await closingReciprocalSource(c,companies,until.toISOString().slice(0,10)),periodEnded=month<today().slice(0,7)+'-01',existing=(await c.query('select id,payload_cipher from ab.finance_group_closings where month=$1',[month])).rows[0];
+        return{format:'AB-GROUP-CLOSE-SOURCE-1',month,companies,companyReviews,periodEnded,reciprocal:source.review,reciprocalSourceDigest:sha(JSON.stringify(source.rows)),alreadyClosed:!!existing,legacyClosingReviewRequired:!!existing&&cipher.open(existing.payload_cipher).format!=='AB-GROUP-CLOSE-SOURCE-1',canClose:!existing&&periodEnded&&companyReviews.every(r=>r.periodId&&r.canClose)&&source.review.balanced,financialEffect:false,taxReturnCertified:false};
+    }
+    app.get('/api/ledger/group-closing-review',route(async(c:any,m:any,s:any,req:any)=>{const q=z.object({month:day.refine(x=>x.endsWith('-01'))}).strict().parse(req.query);return groupClosingReview(c,m,q.month);}));
     app.post('/api/ledger/group-close', route(async (c: any, m: any, s: any, req: any) => {
-        const d = z.object({ companyIds: z.array(id).min(1), month: day.refine(x => x.endsWith('-01')), confirm: z.literal(true) }).strict().parse(req.body);
-        const cos = [...new Set(d.companyIds)];
-        const activeCompanyIds=m.state.companies.filter((co:any)=>co.status==='Active').map((co:any)=>co.id);requireOk(cos.length===activeCompanyIds.length&&activeCompanyIds.every((co:string)=>cos.includes(co)),422,'allActiveCompaniesRequired');
-        for (const co of cos) {
-            need(m, 'group_close', co);
-            requireOk((await c.query('select 1 from ab.finance_periods where company_id=$1 and month=$2', [co, d.month])).rowCount, 409, 'companyNotClosed');
-            requireOk((await closeReview(c, co, d.month)).canClose, 409, 'closingChecklistIncomplete');
-        }
-        const key = randomUUID();
-        await c.query('insert into ab.finance_group_closings(id,tenant_id,month,companies,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6)', [key, s.tenant_id, d.month, cos, cipher.seal({ companyIds: cos, month: d.month }), s.user_id]);
-        return { id: key };
+        const d=z.object({companyIds:z.array(id).min(1),month:day.refine(x=>x.endsWith('-01')),confirm:z.literal(true)}).strict().parse(req.body),cos=[...new Set(d.companyIds)].sort(),activeCompanyIds=m.state.companies.filter((co:any)=>co.status==='Active').map((co:any)=>co.id).sort();
+        requireOk(cos.length===activeCompanyIds.length&&activeCompanyIds.every((co:string)=>cos.includes(co)),422,'allActiveCompaniesRequired');for(const co of cos)need(m,'group_close',co);
+        const prior=(await c.query('select * from ab.finance_group_closings where month=$1',[d.month])).rows[0];
+        if(prior){const saved=cipher.open(prior.payload_cipher);requireOk(saved.format==='AB-GROUP-CLOSE-SOURCE-1'&&saved.month===d.month&&JSON.stringify([...prior.companies].sort())===JSON.stringify(cos)&&JSON.stringify(saved.companies)===JSON.stringify(cos),409,'legacyGroupClosingReviewRequired');return{id:prior.id,alreadyClosed:true,financialEffect:false};}
+        const report=await groupClosingReview(c,m,d.month);requireOk(report.periodEnded,422,'periodNotEnded');requireOk(report.companyReviews.every(r=>r.periodId),409,'companyNotClosed');requireOk(report.companyReviews.every(r=>r.canClose),409,'closingChecklistIncomplete');requireOk(report.reciprocal.balanced,409,'groupReciprocalReviewRequired');
+        const key=randomUUID();await c.query('insert into ab.finance_group_closings(id,tenant_id,month,companies,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6)',[key,s.tenant_id,d.month,cos,cipher.seal(report),s.user_id]);for(const co of cos)await event(c,cipher,s,co,key,'financial_group_period_closed',null,report);return{id:key,alreadyClosed:false,financialEffect:false};
     }));
     app.post('/api/ledger/recurring/run', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id }).strict().parse(req.body); need(m, 'invoice_create', d.companyId); return recurringFinancial(c, cipher, m, s, d.companyId); }));
     app.post('/api/ledger/reminders/run', route(async (c: any, m: any, s: any, req: any) => {
@@ -820,8 +825,9 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
     }));
     app.get('/api/ledger/events', route(async (c: any, m: any, s: any, req: any) => { const co = id.parse(req.query.companyId); need(m, 'audit', co); return { rows: (await c.query("select * from ab.finance_events where company_id=$1 and entity_type='ledger' order by created_at desc limit 200", [co])).rows.map((r: any) => ({ ...r, payload: cipher.open(r.payload_cipher), payload_cipher: undefined })) }; }));
     app.get('/api/ledger/reports', route(async (c: any, m: any, s: any, req: any) => {
-        const q = z.object({ companies: z.string().min(1), from: day, to: day, kind: z.enum(['trial', 'balance', 'profit', 'cashflow', 'ledger', 'journal', 'receivables', 'custody', 'vouchers', 'cards', 'kpi', 'vat', 'collections', 'deposits', 'cheques', 'funds', 'intercompany', 'installments', 'adjustments', 'profitability','cost-centres']), currency: currency.optional(), employeeId: id.optional(), itemId: id.optional(), emirate: z.string().max(100).optional(), areaId: z.string().max(100).optional(), page: z.coerce.number().int().min(0).default(0), format: z.enum(['json', 'csv', 'excel', 'print']).default('json'), consolidated: z.enum(['true', 'false']).default('false'), groupBy: z.enum(['day', 'month', 'year', 'employee', 'item']).default('day'),...registerArgs }).strict().parse(req.query);
+        const q = z.object({ companies: z.string().min(1), from: day, to: day, kind: z.enum(['trial', 'balance', 'profit', 'cashflow', 'ledger', 'journal', 'receivables', 'custody', 'vouchers', 'cards', 'kpi', 'vat', 'collections', 'deposits', 'cheques', 'funds', 'intercompany', 'installments', 'adjustments', 'profitability','cost-centres']), currency: currency.optional(), employeeId: id.optional(), itemId: id.optional(), emirate: z.string().max(100).optional(), areaId: z.string().max(100).optional(), page: z.coerce.number().int().min(0).default(0), format: z.enum(['json', 'csv', 'excel', 'print']).default('json'), consolidated: z.enum(['true', 'false']).default('false'),presentation:z.literal('human_statement_v1').optional(),locale:z.enum(['ar','en']).default('en'), groupBy: z.enum(['day', 'month', 'year', 'employee', 'item']).default('day'),...registerArgs }).strict().parse(req.query);
         const cos = [...new Set(q.companies.split(',').map((x: string) => id.parse(x)))];
+        requireOk(!q.presentation||['trial','balance','profit'].includes(q.kind),422,'unsupportedStatementPresentation');
         requireOk(q.to >= q.from, 422, 'invalidDate');
         for (const co of cos) {
             need(m, 'report', co);
@@ -958,25 +964,19 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         if (q.consolidated === 'true' && ['trial', 'balance', 'profit'].includes(q.kind)) {
             const active = m.state.companies.filter((x: any) => x.status === 'Active').map((x: any) => x.id);
             requireOk(active.every((x: string) => selected.includes(x)), 403, 'allActiveCompaniesRequired');
-            const sums: Record<string, bigint> = {};
-            for (const r of rows.filter((r: any) => r.eliminate))
-                sums[r.currency] = (sums[r.currency] || 0n) + L.units(r.net);
-            if (Object.values(sums).some(x => x !== 0n))
-                eliminationStatus = 'blocked_unbalanced_reciprocal_accounts';
-            else {
-                rows = rows.filter((r: any) => !r.eliminate);
-                eliminationStatus = 'matched_reciprocal_balances_eliminated';
-            }
+            const reciprocal=configuredReciprocalReview(rows);eliminationStatus=reciprocal.status;
+            if(reciprocal.balanced)rows=rows.filter((r:any)=>!r.eliminate);
             scope += '; consolidation removes only configured balanced reciprocal accounts, no FX conversion';
         }
-        if(q.full==='true'||q.search||q.grid!=='{}')rows=filterRegister(rows,q).rows;
+        const humanStatement=q.presentation?financialStatementPresentation(rows,m.state.companies,q,eliminationStatus):null;if(humanStatement)rows=humanStatement.rows;
+        if(q.full==='true'||q.search||q.grid!=='{}'||humanStatement)rows=filterRegister(rows,q,humanStatement?.statementColumns).rows;
         const total = rows.length, totals: any = {};
         for (const r of rows)
             if (r.currency && r.net) {
                 const k = r.currency;
                 totals[k] = L.money(L.units(totals[k] || '0') + L.units(r.net));
             }
-        if(q.full!=='true')rows = rows.slice(q.page * 200, (q.page + 1) * 200);
+        if(q.full!=='true'&&!(humanStatement&&q.format!=='json'))rows = rows.slice(q.page * 200, (q.page + 1) * 200);
         const coverage = (await c.query('select count(*)n from ab.vehicle_invoices i where company_id=any($1::uuid[])and not exists(select 1 from ab.finance_invoice_links l where l.invoice_id=i.id)', [selected])).rows[0].n;
         const agencyAdjustments=await monthlyReady(c)?' and not exists(select 1 from ab.investor_monthly_invoice_classifications mc where mc.invoice_id=a.invoice_id)':'';
         const unpostedAdjustments = Number((await c.query("select count(*)n from ab.vehicle_invoice_adjustments a join ab.finance_invoice_links l on l.invoice_id=a.invoice_id where a.company_id=any($1::uuid[])and not exists(select 1 from ab.finance_journals j where j.company_id=a.company_id and j.status='Posted'and j.source_key='credit:'||a.id::text)"+agencyAdjustments, [selected])).rows[0].n);
@@ -984,7 +984,8 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         if (q.kind === 'profit')
             for (const [cur, net] of Object.entries(totals))
                 profitByCurrency[cur] = L.money(-L.units(net));
-        const result = { companies:selected.map((id:string)=>{const co=m.state.companies.find((r:any)=>r.id===id);return{id,nameAr:co?.arabicName||'',nameEn:co?.englishName||''};}),profitByCurrency, unpostedInvoiceAdjustments: unpostedAdjustments, rows, total, page: q.page, pageSize: 200, totals, scope, unclassifiedInvoices: Number(coverage), groupEliminations: eliminationStatus, groupClosingRequired: true, vatReturnCertified: false };
+        const result = { companies:selected.map((id:string)=>{const co=m.state.companies.find((r:any)=>r.id===id);return{id,nameAr:co?.arabicName||'',nameEn:co?.englishName||''};}),profitByCurrency, unpostedInvoiceAdjustments: unpostedAdjustments, rows, total, page: q.page, pageSize: 200, totals, scope, unclassifiedInvoices: Number(coverage), groupEliminations: eliminationStatus, groupClosingRequired: true, vatReturnCertified: false,...(humanStatement?{...humanStatement,rows,statementColumns:humanStatement.statementColumns,complete:q.full==='true'||q.format!=='json'}:{}) };
+        if(humanStatement&&['csv','excel'].includes(q.format))return{...result,...financialStatementFile(rows,q,result)};
         if (q.format === 'json' || q.format === 'print')
             return result;
         const columns = [...new Set(rows.flatMap(r => Object.keys(r)))], values = [columns, ...rows.map(r => columns.map(k => r[k] instanceof Date ? r[k].toISOString() : typeof r[k] === 'object' ? JSON.stringify(r[k]) : r[k] ?? ''))];

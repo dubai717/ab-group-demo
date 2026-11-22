@@ -322,3 +322,9 @@ jobs:
 
       - name: Original credit source uses native document tax scope and safe output
         run: node backend/tests/einvoice-credit-source-suite.browser.cjs
+
+      - name: Original financial statements preserve group scope, filters and stale output guards
+        run: node backend/tests/financial-statement-suite.browser.cjs
+
+      - name: Original group close refuses unmatched reciprocal balances and retains source review
+        run: node backend/tests/group-closing-suite.browser.cjs

@@ -5,19 +5,15 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "E63 original invoice credit tax/account source; E64 original credit-document review and feedback lease; E65 direct writeoff-review parity",
+    "module": "E66 human statements; E67 original group close source; E68 actual cross-flow period acceptance",
     "acceptance": [
-      "E61/E62 immutable805c09f/tree0478880 passed586/586,0 failed/skipped",
-      "E63 original bugs reproduced;34 targeted native, original financial package browser,172 static and build/type passed",
-      "E64 six new source cases and final40 native regressions passed; three shared feedback tests retain pre-disabled/saving/duplicate-click controls;175 static and build/type passed",
-      "E64 actual Owner/reader/exporter source browser passed AR/EN three widths, true source JSON and stale output denial; original invoice source, financial package and customer save/workspace/schema browsers also passed",
-      "E65 both old direct200 versus package409 cases reproduced;30 targeted native and TypeScript passed",
-      "Combined bf496c6/tree410ec5a passed frozen597/597 on local5442;175 static/type/build passed"
+      "E66 original scoped human statements7 new native; related11/11 and actual AR/EN three-width browser passed",
+      "E67 unsafe old group close200 reproduced;39/39 native, original matched/unmatched AR/EN browser,175 static/type/build passed",
+      "E68 original Owner card/staff/investor sources3/3 passed through real native reconciliation/company closes/group close/replay without new financial entries"
     ],
-    "next": "Continue E66 original group statement presentation/consolidated UI and integrated source acceptance in separate worktree. Save accepted source to the same draft; no release/delivery request."
+    "next": "Merged E67/E68; run immutable609 native plus175 static/type/build on synthetic5442. Continue independent prospective legacy service work. No delivery request."
   },
   "nextIndependentWork": [
-    "Complete original-source group reporting/closing acceptance across Owner, staff and managed investor flows without new elimination rules or financial activation",
     "Complete original-source scoped output for package registers and remaining dashboard drill-downs; preserve report/export rights and all filters",
     "Original noncash employee/external receivable claims using approved actual bank operations and original RV/collection/report sources",
     "Shared-expense reviewed VAT and intercompany settlement acceptance",
@@ -165,5 +161,36 @@
     "native": "583/583,0 failed; decoded logs verified",
     "deployment": false,
     "protectedRunsTouched": false
+  },
+  "savedDraftCheckpoint": {
+    "remoteCommit": "8691a3019fe6f264990bc58add16eb98c53709ad",
+    "localEquivalent": "2fd276bb7051642d121ffee4d7d19947d20dddf6",
+    "tree": "7035bb0b0ae53d584cc94cb5474722021ffe2805",
+    "draftPR": 115,
+    "ciRun": 45006325756,
+    "ciStatusAtSave": "in_progress: only unprivileged staging-checks job; no delivery request"
+  },
+  "requirementCounts": {
+    "منفذ جزئياً": 21,
+    "مكتمل ومنشور": 27,
+    "مكتمل وغير منشور": 47
+  },
+  "groupClosingAcceptance": {
+    "review": "docs/reviews/cross-flow-group-closing-acceptance-2026-11-22.md",
+    "sourceGuardCommit": "dfd2f5d5768d332052d81ea23b94ac5a084db7df",
+    "historicalClosesRewritten": false,
+    "hostedActivation": false
+  },
+  "latestCumulativeAcceptance": {
+    "commit": "65ebf21779f2efb0c9a36adcd211e72f9143406b",
+    "tree": "127c9cc3177a2613a200a4eafa5d921a4e870941",
+    "tests": 604,
+    "passed": 604,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 958792.873451,
+    "log": "/tmp/financial-group-statement-cumulative.log",
+    "environment": "Own synthetic tmpfs PostgreSQL5442; fake Auth/objects; no hosted calls",
+    "scope": "E66 integrated source only; E67/E68 require next609-case acceptance"
   }
 }
