@@ -19,3 +19,11 @@ export async function serviceFeeAmendments(c:any,cipher:any,vehicleId:string,con
  requireOk(rows.length<=500,422,'serviceFeeHistoryReviewRequired');
  return rows.map((r:any)=>cipher.open(r.payload_cipher).after).filter((r:any)=>r.contractId===contractId);
 }
+
+// An explicit signed Owner adoption changes only future generation, never the immutable contract or invoices.
+export async function serviceBillingAdoption(c:any,cipher:any,v:any,contract:any){
+ const rows=(await c.query("select id,company_id,actor_id,payload_cipher from ab.vehicle_events where vehicle_id=$1 and kind='service_billing_policy_adopted' order by created_at,id limit 101",[v.id])).rows;requireOk(rows.length<=100,409,'servicePolicySourceReviewRequired');
+ const all=rows.map((r:any)=>({...cipher.open(r.payload_cipher).after,id:r.id,_sourceCompanyId:r.company_id,_sourceActorId:r.actor_id}));requireOk(all.every((r:any)=>r.format==='AB-PROSPECTIVE-SERVICE-1'&&r.companyId===v.company_id&&r._sourceCompanyId===v.company_id&&r.approvedBy===r._sourceActorId&&r.vehicleId===v.id&&typeof r.contractId==='string'&&/^\d{4}-\d{2}-01$/.test(r.effectiveOn)&&/^[a-f0-9]{64}$/.test(r.sourceDigest)&&r.confirmExistingInvoicesPreserved===true),409,'servicePolicySourceReviewRequired');
+ const selected=all.filter((r:any)=>r.contractId===contract.id);requireOk(selected.length<=1,409,'servicePolicySourceReviewRequired');if(!selected.length)return null;const {_sourceCompanyId,_sourceActorId,...result}=selected[0];return result;
+}
+export function serviceContractForDate(contract:any,adoption:any,asOf:string){if(!adoption)return contract;if(asOf.slice(0,7)+'-01'<adoption.effectiveOn)return{...contract,legacyServiceCutoff:adoption.effectiveOn};return{...contract,serviceBillingPolicy:dueMonthPolicy,startOn:contract.startOn>adoption.effectiveOn?contract.startOn:adoption.effectiveOn};}

@@ -5,13 +5,15 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "E66 human statements; E67 original group close source; E68 actual cross-flow period acceptance",
+    "module": "E69 prospective service policy + E70 original operational report output",
     "acceptance": [
-      "E66 original scoped human statements7 new native; related11/11 and actual AR/EN three-width browser passed",
-      "E67 unsafe old group close200 reproduced;39/39 native, original matched/unmatched AR/EN browser,175 static/type/build passed",
-      "E68 original Owner card/staff/investor sources3/3 passed through real native reconciliation/company closes/group close/replay without new financial entries"
+      "Immutable41e0cfd/tree68c933 native609/609,0 fail/skip",
+      "E69 six new native; related29/29, actual AR/EN held read and503-after-commit recovery, original vehicle/task/V3 browsers both schema states passed",
+      "E70 five new native; related19/19, actual PDFs for three operational report families AR/EN, exact typed files, original statement/reader-exporter ledger browsers passed",
+      "175 static/type/build passed; no schema or hosted change",
+      "Immutablef17ccaf/tree2e0814 native620/620,0 fail/skip; tracked source unchanged during test"
     ],
-    "next": "Merged E67/E68; run immutable609 native plus175 static/type/build on synthetic5442. Continue independent prospective legacy service work. No delivery request."
+    "next": "Finish independent E71 tax-source UI and scoped output acceptance; save exact source before next cumulative. No delivery request."
   },
   "nextIndependentWork": [
     "Complete original-source scoped output for package registers and remaining dashboard drill-downs; preserve report/export rights and all filters",
@@ -163,12 +165,12 @@
     "protectedRunsTouched": false
   },
   "savedDraftCheckpoint": {
-    "remoteCommit": "8691a3019fe6f264990bc58add16eb98c53709ad",
-    "localEquivalent": "2fd276bb7051642d121ffee4d7d19947d20dddf6",
-    "tree": "7035bb0b0ae53d584cc94cb5474722021ffe2805",
+    "remoteCommit": "4b78a68e9eb71191af0b6c0b12266e60ee4a88a5",
+    "localEquivalent": "41e0cfd3b24de18a1cfdb4f9c497c0a21f600d20",
+    "tree": "68c933403a2c589d0e2fa14d5cf564e4a1ec699a",
     "draftPR": 115,
-    "ciRun": 45006325756,
-    "ciStatusAtSave": "in_progress: only unprivileged staging-checks job; no delivery request"
+    "ciStatusAtSave": "new head not yet verified; previous8691a30 entire draft CI45006325756 passed with597 native and actual browser acceptance",
+    "noDeliveryRequested": true
   },
   "requirementCounts": {
     "منفذ جزئياً": 21,
@@ -182,15 +184,29 @@
     "hostedActivation": false
   },
   "latestCumulativeAcceptance": {
-    "commit": "65ebf21779f2efb0c9a36adcd211e72f9143406b",
-    "tree": "127c9cc3177a2613a200a4eafa5d921a4e870941",
-    "tests": 604,
-    "passed": 604,
+    "commit": "f17ccafc2cedd9910a85907d42dcf4798587e2c2",
+    "tree": "2e081460b287221f9730aa40090355af4cd8403b",
+    "tests": 620,
+    "passed": 620,
     "failed": 0,
     "skipped": 0,
-    "durationMs": 958792.873451,
-    "log": "/tmp/financial-group-statement-cumulative.log",
-    "environment": "Own synthetic tmpfs PostgreSQL5442; fake Auth/objects; no hosted calls",
-    "scope": "E66 integrated source only; E67/E68 require next609-case acceptance"
+    "durationMs": 958952.095663,
+    "log": "/tmp/financial-prospective-operational-cumulative.log",
+    "environment": "Own synthetic5442 tmpfs PostgreSQL; fake Auth/objects; no hosted calls",
+    "scope": "E69/E70 integrated exact immutable source; E71 independent candidate not included"
+  },
+  "prospectiveLegacyService": {
+    "review": "docs/reviews/prospective-legacy-service-policy-2026-11-22.md",
+    "sourceCommit": "1d51e0e75024c1991e1831bdbc7146c6a4aab36f",
+    "ownerApprovalRequiredPerActualContract": true,
+    "historicalInvoicesRewritten": false,
+    "investorTermsInferred": false,
+    "hostedActivation": false
+  },
+  "operationalReportOutput": {
+    "review": "docs/reviews/operational-report-presentation-2026-11-22.md",
+    "sourceCommit": "ea1aed9493f5d6d81e3fca7650dbe7355dc04119",
+    "hostedActivation": false,
+    "financialEffect": false
   }
 }

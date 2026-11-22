@@ -1,5 +1,5 @@
 import {configuredReciprocalReview,closingReciprocalSource} from './group-reciprocal-source.js';
-import {financialStatementPresentation,financialStatementFile} from './financial-statement-presentation.js';
+import {financialStatementPresentation,financialStatementFile,humanStatementKinds} from './financial-statement-presentation.js';
 import {originalInvoiceCorrectionSource} from './invoice-correction-source.js';
 import {prepareInvoiceRowImport,commitInvoiceRowImport,readVehicleChargeSource} from './invoice-row-import.js';
 import {assertDiscountAuthority} from './discount-policy-proposals.js';
@@ -827,7 +827,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
     app.get('/api/ledger/reports', route(async (c: any, m: any, s: any, req: any) => {
         const q = z.object({ companies: z.string().min(1), from: day, to: day, kind: z.enum(['trial', 'balance', 'profit', 'cashflow', 'ledger', 'journal', 'receivables', 'custody', 'vouchers', 'cards', 'kpi', 'vat', 'collections', 'deposits', 'cheques', 'funds', 'intercompany', 'installments', 'adjustments', 'profitability','cost-centres']), currency: currency.optional(), employeeId: id.optional(), itemId: id.optional(), emirate: z.string().max(100).optional(), areaId: z.string().max(100).optional(), page: z.coerce.number().int().min(0).default(0), format: z.enum(['json', 'csv', 'excel', 'print']).default('json'), consolidated: z.enum(['true', 'false']).default('false'),presentation:z.literal('human_statement_v1').optional(),locale:z.enum(['ar','en']).default('en'), groupBy: z.enum(['day', 'month', 'year', 'employee', 'item']).default('day'),...registerArgs }).strict().parse(req.query);
         const cos = [...new Set(q.companies.split(',').map((x: string) => id.parse(x)))];
-        requireOk(!q.presentation||['trial','balance','profit'].includes(q.kind),422,'unsupportedStatementPresentation');
+        requireOk(!q.presentation||humanStatementKinds.includes(q.kind),422,'unsupportedStatementPresentation');requireOk(!q.presentation||q.consolidated!=='true'||['trial','balance','profit'].includes(q.kind),422,'unsupportedStatementPresentation');
         requireOk(q.to >= q.from, 422, 'invalidDate');
         for (const co of cos) {
             need(m, 'report', co);
@@ -968,8 +968,9 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
             if(reciprocal.balanced)rows=rows.filter((r:any)=>!r.eliminate);
             scope += '; consolidation removes only configured balanced reciprocal accounts, no FX conversion';
         }
-        const humanStatement=q.presentation?financialStatementPresentation(rows,m.state.companies,q,eliminationStatus):null;if(humanStatement)rows=humanStatement.rows;
-        if(q.full==='true'||q.search||q.grid!=='{}'||humanStatement)rows=filterRegister(rows,q,humanStatement?.statementColumns).rows;
+        const reportItems=q.presentation&&q.kind==='profitability'?(await c.query('select id,name_ar,name_en,payload_cipher from ab.finance_items where id=any($1::uuid[])',[[...new Set(rows.map((r:any)=>r.item_id).filter((id:any)=>typeof id==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(id)))]])).rows.map((r:any)=>({...cipher.open(r.payload_cipher),id:r.id,nameAr:r.name_ar,nameEn:r.name_en})):[];
+        const humanStatement=q.presentation?financialStatementPresentation(rows,m.state.companies,q,eliminationStatus,reportItems):null;if(humanStatement)rows=humanStatement.rows;
+        if(q.full==='true'||q.search||q.grid!=='{}'||humanStatement)rows=filterRegister(rows,q,humanStatement?.statementColumns,humanStatement?.statementTypes).rows;
         const total = rows.length, totals: any = {};
         for (const r of rows)
             if (r.currency && r.net) {

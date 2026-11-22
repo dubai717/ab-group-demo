@@ -328,3 +328,9 @@ jobs:
 
       - name: Original group close refuses unmatched reciprocal balances and retains source review
         run: node backend/tests/group-closing-suite.browser.cjs
+
+      - name: Explicit future service policy preserves legacy invoice history and uncertain outcomes
+        run: node backend/tests/prospective-service-suite.browser.cjs
+
+      - name: Original operational report source output and actual PDF acceptance
+        run: node backend/tests/operational-report-suite.browser.cjs
