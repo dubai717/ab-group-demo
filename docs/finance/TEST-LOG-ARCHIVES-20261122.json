@@ -1,0 +1,63 @@
+{
+  "archivedOn": "2026-11-22",
+  "scope": "Only completed own isolated synthetic test output; no project/data/attachment/backup files. Running656 log untouched.",
+  "restore": "Read with gzip -dc archivePath; restore original bytes only when disk space permits.",
+  "archives": [
+    {
+      "originalPath": "/tmp/financial-prospective-operational-cumulative.log",
+      "archivePath": "/tmp/financial-prospective-operational-cumulative.log.gz",
+      "uncompressedBytes": 131266,
+      "compressedBytes": 34844,
+      "sha256OfUncompressed": "9dbdb00b58c76101c799c87affc678b1fa989dccb62da5693a8c544b6dd57799",
+      "decompressedChecksumVerified": true
+    },
+    {
+      "originalPath": "/tmp/financial-tax-source-cumulative.log",
+      "archivePath": "/tmp/financial-tax-source-cumulative.log.gz",
+      "uncompressedBytes": 132670,
+      "compressedBytes": 35363,
+      "sha256OfUncompressed": "47b16ab2bad8ea9d4d4b43d16b7e44fcd6c318187d373579810366b869797588",
+      "decompressedChecksumVerified": true
+    },
+    {
+      "originalPath": "/tmp/financial-owner-personal-cumulative.log",
+      "archivePath": "/tmp/financial-owner-personal-cumulative.log.gz",
+      "uncompressedBytes": 135204,
+      "compressedBytes": 35750,
+      "sha256OfUncompressed": "f1651d6d3e5234e9073ec66c4ee05e34b80e717f20ccb8fb8adf23e088561a1e",
+      "decompressedChecksumVerified": true
+    },
+    {
+      "originalPath": "/tmp/financial-ledger-source-cumulative.log",
+      "archivePath": "/tmp/financial-ledger-source-cumulative.log.gz",
+      "uncompressedBytes": 140548,
+      "compressedBytes": 37612,
+      "sha256OfUncompressed": "baa1ac1aad01e4d344a8b30a120cd7c7ac206cb5b0650076fd3b8a2128f7a6c5",
+      "decompressedChecksumVerified": true
+    },
+    {
+      "originalPath": "/tmp/financial-tax-registration-cumulative.log",
+      "archivePath": "/tmp/financial-tax-registration-cumulative.log.gz",
+      "uncompressedBytes": 139530,
+      "compressedBytes": 36981,
+      "sha256OfUncompressed": "8238b23915fd9e1b1c7482833878c214ffbd839f0e5ec5d20066bc358152714c",
+      "decompressedChecksumVerified": true
+    },
+    {
+      "originalPath": "/tmp/financial-collections-integrated-cumulative.log",
+      "archivePath": "/tmp/financial-collections-integrated-cumulative.log.gz",
+      "uncompressedBytes": 138957,
+      "compressedBytes": 36754,
+      "sha256OfUncompressed": "a2db14a411514e37c7fd8d5b74c00ca17af165ae795f1cb802ad82a709679de8",
+      "decompressedChecksumVerified": true
+    },
+    {
+      "originalPath": "/tmp/financial-invoice-reports-cumulative.log",
+      "archivePath": "/tmp/financial-invoice-reports-cumulative.log.gz",
+      "uncompressedBytes": 139482,
+      "compressedBytes": 36938,
+      "sha256OfUncompressed": "20d6f49e3cf898e33477375dd81aa950539f3a4d9b4fb261e606958cda90c133",
+      "decompressedChecksumVerified": true
+    }
+  ]
+}

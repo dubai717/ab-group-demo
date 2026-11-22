@@ -89,6 +89,8 @@ export function registerPersonnel(app: any, call: any, cipher: any, options: any
         requireOk(hrRight(m, 'task_manage', t.company_id)||taskRight(m,'assign',t.company_id) || e.manager_id === m.actor.id, 403, 'denied');
         requireOk(e.user_id !== m.actor.id || m.actor.roleId === 'owner', 403, 'independentReviewRequired');
     } if (d.action === 'reassign') {
+        requireOk(!['owner_cheque_receipt','owner_cheque_deposit'].includes(t.source_type),409,'ownerChequeReassignmentRequired');
+        requireOk(t.source_type!=='petty_fund_receipt',409,'fundReceiverAssignmentLocked');
         requireOk(d.employeeId, 422, 'required');
         await employeeIn(c, d.employeeId, t.company_id);const vehicleTransfer=await validateVehicleTaskReassignment(c,m,cipher,t,d.employeeId);if(vehicleTransfer)await c.query("insert into ab.finance_notifications(id,tenant_id,company_id,user_id,action,event_key,entity_id)values($1,$2,$3,$4,'vehicle:registration_reassigned',$5,$6)on conflict(tenant_id,user_id,event_key)do nothing",[randomUUID(),s.tenant_id,t.company_id,vehicleTransfer.userId,'vehicle-task-reassign:'+t.id+':'+t.revision,vehicleTransfer.requestId]);
         assignee = d.employeeId;

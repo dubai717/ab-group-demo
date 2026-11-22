@@ -100,6 +100,7 @@ test('native document corrections distinguish discount, unsafe cancellation and 
     rows = (await f.req('GET', '/api/ledger/invoices?companyId=' + f.co1)).rows;
     assert.equal(rows.find((r: any) => r.id === a.id).outstanding, '90.000');
     assert.equal(rows.find((r: any) => r.id === a.id).bookOutstanding, '0.000');
+    assert.equal((await f.req('GET','/api/notifications')).rows.filter((r:any)=>r.action==='ledger:discount_applied').length,1,'cancellation and bad debt are not mislabeled as new discounts');
     const docs = await f.req('GET', '/api/ledger/package/documents?companyId=' + f.co1 + '&type=Discount');
     assert.equal(docs.rows.length, 1);
     assert(docs.rows.every((r: any) => r.number && r.createdByName));

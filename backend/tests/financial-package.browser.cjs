@@ -1,8 +1,8 @@
 const { chromium } = require('playwright'), assert = require('node:assert/strict'), fs = require('node:fs');
 (async () => {
-    const f = JSON.parse(fs.readFileSync('work/financial-package-fixture.json')), browser = await chromium.launch({ executablePath: process.env.AB_BROWSER_EXECUTABLE || '/usr/bin/chromium', headless: true, args: ['--no-sandbox'] }), p = await browser.newPage({ viewport: { width: 1440, height: 1000 } }), errors = [];
+    const f = JSON.parse(fs.readFileSync('work/financial-package-fixture.json')), browser = await chromium.launch({ executablePath: process.env.AB_BROWSER_EXECUTABLE || '/usr/bin/chromium', headless: true, args: ['--no-sandbox'] }), p = await browser.newPage({ viewport: { width: 1440, height: 1000 } }), errors = [],failedResponses=[],alerts=[];
     p.on('pageerror', e => errors.push(e.message));
-    p.on('dialog', d => d.accept());
+    p.on('dialog', d => {if(d.type()==='alert')alerts.push(d.message().slice(0,180));return d.accept();});p.on('response',r=>{if(r.status()>=400)failedResponses.push({status:r.status(),path:new URL(r.url()).pathname.replace(/[a-f0-9]{8}-[a-f0-9-]{27}/g,':id')});});
     const tab = async (id) => { await p.locator('[data-ld=tab][data-id="' + id + '"]').click(); await p.locator('.ld-section').waitFor(); const ready = { setup: '[data-fp=new-item]', priorities: '#fp-priority', compliance: '[data-fp=fee-new]', documents: '#fp-document-type' }[id]; if (ready)
         await p.locator(ready).waitFor(); };
     try {
@@ -13,8 +13,10 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         await p.locator('.stats-grid').waitFor();
         await p.locator('[data-page=financialManagement]').click();
         await p.locator('#ld-company').selectOption(f.companyId);
-        await require('./company-tax.browser.cjs')(p,f);
+        // Original company-tax assertions run in company-tax-legacy.browser.cjs with their own unchanged rate limiter.
         await require('./cost-centres.browser.cjs')(p,f);
+        await require('./contract-financier.browser.cjs')(p,f);
+        await require('./invoice-import-template.browser.cjs')(p);
         await tab('setup');
         assert.equal(await p.locator('[data-ft-search]').count(), 1, 'one shared search for accounts and financial items');
         assert.equal(await p.locator('.ld-section table').count(), await p.locator('.ld-section [data-ft-table] table').count(), 'all setup tables use the financial adapter');
@@ -68,11 +70,11 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         const rules = await p.evaluate(co => ABCentral.api('ledger/package/state?companyId=' + co), f.companyId);
         assert.equal(rules.feeRules.length, 1);
         const rule = rules.feeRules[0];
-        assert.equal(rule.enabled, false);
+        assert.equal(rule.enabled, false);assert.equal(rule.debtCategory,'salik');assert.deepEqual(rule.sourceItemIds,[f.itemId]);
         await p.locator('[data-fp-open="' + rule.id + '"]').locator('xpath=ancestor::tr').locator('td').first().click();
         dialog = p.locator('dialog[open]').last();
         assert.equal(await dialog.locator('[name=amount]').inputValue(), '10');
-        assert.equal(await dialog.locator('[name=unit]').inputValue(), 'customer_item');
+        assert.equal(await dialog.locator('[name=unit]').inputValue(), 'vehicle_category');
         await dialog.locator('[data-cancel]').click();
         await p.locator('[data-fp=fee-status]').click();
         await p.locator('#ld-notice').filter({ hasText: /موافقة|approval/ }).waitFor();
@@ -93,17 +95,17 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         await invoiceStarted;
         try {
             await p.locator('#fp-document-type').selectOption('Discount');
-            await p.waitForFunction(() => document.querySelector('[data-ft-table="package:documents"] tbody')?.innerText.includes('DS-'));
+            await p.waitForFunction(() => document.querySelector('[data-ft-table^="package:documents:"] tbody')?.innerText.includes('DS-'));
         } finally { releaseInvoice(); }
         await p.unrouteAll({behavior:'wait'});
-        await p.waitForFunction(() => document.querySelector('#fp-document-type')?.value === 'Discount' && document.querySelector('[data-ft-table="package:documents"] tbody')?.innerText.includes('DS-'));
+        await p.waitForFunction(() => document.querySelector('#fp-document-type')?.value === 'Discount' && document.querySelector('[data-ft-table^="package:documents:"] tbody')?.innerText.includes('DS-'));
 
         const documents = await p.evaluate(co => ABCentral.api('ledger/package/documents?companyId=' + co + '&type=Discount'), f.companyId);
         assert.equal(documents.rows.length, 1);
         assert(documents.rows[0].number.startsWith('DS-'));
         for (const type of ['RV', 'PV', 'Deposit']) {
             await p.locator('#fp-document-type').selectOption(type);
-            await p.waitForFunction(() => document.querySelector('[data-ft-table="package:documents"] [data-fp-open]'));
+            await p.waitForFunction(() => document.querySelector('[data-ft-table^="package:documents:"] [data-fp-open]'));
             const docs = await p.evaluate(({ co, type }) => ABCentral.api('ledger/package/documents?companyId=' + co + '&type=' + type), { co: f.companyId, type });
             assert.equal(docs.rows.length, 1);
             assert(docs.rows[0].number);
@@ -127,8 +129,8 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         console.log('PASS financial package actual UI: delayed Invoice to Discount switch ignores stale response, atomic delayed model refresh, auto-code item save/readback, collapsed accounting mapping, priority reordering/draft gate, disabled fee rule/row/activation denial, Invoice/RV/Discount/PV/Deposit metadata, noncash discount, no noninvoice Cancel, AR/EN desktop/tablet/mobile.');
     }
     catch (e) {
-        await p.screenshot({ path: 'work/financial-package-failure.png' });
-        console.error('FAIL FINANCIAL_PACKAGE:', e.stack);
+        console.error('FAIL FINANCIAL_PACKAGE:', e.stack);console.error({failedResponses,alerts});
+        await p.screenshot({ path: 'work/financial-package-failure.png',timeout:5000 }).catch(error=>console.error('Failure screenshot unavailable:',error.name));
         console.error(await p.locator('[role=alert],#ld-notice').allTextContents());
         process.exitCode = 1;
     }

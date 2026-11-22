@@ -1,3 +1,8 @@
+import {registerTaxControlCenter,taxControlProfile} from './tax-control-center.js';
+import {registerTaxRegistrationReview} from './tax-registration-review.js';
+import {registerTaxSourceReview} from './tax-source-review.js';
+import {corporateAccounting,registerCorporateTaxSources} from './corporate-tax-workpaper.js';
+import {vatControlsSchema,validateVatControls,registerVatWorkpaper} from './vat-workpaper.js';
 import {z} from 'zod';
 import {requireOk} from './core.js';
 import {L,need,company,item,event,evidence} from './ledger-domain.js';
@@ -11,7 +16,7 @@ export const companyTaxSchema=z.object({
  adjustments:z.array(z.object({id:z.uuid(),from:z.iso.date(),to:z.iso.date(),direction:z.enum(['add','deduct']),
   amount:z.string().regex(/^\d{1,15}(\.\d{1,3})?$/),reason:z.string().trim().min(1).max(2000),
   evidenceVersionId:z.uuid().nullable()}).strict()).max(500),
- notes:z.string().max(4000),confirm:z.literal(true)
+ notes:z.string().max(4000),vatControls:vatControlsSchema.optional(),confirm:z.literal(true)
 }).strict().superRefine((d,ctx)=>{
  for(const key of ['vatPeriods','corporatePeriods'] as const){const sorted=[...d[key]].sort((a,b)=>a.from.localeCompare(b.from));
   if(sorted.some((p,i)=>i>0&&p.from<=sorted[i-1].to))ctx.addIssue({code:'custom',path:[key],message:'overlappingTaxPeriods'});}
@@ -32,17 +37,29 @@ export function taxBridge(profit:string,adjustments:any[],from:string,to:string)
   deductions=rows.filter(a=>a.direction==='deduct').reduce<bigint>((n,a)=>n+L.units(a.amount),0n);
  return{currency:'AED',accountingProfit:profit,proposedAdditions:L.money(adds),proposedDeductions:L.money(deductions),
   proposedTaxableIncome:L.money(L.units(profit)+adds-deductions),taxableIncome:null,taxDue:null,
-  adjustments:rows,filingReady:false,status:'DraftForTaxReview',source:'posted income/expense journals; exact selected period only'};
+  adjustments:rows,filingReady:false,status:'DraftForTaxReview',source:'posted income/expense journals and approved bank operations; exact selected period only'};
 }
 export function registerCompanyTaxPreparation(app:any,route:any,cipher:any){
+ registerTaxControlCenter(app,route,cipher);
+ registerTaxRegistrationReview(app,route,cipher,companyTaxDraft);
+ registerVatWorkpaper(app,route,cipher,companyTaxDraft);
+ registerTaxSourceReview(app,route,cipher,companyTaxDraft);
+ registerCorporateTaxSources(app,route);
  app.post('/api/ledger/package/tax-config',route(async(c:any,m:any,s:any,req:any)=>{
   const d=companyTaxSchema.parse(req.body);need(m,'configure',d.companyId);company(m,d.companyId);
   await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[key(d.companyId)]);
   const old=await companyTaxDraft(c,cipher,d.companyId);requireOk((old?.revision||0)===d.revision,409,'revisionConflict');
+  // Independent files are authoritative once explicitly created. Keep the old proposals as history;
+  // this compatibility endpoint still manages shared TRN/control accounts and original CT adjustments.
+  for(const type of ['vat','corporate'] as const)await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',['ledger:tax-control-profile-v1:'+d.companyId+':'+type]);
+  const vatProfile=await taxControlProfile(c,cipher,d.companyId,'vat',s.tenant_id),corporateProfile=await taxControlProfile(c,cipher,d.companyId,'corporate',s.tenant_id),same=(a:any,b:any)=>JSON.stringify(a||[])===JSON.stringify(b||[]);
+  requireOk(!vatProfile||(same(d.mappings,old?.mappings)&&same(d.vatPeriods,old?.vatPeriods)),409,'independentTaxProfilesRequired');
+  requireOk(!corporateProfile||same(d.corporatePeriods,old?.corporatePeriods),409,'independentTaxProfilesRequired');
+  if(d.vatControls){await validateVatControls(c,cipher,m,d.companyId,d.vatControls);if(d.vatControls.evidenceVersionId)await evidence(c,m,d.companyId,d.vatControls.evidenceVersionId);}
   for(const mapping of d.mappings)await item(c,cipher,m,mapping.itemId,d.companyId,true);
   for(const adjustment of d.adjustments)if(adjustment.evidenceVersionId)await evidence(c,m,d.companyId,adjustment.evidenceVersionId);
   // Configuration drafts have no posting, invoice, rate-change or filing authority.
-  const value={...d,revision:d.revision+1,status:'DraftForTaxReview',updatedBy:s.user_id,updatedAt:new Date().toISOString()};
+  const value={...d,...(!d.vatControls&&old?.vatControls?{vatControls:old.vatControls}:{}),revision:d.revision+1,status:'DraftForTaxReview',updatedBy:s.user_id,updatedAt:new Date().toISOString()};
   await c.query('insert into ab.settings(tenant_id,key,value)values($1,$2,$3)on conflict(tenant_id,key)do update set value=excluded.value',
    [s.tenant_id,key(d.companyId),{cipher:cipher.seal(value)}]);
   await event(c,cipher,s,d.companyId,d.companyId,'tax_preparation_draft_saved',old,value);
@@ -56,9 +73,8 @@ export function registerCompanyTaxPreparation(app:any,route:any,cipher:any){
  app.get('/api/ledger/package/tax-bridge',route(async(c:any,m:any,s:any,req:any)=>{
   const q=z.object({companyId:z.uuid(),from:z.iso.date(),to:z.iso.date()}).strict().parse(req.query);
   requireOk(q.to>=q.from,422,'invalidTaxPeriod');need(m,'report',q.companyId);company(m,q.companyId);
-  const rows=(await c.query("select ch.kind,sum(e.debit)::text debit,sum(e.credit)::text credit from ab.finance_entries e join ab.finance_journals j on j.id=e.journal_id join ab.finance_chart ch on ch.id=e.chart_id where j.status='Posted' and j.company_id=$1 and j.currency='AED' and j.effective_on between $2 and $3 and ch.kind in('income','expense') group by ch.kind",[q.companyId,q.from,q.to])).rows;
-  const profit=rows.reduce((n:bigint,r:any)=>n+L.units(r.credit)-L.units(r.debit),0n),cfg=await companyTaxDraft(c,cipher,q.companyId);
-  const registeredPeriod=cfg?.corporatePeriods.some((p:any)=>p.from===q.from&&p.to===q.to)||false;
-  return{companyId:q.companyId,from:q.from,to:q.to,registeredPeriod,...taxBridge(L.money(profit),cfg?.adjustments||[],q.from,q.to)};
+  const accounting=await corporateAccounting(c,q.companyId,q.from,q.to),cfg=await companyTaxDraft(c,cipher,q.companyId);
+  const profile=await taxControlProfile(c,cipher,q.companyId,'corporate',s.tenant_id),registeredPeriod=(profile?.periods||cfg?.corporatePeriods||[]).some((p:any)=>p.from===q.from&&p.to===q.to);
+  const co=m.state.companies.find((r:any)=>r.id===q.companyId);return{companyId:q.companyId,companyNameAr:co.arabicName,companyNameEn:co.englishName,from:q.from,to:q.to,registeredPeriod,periodSource:profile?'independent_corporate_profile':'legacy_draft',...taxBridge(accounting.accountingProfit,cfg?.adjustments||[],q.from,q.to),...accounting};
  }));
 }

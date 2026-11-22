@@ -83,7 +83,7 @@
   C.openCompany=async id=>{if(!await WorkspaceUI.leave())return;await api('companies/'+id);activeCompany=id;app.state.currentPage='companies';await readDocuments({companyId:id}).catch(()=>[]);CompanyDocuments.centralSelect(id);await load();};
   async function load(draw = true) {
     const b = await api("bootstrap");
-    if(C.actor?.id!==b.actor.id){C.hiddenUserId=null;globalThis.CenterForms?.clear();globalThis.AttachmentViewer?.close();globalThis.FinanceWorkbench?.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();globalThis.LedgerUI?.reset();globalThis.RegisterStore?.clear();globalThis.RegisterView?.clear();globalThis.FinancialTables?.clear();C.documents.clear();C.enrollment.clear();activeUser=activeCompany=activeBank=null;globalThis.CompanyDocuments?.centralSelect?.(null);globalThis.UserManagement?.centralSelect?.(null);}
+    if(C.actor?.id!==b.actor.id){C.hiddenUserId=null;globalThis.CenterForms?.clear();globalThis.RecordLinks?.reset?.();globalThis.AttachmentViewer?.close();globalThis.FinanceWorkbench?.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();globalThis.LedgerUI?.reset();globalThis.RegisterStore?.clear();globalThis.RegisterView?.clear();globalThis.FinancialTables?.clear();C.documents.clear();C.enrollment.clear();activeUser=activeCompany=activeBank=null;globalThis.CompanyDocuments?.centralSelect?.(null);globalThis.UserManagement?.centralSelect?.(null);}
     C.actor = b.actor;
     C.viewAs=b.viewAs||null;C.previewUncertain=false;
     C.resetTestDatabaseAvailable=b.resetTestDatabaseAvailable===true;
@@ -695,7 +695,8 @@
           await api("logout", "POST", {});
           FinanceWorkbench.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();
           globalThis.CenterForms?.clear();
-          C.actor = null;
+          globalThis.TaxControlUI?.reset();
+          C.actor = null;globalThis.RecordLinks?.reset?.();
           C.viewAs=null;
           C.csrf = "";
           globalThis.RegisterStore?.clear();globalThis.RegisterView?.clear();globalThis.FinancialTables?.clear();
@@ -814,7 +815,7 @@
       C.ready = true;
       if(["viewAsExpired","viewAsInvalid","viewAsSessionMismatch","viewAsUnavailable"].includes(e.message)){await ViewAsUI.recover();return;}
       if (e.message === "loginRequired") {
-        C.actor = null;
+        C.actor = null;globalThis.RecordLinks?.reset?.();
         render();
       } else {
         C.loading();

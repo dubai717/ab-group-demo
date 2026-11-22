@@ -1,0 +1,34 @@
+[
+  {
+    "original": "/tmp/financial-scheduled-dashboard-cumulative.log",
+    "archive": "/tmp/financial-scheduled-dashboard-cumulative.log.gz",
+    "originalBytes": 140326,
+    "archiveBytes": 37210,
+    "sha256": "3139ee4c3b7098ae276d9c11543d42538b26961729184de175855f006b1edbb9",
+    "decodedVerified": true
+  },
+  {
+    "original": "/tmp/ab-group-financial-clean-20261117/work/ledger-output-filtered.xml",
+    "archive": "/tmp/ab-group-financial-clean-20261117/work/ledger-output-filtered.xml.gz",
+    "originalBytes": 182981,
+    "archiveBytes": 10673,
+    "sha256": "89ad1fc37f2e40b63d8625e792334fd32a68914429dafb451527ac0eea7cbb13",
+    "decodedVerified": true
+  },
+  {
+    "original": "/tmp/financial-register-scope-cumulative.log",
+    "archive": "/tmp/financial-register-scope-cumulative.log.gz",
+    "originalBytes": 141033,
+    "archiveBytes": 37476,
+    "sha256": "92f4259ed6a0306fc5d86e719ca9a9cbc01603f5d352461c79b522460a07120b",
+    "decodedVerified": true
+  },
+  {
+    "original": "/tmp/ab-finance-writeoff-guard/work/ledger-output-filtered.xml",
+    "archive": "/tmp/ab-finance-writeoff-guard/work/ledger-output-filtered.xml.gz",
+    "originalBytes": 72122,
+    "archiveBytes": 1295,
+    "sha256": "cc951302394df22100c16fe7a672c141ab809f6b0376d1cf27cd2ed29c0a5334",
+    "decodedVerified": true
+  }
+]

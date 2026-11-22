@@ -6,7 +6,8 @@ permissions:
 jobs:
   staging-checks:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Full isolated native + browser acceptance now exceeds 30 minutes; retain every required test.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -237,3 +238,139 @@ jobs:
             wait "$fixture_pid"
             trap - EXIT
           done
+      - name: Non-sales follow-up reuses original task and contact history in isolated reviewed schema
+        run: node backend/tests/manual-claim-chain-suite.browser.cjs
+      - name: Non-sales claims use isolated reviewed custody proposal only
+        run: node backend/tests/manual-claims-suite.browser.cjs
+      - name: Original treasury responsibilities retain distinct bases and source permissions
+        run: node backend/tests/treasury-responsibilities-suite.browser.cjs
+      - name: Original receipt financier captions in full output
+        run: node backend/tests/financier-receipt-output-suite.browser.cjs
+      - name: Future discount controls preserve current unlimited trial
+        run: node backend/tests/discount-policy-proposals-suite.browser.cjs
+      - name: Salik import rechecks original dated responsibility
+        run: node backend/tests/salik-responsibility-suite.browser.cjs
+      - name: Original package registers export complete authorized sources
+        run: node backend/tests/financial-package-registers-suite.browser.cjs
+      - name: Fee and entitlement source exports preserve customer scope
+        run: node backend/tests/package-entitlement-sources-suite.browser.cjs
+      - name: Explicit recurring company scope preserves legacy review
+        run: node backend/tests/explicit-recurrence-company-suite.browser.cjs
+      - name: Corporate accounting revenue expense and original source output
+        run: node backend/tests/corporate-tax-workpaper-suite.browser.cjs
+      - name: Approved supplier cash and native bank settlement without repeated expense
+        run: node backend/tests/commitment-payments-suite.browser.cjs
+      - name: Ledger output uses existing export authority and complete scoped print sources
+        run: node backend/tests/ledger-output-suite.browser.cjs
+      - name: Investor agency proposal uses isolated synthetic schema and providers only
+        run: node backend/tests/investor-monthly-suite.browser.cjs
+      - name: Financial package and completion use independent rate-limited fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          for suite in company-tax-legacy financial-package financial-completion monthly-salik shared-commitments petty-cash-review petty-expense-approval petty-fund-handover personal-owner-card owner-customer-disbursements card-statement-import card-reconciliation employee-advance-chain owner-settlements collection-discounts logical-followup-categories vat-workpaper owner-wallet-consumption bank-lender-registry account-numbering commitment-scheduler; do
+            if test "$suite" = owner-settlements; then
+              export AB_OWNER_SETTLEMENT_FIXTURE=1
+            else
+              export AB_OWNER_SETTLEMENT_FIXTURE=0
+            fi
+            # Review-only source extensions are rehearsed only in the isolated synthetic fixture.
+            export AB_TEST_MANUAL_CLAIM_COLLECTION_SCHEMA=0 AB_TEST_EMPLOYEE_ADVANCE_COLLECTION_SCHEMA=0
+            if test "$suite" = employee-advance-chain; then
+              export AB_TEST_MANUAL_CLAIM_COLLECTION_SCHEMA=1 AB_TEST_EMPLOYEE_ADVANCE_COLLECTION_SCHEMA=1
+            fi
+            node --import tsx backend/tests/serve-financial-package-fixture.ts > work/financial-completion-browser.log 2>&1 &
+            fixture_pid=$!
+            trap 'kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true' EXIT
+            for attempt in $(seq 1 90); do
+              if curl --fail --silent http://127.0.0.1:3646/api/health >/dev/null; then break; fi
+              if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
+              sleep 1
+            done
+            curl --fail --silent http://127.0.0.1:3646/api/health >/dev/null
+            node "backend/tests/$suite.browser.cjs"
+            kill "$fixture_pid"
+            wait "$fixture_pid"
+            trap - EXIT
+          done
+      - name: Original personal issuer proof matching uses explicitly reviewed isolated schema only
+        run: node backend/tests/card-issuer-reconciliation-suite.browser.cjs
+
+      - name: Original complete financial document output acceptance
+        run: node backend/tests/financial-document-register-suite.browser.cjs
+
+      - name: Financial dashboard exact original source drill-downs
+        run: node backend/tests/dashboard-source-drilldown-suite.browser.cjs
+
+      - name: Original e-invoice source preparation remains review-only
+        run: node backend/tests/einvoice-source-preparation-suite.browser.cjs
+
+      - name: Original shared obligation two-sided bank settlement acceptance
+        run: node backend/tests/shared-commitment-settlements-suite.browser.cjs
+
+      - name: Original shared settlement statement output and scope continuity
+        run: node backend/tests/shared-commitment-settlement-reports-suite.browser.cjs
+
+      - name: Original dated fine imports preserve source scope and uncertain-outcome recovery
+        run: node backend/tests/vehicle-charge-imports-suite.browser.cjs
+
+      - name: Financial evidence retains original company across file reads and late responses
+        run: node backend/tests/financial-evidence-context-suite.browser.cjs
+
+      - name: Original generic row imports recover uncertain outcomes without another invoice
+        run: node backend/tests/invoice-import-recovery-suite.browser.cjs
+
+      - name: Original credit source uses native document tax scope and safe output
+        run: node backend/tests/einvoice-credit-source-suite.browser.cjs
+
+      - name: Original financial statements preserve group scope, filters and stale output guards
+        run: node backend/tests/financial-statement-suite.browser.cjs
+
+      - name: Original group close refuses unmatched reciprocal balances and retains source review
+        run: node backend/tests/group-closing-suite.browser.cjs
+
+      - name: Explicit future service policy preserves legacy invoice history and uncertain outcomes
+        run: node backend/tests/prospective-service-suite.browser.cjs
+
+      - name: Original operational report source output and actual PDF acceptance
+        run: node backend/tests/operational-report-suite.browser.cjs
+
+      - name: Original recorded tax sources preserve unknowns, bank authority and stale output safety
+        run: node backend/tests/tax-source-review-suite.browser.cjs
+
+      - name: Recoverable Owner personal request requires independent review and original payment
+        run: node backend/tests/owner-personal-suite.browser.cjs
+
+      - name: Original journal drilldowns retain source scope and obsolete response protection
+        run: node backend/tests/original-record-suite.browser.cjs
+
+      - name: Original general ledger and journal keep exact human output and native source links
+        run: node backend/tests/general-ledger-suite.browser.cjs
+
+      - name: Documentary TRN review preserves company identity, Owner authority and immutable certificate history
+        run: node backend/tests/tax-registration-suite.browser.cjs
+
+      - name: Original collections keep actual receipt totals and scoped human group captions
+        run: node backend/tests/collection-report-suite.browser.cjs
+
+      - name: Original installment and adjustment source output retains current balances and unknown legacy facts
+        run: node backend/tests/invoice-report-suite.browser.cjs
+      - name: Original treasury document reports in Arabic and English
+        run: node backend/tests/treasury-report-suite.browser.cjs
+      - name: Recorded VAT account movements retain source facts without inferred recovery or filing
+        run: node backend/tests/recorded-vat-suite.browser.cjs
+      - name: Original receivables and own custody preserve current balances and source rights
+        run: node backend/tests/operational-balance-suite.browser.cjs
+      - name: Original remaining report sources preserve Owner card and audit scope without inferred money
+        run: node backend/tests/remaining-report-suite.browser.cjs
+      - name: Original report context and cleared server-filtered sources recover without stale output
+        run: node backend/tests/report-context-suite.browser.cjs
+
+      - name: All original financial dashboard counts open exact scoped sources despite old filters
+        run: node backend/tests/dashboard-complete-source-suite.browser.cjs
+
+      - name: Central financial figures open exact original sources with independent read and export rights
+        run: node backend/tests/central-financial-source-suite.browser.cjs
+
+      - name: Independent company VAT and corporate planning files retain original catalog and disabled posting
+        run: node backend/tests/tax-control-suite.browser.cjs

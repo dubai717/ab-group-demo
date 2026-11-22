@@ -40,3 +40,9 @@ test('company tax draft save/read/revision, scoped profit bridge and no financia
   await f.req('GET','/api/ledger/package/tax-bridge?'+new URLSearchParams({companyId:f.co1,...period}),undefined,403);
  }finally{await f.close();}
 });
+test('corporate accounting-profit bridge includes approved native bank expenses and excludes draft operations and other companies without assessing tax',async()=>{
+ const f=await businessCentersFixture();try{
+ await f.bill('100',f.items.salik);await f.bill('900',f.items.salik,{companyId:f.co2,customerId:f.client2});const bank=await f.bank(),proof=await f.proof(),body={companyId:f.co1,kind:'payment',bankAccountId:bank.id,amount:'20',currency:'AED',effectiveOn:f.date,reason:'Synthetic bank expense in accounting-profit bridge',reference:'SYNTHETIC-TAX-BANK-EXPENSE',counterpartId:f.accounts.expense.charts[f.co1],documentVersionId:proof},approved=await f.req('POST','/api/finance/operations',body);await f.req('POST','/api/finance/operations/'+approved.id+'/approve',{revision:1});await f.req('POST','/api/finance/operations',{...body,amount:'30',reference:'SYNTHETIC-UNAPPROVED-EXPENSE'});
+ const before=(await f.admin.query('select count(*)::int n from ab.finance_entries')).rows[0].n,bridge=await f.req('GET','/api/ledger/package/tax-bridge?'+new URLSearchParams({companyId:f.co1,from:f.date,to:f.date}));assert.equal(bridge.accountingProfit,'80.000');assert.equal(bridge.proposedTaxableIncome,'80.000');assert.equal(bridge.taxableIncome,null);assert.equal(bridge.taxDue,null);assert.equal(bridge.filingReady,false);assert.equal((await f.admin.query('select count(*)::int n from ab.finance_entries')).rows[0].n,before);
+ }finally{await f.close();}
+});

@@ -1,3 +1,4 @@
+import {disposeSyntheticRestoreCopy} from './dispose-synthetic-database.js';
 import {localTestPort,localTestContainer} from './setup.js';
 import {assertEncryptedBackupEnvelope} from './backup-envelope-assertions.js';
 import { test } from 'node:test';
@@ -8,7 +9,7 @@ import { Pool } from 'pg';
 import { ledgerFixture } from './ledger-fixture.js';
 import { archive, restoreArchive } from '../src/backup.js';
 import { security, transaction } from '../src/core.js';
-test('financial backup restores journals, invoices, allocations, custody, private evidence, RLS and immutable history into a separate local database without touching source', async () => { const f = await ledgerFixture(); let target: Pool | undefined; try {
+test('financial backup restores journals, invoices, allocations, custody, private evidence, RLS and immutable history into a separate local database without touching source', async () => { const f = await ledgerFixture(); let target: Pool | undefined,ownedRestore:string|undefined; try {
     const bill = await f.bill('1000');
     await f.collection('600');
     const proofId = await f.proof();
@@ -21,7 +22,7 @@ test('financial backup restores journals, invoices, allocations, custody, privat
     assertEncryptedBackupEnvelope(sealed,key,dump);
     assert.throws(() => restoreArchive(sealed, randomBytes(32).toString('base64')));
     const restored = restoreArchive(sealed, key), name = 'ab_restore_' + randomUUID().replaceAll('-', '');
-    docker(['exec', localTestContainer, 'createdb', '-U', 'postgres', name]);
+    docker(['exec', localTestContainer, 'createdb', '-U', 'postgres', name]);ownedRestore=name;
     docker(['exec', '-i', localTestContainer, 'pg_restore', '-U', 'postgres', '-d', name, '--no-owner'], restored.database);
     target = new Pool({ host: '127.0.0.1', port: localTestPort, user: 'postgres', password: f.secret.admin, database: name });
     for (const table of ['companies', 'customers', 'finance_accounts', 'finance_items', 'finance_chart', 'finance_journals', 'finance_entries', 'vehicle_invoices', 'finance_invoice_links', 'finance_receipts', 'vehicle_allocations', 'finance_custody_moves', 'finance_events', 'documents', 'document_versions', 'role_permissions'])
@@ -43,5 +44,6 @@ test('financial backup restores journals, invoices, allocations, custody, privat
 finally {
     if (target)
         await target.end();
+    if(ownedRestore)await disposeSyntheticRestoreCopy(f.adminUrl,f.sourceDatabase,ownedRestore);
     await f.close();
 } });

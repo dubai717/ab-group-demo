@@ -1,0 +1,370 @@
+{
+  "scope": "Completed own synthetic logs only; decoded bytes verified before removing redundant plain copy; no source or backup data",
+  "records": [
+    {
+      "original": "/tmp/financial-central-source-cumulative.log",
+      "archive": "/tmp/financial-central-source-cumulative.log.gz",
+      "sha256": "6f169b86d75c46858fdb12ff5110946e6675b9291bf927306f90a4aea7b8bb7b",
+      "bytes": 143667,
+      "archiveBytes": 38333
+    },
+    {
+      "original": "/tmp/financial-all-report-sources-cumulative.log",
+      "archive": "/tmp/financial-all-report-sources-cumulative.log.gz",
+      "sha256": "4083529bb7d7e78defc9676a5282f86008966e18d6795dc1ebb3be34daa3da61",
+      "bytes": 142772,
+      "archiveBytes": 38069
+    },
+    {
+      "original": "/tmp/financial-treasury-tax-output-cumulative.log",
+      "archive": "/tmp/financial-treasury-tax-output-cumulative.log.gz",
+      "sha256": "6357c92fcc2b4fdc11939533360a9c7331a6bb314ccc8b447cde73a1e8cd6432",
+      "bytes": 141609,
+      "archiveBytes": 37669
+    },
+    {
+      "original": "/tmp/tax-control-accepted-static.log",
+      "archive": "/tmp/tax-control-accepted-static.log.gz",
+      "bytes": 16789,
+      "archiveBytes": 6779,
+      "sha256": "c9f5c35250e4082f1fc28bebab4fe3c37126b10439d579ad3062b62e20dc79dc"
+    },
+    {
+      "original": "/tmp/tax-control-final-175.log",
+      "archive": "/tmp/tax-control-final-175.log.gz",
+      "bytes": 16797,
+      "archiveBytes": 6798,
+      "sha256": "c2b32e3aa1bead70a8927a546be4a34f136e778a1603e2cce932a27547e84f4a"
+    },
+    {
+      "original": "/tmp/tax-control-final-static.log",
+      "archive": "/tmp/tax-control-final-static.log.gz",
+      "bytes": 16788,
+      "archiveBytes": 6801,
+      "sha256": "084b554f4044167ab2db1b95faba70f5391b11a80c198b140a703dc0d917e634"
+    },
+    {
+      "original": "/tmp/tax-control-last-static.log",
+      "archive": "/tmp/tax-control-last-static.log.gz",
+      "bytes": 16788,
+      "archiveBytes": 6771,
+      "sha256": "69415e18e386d8b2941821b14202f06da68dac3e45975628336d12d13ecadcb5"
+    },
+    {
+      "original": "/tmp/tax-control-native-accepted.log",
+      "archive": "/tmp/tax-control-native-accepted.log.gz",
+      "bytes": 4419,
+      "archiveBytes": 1577,
+      "sha256": "d04f7bf5f88c3f8c112377b9c094b6e2be58b9911e86a8069668976d696faa65"
+    },
+    {
+      "original": "/tmp/tax-control-native-final.log",
+      "archive": "/tmp/tax-control-native-final.log.gz",
+      "bytes": 6228,
+      "archiveBytes": 2234,
+      "sha256": "34cb9ec483c47235838d765862fdd22e268be48c38da996c25182fab6a3a53c5"
+    },
+    {
+      "original": "/tmp/tax-control-native-related.log",
+      "archive": "/tmp/tax-control-native-related.log.gz",
+      "bytes": 4418,
+      "archiveBytes": 1580,
+      "sha256": "059916d9e7ef37608784485d8b09e99c9b8db1ddc0bb8ee82a467de4c3b0fb8e"
+    },
+    {
+      "original": "/tmp/tax-control-native-third.log",
+      "archive": "/tmp/tax-control-native-third.log.gz",
+      "bytes": 2359,
+      "archiveBytes": 873,
+      "sha256": "2c3ffb3c9d1b955a3bcd2c5f220afc62b74db75d882b81fbef8a9ba70e7b62ce"
+    },
+    {
+      "original": "/tmp/tax-control-source-accepted-native.log",
+      "archive": "/tmp/tax-control-source-accepted-native.log.gz",
+      "bytes": 4416,
+      "archiveBytes": 1568,
+      "sha256": "0175e13b63638f3b9b340c83f762cc27e49f8bd301be243bd06fefc8aa899968"
+    },
+    {
+      "original": "/tmp/tax-control-static.log",
+      "archive": "/tmp/tax-control-static.log.gz",
+      "bytes": 16791,
+      "archiveBytes": 6793,
+      "sha256": "23dd8657a19e6b3acee4fd077cfa5724d0842ac5a79a3a7155e8874b8cb3e43a"
+    },
+    {
+      "original": "/tmp/tax-control-verified-static.log",
+      "archive": "/tmp/tax-control-verified-static.log.gz",
+      "bytes": 16789,
+      "archiveBytes": 6810,
+      "sha256": "cd73412b30cf0726b859a68349dbe127ec067257acf7080e9ebedb9ef65a7441"
+    },
+    {
+      "original": "/tmp/e80-financial-job-isolation-static.log",
+      "archive": "/tmp/e80-financial-job-isolation-static.log.gz",
+      "bytes": 16827,
+      "archiveBytes": 6840,
+      "sha256": "4bcdbcdcf23a4af6c841a5c181d3cb2d6f2d71c140ee2f773837e65456b96e42"
+    },
+    {
+      "original": "/tmp/e80-financial-job-isolation.log",
+      "archive": "/tmp/e80-financial-job-isolation.log.gz",
+      "bytes": 1942,
+      "archiveBytes": 949,
+      "sha256": "6d334d36c53a1f3631d7f2f4b32634ab3695b4b0763e5a7650dc793d9494f183"
+    },
+    {
+      "original": "/tmp/e80-scheduled-isolation-final-static.log",
+      "archive": "/tmp/e80-scheduled-isolation-final-static.log.gz",
+      "bytes": 16812,
+      "archiveBytes": 6833,
+      "sha256": "21311cddf97616263ce4f8b0b94f7ea08a998081f2cb407114cfddf73d6e9eae"
+    },
+    {
+      "original": "/tmp/e80-scheduled-isolation-final.log",
+      "archive": "/tmp/e80-scheduled-isolation-final.log.gz",
+      "bytes": 2638,
+      "archiveBytes": 1214,
+      "sha256": "4e295297463cc5684c197cdd78c24b5bb06defc3582e0fa606436ac78541e789"
+    },
+    {
+      "original": "/tmp/e80-scheduled-isolation-privacy.log",
+      "archive": "/tmp/e80-scheduled-isolation-privacy.log.gz",
+      "bytes": 949,
+      "archiveBytes": 510,
+      "sha256": "57b2b4561ae457a658e0f5c66523d2ff097fbe38de774deb956220304dd15dbe"
+    },
+    {
+      "original": "/tmp/e81-dashboard-static.log",
+      "archive": "/tmp/e81-dashboard-static.log.gz",
+      "bytes": 16807,
+      "archiveBytes": 6835,
+      "sha256": "3864ec89d3118a847911772ebc70585da90c69a51c1fa49be5d0fc542307924e"
+    },
+    {
+      "original": "/tmp/e82-register-read-final-static.log",
+      "archive": "/tmp/e82-register-read-final-static.log.gz",
+      "bytes": 16802,
+      "archiveBytes": 6826,
+      "sha256": "e01a1abe0498ac6a2b66fe524f1353d9781b7b949ef0a5b32ee04de0b4ec7e59"
+    },
+    {
+      "original": "/tmp/e82-register-read-scope.log",
+      "archive": "/tmp/e82-register-read-scope.log.gz",
+      "bytes": 1547,
+      "archiveBytes": 927,
+      "sha256": "c56862e3bfcb63db624355750a20ca3bfca21376f1c4749a496b479f0a317606"
+    },
+    {
+      "original": "/tmp/e82-register-read-static.log",
+      "archive": "/tmp/e82-register-read-static.log.gz",
+      "bytes": 16827,
+      "archiveBytes": 6846,
+      "sha256": "a16434ef1e18752bf53c57018d4f65080c87b2d89bdc170da495d64f8c39d0ee"
+    },
+    {
+      "original": "/tmp/e83-treasury-native-final.log",
+      "archive": "/tmp/e83-treasury-native-final.log.gz",
+      "bytes": 1702,
+      "archiveBytes": 863,
+      "sha256": "339983f9d53d485319f6f3f83cee2b893984b7f2e02c4d30ee3b721ed7831851"
+    },
+    {
+      "original": "/tmp/e83-treasury-static.log",
+      "archive": "/tmp/e83-treasury-static.log.gz",
+      "bytes": 16821,
+      "archiveBytes": 6840,
+      "sha256": "6e83a2d9a7394d2e0743dd4145ff75237b3cea4c19638891874f02bf48dae3c2"
+    },
+    {
+      "original": "/tmp/e84-treasury-links-native-final.log",
+      "archive": "/tmp/e84-treasury-links-native-final.log.gz",
+      "bytes": 1385,
+      "archiveBytes": 722,
+      "sha256": "782d65f01819efe23e93c53cb1f5a1cd5298d5259368fa1eb7a4dad0e16834f0"
+    },
+    {
+      "original": "/tmp/e84-treasury-links-native.log",
+      "archive": "/tmp/e84-treasury-links-native.log.gz",
+      "bytes": 1385,
+      "archiveBytes": 723,
+      "sha256": "36166e3dcd137bdb49b1eaa7a8a2db4a3639b0115f89425a82c3ce3c87f7c0fa"
+    },
+    {
+      "original": "/tmp/e84-treasury-links-static.log",
+      "archive": "/tmp/e84-treasury-links-static.log.gz",
+      "bytes": 16810,
+      "archiveBytes": 6840,
+      "sha256": "bd741c5cc2b9ab52f1ef309d1f4004038f8fd77b83d87d043a2a1d248e2c5a9f"
+    },
+    {
+      "original": "/tmp/e85-recorded-vat-native.log",
+      "archive": "/tmp/e85-recorded-vat-native.log.gz",
+      "bytes": 2164,
+      "archiveBytes": 1128,
+      "sha256": "28bfa456d03c71f6397863750a7ee692dddbd40c736c4413e211f6ed56c7c6f7"
+    },
+    {
+      "original": "/tmp/e85-recorded-vat-static.log",
+      "archive": "/tmp/e85-recorded-vat-static.log.gz",
+      "bytes": 16791,
+      "archiveBytes": 6793,
+      "sha256": "0e1f53ea2172812b85056a3829e7845492dc15f2241a4b55adae4b7b9f872d8f"
+    },
+    {
+      "original": "/tmp/e86-fund-scope-regression.log",
+      "archive": "/tmp/e86-fund-scope-regression.log.gz",
+      "bytes": 482,
+      "archiveBytes": 329,
+      "sha256": "e83f40a4e2b3dee76dfd4b07cb920f6b7185efbdd80bfb9f6ecf1df014ce1ff4"
+    },
+    {
+      "original": "/tmp/e86-operational-balance-accepted-native.log",
+      "archive": "/tmp/e86-operational-balance-accepted-native.log.gz",
+      "bytes": 1518,
+      "archiveBytes": 823,
+      "sha256": "35e44c0661cfd6dcecc15fa47bef0c24c6c46bb42e3fb4f697d2bc37e406e4ab"
+    },
+    {
+      "original": "/tmp/e86-operational-balance-accepted-static.log",
+      "archive": "/tmp/e86-operational-balance-accepted-static.log.gz",
+      "bytes": 16812,
+      "archiveBytes": 6841,
+      "sha256": "76e428036ed1cb1c7f141319b2e17de55283be92cea0151d3d4e63382e799513"
+    },
+    {
+      "original": "/tmp/e86-operational-balance-native.log",
+      "archive": "/tmp/e86-operational-balance-native.log.gz",
+      "bytes": 1149,
+      "archiveBytes": 643,
+      "sha256": "57ec0ba657ac714eced5737bf963479170670c8e88a4ef6e633712d70ee58176"
+    },
+    {
+      "original": "/tmp/e86-operational-balance-static.log",
+      "archive": "/tmp/e86-operational-balance-static.log.gz",
+      "bytes": 16807,
+      "archiveBytes": 6840,
+      "sha256": "55566253b82d98cc8b6faf3e67b8fb5c0388dc4688e62fefca8a648790616a2a"
+    },
+    {
+      "original": "/tmp/e87-remaining-report-accepted-native.log",
+      "archive": "/tmp/e87-remaining-report-accepted-native.log.gz",
+      "bytes": 1923,
+      "archiveBytes": 996,
+      "sha256": "6630b8dde71d63bfff5a934755ed67f07d53f74384bfb6ec68f70303ff746cb8"
+    },
+    {
+      "original": "/tmp/e87-remaining-report-accepted-static.log",
+      "archive": "/tmp/e87-remaining-report-accepted-static.log.gz",
+      "bytes": 16807,
+      "archiveBytes": 6816,
+      "sha256": "cce27a573f984966183d3d7642e1dab1bb8f60c33782b30db7993c9ecee92465"
+    },
+    {
+      "original": "/tmp/e87-remaining-report-native-final.log",
+      "archive": "/tmp/e87-remaining-report-native-final.log.gz",
+      "bytes": 1925,
+      "archiveBytes": 999,
+      "sha256": "0dd91a608389ddcbe6833046893b7af1ff75979e3f8b5201de3d8aaf7ac887c6"
+    },
+    {
+      "original": "/tmp/e87-remaining-report-static.log",
+      "archive": "/tmp/e87-remaining-report-static.log.gz",
+      "bytes": 16810,
+      "archiveBytes": 6831,
+      "sha256": "c22e26b6aec63a82191460c2e3cecb795e359661c5d89895b7b3b9f6e5dabb17"
+    },
+    {
+      "original": "/tmp/e88-report-clear-accepted-static.log",
+      "archive": "/tmp/e88-report-clear-accepted-static.log.gz",
+      "bytes": 16800,
+      "archiveBytes": 6799,
+      "sha256": "5b1e96fe4bfd3d574c051509e39e350e73dac8ed3a4052caa3ff2f84d9bf2b7f"
+    },
+    {
+      "original": "/tmp/e88-report-clear-static-final.log",
+      "archive": "/tmp/e88-report-clear-static-final.log.gz",
+      "bytes": 16804,
+      "archiveBytes": 6814,
+      "sha256": "90ab571a84ca427b13d3727ab4180ae68f9718c7e24a6f71ac5ae0233dd5c3c8"
+    },
+    {
+      "original": "/tmp/e88-report-clear-static.log",
+      "archive": "/tmp/e88-report-clear-static.log.gz",
+      "bytes": 16809,
+      "archiveBytes": 6822,
+      "sha256": "d6fe8b8f773d749ff3b2761e02fcef74b746a0e53d5bcdc818ccea6a30ce04b1"
+    },
+    {
+      "original": "/tmp/e89-accepted-static.log",
+      "archive": "/tmp/e89-accepted-static.log.gz",
+      "bytes": 16795,
+      "archiveBytes": 6780,
+      "sha256": "c995ea045af2f7c31f3afb3060b90e730b22a31548c23f80941658d5e843cd17"
+    },
+    {
+      "original": "/tmp/e89-central-source-native-related.log",
+      "archive": "/tmp/e89-central-source-native-related.log.gz",
+      "bytes": 2699,
+      "archiveBytes": 1336,
+      "sha256": "8296104d3ed91961e75e83164efb625cea8455772a29e74b3304263d90c2b290"
+    },
+    {
+      "original": "/tmp/e89-current-bank-native-final.log",
+      "archive": "/tmp/e89-current-bank-native-final.log.gz",
+      "bytes": 1010,
+      "archiveBytes": 589,
+      "sha256": "7c0568c9d2263be1eed4d45170c23234818a9af31aaacd894c951a78155e49bf"
+    },
+    {
+      "original": "/tmp/e89-final-static.log",
+      "archive": "/tmp/e89-final-static.log.gz",
+      "bytes": 16803,
+      "archiveBytes": 6797,
+      "sha256": "b4036b48b02df796d53036bb651b1bc3440cc4af5b0cd345a6def1ccdf2c372d"
+    },
+    {
+      "original": "/tmp/e89-native-final-related.log",
+      "archive": "/tmp/e89-native-final-related.log.gz",
+      "bytes": 2695,
+      "archiveBytes": 1330,
+      "sha256": "12dae2a19467d598d5e83f6e309cb4680cf63fb11060b4d3d8e1a8f3014e5dbf"
+    },
+    {
+      "original": "/tmp/financial-credit-source-cumulative.log",
+      "archive": "/tmp/financial-credit-source-cumulative.log.gz",
+      "bytes": 125879,
+      "archiveBytes": 33488,
+      "sha256": "59df40947656b49c66a840c1251d958859dd346890c35b6c66bd2ba05512fbad"
+    },
+    {
+      "original": "/tmp/financial-dated-charge-isolated-cumulative.log",
+      "archive": "/tmp/financial-dated-charge-isolated-cumulative.log.gz",
+      "bytes": 121697,
+      "archiveBytes": 32604,
+      "sha256": "e81f1f150792951761f08dadb98088b24a8c71ced7e22076ee37374504d46a01"
+    },
+    {
+      "original": "/tmp/financial-group-closing-cumulative.log",
+      "archive": "/tmp/financial-group-closing-cumulative.log.gz",
+      "bytes": 129461,
+      "archiveBytes": 34266,
+      "sha256": "42cafc52156eb4c95dcfb4f7dd021b4300c0e251862eb1b439f53cd4b5ed8594"
+    },
+    {
+      "original": "/tmp/financial-group-statement-cumulative.log",
+      "archive": "/tmp/financial-group-statement-cumulative.log.gz",
+      "bytes": 128308,
+      "archiveBytes": 33948,
+      "sha256": "ba77ed31f6efbbd498779d2d9b430ff893684abe438b50e0f70985f540d8a8b6"
+    },
+    {
+      "original": "/tmp/financial-import-recovery-cumulative.log",
+      "archive": "/tmp/financial-import-recovery-cumulative.log.gz",
+      "bytes": 122952,
+      "archiveBytes": 32777,
+      "sha256": "a34a4b48a404a0b31c0420fd38c567309e98f4f18dfbb0e9a21cb50ba5da9962"
+    }
+  ],
+  "recovery": "Temporary worktree copy exhausted disk after the first source commit; only completed own synthetic logs were compressed in allocated blocks, decoded bytes verified and retained. The incomplete-source local test was stopped and is not acceptance. No source Git history, DB, volume, backup or financial records deleted."
+}

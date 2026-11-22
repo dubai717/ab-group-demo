@@ -1,0 +1,28 @@
+{
+  "reviewedOn": "2026-11-22",
+  "purpose": "Technical resource discovery only; not tax classification, compliance or provider acceptance",
+  "officialSources": [
+    "https://mof.gov.ae/en/about-us/initiatives/einvoicing/",
+    "https://peppol.org/documentation/technical-documentation/post-award-documentation/",
+    "https://docs.peppol.eu/poac/ae/",
+    "https://docs.peppol.eu/poac/ae/v1.0.5/",
+    "https://docs.peppol.eu/poac/ae/v1.0.5/pint-ae/trn-invoice/rule/"
+  ],
+  "publishedVersionsObserved": [
+    {"profile": "PINT AE Billing", "version": "1.0.4", "mandatoryDateListed": "2026-06-08", "source": "Official OpenPeppol post-award table"},
+    {"profile": "PINT AE Billing", "version": "1.0.5", "publishedOn": "2026-11-17", "mandatoryDateListed": "2026-12-03", "source": "Official OpenPeppol post-award table"}
+  ],
+  "validationLayersObserved": ["Shared PINT rules", "AE-specific PINT rules"],
+  "resourceDownload": {
+    "url": "https://docs.peppol.eu/poac/ae/v1.0.5/pint-ae/resources.zip",
+    "result": "Direct download blocked by network proxy: Tunnel connection failed 403 Forbidden; web reader cannot download application/zip",
+    "actualArtifactDownloaded": false,
+    "sha256": null,
+    "rulesValidated": false
+  },
+  "profileSelectedForOperations": false,
+  "providerSelected": false,
+  "taxTreatmentApproved": false,
+  "transmissionEnabled": false,
+  "nextSafeWork": "Obtain the exact official artifact over an allowed transport, verify contents/license/checksums, test an offline validator with synthetic fixtures, and retain separate version/effective dates. Do not substitute EU/third-party rules or infer ASP acceptance."
+}
