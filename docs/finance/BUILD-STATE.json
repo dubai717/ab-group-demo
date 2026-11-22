@@ -10,9 +10,10 @@
       "24/24 related native including9 new cases;175 static, TypeScript and provider-free build passed",
       "Owner/reader/configurer AR/EN three widths, four actual PDFs/full Excel, lost-response draft recovery and held cross-company preview/export guards passed",
       "Original legacy tax proposals/package/source/certificate/corporate/GL/VAT browsers passed with original assertions and normal300/min protection retained",
-      "Single original item catalog; immutable encrypted planning versions; no source ledger, historical invoice, permission, hosted DB or deployment changes"
+      "Single original item catalog; immutable encrypted planning versions; no source ledger, historical invoice, permission, hosted DB or deployment changes",
+      "681/681 full native acceptance on immutable tree22f62b05,0 failures/skips/cancellations,1120991.859396ms; decoded log SHA256 recorded"
     ],
-    "next": "Freeze accepted source and verify681 cumulative native cases. Preserve build-only hold and unresolved real tax/legal/agency/provider activation decisions."
+    "next": "Continue independent remaining financial construction under release hold; unresolved real tax/legal/agency/provider activation decisions remain blocked, not all95 acceptance."
   },
   "nextIndependentWork": [
     "Complete original-source scoped output for package registers and remaining dashboard drill-downs; preserve report/export rights and all filters",
@@ -198,22 +199,21 @@
     "hostedActivation": false
   },
   "latestCumulativeAcceptance": {
-    "commit": "379946aad4e6a7c5f9235596e9fdc7cb81c6b879",
-    "tree": "9ba333efd9b2176c2cdea39eb09bbd77c0811fb3",
-    "remoteSourceCommit": "a841569babd45f27c00309eead8db889b23cd9e3",
-    "tests": 672,
-    "passed": 672,
+    "commit": "2996269efbbd96771d5f3b9c59c953bce09966e1",
+    "tree": "22f62b0567961a9c5adaaeee8a4cc98d2830d3e8",
+    "remoteSourceCommit": "b591947b9c0855c730baab3ed9268fda037ffba2",
+    "tests": 681,
+    "passed": 681,
     "failed": 0,
-    "cancelled": 0,
     "skipped": 0,
-    "durationMs": 1128876.750165,
-    "log": "/tmp/financial-central-source-cumulative.log",
-    "logBytes": 143667,
-    "logSha256": "6f169b86d75c46858fdb12ff5110946e6675b9291bf927306f90a4aea7b8bb7b",
-    "scope": "Immutable E89 source includes all previous native tests; not legal/tax/financial activation or all95 acceptance",
+    "cancelled": 0,
+    "durationMs": 1120991.859396,
+    "archivedLog": "/tmp/financial-tax-control-cumulative-verified.log.gz",
+    "decodedLogBytes": 146857,
+    "decodedLogSha256": "7aeee41a50bdd5bc2695d528de23f50c0e72bcf710b6d93806f9a46f37743013",
+    "sourceUnchangedThroughout": true,
     "noHostedOperations": true,
-    "archivedLog": "/tmp/financial-central-source-cumulative.log.gz",
-    "decodedLogSha256": "6f169b86d75c46858fdb12ff5110946e6675b9291bf927306f90a4aea7b8bb7b"
+    "notAll95Acceptance": true
   },
   "prospectiveLegacyService": {
     "review": "docs/reviews/prospective-legacy-service-policy-2026-11-22.md",
@@ -385,8 +385,7 @@
     "hostedChange": false
   },
   "nextCumulativeAcceptance": {
-    "expectedTests": 681,
-    "status": "Pending immutable current-source run",
+    "status": "Current E90 immutable acceptance complete681/681; rerun only after source changes",
     "notAll95Acceptance": true
   },
   "treasuryOriginalRecordLinks": {
@@ -417,12 +416,22 @@
     "hostedChange": false
   },
   "currentCumulativeRun": {
-    "commit": "b485caefc789ca9c0abbbb5a0292080934cdcf9c",
-    "tree": "8df5311df715855241f65c1ecb74f9918bf3b627",
-    "status": "completed success668/668, source unchanged",
-    "log": "/tmp/financial-all-report-sources-cumulative.log",
-    "archivedLog": "/tmp/financial-all-report-sources-cumulative.log.gz",
-    "decodedLogSha256": "4083529bb7d7e78defc9676a5282f86008966e18d6795dc1ebb3be34daa3da61"
+    "commit": "2996269efbbd96771d5f3b9c59c953bce09966e1",
+    "tree": "22f62b0567961a9c5adaaeee8a4cc98d2830d3e8",
+    "remoteSourceCommit": "b591947b9c0855c730baab3ed9268fda037ffba2",
+    "tests": 681,
+    "passed": 681,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "durationMs": 1120991.859396,
+    "archivedLog": "/tmp/financial-tax-control-cumulative-verified.log.gz",
+    "decodedLogBytes": 146857,
+    "decodedLogSha256": "7aeee41a50bdd5bc2695d528de23f50c0e72bcf710b6d93806f9a46f37743013",
+    "sourceUnchangedThroughout": true,
+    "noHostedOperations": true,
+    "notAll95Acceptance": true,
+    "status": "completed success681/681, source unchanged"
   },
   "operationalBalancePresentation": {
     "newNativeCases": 2,
@@ -554,7 +563,26 @@
       "interruptedOwnIncompleteSourceRun": true,
       "incompleteRunAccepted": false,
       "databaseOrBackupChanges": false
-    }
+    },
+    "cumulativeNativePassed": 681
   },
-  "taxCenterTestResourceArchive": "docs/finance/TAX-CENTER-TEST-RESOURCE-PRESERVATION-20261122.json"
+  "taxCenterTestResourceArchive": "docs/finance/TAX-CENTER-TEST-RESOURCE-PRESERVATION-20261122.json",
+  "previous672CumulativeAcceptance": {
+    "commit": "379946aad4e6a7c5f9235596e9fdc7cb81c6b879",
+    "tree": "9ba333efd9b2176c2cdea39eb09bbd77c0811fb3",
+    "remoteSourceCommit": "a841569babd45f27c00309eead8db889b23cd9e3",
+    "tests": 672,
+    "passed": 672,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "durationMs": 1128876.750165,
+    "log": "/tmp/financial-central-source-cumulative.log",
+    "logBytes": 143667,
+    "logSha256": "6f169b86d75c46858fdb12ff5110946e6675b9291bf927306f90a4aea7b8bb7b",
+    "scope": "Immutable E89 source includes all previous native tests; not legal/tax/financial activation or all95 acceptance",
+    "noHostedOperations": true,
+    "archivedLog": "/tmp/financial-central-source-cumulative.log.gz",
+    "decodedLogSha256": "6f169b86d75c46858fdb12ff5110946e6675b9291bf927306f90a4aea7b8bb7b"
+  }
 }
