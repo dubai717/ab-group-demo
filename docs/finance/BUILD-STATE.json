@@ -5,16 +5,16 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Existing export authorization for complete ledger PDF/print, original source/date/JV filters and actual PDF acceptance",
+    "module": "Original approved supplier cash and bank payment methods, CPV and actual source state",
     "acceptance": [
-      "Three new native cases and 62 related native tests passed; real gate failures reproduced, empty statement export scope enforced, private Owner/other companies denied, grants and entries unchanged",
-      "Actual separate reader/exporter browser passed: complete >50 invoice print with localized headers and real multi-page PDF, complete named journal source in AR/EN, typed date filter plus Excel, three widths",
-      "TypeScript, 172 static checks and portable runtime graph passed; requirement 7.1 reevaluated against already accepted E34/E40 rather than rebuilt"
+      "Seven new native cases and 25 related native tests passed, including forced CPV failure with complete bank rollback, same-source retry, exact amounts, original cheque exclusivity and scoped reviewer",
+      "Actual original AR/EN three-width browser and prior financial-package browser passed; mismatch inputs and trace retained, bank Draft not paid, one original CPV per source",
+      "TypeScript, 172 static checks and portable runtime graph passed; company financial feature approval remains absent by default"
     ],
-    "next": "Save E45 and freeze it for cumulative native acceptance. Then complete original approved-commitment payment methods using existing bank operations/cash journals/PV register; no hosted activation or deployment."
+    "next": "Save E46 and run frozen cumulative acceptance. Continue corporate-tax revenue/expense/source distinction and remaining original financial reports, without tax assessment, hosted activation or deployment."
   },
   "nextIndependentWork": [
-    "Complete cash/bank payment methods of approved commitments through original bank operations, fund journals and PV register, keeping existing cheque controls and future financial activation approval",
+    "Corporate-tax revenue/expense/profit distinction and drill-through to original posted sources; no assumed taxable income or tax due",
     "Original noncash employee/external receivable claims using approved actual bank operations and original RV/collection/report sources",
     "Shared-expense reviewed VAT and intercompany settlement acceptance",
     "Owner-card broad classification and exceptional personal requests; supplier refund/correction review",
@@ -30,7 +30,8 @@
     "Supplier refund/cancellation of an actually paid customer outlay requires explicit recoverability decision; original source reversal remains protected",
     "Explicit reviewed employee-advance contact-source schema extension before hosted activation; no historical rewriting",
     "Explicit review of card-issuer-payment-match.review-only.sql and reader compatibility before hosted activation; no old-reader rollback after new source records",
-    "Explicit review of manual-claim-bank-receipts.review-only.sql before hosted activation; retain compatible claim-balance readers after the first bank RV"
+    "Explicit review of manual-claim-bank-receipts.review-only.sql before hosted activation; retain compatible claim-balance readers after the first bank RV",
+    "Specific existing financial feature approval commitment_payments before enabling future cash/direct-bank supplier methods; no historical adoption or automatic source correction"
   ],
   "resumeRules": [
     "read RELEASE-HOLD.md first",
@@ -43,17 +44,17 @@
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
   "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
   "checklistCounts": {
-    "منفذ جزئياً": 26,
+    "منفذ جزئياً": 25,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 41,
+    "مكتمل وغير منشور": 42,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "1a9c29962175acfd5c2353059df05ad60f1c697e",
-  "lastRemoteTree": "dc33d77459c99dcc60d8e9873463c8bcb5e74414",
+  "lastRemoteCommit": "4909fe6ff1343c197dcc4a4407e0e995dd537b79",
+  "lastRemoteTree": "5bbb6e5162a0270d93099e103f0e2ec205833558",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44963014630",
-    "head": "1a9c29962175acfd5c2353059df05ad60f1c697e",
-    "status": "success",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44967045013",
+    "head": "4909fe6ff1343c197dcc4a4407e0e995dd537b79",
+    "status": "in_progress at last read",
     "deployment": false,
     "protectedRunsTouched": false
   },
@@ -66,11 +67,11 @@
     "includes": "Original scoped fund projection and every preceding saved checkpoint"
   },
   "lastCumulativeAcceptance": {
-    "localCommit": "e7dbd4f103808787884e78233aa9e43d06706c8c",
-    "remoteCommit": "68653b017d10af867501ffb49c580e64da71448f",
-    "tree": "857f10f16f5d00dc43d10dceb42c1ac49d44346d",
-    "result": "520 passed, 0 failed; source remained unchanged throughout the complete run",
-    "log": "/workspace/ab-test-tmp/financial-manual-bank-cumulative.log",
+    "localCommit": "d546a58f642af302314be1f537316b6ac9837668",
+    "remoteCommit": "4909fe6ff1343c197dcc4a4407e0e995dd537b79",
+    "tree": "5bbb6e5162a0270d93099e103f0e2ec205833558",
+    "result": "525 passed, 0 failed; tracked source remained unchanged throughout the complete run",
+    "log": "/workspace/ab-test-tmp/financial-ledger-output-cumulative.log",
     "noHostedOperations": true
   },
   "lastCumulativeAttempt": {
