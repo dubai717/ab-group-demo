@@ -1245,6 +1245,7 @@ export async function build(options: Options) {
       "ledger-policy.js",
       "ledger-ui.js",
       "receivables-ui.js",
+      "tax-control-ui.js",
       "financial-package-ui.js",
       "owner-finance-ui.js",
       "petty-review-ui.js",

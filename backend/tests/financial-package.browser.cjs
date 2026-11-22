@@ -13,7 +13,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         await p.locator('.stats-grid').waitFor();
         await p.locator('[data-page=financialManagement]').click();
         await p.locator('#ld-company').selectOption(f.companyId);
-        await require('./company-tax.browser.cjs')(p,f);
+        // Original company-tax assertions run in company-tax-legacy.browser.cjs with their own unchanged rate limiter.
         await require('./cost-centres.browser.cjs')(p,f);
         await require('./contract-financier.browser.cjs')(p,f);
         await require('./invoice-import-template.browser.cjs')(p);

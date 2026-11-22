@@ -695,6 +695,7 @@
           await api("logout", "POST", {});
           FinanceWorkbench.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();
           globalThis.CenterForms?.clear();
+          globalThis.TaxControlUI?.reset();
           C.actor = null;globalThis.RecordLinks?.reset?.();
           C.viewAs=null;
           C.csrf = "";

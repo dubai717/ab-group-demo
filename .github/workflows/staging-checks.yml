@@ -268,7 +268,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for suite in financial-package financial-completion monthly-salik shared-commitments petty-cash-review petty-expense-approval petty-fund-handover personal-owner-card owner-customer-disbursements card-statement-import card-reconciliation employee-advance-chain owner-settlements collection-discounts logical-followup-categories vat-workpaper owner-wallet-consumption bank-lender-registry account-numbering commitment-scheduler; do
+          for suite in company-tax-legacy financial-package financial-completion monthly-salik shared-commitments petty-cash-review petty-expense-approval petty-fund-handover personal-owner-card owner-customer-disbursements card-statement-import card-reconciliation employee-advance-chain owner-settlements collection-discounts logical-followup-categories vat-workpaper owner-wallet-consumption bank-lender-registry account-numbering commitment-scheduler; do
             if test "$suite" = owner-settlements; then
               export AB_OWNER_SETTLEMENT_FIXTURE=1
             else
@@ -371,3 +371,6 @@ jobs:
 
       - name: Central financial figures open exact original sources with independent read and export rights
         run: node backend/tests/central-financial-source-suite.browser.cjs
+
+      - name: Independent company VAT and corporate planning files retain original catalog and disabled posting
+        run: node backend/tests/tax-control-suite.browser.cjs

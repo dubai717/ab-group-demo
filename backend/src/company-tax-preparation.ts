@@ -1,3 +1,4 @@
+import {registerTaxControlCenter,taxControlProfile} from './tax-control-center.js';
 import {registerTaxRegistrationReview} from './tax-registration-review.js';
 import {registerTaxSourceReview} from './tax-source-review.js';
 import {corporateAccounting,registerCorporateTaxSources} from './corporate-tax-workpaper.js';
@@ -39,6 +40,7 @@ export function taxBridge(profit:string,adjustments:any[],from:string,to:string)
   adjustments:rows,filingReady:false,status:'DraftForTaxReview',source:'posted income/expense journals and approved bank operations; exact selected period only'};
 }
 export function registerCompanyTaxPreparation(app:any,route:any,cipher:any){
+ registerTaxControlCenter(app,route,cipher);
  registerTaxRegistrationReview(app,route,cipher,companyTaxDraft);
  registerVatWorkpaper(app,route,cipher,companyTaxDraft);
  registerTaxSourceReview(app,route,cipher,companyTaxDraft);
@@ -47,6 +49,12 @@ export function registerCompanyTaxPreparation(app:any,route:any,cipher:any){
   const d=companyTaxSchema.parse(req.body);need(m,'configure',d.companyId);company(m,d.companyId);
   await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[key(d.companyId)]);
   const old=await companyTaxDraft(c,cipher,d.companyId);requireOk((old?.revision||0)===d.revision,409,'revisionConflict');
+  // Independent files are authoritative once explicitly created. Keep the old proposals as history;
+  // this compatibility endpoint still manages shared TRN/control accounts and original CT adjustments.
+  for(const type of ['vat','corporate'] as const)await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',['ledger:tax-control-profile-v1:'+d.companyId+':'+type]);
+  const vatProfile=await taxControlProfile(c,cipher,d.companyId,'vat',s.tenant_id),corporateProfile=await taxControlProfile(c,cipher,d.companyId,'corporate',s.tenant_id),same=(a:any,b:any)=>JSON.stringify(a||[])===JSON.stringify(b||[]);
+  requireOk(!vatProfile||(same(d.mappings,old?.mappings)&&same(d.vatPeriods,old?.vatPeriods)),409,'independentTaxProfilesRequired');
+  requireOk(!corporateProfile||same(d.corporatePeriods,old?.corporatePeriods),409,'independentTaxProfilesRequired');
   if(d.vatControls){await validateVatControls(c,cipher,m,d.companyId,d.vatControls);if(d.vatControls.evidenceVersionId)await evidence(c,m,d.companyId,d.vatControls.evidenceVersionId);}
   for(const mapping of d.mappings)await item(c,cipher,m,mapping.itemId,d.companyId,true);
   for(const adjustment of d.adjustments)if(adjustment.evidenceVersionId)await evidence(c,m,d.companyId,adjustment.evidenceVersionId);
@@ -66,7 +74,7 @@ export function registerCompanyTaxPreparation(app:any,route:any,cipher:any){
   const q=z.object({companyId:z.uuid(),from:z.iso.date(),to:z.iso.date()}).strict().parse(req.query);
   requireOk(q.to>=q.from,422,'invalidTaxPeriod');need(m,'report',q.companyId);company(m,q.companyId);
   const accounting=await corporateAccounting(c,q.companyId,q.from,q.to),cfg=await companyTaxDraft(c,cipher,q.companyId);
-  const registeredPeriod=cfg?.corporatePeriods.some((p:any)=>p.from===q.from&&p.to===q.to)||false;
-  const co=m.state.companies.find((r:any)=>r.id===q.companyId);return{companyId:q.companyId,companyNameAr:co.arabicName,companyNameEn:co.englishName,from:q.from,to:q.to,registeredPeriod,...taxBridge(accounting.accountingProfit,cfg?.adjustments||[],q.from,q.to),...accounting};
+  const profile=await taxControlProfile(c,cipher,q.companyId,'corporate',s.tenant_id),registeredPeriod=(profile?.periods||cfg?.corporatePeriods||[]).some((p:any)=>p.from===q.from&&p.to===q.to);
+  const co=m.state.companies.find((r:any)=>r.id===q.companyId);return{companyId:q.companyId,companyNameAr:co.arabicName,companyNameEn:co.englishName,from:q.from,to:q.to,registeredPeriod,periodSource:profile?'independent_corporate_profile':'legacy_draft',...taxBridge(accounting.accountingProfit,cfg?.adjustments||[],q.from,q.to),...accounting};
  }));
 }

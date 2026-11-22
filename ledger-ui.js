@@ -531,6 +531,7 @@
                     if(!ABCentral.viewAs)await api('preferences','POST',{companyId:co,tab},crypto.randomUUID());report=null;preview=null;if(tab==='collect')await load();else render();return;
                 }
                 if (action === 'tab') {
+                    if(!TaxControlUI.leave())return;
                     tab = key;
                     if(!ABCentral.viewAs)await api('preferences', 'POST', { companyId: co, tab: key }, crypto.randomUUID());
                     report = null;
@@ -689,7 +690,7 @@
  function bind() {
         if (app.state.currentPage !== 'financialManagement')
             return;
-        document.getElementById('ld-company')?.addEventListener('change', async (ev) => { epoch++; busy = false; co = ev.target.value; context = null; report = null;closingInputRevision++;reportInputRevision++; preview = null; importJob=null; importInputRevision++;notice=''; drafts = {}; bills = []; await refresh(); });
+        document.getElementById('ld-company')?.addEventListener('change', async (ev) => { if(!TaxControlUI.leave()){ev.target.value=co;return;} epoch++; busy = false; co = ev.target.value; context = null; report = null;closingInputRevision++;reportInputRevision++; preview = null; importJob=null; importInputRevision++;notice=''; drafts = {}; bills = []; await refresh(); });
         FinancialTables.bind(document.querySelector(".ld-section"),bindRegisterActions);
         bindForms();
         bindRegisterActions();

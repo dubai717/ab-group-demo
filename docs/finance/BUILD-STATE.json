@@ -5,20 +5,14 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "E89 central original financial source output accepted; cumulative acceptance and independent remaining financial decisions",
+    "module": "E90 company-first independent VAT and corporate planning control center",
     "acceptance": [
-      "Full immutable b485cae/tree8df5311d668/6680fail/skip",
-      "E83:9/9 related native,175 static, six actual PDFs, AR/EN original three treasury reports; original ledger/collections/invoice browser regressions passed",
-      "E84:7/7 related native,175 static, type/build, original voucher/deposit row links and changed-period late-response discard; original session and GL/journal browsers passed",
-      "No hosting operations, financial activation or source/historical/grant changes",
-      "E85:12/12 related native,175 static,type/build, actual recorded VAT AR/EN two PDFs/Excel/native JV; original source-review and GL browsers passed",
-      "E86:8/8 related native;175 static/type/build; actual Owner/reader AR/EN own-only custody, current native receivables, invoice sources, four PDFs and Excel including empty scope",
-      "E87:10/10 related native, all21 report presentations supported; Owner/reader AR/EN eight actual PDFs/full Excel; original package/ledger/operational browser regressions passed",
-      "E88 actual before0 versus2; after AR/EN clear-source recovery,503 manual retry and obsolete report reply discard; original ledger/package/personnel regressions and stricter upload-response checks passed",
-      "E89:18/18 related native,175 static/type/build; Owner and three scoped readers AR/EN, eight actual PDFs/Excel and held native response/export guards; read-only original sources",
-      "Frozen E89 source379946a/tree9ba333ef passed672/672 native,0fail/skip/cancel; same tree as saved remotea841569; log SHA256 recorded"
+      "24/24 related native including9 new cases;175 static, TypeScript and provider-free build passed",
+      "Owner/reader/configurer AR/EN three widths, four actual PDFs/full Excel, lost-response draft recovery and held cross-company preview/export guards passed",
+      "Original legacy tax proposals/package/source/certificate/corporate/GL/VAT browsers passed with original assertions and normal300/min protection retained",
+      "Single original item catalog; immutable encrypted planning versions; no source ledger, historical invoice, permission, hosted DB or deployment changes"
     ],
-    "next": "Substantial approved tax/agency/refund and official profile/provider references remain outstanding; continue only independent safe work without assuming those decisions. Preserve the single final release hold."
+    "next": "Freeze accepted source and verify681 cumulative native cases. Preserve build-only hold and unresolved real tax/legal/agency/provider activation decisions."
   },
   "nextIndependentWork": [
     "Complete original-source scoped output for package registers and remaining dashboard drill-downs; preserve report/export rights and all filters",
@@ -92,7 +86,9 @@
     "logBytes": 143667,
     "logSha256": "6f169b86d75c46858fdb12ff5110946e6675b9291bf927306f90a4aea7b8bb7b",
     "scope": "Immutable E89 source includes all previous native tests; not legal/tax/financial activation or all95 acceptance",
-    "noHostedOperations": true
+    "noHostedOperations": true,
+    "archivedLog": "/tmp/financial-central-source-cumulative.log.gz",
+    "decodedLogSha256": "6f169b86d75c46858fdb12ff5110946e6675b9291bf927306f90a4aea7b8bb7b"
   },
   "lastCumulativeAttempt": {
     "localCommit": "5725c72d8930ba734378c710411421b1d78756b8",
@@ -215,7 +211,9 @@
     "logBytes": 143667,
     "logSha256": "6f169b86d75c46858fdb12ff5110946e6675b9291bf927306f90a4aea7b8bb7b",
     "scope": "Immutable E89 source includes all previous native tests; not legal/tax/financial activation or all95 acceptance",
-    "noHostedOperations": true
+    "noHostedOperations": true,
+    "archivedLog": "/tmp/financial-central-source-cumulative.log.gz",
+    "decodedLogSha256": "6f169b86d75c46858fdb12ff5110946e6675b9291bf927306f90a4aea7b8bb7b"
   },
   "prospectiveLegacyService": {
     "review": "docs/reviews/prospective-legacy-service-policy-2026-11-22.md",
@@ -387,8 +385,8 @@
     "hostedChange": false
   },
   "nextCumulativeAcceptance": {
-    "status": "E89 cumulative acceptance completed; rerun relevant and cumulative checks after future product changes",
-    "lastPassedTests": 672,
+    "expectedTests": 681,
+    "status": "Pending immutable current-source run",
     "notAll95Acceptance": true
   },
   "treasuryOriginalRecordLinks": {
@@ -422,7 +420,9 @@
     "commit": "b485caefc789ca9c0abbbb5a0292080934cdcf9c",
     "tree": "8df5311df715855241f65c1ecb74f9918bf3b627",
     "status": "completed success668/668, source unchanged",
-    "log": "/tmp/financial-all-report-sources-cumulative.log"
+    "log": "/tmp/financial-all-report-sources-cumulative.log",
+    "archivedLog": "/tmp/financial-all-report-sources-cumulative.log.gz",
+    "decodedLogSha256": "4083529bb7d7e78defc9676a5282f86008966e18d6795dc1ebb3be34daa3da61"
   },
   "operationalBalancePresentation": {
     "newNativeCases": 2,
@@ -463,7 +463,9 @@
     "durationMs": 1166192.848667,
     "log": "/tmp/financial-treasury-tax-output-cumulative.log",
     "scope": "Immutable full E83–E85 acceptance; E86/E87 later additions separately verified. Not all95 acceptance.",
-    "noHostedOperations": true
+    "noHostedOperations": true,
+    "archivedLog": "/tmp/financial-treasury-tax-output-cumulative.log.gz",
+    "decodedLogSha256": "6357c92fcc2b4fdc11939533360a9c7331a6bb314ccc8b447cde73a1e8cd6432"
   },
   "reportFilterRecovery": {
     "actualBaseline": "0 rows after clearing a restored filtered result versus2 original rows",
@@ -517,13 +519,42 @@
     "durationMs": 1140879.781634,
     "log": "/tmp/financial-all-report-sources-cumulative.log",
     "scope": "Full immutable E86/E87 acceptance; UI-only E88 later separately verified. Not all95 acceptance.",
-    "noHostedOperations": true
+    "noHostedOperations": true,
+    "archivedLog": "/tmp/financial-all-report-sources-cumulative.log.gz",
+    "decodedLogSha256": "4083529bb7d7e78defc9676a5282f86008966e18d6795dc1ebb3be34daa3da61"
   },
   "previous597CumulativeAcceptance": {
     "localCommit": "bf496c6dcf48fb090011e9b4587ac63b10243898",
     "tree": "410ec5a09c954e9454defcc00f1c7bcfe33ced48",
     "result": "597 passed,0 failed/skipped; exact tracked source unchanged throughout,888931.000649ms",
     "log": "/tmp/financial-credit-source-cumulative.log",
-    "noHostedOperations": true
-  }
+    "noHostedOperations": true,
+    "archivedLog": "/tmp/financial-credit-source-cumulative.log.gz",
+    "decodedLogSha256": "59df40947656b49c66a840c1251d958859dd346890c35b6c66bd2ba05512fbad"
+  },
+  "taxControlCenter": {
+    "review": "docs/reviews/tax-control-center-2026-11-22.md",
+    "sharedCatalog": "ab.finance_items",
+    "files": [
+      "vat",
+      "corporate"
+    ],
+    "namespace": "ledger:tax-control-profile-v1:",
+    "newNativeCases": 9,
+    "relatedNativePassed": 24,
+    "staticPassed": 175,
+    "taxTreatmentLegallyApproved": false,
+    "automaticTaxPosting": false,
+    "filingReady": false,
+    "hostedChanges": false,
+    "legacyProposalPolicy": "Retain original proposal data; independent files are authoritative once explicitly created; block parallel legacy mapping/period edits, preserve shared TRN/control accounts and original CT adjustments",
+    "localResourceRecovery": {
+      "sourceCommitPreserved": "4e6b89f2cfceb59291dab7d264ada17fc9e864bc",
+      "archivedOnlyCompletedOwnSyntheticLogs": 52,
+      "interruptedOwnIncompleteSourceRun": true,
+      "incompleteRunAccepted": false,
+      "databaseOrBackupChanges": false
+    }
+  },
+  "taxCenterTestResourceArchive": "docs/finance/TAX-CENTER-TEST-RESOURCE-PRESERVATION-20261122.json"
 }
