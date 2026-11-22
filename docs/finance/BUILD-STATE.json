@@ -15,9 +15,10 @@
       "E86:8/8 related native;175 static/type/build; actual Owner/reader AR/EN own-only custody, current native receivables, invoice sources, four PDFs and Excel including empty scope",
       "E87:10/10 related native, all21 report presentations supported; Owner/reader AR/EN eight actual PDFs/full Excel; original package/ledger/operational browser regressions passed",
       "E88 actual before0 versus2; after AR/EN clear-source recovery,503 manual retry and obsolete report reply discard; original ledger/package/personnel regressions and stricter upload-response checks passed",
-      "E89:18/18 related native,175 static/type/build; Owner and three scoped readers AR/EN, eight actual PDFs/Excel and held native response/export guards; read-only original sources"
+      "E89:18/18 related native,175 static/type/build; Owner and three scoped readers AR/EN, eight actual PDFs/Excel and held native response/export guards; read-only original sources",
+      "Frozen E89 source379946a/tree9ba333ef passed672/672 native,0fail/skip/cancel; same tree as saved remotea841569; log SHA256 recorded"
     ],
-    "next": "Freeze accepted E89 source, run cumulative672 acceptance and regress original dashboards/GL; continue independent builds while approved tax/agency/legal references remain pending."
+    "next": "Substantial approved tax/agency/refund and official profile/provider references remain outstanding; continue only independent safe work without assuming those decisions. Preserve the single final release hold."
   },
   "nextIndependentWork": [
     "Complete original-source scoped output for package registers and remaining dashboard drill-downs; preserve report/export rights and all filters",
@@ -59,27 +60,38 @@
     "منفذ جزئياً": 19,
     "لم يُنفذ": 0
   },
-  "lastRemoteCommit": "8cee6bad69d3df9ce0043bd7965c4e47f59b7c95",
-  "lastRemoteTree": "3e6c14382e5f4a78ccf8e25ae5f4d2387a61788e",
+  "lastRemoteCommit": "a841569babd45f27c00309eead8db889b23cd9e3",
+  "lastRemoteTree": "9ba333efd9b2176c2cdea39eb09bbd77c0811fb3",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/45038268907",
-    "head": "8cee6bad69d3df9ce0043bd7965c4e47f59b7c95",
-    "status": "in_progress; original HR directory step passed; whole run not yet accepted",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/45041859345",
+    "head": "a841569babd45f27c00309eead8db889b23cd9e3",
+    "tree": "9ba333efd9b2176c2cdea39eb09bbd77c0811fb3",
+    "status": "in_progress; unprivileged synthetic checks only; no final whole-run result yet",
     "deployment": false,
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/45024068037",
-    "head": "3a76b6a36e046b605a0d4950836b6beb06d6628f",
-    "status": "completed success;175 static and648 native passed, all actual browsers passed; unprivileged checks only",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/45038268907",
+    "head": "8cee6bad69d3df9ce0043bd7965c4e47f59b7c95",
+    "tree": "3e6c14382e5f4a78ccf8e25ae5f4d2387a61788e",
+    "status": "completed success;175 static and668 native passed; all actual browser steps passed, including original personnel directory and complete source recovery tests",
     "deployment": false,
     "protectedRunsTouched": false
   },
   "lastCumulativeAcceptance": {
-    "localCommit": "bf496c6dcf48fb090011e9b4587ac63b10243898",
-    "tree": "410ec5a09c954e9454defcc00f1c7bcfe33ced48",
-    "result": "597 passed,0 failed/skipped; exact tracked source unchanged throughout,888931.000649ms",
-    "log": "/tmp/financial-credit-source-cumulative.log",
+    "commit": "379946aad4e6a7c5f9235596e9fdc7cb81c6b879",
+    "tree": "9ba333efd9b2176c2cdea39eb09bbd77c0811fb3",
+    "remoteSourceCommit": "a841569babd45f27c00309eead8db889b23cd9e3",
+    "tests": 672,
+    "passed": 672,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "durationMs": 1128876.750165,
+    "log": "/tmp/financial-central-source-cumulative.log",
+    "logBytes": 143667,
+    "logSha256": "6f169b86d75c46858fdb12ff5110946e6675b9291bf927306f90a4aea7b8bb7b",
+    "scope": "Immutable E89 source includes all previous native tests; not legal/tax/financial activation or all95 acceptance",
     "noHostedOperations": true
   },
   "lastCumulativeAttempt": {
@@ -101,10 +113,10 @@
     "qualification": "E43 source was edited during the run. Do not attribute this to an immutable E43 commit. Exact E42 CI native stage separately passed."
   },
   "lastLocalSavedCheckpoint": {
-    "commit": "bf496c6dcf48fb090011e9b4587ac63b10243898",
-    "tree": "410ec5a09c954e9454defcc00f1c7bcfe33ced48",
-    "includes": "E63 recorded credit source, E64 native credit-document review/feedback ownership and E65 direct writeoff-review parity; frozen597/597",
-    "remotePublication": "Local saved; remote fc370018f2fc92a1fa72f249d4aad58e3bae984b remains older E60 and passed entire draft CI44998596373"
+    "commit": "379946aad4e6a7c5f9235596e9fdc7cb81c6b879",
+    "tree": "9ba333efd9b2176c2cdea39eb09bbd77c0811fb3",
+    "includes": "E89 central original financial sources, all21 human report outputs and cumulative672/672; six original browser regressions also passed",
+    "remotePublication": "Same exact tested source tree saved at remotea841569; separate documentation-only evidence checkpoint follows"
   },
   "ciExecutionBudgetFix": "Reusable unprivileged staging-checks job budget increased from30 to90 minutes, all required tests retained. Protected controller, owner approval and cancel-in-progress:false unchanged. Old runs not restarted or cancelled.",
   "isolatedTestResourceRecovery": {
@@ -190,15 +202,19 @@
     "hostedActivation": false
   },
   "latestCumulativeAcceptance": {
-    "commit": "b485caefc789ca9c0abbbb5a0292080934cdcf9c",
-    "tree": "8df5311df715855241f65c1ecb74f9918bf3b627",
-    "tests": 668,
-    "passed": 668,
+    "commit": "379946aad4e6a7c5f9235596e9fdc7cb81c6b879",
+    "tree": "9ba333efd9b2176c2cdea39eb09bbd77c0811fb3",
+    "remoteSourceCommit": "a841569babd45f27c00309eead8db889b23cd9e3",
+    "tests": 672,
+    "passed": 672,
     "failed": 0,
+    "cancelled": 0,
     "skipped": 0,
-    "durationMs": 1140879.781634,
-    "log": "/tmp/financial-all-report-sources-cumulative.log",
-    "scope": "Full immutable E86/E87 acceptance; UI-only E88 later separately verified. Not all95 acceptance.",
+    "durationMs": 1128876.750165,
+    "log": "/tmp/financial-central-source-cumulative.log",
+    "logBytes": 143667,
+    "logSha256": "6f169b86d75c46858fdb12ff5110946e6675b9291bf927306f90a4aea7b8bb7b",
+    "scope": "Immutable E89 source includes all previous native tests; not legal/tax/financial activation or all95 acceptance",
     "noHostedOperations": true
   },
   "prospectiveLegacyService": {
@@ -371,8 +387,8 @@
     "hostedChange": false
   },
   "nextCumulativeAcceptance": {
-    "expectedTests": 672,
-    "scope": "E89 adds4 native cases; prior668 is not final E89 acceptance",
+    "status": "E89 cumulative acceptance completed; rerun relevant and cumulative checks after future product changes",
+    "lastPassedTests": 672,
     "notAll95Acceptance": true
   },
   "treasuryOriginalRecordLinks": {
@@ -471,6 +487,43 @@
     "staticPassed": 175,
     "browser": "Owner/ledger-exporter/bank-print-only/summary-only AR/EN; eight actual PDFs and full Excel; held native source and closed-print replies discarded",
     "financialWrites": false,
-    "hostedChanges": false
+    "hostedChanges": false,
+    "originalRegressions": "Original GL/document output, all original financial dashboard counters, Owner personal receivable, actual shared settlement and original shared source reports passed after E89; no accounting/grant mutation",
+    "cumulativePassed": 672,
+    "cumulativeTree": "9ba333efd9b2176c2cdea39eb09bbd77c0811fb3"
+  },
+  "previousFailedDraftCi": {
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/45031886523",
+    "head": "69a19b8103efc21a4913be31fffc487e1ec2e14f",
+    "status": "completed failure: personnel-directory document form remained visible; no HTTP cause present in original CI log; same test passes locally with new safe diagnostics and stricter actual upload HTTP assertions",
+    "native": "661/661 passed;175 static passed",
+    "deployment": false,
+    "protectedRunsTouched": false
+  },
+  "checklistEvidenceIntegrity": {
+    "requirements": 95,
+    "uniqueEvidenceAnchors": 89,
+    "missingRequirementEvidence": 0,
+    "brokenLocalLinks": 0,
+    "result": "Original JSON/Markdown states and code/review/test paths verified locally; not financial-policy or full95 acceptance"
+  },
+  "previous668CumulativeAcceptance": {
+    "commit": "b485caefc789ca9c0abbbb5a0292080934cdcf9c",
+    "tree": "8df5311df715855241f65c1ecb74f9918bf3b627",
+    "tests": 668,
+    "passed": 668,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 1140879.781634,
+    "log": "/tmp/financial-all-report-sources-cumulative.log",
+    "scope": "Full immutable E86/E87 acceptance; UI-only E88 later separately verified. Not all95 acceptance.",
+    "noHostedOperations": true
+  },
+  "previous597CumulativeAcceptance": {
+    "localCommit": "bf496c6dcf48fb090011e9b4587ac63b10243898",
+    "tree": "410ec5a09c954e9454defcc00f1c7bcfe33ced48",
+    "result": "597 passed,0 failed/skipped; exact tracked source unchanged throughout,888931.000649ms",
+    "log": "/tmp/financial-credit-source-cumulative.log",
+    "noHostedOperations": true
   }
 }
