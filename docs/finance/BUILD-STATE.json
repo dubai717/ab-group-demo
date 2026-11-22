@@ -5,15 +5,17 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "E54 prospective explicit recurring company scope and legacy non-adoption protection",
+    "module": "E56 exact original Pending-voucher/Review-deposit dashboard source drill-downs",
     "acceptance": [
-      "24 focused native cases passed (five new), final TypeScript, 172 static tests and portable build passed",
-      "Three actual browser suites passed: explicit recurrence company, original package and entitlement output; AR/EN three widths",
-      "No hosted operations or deployment; full 561-case cumulative acceptance next on frozen commit"
+      "Actual before-fix browser reproduced1 Pending count opening2 native vouchers; no source-data error",
+      "Actual Owner/scoped reporter browser passed exact counted subsets, clear/query reset, full print, empty/other-company boundaries, AR/EN three widths and unchanged source states/rights",
+      "Four actual browser suites passed including206-row document source, original financial package and601-row sources/PDF; TypeScript,172 static and build/graph passed",
+      "Customer integration8/8 and existing disposal guards3/3 passed after per-case owned local fixture cleanup; no test weakened"
     ],
-    "next": "Complete original document metadata output and remaining report drill-downs; retain native source permissions and coherent server-side pagination."
+    "next": "Run a fresh immutable full564 acceptance with compiler caches disabled, then continue independent e-invoice original-source preparation infrastructure and remaining financial/tax requirements. No merge/deploy."
   },
   "nextIndependentWork": [
+    "Original-source immutable e-invoice preparation with original VAT snapshots, strict scope and explicit unvalidated/legal/provider blockers; no transmission or invented XML compliance",
     "Complete original-source scoped output for package registers and remaining dashboard drill-downs; preserve report/export rights and all filters",
     "Original noncash employee/external receivable claims using approved actual bank operations and original RV/collection/report sources",
     "Shared-expense reviewed VAT and intercompany settlement acceptance",
@@ -51,35 +53,36 @@
     "مكتمل وغير منشور": 45,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "094aa087b4d56ff13552df492bc98b9c736a742f",
-  "lastRemoteTree": "06c3b18a5221847cad4043f4dee4219537eda0ae",
+  "lastRemoteCommit": "31014cd711b60ff33bab17832c45505999cee984",
+  "lastRemoteTree": "8984bffa7e42fe249060f2e16ad54b3ecdc8f2cb",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44977048066",
-    "head": "094aa087b4d56ff13552df492bc98b9c736a742f",
-    "status": "cancelled by existing 30-minute job execution budget after all 550 native tests and static/build passed; no test failure in completed steps",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44982198278",
+    "head": "31014cd711b60ff33bab17832c45505999cee984",
+    "status": "completed success (entire unprivileged draft workflow, verified22Nov)",
     "deployment": false,
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44968684100",
-    "head": "75cc9eb97f612d5a35df537d7efce3cb749cd851",
-    "status": "success",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44982198278",
+    "head": "31014cd711b60ff33bab17832c45505999cee984",
+    "status": "completed success (entire unprivileged draft workflow, verified22Nov)",
     "deployment": false,
     "protectedRunsTouched": false
   },
   "lastCumulativeAcceptance": {
-    "localCommit": "b0113fc2707df6b59a8afd8fd8ffb931eb162a33",
-    "remoteCommit": "094aa087b4d56ff13552df492bc98b9c736a742f",
-    "tree": "06c3b18a5221847cad4043f4dee4219537eda0ae",
-    "result": "550 passed, 0 failed; tracked source unchanged throughout",
-    "log": "/workspace/ab-test-tmp/financial-discount-salik-cumulative.log",
+    "localCommit": "565881b0710c2826913cc00ae532879986ffd830",
+    "remoteCommit": "31014cd711b60ff33bab17832c45505999cee984",
+    "tree": "8984bffa7e42fe249060f2e16ad54b3ecdc8f2cb",
+    "result": "561 passed, 0 failed; tracked tree unchanged throughout the entire run",
+    "log": "/workspace/ab-test-tmp/financial-explicit-company-cumulative.log",
     "noHostedOperations": true
   },
   "lastCumulativeAttempt": {
-    "localCommit": "af9306d",
-    "result": "496 tests: 494 passed; 2 failed only at isolated pg_restore index creation with No space left on device",
-    "log": "/workspace/ab-test-tmp/financial-owner-unbilled-cumulative.log",
-    "followup": "Resolved: 10 affected/resource cases passed, then 497/497 cumulative tests passed at d55bc80. No cloud operations."
+    "localCommit": "5725c72d8930ba734378c710411421b1d78756b8",
+    "tree": "773abefa3fbe4a92cc52df2d8e60f90d0172b82a",
+    "result": "564 total,563 passed,1 resource-only failure during fresh customer scanner fixture creation (53100); exact tree unchanged throughout",
+    "log": "/workspace/ab-test-tmp/financial-document-register-cumulative.log",
+    "followup": "8/8 customer integration and3/3 existing disposal guards passed after per-case fixture cleanup; a fresh cumulative run remains required"
   },
   "priorDraftCiFailure": {
     "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44943381763",
@@ -93,10 +96,18 @@
     "qualification": "E43 source was edited during the run. Do not attribute this to an immutable E43 commit. Exact E42 CI native stage separately passed."
   },
   "lastLocalSavedCheckpoint": {
-    "commit": "f915bd80e2127c69218fb7a0aea853a39fc70622",
-    "tree": "437dbdb97ed7aff316d5c9cffe29421d87e46f60",
-    "includes": "E53 scoped original entitlement/fee output:33 native and five browser suites passed",
-    "remotePublication": "E52–E54 combined build checkpoint pending; draft only, no merge or delivery"
+    "commit": "80ed3a829646b5788a1ad3ea94a7e7bf2ca0f63a",
+    "includes": "E55 original document outputs and isolated per-case customer fixture lifecycle fix; E56 accepted locally and saved next",
+    "remotePublication": "E55–E56 combined draft publication follows exact acceptance; no merge/delivery"
   },
-  "ciExecutionBudgetFix": "Reusable unprivileged staging-checks job budget increased from30 to90 minutes, all required tests retained. Protected controller, owner approval and cancel-in-progress:false unchanged. Old runs not restarted or cancelled."
+  "ciExecutionBudgetFix": "Reusable unprivileged staging-checks job budget increased from30 to90 minutes, all required tests retained. Protected controller, owner approval and cancel-in-progress:false unchanged. Old runs not restarted or cancelled.",
+  "isolatedTestResourceRecovery": {
+    "compilerCacheBytesReclaimed": 17976891,
+    "onlyLocalContainer": "ab-postgres-foundation",
+    "onlyLoopbackPort": 5441,
+    "localWalBudget": "min32MB/max64MB and ordinary CHECKPOINT; no Reset/Restore",
+    "rootFix": "customers.integration close now disposes its own allocated synthetic DB immediately instead of accumulating eight until beforeExit",
+    "noUnknownDatabasesOrProcessesRemoved": true,
+    "originalSupabaseTouched": false
+  }
 }

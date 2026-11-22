@@ -95,17 +95,17 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         await invoiceStarted;
         try {
             await p.locator('#fp-document-type').selectOption('Discount');
-            await p.waitForFunction(() => document.querySelector('[data-ft-table="package:documents"] tbody')?.innerText.includes('DS-'));
+            await p.waitForFunction(() => document.querySelector('[data-ft-table^="package:documents:"] tbody')?.innerText.includes('DS-'));
         } finally { releaseInvoice(); }
         await p.unrouteAll({behavior:'wait'});
-        await p.waitForFunction(() => document.querySelector('#fp-document-type')?.value === 'Discount' && document.querySelector('[data-ft-table="package:documents"] tbody')?.innerText.includes('DS-'));
+        await p.waitForFunction(() => document.querySelector('#fp-document-type')?.value === 'Discount' && document.querySelector('[data-ft-table^="package:documents:"] tbody')?.innerText.includes('DS-'));
 
         const documents = await p.evaluate(co => ABCentral.api('ledger/package/documents?companyId=' + co + '&type=Discount'), f.companyId);
         assert.equal(documents.rows.length, 1);
         assert(documents.rows[0].number.startsWith('DS-'));
         for (const type of ['RV', 'PV', 'Deposit']) {
             await p.locator('#fp-document-type').selectOption(type);
-            await p.waitForFunction(() => document.querySelector('[data-ft-table="package:documents"] [data-fp-open]'));
+            await p.waitForFunction(() => document.querySelector('[data-ft-table^="package:documents:"] [data-fp-open]'));
             const docs = await p.evaluate(({ co, type }) => ABCentral.api('ledger/package/documents?companyId=' + co + '&type=' + type), { co: f.companyId, type });
             assert.equal(docs.rows.length, 1);
             assert(docs.rows[0].number);

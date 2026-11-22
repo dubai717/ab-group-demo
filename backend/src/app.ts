@@ -258,7 +258,7 @@ export async function build(options: Options) {
             JSON.stringify(result),
           ]);
         return result;
-      },s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:undefined);
+      },{...(s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:{}),...(req.method==='GET'&&req.url.split('?')[0]==='/api/ledger/package/document-register'?{repeatableRead:true}:{})});
     };
   registerPermissionAdmin(app,call,cipher);registerSecurityRoles(app,call,cipher);
   registerFinance(app,call,cipher);

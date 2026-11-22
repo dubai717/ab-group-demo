@@ -295,3 +295,9 @@ jobs:
           done
       - name: Original personal issuer proof matching uses explicitly reviewed isolated schema only
         run: node backend/tests/card-issuer-reconciliation-suite.browser.cjs
+
+      - name: Original complete financial document output acceptance
+        run: node backend/tests/financial-document-register-suite.browser.cjs
+
+      - name: Financial dashboard exact original source drill-downs
+        run: node backend/tests/dashboard-source-drilldown-suite.browser.cjs
