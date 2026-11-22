@@ -4,7 +4,7 @@ import {z} from 'zod';
 import {requireOk} from './core.js';
 const Grid=createRequire(import.meta.url)('../../register-tools.js');
 export const registerArgs={search:z.string().max(5000).default(''),grid:z.string().max(40000).default('{}'),full:z.enum(['true','false']).default('false')};
-export function registerType(key:string):string{return /(^|_)(amount|paid|outstanding|balance|refill|debit|credit|net|total|priority|score|opening_balance|closing_balance|ceiling|threshold|confirmed)$|^(bookOutstanding|openingBalance|closingBalance|invoiceNumber|invoice_number|receipt_number|number)$/.test(key)?'number':/(_on|_at)$|^(date|dueOn|issuedOn|createdAt|effectiveOn|month|period_from|period_to)$/.test(key)?'date':'text';}
+export function registerType(key:string):string{return /(^|_)(amount|paid|outstanding|balance|refill|debit|credit|net|total|priority|score|opening_balance|closing_balance|ceiling|threshold|confirmed)$|^(bookOutstanding|openingBalance|closingBalance|invoiceNumber|invoice_number|receipt_number|number|fundsAwaitingDelivery|maxPerInvoice|ownerReviewAbove|maxPercent|revision|delayMonths)$/.test(key)?'number':/(_on|_at)$|^(date|dueOn|issuedOn|createdAt|effectiveOn|anchorOn|untilOn|month|period_from|period_to)$/.test(key)?'date':'text';}
 export function filterRegister(rows:any[],q:any,fields?:string[],typeOverrides:Record<string,string>={}){
  requireOk(rows.length<=20000,422,'registerTooLarge');
  const allowed=fields||[...new Set(rows.flatMap(r=>Object.keys(r)))].filter(k=>!/(cipher|password|token)/i.test(k));

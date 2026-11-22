@@ -1,0 +1,13 @@
+import {security} from '../src/core.js';import {today} from '../src/vehicle-domain.js';
+import {createEntitlementSources} from './package-entitlement-fixture.js';
+// Independent synthetic source fixture, fake Auth/storage and loopback only.
+import {writeFile} from 'node:fs/promises';import {packageRegisterFixture} from './package-register-fixture.js';import {build} from '../src/app.js';
+const f=await packageRegisterFixture(true),entitlementFixture=process.env.AB_TEST_ENTITLEMENT_EXPORT_FIXTURE==='1'?await createEntitlementSources(f):null,users:any={};for(const kind of ['reader','exporter']){const u=await f.employee();for(const action of ['ledger_view','ledger_report','customer_view',...(kind==='exporter'?['ledger_export']:[])])await f.req('POST','/api/users/'+u.id+'/grants',{action,scope:{type:'company',id:f.co1},delegable:false});users[kind]=u;}
+if(process.env.AB_TEST_LEGACY_RELATION_REVIEW_FIXTURE==='1'){
+ if(!entitlementFixture)throw Error('SYNTHETIC_ENTITLEMENT_SOURCE_REQUIRED');const cipher=security(f.secret.key);
+ await f.admin.query('insert into ab.settings(tenant_id,key,value)values($1,$2,$3)',[f.org.tenant,'financial-package-v1:approval:'+f.co1,{cipher:cipher.seal({companyId:f.co1,features:['recurring'],reviewedDigest:'synthetic-legacy-ui-source-review',reason:'Isolated manual UI acceptance only, no hosted approval',approvedBy:f.org.user,approvedOn:today()})}]);
+ for(const id of [entitlementFixture.sameCompanyId,entitlementFixture.crossCompanyId])await f.req('POST','/api/ledger/package/relations/'+id+'/status',{companyId:f.co1,enabled:true,revision:1,confirm:true});
+ const key='financial-package-v1:relations:'+f.co1+':'+entitlementFixture.crossCompanyId,row=(await f.admin.query('select value from ab.settings where key=$1',[key])).rows[0],data=cipher.open(row.value.cipher);delete data.companyScopePolicy;await f.admin.query('update ab.settings set value=$2 where key=$1',[key,{cipher:cipher.seal(data)}]);
+}
+await f.app.close();const app=await build({pool:f.runtime,key:f.secret.key,origin:'http://127.0.0.1:3646',secureCookies:false,auth:f.auth,objects:f.objects,scan:async()=> 'clean'});
+await writeFile('work/package-register-fixture.json',JSON.stringify({entitlementFixture,username:f.username,password:f.password,companyId:f.co1,otherCompanyId:f.co2,users,centresCount:601}),{mode:0o600});await app.listen({host:'127.0.0.1',port:3646});console.log('SYNTHETIC_PACKAGE_REGISTER_READY');process.on('SIGTERM',async()=>{await app.close();await f.close();process.exit(0);});

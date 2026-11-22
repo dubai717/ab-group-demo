@@ -5,13 +5,13 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Original dated Salik responsibility source proof, commit recheck and cached-preview compatibility",
+    "module": "E54 prospective explicit recurring company scope and legacy non-adoption protection",
     "acceptance": [
-      "8 final native tests passed, including four new relation/date/source/preview-upgrade cases and original wallet/import source regressions",
-      "Actual cutoff import browser plus original monthly Salik, Owner wallet and full package browsers passed; AR/EN three widths; review errors preserve financial source",
-      "TypeScript, 172 static tests and portable runtime build passed"
+      "24 focused native cases passed (five new), final TypeScript, 172 static tests and portable build passed",
+      "Three actual browser suites passed: explicit recurrence company, original package and entitlement output; AR/EN three widths",
+      "No hosted operations or deployment; full 561-case cumulative acceptance next on frozen commit"
     ],
-    "next": "Save/preserve E49-E51 on draft115, then freeze cumulative acceptance (expected550). Prepare original-source exports for the remaining package registers outside frozen tracked source; no merge/deploy."
+    "next": "Complete original document metadata output and remaining report drill-downs; retain native source permissions and coherent server-side pagination."
   },
   "nextIndependentWork": [
     "Complete original-source scoped output for package registers and remaining dashboard drill-downs; preserve report/export rights and all filters",
@@ -32,7 +32,8 @@
     "Explicit review of card-issuer-payment-match.review-only.sql and reader compatibility before hosted activation; no old-reader rollback after new source records",
     "Explicit review of manual-claim-bank-receipts.review-only.sql before hosted activation; retain compatible claim-balance readers after the first bank RV",
     "Specific existing financial feature approval commitment_payments before enabling future cash/direct-bank supplier methods; no historical adoption or automatic source correction",
-    "Any future discount limit activation requires independent exact proposal/digest Owner financial approval; no activation endpoint or hosted approval is performed by the build."
+    "Any future discount limit activation requires independent exact proposal/digest Owner financial approval; no activation endpoint or hosted approval is performed by the build.",
+    "Existing cross-company explicit recurring relations previously skipped by the generator require a specifically reviewed prospective adoption decision; no automatic stamping, activation or historical billing."
   ],
   "resumeRules": [
     "read RELEASE-HOLD.md first",
@@ -50,12 +51,12 @@
     "مكتمل وغير منشور": 45,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "93888ba2eba3f29a7d19af80a1aee5ffe9983db9",
-  "lastRemoteTree": "3e038add96dd0040b3168a9dfbab5aef2fb72bda",
+  "lastRemoteCommit": "094aa087b4d56ff13552df492bc98b9c736a742f",
+  "lastRemoteTree": "06c3b18a5221847cad4043f4dee4219537eda0ae",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44974441328",
-    "head": "93888ba2eba3f29a7d19af80a1aee5ffe9983db9",
-    "status": "in_progress at last read",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44977048066",
+    "head": "094aa087b4d56ff13552df492bc98b9c736a742f",
+    "status": "cancelled by existing 30-minute job execution budget after all 550 native tests and static/build passed; no test failure in completed steps",
     "deployment": false,
     "protectedRunsTouched": false
   },
@@ -67,11 +68,11 @@
     "protectedRunsTouched": false
   },
   "lastCumulativeAcceptance": {
-    "localCommit": "e0c3ffd6c64046fa14630a02ff4ffa1dbe682261",
-    "remoteCommit": "93888ba2eba3f29a7d19af80a1aee5ffe9983db9",
-    "tree": "3e038add96dd0040b3168a9dfbab5aef2fb72bda",
-    "result": "539 passed, 0 failed; tracked source unchanged throughout",
-    "log": "/workspace/ab-test-tmp/financial-treasury-overview-cumulative.log",
+    "localCommit": "b0113fc2707df6b59a8afd8fd8ffb931eb162a33",
+    "remoteCommit": "094aa087b4d56ff13552df492bc98b9c736a742f",
+    "tree": "06c3b18a5221847cad4043f4dee4219537eda0ae",
+    "result": "550 passed, 0 failed; tracked source unchanged throughout",
+    "log": "/workspace/ab-test-tmp/financial-discount-salik-cumulative.log",
     "noHostedOperations": true
   },
   "lastCumulativeAttempt": {
@@ -92,9 +93,10 @@
     "qualification": "E43 source was edited during the run. Do not attribute this to an immutable E43 commit. Exact E42 CI native stage separately passed."
   },
   "lastLocalSavedCheckpoint": {
-    "commit": "8de6ec8705795793fc5d415efc8eba3292d86353",
-    "tree": "41cb8cc4aef714f8e1c834c9a6e9e11fe92462cc",
-    "includes": "E50 future discount capability; 20 native/three browser suites, 172 static/type/build passed",
-    "remotePublication": "pending cumulative E49-E51 checkpoint"
-  }
+    "commit": "f915bd80e2127c69218fb7a0aea853a39fc70622",
+    "tree": "437dbdb97ed7aff316d5c9cffe29421d87e46f60",
+    "includes": "E53 scoped original entitlement/fee output:33 native and five browser suites passed",
+    "remotePublication": "E52–E54 combined build checkpoint pending; draft only, no merge or delivery"
+  },
+  "ciExecutionBudgetFix": "Reusable unprivileged staging-checks job budget increased from30 to90 minutes, all required tests retained. Protected controller, owner approval and cancel-in-progress:false unchanged. Old runs not restarted or cancelled."
 }

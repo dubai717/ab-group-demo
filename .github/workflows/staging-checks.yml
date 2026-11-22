@@ -6,7 +6,8 @@ permissions:
 jobs:
   staging-checks:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Full isolated native + browser acceptance now exceeds 30 minutes; retain every required test.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -249,6 +250,12 @@ jobs:
         run: node backend/tests/discount-policy-proposals-suite.browser.cjs
       - name: Salik import rechecks original dated responsibility
         run: node backend/tests/salik-responsibility-suite.browser.cjs
+      - name: Original package registers export complete authorized sources
+        run: node backend/tests/financial-package-registers-suite.browser.cjs
+      - name: Fee and entitlement source exports preserve customer scope
+        run: node backend/tests/package-entitlement-sources-suite.browser.cjs
+      - name: Explicit recurring company scope preserves legacy review
+        run: node backend/tests/explicit-recurrence-company-suite.browser.cjs
       - name: Corporate accounting revenue expense and original source output
         run: node backend/tests/corporate-tax-workpaper-suite.browser.cjs
       - name: Approved supplier cash and native bank settlement without repeated expense
