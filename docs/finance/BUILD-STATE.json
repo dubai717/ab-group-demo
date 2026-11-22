@@ -5,16 +5,15 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "E75–E78 integrated: documentary TRN, localized original ledger acceptance, human collection grouping and bounded original source",
+    "module": "E75–E81 integrated build;651 native accepted before E80/E81; combined656 acceptance next",
     "acceptance": [
-      "E75:9/9 related native and actual private-PDF/Owner-history AR/EN browser passed",
-      "E77:12/12 related native and actual original collections all five groupings AR/EN PDF/Excel passed",
-      "E78:27/27 related native and actual collections browser passed;175 static/type/provider-free build passed",
-      "Original Owner/source/GL/package integrated browsers passed",
-      "Full644 attempt643 passed/1 ENOSPC copying portable PDF test dependencies; same unchanged PDF worker passes using separate memory temporary directory",
-      "Remote447:638 native passed but old locale assertion failed; E76 corrected and original browser passed; no protected workflow touched"
+      "Full651/6510fail/skip94a98be tree8d119b51",
+      "E80:14/14 related native, then5/5 final privacy/fault cases; financial/vehicle company rollback and safe continuation; global maintenance/53100 still stop",
+      "E81: actual receipt dashboard0versus1 before fix; Owner/reader all three remaining counters AR/EN filters/search/full print/three widths passed after fix",
+      "Original Pending voucher/Review deposit dashboard browser passed;175 static and provider-free build passed",
+      "No source database, historical balance/grant change, staging merge, protected workflow action or delivery request"
     ],
-    "next": "Run full648 integrated native acceptance in own synthetic DB5442 using per-process memory temp; preserve remaining20 partial and build-only hold."
+    "next": "Run combined656 native suite on isolated DB5442 with per-command memory temp; continue independent work while approved tax classification reference remains pending."
   },
   "nextIndependentWork": [
     "Complete original-source scoped output for package registers and remaining dashboard drill-downs; preserve report/export rights and all filters",
@@ -55,19 +54,19 @@
     "مكتمل ومنشور": 27,
     "مكتمل وغير منشور": 48
   },
-  "lastRemoteCommit": "447c750a7c8b79869c6c20b36e932a04d7e2b835",
-  "lastRemoteTree": "935ec64d52e2a0f257002cb46b7de0843ab0e8ca",
+  "lastRemoteCommit": "3a76b6a36e046b605a0d4950836b6beb06d6628f",
+  "lastRemoteTree": "66da8b59605870f7c664ea6a1c9f830d0b74c266",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/45019473013",
-    "head": "447c750a7c8b79869c6c20b36e932a04d7e2b835",
-    "status": "completed failure: native638 passed; legacy ledger-output browser expected English posted-source wording in Arabic output; later steps skipped",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/45024068037",
+    "head": "3a76b6a36e046b605a0d4950836b6beb06d6628f",
+    "status": "completed success;175 static and648 native passed, all actual browsers passed; unprivileged checks only",
     "deployment": false,
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44986796893",
-    "head": "b8ff6c8747751a00fae8b0ea1481dc2e773070dd",
-    "status": "completed success (entire unprivileged draft workflow, verified22Nov)",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/45024068037",
+    "head": "3a76b6a36e046b605a0d4950836b6beb06d6628f",
+    "status": "completed success;175 static and648 native passed, all actual browsers passed; unprivileged checks only",
     "deployment": false,
     "protectedRunsTouched": false
   },
@@ -185,15 +184,15 @@
     "hostedActivation": false
   },
   "latestCumulativeAcceptance": {
-    "commit": "4996948991c83ffde3128fd2009134f236aa70b9",
-    "tree": "e4a32df7d34e7d483dfab5b6c972dd22d52fa125",
-    "tests": 632,
-    "passed": 632,
+    "commit": "3dbc0b39a59e13bb0e7be75268cb813edf3307fe",
+    "tree": "89e54c1db103f925cd2d1d30a4fca54f5d1f9f89",
+    "tests": 656,
+    "passed": 656,
     "failed": 0,
     "skipped": 0,
-    "durationMs": 1056619.269124,
-    "log": "/tmp/financial-owner-personal-cumulative.log",
-    "scope": "632 native tests passed on immutable4996948. Owner UI was not yet staged at that checkpoint; wire correction f22caa0 and actual combined UI acceptance are recorded separately. Not acceptance of the complete financial package.",
+    "durationMs": 1082638.270144,
+    "log": "/tmp/financial-scheduled-dashboard-cumulative.log",
+    "scope": "Immutable full E80/E81 native acceptance; E82 is a subsequent independently verified addition. Not all95 acceptance.",
     "noHostedOperations": true
   },
   "prospectiveLegacyService": {
@@ -274,5 +273,100 @@
     "sourceLimit": 20000,
     "egressBillingSavingMeasured": false,
     "hostedChange": false
+  },
+  "previous632CumulativeAcceptance": {
+    "commit": "4996948991c83ffde3128fd2009134f236aa70b9",
+    "tree": "e4a32df7d34e7d483dfab5b6c972dd22d52fa125",
+    "tests": 632,
+    "passed": 632,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 1056619.269124,
+    "log": "/tmp/financial-owner-personal-cumulative.log",
+    "scope": "632 native tests passed on immutable4996948. Owner UI was not yet staged at that checkpoint; wire correction f22caa0 and actual combined UI acceptance are recorded separately. Not acceptance of the complete financial package.",
+    "noHostedOperations": true
+  },
+  "invoiceReportBuild": {
+    "candidateCommit": "7e04b4f4d518f757904644da06634ebdf0adbb00",
+    "candidateTree": "98e5905bb715e87a71a72b3afc96d27924eba730",
+    "relatedNativePassed": 9,
+    "newNativeCases": 3,
+    "actualBrowser": "final AR/EN three widths, current/unknown balances, original invoice opening, late source discard, four PDFs, Excel passed",
+    "fullNew651Acceptance": false,
+    "hostedChange": false
+  },
+  "pendingTaxReference": {
+    "askedOn": "2026-11-22",
+    "needed": "Approved advisor/accountant reference for financing, fees, customer outlays, input VAT recovery and corporate-tax adjustments",
+    "finalTaxPostingOrFilingEnabled": false,
+    "independentBuildContinues": true
+  },
+  "previous648CumulativeAcceptance": {
+    "commit": "0ae463d8efac0db8936897b4ac3a3624719cbd4e",
+    "tree": "66da8b59605870f7c664ea6a1c9f830d0b74c266",
+    "tests": 648,
+    "passed": 648,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 1094977.014974,
+    "log": "/tmp/financial-collections-integrated-cumulative.log",
+    "scope": "Full E75–E78 native suite passed on unchanged clean immutable source0ae463d. Includes portable PDF worker using per-command memory temporary directory. This is not acceptance of all95 or hosted financial activation. E79 is a later separately targeted-tested addition.",
+    "noHostedOperations": true
+  },
+  "scheduledCompanyIsolation": {
+    "candidateCommit": "3e33accacfa695ab1b8c58f472799cfb2ef1afa9",
+    "candidateTree": "2a1c2746c5755651fe921d7215a9e8d8992cfc9b",
+    "newNativeCases": 5,
+    "relatedNativePass": 14,
+    "finalFaultPrivacyPass": 5,
+    "globalMaintenanceAndPostgresStopsPreserved": true,
+    "existingOptInAndCadencePreserved": true,
+    "hostedActivation": false
+  },
+  "financialDashboardSourceReset": {
+    "candidateCommit": "94a5fc9ed8fff1bbae3242694351157cc098c924",
+    "candidateTree": "72f6995ad0f2a639fe36db46877dab5d0585a473",
+    "actualBaselineFailure": "Receipt counter1 opened0 rows due to saved unrelated filter/search",
+    "actualAcceptance": "Owner/reader AR/EN all receipt/custody/card sources reset correctly; original Pending/Review drilldown still passes; full print and three widths",
+    "backendOrFinancialChange": false
+  },
+  "previous651CumulativeAcceptance": {
+    "commit": "94a98befbbec446ed44824b1254181b965f68ee9",
+    "tree": "8d119b51a3dc8deadf927a8b49a238cb5655b381",
+    "tests": 651,
+    "passed": 651,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 1104132.273453,
+    "log": "/tmp/financial-invoice-reports-cumulative.log",
+    "scope": "Full E79 integrated native suite passed on clean immutable94a98be. E80 company-local job isolation and E81 dashboard source reset are later separately accepted additions. Not all95 acceptance or hosted financial activation.",
+    "noHostedOperations": true
+  },
+  "scopedRegisterReads": {
+    "commit": "87b3c78fa2996b3f04d0a83061d5bd7eb90aa4df",
+    "tree": "44295d1f1949503445cc3cd5c121c2a1dd4a71b0",
+    "relatedNativePassed": 7,
+    "actualBrowsersPassed": 3,
+    "staticPassed": 175,
+    "typeAndBuildPassed": true,
+    "financialOrPermissionChange": false,
+    "egressSavingMeasured": false
+  },
+  "testLogArchives": "docs/finance/TEST-LOG-ARCHIVES-20261122.json",
+  "treasuryOriginalDocumentOutput": {
+    "candidateCommit": "b2ffa22f8749411044b9fa74695d1b84bb3f7d14",
+    "relatedNativePass": 9,
+    "newNativeCases": 2,
+    "staticPass": 175,
+    "actualBrowser": "AR/EN three document kinds, three widths, six actual PDFs and Excel; all three original ledger/collection/invoice browser regressions passed",
+    "temporaryResourceFailure": "First large Chromium PDF used disk-full temporary directory and failed IO.read; unchanged regression passed with per-command isolated memory directory",
+    "scope": "Original document amounts and status only; unconfirmed amount unknown, no inferred cash collection or bank settlement",
+    "financialWrites": false,
+    "hostedChange": false
+  },
+  "nextCumulativeAcceptance": {
+    "expectedTests": 661,
+    "scope": "Full E83 native suite pending;659 suite currently runs on immutablec0a7d1e before E83",
+    "notAll95Acceptance": true
   }
 }

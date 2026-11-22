@@ -352,3 +352,11 @@ jobs:
 
       - name: Original collections keep actual receipt totals and scoped human group captions
         run: node backend/tests/collection-report-suite.browser.cjs
+
+      - name: Original installment and adjustment source output retains current balances and unknown legacy facts
+        run: node backend/tests/invoice-report-suite.browser.cjs
+      - name: Original treasury document reports in Arabic and English
+        run: node backend/tests/treasury-report-suite.browser.cjs
+
+      - name: All original financial dashboard counts open exact scoped sources despite old filters
+        run: node backend/tests/dashboard-complete-source-suite.browser.cjs
