@@ -334,3 +334,15 @@ jobs:
 
       - name: Original operational report source output and actual PDF acceptance
         run: node backend/tests/operational-report-suite.browser.cjs
+
+      - name: Original recorded tax sources preserve unknowns, bank authority and stale output safety
+        run: node backend/tests/tax-source-review-suite.browser.cjs
+
+      - name: Recoverable Owner personal request requires independent review and original payment
+        run: node backend/tests/owner-personal-suite.browser.cjs
+
+      - name: Original journal drilldowns retain source scope and obsolete response protection
+        run: node backend/tests/original-record-suite.browser.cjs
+
+      - name: Original general ledger and journal keep exact human output and native source links
+        run: node backend/tests/general-ledger-suite.browser.cjs

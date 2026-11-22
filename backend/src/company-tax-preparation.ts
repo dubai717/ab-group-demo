@@ -1,3 +1,4 @@
+import {registerTaxSourceReview} from './tax-source-review.js';
 import {corporateAccounting,registerCorporateTaxSources} from './corporate-tax-workpaper.js';
 import {vatControlsSchema,validateVatControls,registerVatWorkpaper} from './vat-workpaper.js';
 import {z} from 'zod';
@@ -38,6 +39,7 @@ export function taxBridge(profit:string,adjustments:any[],from:string,to:string)
 }
 export function registerCompanyTaxPreparation(app:any,route:any,cipher:any){
  registerVatWorkpaper(app,route,cipher,companyTaxDraft);
+ registerTaxSourceReview(app,route,cipher,companyTaxDraft);
  registerCorporateTaxSources(app,route);
  app.post('/api/ledger/package/tax-config',route(async(c:any,m:any,s:any,req:any)=>{
   const d=companyTaxSchema.parse(req.body);need(m,'configure',d.companyId);company(m,d.companyId);

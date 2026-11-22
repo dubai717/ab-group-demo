@@ -1,3 +1,4 @@
+import {registerOwnerPersonalReceivables} from './owner-personal-receivables.js';
 import {registerElectronicInvoiceSourcePreparation} from './einvoice-source-preparation.js';
 import {financialDocumentPage} from './financial-document-page.js';
 import {registerFinancialDocumentRegister} from './financial-document-register.js';
@@ -151,6 +152,7 @@ export function registerFinancialPackage(app: any, route: any, cipher: any, corr
     registerFinancialDocumentRegister(app,route,cipher);
     registerElectronicInvoiceSourcePreparation(app,route,cipher);
     registerManualReceivableClaims(app,route,cipher);
+    registerOwnerPersonalReceivables(app,route,cipher);
     const base = '/api/ledger/package';
     app.get(base + '/state', route(async (c: any, m: any, s: any, req: any) => { const co = id.parse(req.query.companyId); need(m, 'view', co); const approval = await packageRecord(c, cipher, 'approval:' + co); return { companyId: co, discountProposals:await discountProposalState(c,cipher,m,co), manualClaims:await manualClaimState(c,cipher,co,m), ownerSettlements:financeRight(m,'ledger_card_settle',co)?{available:true,...await ownerSettlementState(c,cipher,co)}:{available:false,rows:[]},employeeAdvances:await employeeAdvanceState(c,cipher,co,m), commitments:await commitmentState(c,cipher,co,m), costCentres: await costCentres(c,cipher,co), taxPreparation: await companyTaxDraft(c,cipher,co), priority: await priorityPolicy(c, cipher, co), feeRules: await feeSourceRows(c,cipher,m,co), relations: await relationSourceRows(c,cipher,m,co), approved: Object.fromEntries(await Promise.all(['priority', 'fees', 'recurring', 'documents'].map(async (f) => [f, await financialApproval(c, cipher, m, co, f, approval)]))), activation: 'specific owner financial review required; no automatic changes to existing balances' }; }));
     app.post(base + '/priority', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id, enabled: z.boolean(), itemIds: z.array(id).max(2000), revision: z.number().int().min(0), confirm: z.literal(true) }).strict().parse(req.body); need(m, 'configure', d.companyId); requireOk(new Set(d.itemIds).size === d.itemIds.length, 422, 'duplicate'); const old = await priorityPolicy(c, cipher, d.companyId); requireOk((old?.revision || 0) === d.revision, 409, 'revisionConflict'); for (const key of d.itemIds)

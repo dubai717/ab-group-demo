@@ -5,15 +5,14 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "E69 prospective service policy + E70 original operational report output",
+    "module": "E71–E74 integrated build, Owner UI wire/calendar and legacy test expectation corrected",
     "acceptance": [
-      "Immutable41e0cfd/tree68c933 native609/609,0 fail/skip",
-      "E69 six new native; related29/29, actual AR/EN held read and503-after-commit recovery, original vehicle/task/V3 browsers both schema states passed",
-      "E70 five new native; related19/19, actual PDFs for three operational report families AR/EN, exact typed files, original statement/reader-exporter ledger browsers passed",
-      "175 static/type/build passed; no schema or hosted change",
-      "Immutablef17ccaf/tree2e0814 native620/620,0 fail/skip; tracked source unchanged during test"
+      "Last full632 native accepted; next637 attempt636 passed/1 obsolete expectation now corrected",
+      "Corrected statement/GL/Owner targeted12/12 passed",
+      "Actual combined Owner/source/GL/package UI passed at657c068 tree3ce61e59",
+      "No hosted changes or delivery request"
     ],
-    "next": "Finish independent E71 tax-source UI and scoped output acceptance; save exact source before next cumulative. No delivery request."
+    "next": "Build E75 documentary TRN review and complete final cumulative native/actual UI acceptance; no staging delivery."
   },
   "nextIndependentWork": [
     "Complete original-source scoped output for package registers and remaining dashboard drill-downs; preserve report/export rights and all filters",
@@ -36,8 +35,8 @@
     "Specific existing financial feature approval commitment_payments before enabling future cash/direct-bank supplier methods; no historical adoption or automatic source correction",
     "Any future discount limit activation requires independent exact proposal/digest Owner financial approval; no activation endpoint or hosted approval is performed by the build.",
     "Existing cross-company explicit recurring relations previously skipped by the generator require a specifically reviewed prospective adoption decision; no automatic stamping, activation or historical billing.",
-    "Office-paid Owner personal outlays require explicit accounting treatment and approval governance compatible with existing Owner-only plus independent-verifier claim guards. Never disguise the Owner as an external party or bypass those guards. Other independent build work continues.",
-    "Existing specific shared_settlements approval for both companies before future shared-obligation bank settlement; review unlinked historical control movements and VAT without automatic attribution or correction."
+    "Existing specific shared_settlements approval for both companies before future shared-obligation bank settlement; review unlinked historical control movements and VAT without automatic attribution or correction.",
+    "Owner explicitly selected recoverable personal AR with independent reviewer on22Nov; no historical adoption, automatic setoff or unreviewed source correction."
   ],
   "resumeRules": [
     "read RELEASE-HOLD.md first",
@@ -50,12 +49,12 @@
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
   "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
   "checklistCounts": {
-    "منفذ جزئياً": 23,
+    "منفذ جزئياً": 20,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 45
+    "مكتمل وغير منشور": 48
   },
-  "lastRemoteCommit": "052c9a0f5f62a4008640295747fab24041d8536d",
-  "lastRemoteTree": "c636a3adfd065c43cb9f9ae38d72428fcdae65e1",
+  "lastRemoteCommit": "6d06573e6a2dd97fdbb1df608a9dce3a401af2ea",
+  "lastRemoteTree": "c174f1835e4c7737f2fe7589e41a3f747f16c21a",
   "lastDraftCi": {
     "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44992177320",
     "head": "052c9a0f5f62a4008640295747fab24041d8536d",
@@ -156,11 +155,11 @@
     "taxOrTransmissionApproved": false
   },
   "latestUnprivilegedDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44998596373",
-    "head": "fc370018f2fc92a1fa72f249d4aad58e3bae984b",
-    "tree": "3670d2fcce5cb1f6be25b3afb679c3351ec0b5c8",
-    "status": "completed success (entire unprivileged draft workflow, verified22Nov)",
-    "native": "583/583,0 failed; decoded logs verified",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/45012600161",
+    "head": "6d06573e6a2dd97fdbb1df608a9dce3a401af2ea",
+    "status": "completed failure: obsolete English cost-centre literal in nested original financial-package browser; exact failure verified in decoded logs",
+    "native": "620 native stage completed success",
+    "fix": "E71 replaces obsolete literal with actual human source metadata; original package browser passed locally with unchanged financial guards",
     "deployment": false,
     "protectedRunsTouched": false
   },
@@ -173,9 +172,9 @@
     "noDeliveryRequested": true
   },
   "requirementCounts": {
-    "منفذ جزئياً": 21,
+    "منفذ جزئياً": 20,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 47
+    "مكتمل وغير منشور": 48
   },
   "groupClosingAcceptance": {
     "review": "docs/reviews/cross-flow-group-closing-acceptance-2026-11-22.md",
@@ -184,16 +183,16 @@
     "hostedActivation": false
   },
   "latestCumulativeAcceptance": {
-    "commit": "f17ccafc2cedd9910a85907d42dcf4798587e2c2",
-    "tree": "2e081460b287221f9730aa40090355af4cd8403b",
-    "tests": 620,
-    "passed": 620,
+    "commit": "4996948991c83ffde3128fd2009134f236aa70b9",
+    "tree": "e4a32df7d34e7d483dfab5b6c972dd22d52fa125",
+    "tests": 632,
+    "passed": 632,
     "failed": 0,
     "skipped": 0,
-    "durationMs": 958952.095663,
-    "log": "/tmp/financial-prospective-operational-cumulative.log",
-    "environment": "Own synthetic5442 tmpfs PostgreSQL; fake Auth/objects; no hosted calls",
-    "scope": "E69/E70 integrated exact immutable source; E71 independent candidate not included"
+    "durationMs": 1056619.269124,
+    "log": "/tmp/financial-owner-personal-cumulative.log",
+    "scope": "632 native tests passed on immutable4996948. Owner UI was not yet staged at that checkpoint; wire correction f22caa0 and actual combined UI acceptance are recorded separately. Not acceptance of the complete financial package.",
+    "noHostedOperations": true
   },
   "prospectiveLegacyService": {
     "review": "docs/reviews/prospective-legacy-service-policy-2026-11-22.md",
@@ -208,5 +207,32 @@
     "sourceCommit": "ea1aed9493f5d6d81e3fca7650dbe7355dc04119",
     "hostedActivation": false,
     "financialEffect": false
+  },
+  "ownerPersonalDecision": {
+    "received": "2026-11-22 UAE",
+    "treatment": "Recoverable Owner debt with authorized independent financial reviewer",
+    "implementation": "E72 prospective native non-sales claim and bank-source flow; no historical adoption or hosted activation"
+  },
+  "latestCumulativeAttempt": {
+    "commit": "100b3c86d91d464c3ad981cc28626ec5cf2c7f40",
+    "tree": "438ceff16b166136025bfc16f24db046795e58d5",
+    "tests": 637,
+    "passed": 636,
+    "failed": 1,
+    "skipped": 0,
+    "durationMs": 1019617.374217,
+    "log": "/tmp/financial-ledger-source-cumulative.log",
+    "reason": "Old human-statement test expected journal presentation to be unsupported422; E74 intentionally adds it. Unsupported guard now tests custody; technical-column guard retained.",
+    "noHostedOperations": true
+  },
+  "ownerUiIntegration": {
+    "wireCommit": "f22caa0",
+    "actualEquivalentSource": "657c068293833f9e0f58f4dceeab478a1716b034",
+    "tree": "3ce61e59a7ac63178c82cd44fbfe0673728f18d8",
+    "actualBrowsers": "Owner personal + original record + GL/journal + original financial package all passed",
+    "log": "/tmp/e74-ui-wired-integrated-browsers.log",
+    "qualification": "UI wire had been omitted from the first E72 commit; no deployment occurred; now included on completion branch.",
+    "calendarGuard": "213c17e: prospective payment minimum day uses UAE review date;5/5 native passed",
+    "unsupportedGuard": "1e5c99e:12/12 statement/GL/Owner related native passed; no financial or authorization bypass"
   }
 }
