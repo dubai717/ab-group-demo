@@ -301,3 +301,9 @@ jobs:
 
       - name: Financial dashboard exact original source drill-downs
         run: node backend/tests/dashboard-source-drilldown-suite.browser.cjs
+
+      - name: Original e-invoice source preparation remains review-only
+        run: node backend/tests/einvoice-source-preparation-suite.browser.cjs
+
+      - name: Original shared obligation two-sided bank settlement acceptance
+        run: node backend/tests/shared-commitment-settlements-suite.browser.cjs

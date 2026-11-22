@@ -1,3 +1,4 @@
+import {registerElectronicInvoiceSourcePreparation} from './einvoice-source-preparation.js';
 import {financialDocumentPage} from './financial-document-page.js';
 import {registerFinancialDocumentRegister} from './financial-document-register.js';
 import {relationSourceRows,feeSourceRows} from './financial-package-sources.js';
@@ -148,6 +149,7 @@ export function registerFinancialPackage(app: any, route: any, cipher: any, corr
     registerTreasuryResponsibilities(app,route,cipher);
     registerFinancialPackageRegisters(app,route,cipher);
     registerFinancialDocumentRegister(app,route,cipher);
+    registerElectronicInvoiceSourcePreparation(app,route,cipher);
     registerManualReceivableClaims(app,route,cipher);
     const base = '/api/ledger/package';
     app.get(base + '/state', route(async (c: any, m: any, s: any, req: any) => { const co = id.parse(req.query.companyId); need(m, 'view', co); const approval = await packageRecord(c, cipher, 'approval:' + co); return { companyId: co, discountProposals:await discountProposalState(c,cipher,m,co), manualClaims:await manualClaimState(c,cipher,co,m), ownerSettlements:financeRight(m,'ledger_card_settle',co)?{available:true,...await ownerSettlementState(c,cipher,co)}:{available:false,rows:[]},employeeAdvances:await employeeAdvanceState(c,cipher,co,m), commitments:await commitmentState(c,cipher,co,m), costCentres: await costCentres(c,cipher,co), taxPreparation: await companyTaxDraft(c,cipher,co), priority: await priorityPolicy(c, cipher, co), feeRules: await feeSourceRows(c,cipher,m,co), relations: await relationSourceRows(c,cipher,m,co), approved: Object.fromEntries(await Promise.all(['priority', 'fees', 'recurring', 'documents'].map(async (f) => [f, await financialApproval(c, cipher, m, co, f, approval)]))), activation: 'specific owner financial review required; no automatic changes to existing balances' }; }));
