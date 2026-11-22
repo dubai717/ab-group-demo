@@ -5,16 +5,16 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Original approved supplier cash and bank payment methods, CPV and actual source state",
+    "module": "Corporate accounting revenue/expense/profit and complete original source workpaper; explicit existing cash payout approval",
     "acceptance": [
-      "Seven new native cases and 25 related native tests passed, including forced CPV failure with complete bank rollback, same-source retry, exact amounts, original cheque exclusivity and scoped reviewer",
-      "Actual original AR/EN three-width browser and prior financial-package browser passed; mismatch inputs and trace retained, bank Draft not paid, one original CPV per source",
-      "TypeScript, 172 static checks and portable runtime graph passed; company financial feature approval remains absent by default"
+      "20 native cases passed: original tax/VAT/output plus new source/FX/authority/full export cases and eight supplier payment cases; before-fix own-fund payment approval gap reproduced and corrected without grants",
+      "Actual corporate source browser passed AR/EN three widths, full 256-row print/Excel, actual multi-page PDF, readonly source and unchanged journals; supplier, original package and original full output browsers passed again",
+      "Final TypeScript, 172 static tests and portable runtime graph passed; final taxable income/tax due remain null and tax classifications are not certified"
     ],
-    "next": "Save E46 and run frozen cumulative acceptance. Continue corporate-tax revenue/expense/source distinction and remaining original financial reports, without tax assessment, hosted activation or deployment."
+    "next": "Save E47, run frozen cumulative acceptance, then complete a current original-source treasury responsibility overview with separate cash-ledger, collection custody, cheque, pending handover/deposit, staff-AR and Owner settlement bases; no misleading combined cash total or hosted activation."
   },
   "nextIndependentWork": [
-    "Corporate-tax revenue/expense/profit distinction and drill-through to original posted sources; no assumed taxable income or tax due",
+    "Current scoped original-source treasury responsibility overview and drill-down; distinct money/cheque/debt/pending bases and currencies",
     "Original noncash employee/external receivable claims using approved actual bank operations and original RV/collection/report sources",
     "Shared-expense reviewed VAT and intercompany settlement acceptance",
     "Owner-card broad classification and exceptional personal requests; supplier refund/correction review",
@@ -49,29 +49,29 @@
     "مكتمل وغير منشور": 42,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "4909fe6ff1343c197dcc4a4407e0e995dd537b79",
-  "lastRemoteTree": "5bbb6e5162a0270d93099e103f0e2ec205833558",
+  "lastRemoteCommit": "75cc9eb97f612d5a35df537d7efce3cb749cd851",
+  "lastRemoteTree": "1993be1c4bededf02ac0bf4833947a1ed8c7b197",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44967045013",
-    "head": "4909fe6ff1343c197dcc4a4407e0e995dd537b79",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44968684100",
+    "head": "75cc9eb97f612d5a35df537d7efce3cb749cd851",
     "status": "in_progress at last read",
     "deployment": false,
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44963014630",
-    "head": "1a9c29962175acfd5c2353059df05ad60f1c697e",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44967045013",
+    "head": "4909fe6ff1343c197dcc4a4407e0e995dd537b79",
     "status": "success",
     "deployment": false,
     "protectedRunsTouched": false,
-    "includes": "Original scoped fund projection and every preceding saved checkpoint"
+    "includes": "Exact E45 complete original output scope and all prior build checkpoints"
   },
   "lastCumulativeAcceptance": {
-    "localCommit": "d546a58f642af302314be1f537316b6ac9837668",
-    "remoteCommit": "4909fe6ff1343c197dcc4a4407e0e995dd537b79",
-    "tree": "5bbb6e5162a0270d93099e103f0e2ec205833558",
-    "result": "525 passed, 0 failed; tracked source remained unchanged throughout the complete run",
-    "log": "/workspace/ab-test-tmp/financial-ledger-output-cumulative.log",
+    "localCommit": "6bbf845313ecaf71a5a2d0b0bbd03e0c07c489b8",
+    "remoteCommit": "75cc9eb97f612d5a35df537d7efce3cb749cd851",
+    "tree": "1993be1c4bededf02ac0bf4833947a1ed8c7b197",
+    "result": "532 passed, 0 failed; tracked source remained unchanged throughout the complete run",
+    "log": "/workspace/ab-test-tmp/financial-commitment-payments-cumulative.log",
     "noHostedOperations": true
   },
   "lastCumulativeAttempt": {

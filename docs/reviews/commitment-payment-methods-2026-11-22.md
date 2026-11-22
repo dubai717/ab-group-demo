@@ -41,3 +41,5 @@ Both new payment methods require the existing company-specific reviewed Owner fi
 - Prior exact E45 tree `5bbb6e5162a0270d93099e103f0e2ec205833558` (local `d546a58`, remote `4909fe6ff1343c197dcc4a4407e0e995dd537b79`) independently passed **525 cumulative native tests**, with tracked source unchanged throughout the complete run. This is prior immutable proof, not a claim that E46's new cases were included.
 
 Requirement 4.2 is accepted as complete-unpublished for the original supplier-obligation payment cycle. All-95 acceptance remains incomplete. No merge, protected delivery run operation, Render change, original Supabase write or financial activation occurred.
+
+Follow-up E47: an additional pre-release test exposed the need for explicit existing cash payment approval authority beyond fund management/settlement. `ledger_voucher_approve` is now enforced for that path, with no grant changes. See [the before-fix evidence and acceptance](corporate-accounting-sources-2026-11-22.md). E46's 532-test immutable proof remains attributed to its exact saved source, rather than relabelled as including this follow-up.

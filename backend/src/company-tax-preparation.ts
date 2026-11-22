@@ -1,3 +1,4 @@
+import {corporateAccounting,registerCorporateTaxSources} from './corporate-tax-workpaper.js';
 import {vatControlsSchema,validateVatControls,registerVatWorkpaper} from './vat-workpaper.js';
 import {z} from 'zod';
 import {requireOk} from './core.js';
@@ -37,6 +38,7 @@ export function taxBridge(profit:string,adjustments:any[],from:string,to:string)
 }
 export function registerCompanyTaxPreparation(app:any,route:any,cipher:any){
  registerVatWorkpaper(app,route,cipher,companyTaxDraft);
+ registerCorporateTaxSources(app,route);
  app.post('/api/ledger/package/tax-config',route(async(c:any,m:any,s:any,req:any)=>{
   const d=companyTaxSchema.parse(req.body);need(m,'configure',d.companyId);company(m,d.companyId);
   await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[key(d.companyId)]);
@@ -59,9 +61,8 @@ export function registerCompanyTaxPreparation(app:any,route:any,cipher:any){
  app.get('/api/ledger/package/tax-bridge',route(async(c:any,m:any,s:any,req:any)=>{
   const q=z.object({companyId:z.uuid(),from:z.iso.date(),to:z.iso.date()}).strict().parse(req.query);
   requireOk(q.to>=q.from,422,'invalidTaxPeriod');need(m,'report',q.companyId);company(m,q.companyId);
-  const rows=(await c.query("select ch.kind,sum(e.debit)::text debit,sum(e.credit)::text credit from ab.finance_entries e left join ab.finance_journals j on j.id=e.journal_id left join ab.finance_operations o on o.id=e.operation_id join ab.finance_chart ch on ch.id=e.chart_id where (j.status='Posted' or o.status='Approved') and e.company_id=$1 and e.currency='AED' and coalesce(o.effective_on,j.effective_on) between $2 and $3 and ch.kind in('income','expense') group by ch.kind",[q.companyId,q.from,q.to])).rows;
-  const profit=rows.reduce((n:bigint,r:any)=>n+L.units(r.credit)-L.units(r.debit),0n),cfg=await companyTaxDraft(c,cipher,q.companyId);
+  const accounting=await corporateAccounting(c,q.companyId,q.from,q.to),cfg=await companyTaxDraft(c,cipher,q.companyId);
   const registeredPeriod=cfg?.corporatePeriods.some((p:any)=>p.from===q.from&&p.to===q.to)||false;
-  return{companyId:q.companyId,from:q.from,to:q.to,registeredPeriod,...taxBridge(L.money(profit),cfg?.adjustments||[],q.from,q.to)};
+  const co=m.state.companies.find((r:any)=>r.id===q.companyId);return{companyId:q.companyId,companyNameAr:co.arabicName,companyNameEn:co.englishName,from:q.from,to:q.to,registeredPeriod,...taxBridge(accounting.accountingProfit,cfg?.adjustments||[],q.from,q.to),...accounting};
  }));
 }

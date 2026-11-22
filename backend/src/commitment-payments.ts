@@ -43,7 +43,7 @@ export function registerCommitmentPayments(app:any,route:any,cipher:any){
  const path='/api/ledger/commitments/:id';
  app.post(path+'/cash-payment',route(async(c:any,m:any,s:any,req:any)=>{
   const d=base.extend({fundId:id}).parse(req.body),r=await lockCommitment(c,cipher,m,d.companyId,id.parse(req.params.id),'settle');
-  need(m,'fund_manage',r.companyId);company(m,r.companyId);await activation(c,cipher,m,r.companyId);
+  need(m,'fund_manage',r.companyId);need(m,'voucher_approve',r.companyId);company(m,r.companyId);await activation(c,cipher,m,r.companyId);
   const digest=sha(JSON.stringify(d));
   if(r.payment?.kind==='cash'){
    requireOk(r.payment.digest===digest,409,'commitmentPaymentAlreadyRecorded');
@@ -58,7 +58,7 @@ export function registerCommitmentPayments(app:any,route:any,cipher:any){
   const payable=await chart(c,r.companyId,'AED',r.payableChartId,'liability'),cash=await chart(c,r.companyId,'AED',fund.chart_id,'asset');
   const j=await journal(c,cipher,s,r.companyId,today(),'AED','commitment-cash:'+r.id,[line(payable,L.units(d.amount)),line(cash,-L.units(d.amount))],{commitmentId:r.id,beneficiary:r.beneficiary,reason:d.reason,reference:d.reference,documentVersionId:d.documentVersionId,fundId:fund.id,actualCashPayment:true,alreadyAccrued:true});
   const{recordFinancialDocument}=await import('./financial-package.js'),doc=await recordFinancialDocument(c,cipher,s,r.companyId,j,'PV',{sourceKind:'cash_journal',commitmentId:r.id,beneficiary:r.beneficiary,fundId:fund.id});
-  await saveCommitment(c,cipher,s,'records',{...r,payment:{kind:'cash',journalId:j,number:doc.number,digest,reference:d.reference,documentVersionId:d.documentVersionId,paidBy:s.user_id,paidAt:new Date().toISOString()},paymentHistory:[...(r.paymentHistory||[]),...(r.payment?[r.payment]:[])]},r);
+  await saveCommitment(c,cipher,s,'records',{...r,payment:{kind:'cash',journalId:j,number:doc.number,digest,reference:d.reference,documentVersionId:d.documentVersionId,approvedBy:s.user_id,paidBy:s.user_id,paidAt:new Date().toISOString()},paymentHistory:[...(r.paymentHistory||[]),...(r.payment?[r.payment]:[])]},r);
   return{id:r.id,journalId:j,number:doc.number,existing:false,paymentState:'Paid',paid:L.money(L.units(d.amount)),outstanding:'0.000'};
  }));
  app.post(path+'/bank-payment',route(async(c:any,m:any,s:any,req:any)=>{
