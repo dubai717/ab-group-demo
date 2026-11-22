@@ -1,0 +1,85 @@
+{
+  "reviewedOn": "2026-11-23",
+  "scope": "isolated synthetic fixtures only; no source Supabase, Render, merge or system restore",
+  "baselineRemoteCommit": "549468d4683bccbad1126ee8318b0ca6d16c55a8",
+  "baselineCi": {
+    "url": "https://github.com/dubai717/ab-group-demo/actions/runs/45062476772",
+    "conclusion": "success",
+    "allStepsPassed": true,
+    "nativePassed": 681,
+    "coversLaterE91Changes": false
+  },
+  "currentLocalAcceptance": {
+    "staticPassed": 178,
+    "nativeTargetedPassed": 6,
+    "typeCheckPassed": true,
+    "providerFreeBuildPassed": true,
+    "browserSuitesPassed": [
+      "card-reconciliation",
+      "card-statement-import",
+      "tax-source-review",
+      "card-issuer-reconciliation"
+    ],
+    "actualRaceReproduced": "late statement source after tab change:2 versus0; company API guard already passed",
+    "heldSuccessChecks": [
+      "company",
+      "tab",
+      "locale",
+      "newer_statement_wins"
+    ],
+    "duplicateApprovalBlocked": true,
+    "originalGlPvArUnchangedInBrowserAssertions": true,
+    "runtimeBackendChanged": false,
+    "notAll95Acceptance": true
+  },
+  "sourceFiles": {
+    "ledger-ui.js": "a8368d98347e4f0ccb80d6c10388e2156ccc6e71321cdbdae8f55be250359977",
+    "backend/tests/card-reconciliation.browser.cjs": "eae64303ef876a8b3611e467d8bb780ed1d9a128bf7086906ffebc0dd87ca6be",
+    "backend/deploy/financial-checklist-review.mjs": "5bdc7c738c10a226d85dbc14b7762ac5981eaf86cf43ef12ba26d39398c391de",
+    "tests/financial-checklist-review.test.cjs": "7212553edd2f948403ca28a1ec17a923b9dc59fd7e792958d08adf7419518013"
+  },
+  "logs": [
+    {
+      "log": "/tmp/financial-review-static-final.log",
+      "bytes": 17185,
+      "sha256": "79f200ce7b394369543b2e41f75b92ca5a13553d116d33200273f6f97be553b4"
+    },
+    {
+      "log": "/tmp/financial-review-native-targeted.log",
+      "bytes": 2660,
+      "sha256": "bdb0255f5887f52c9446938bd352cdcddf19ab9fe82f5fabcb6eb78e49282fa2"
+    },
+    {
+      "log": "/tmp/financial-review-type-20261123.log",
+      "bytes": 277,
+      "sha256": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10"
+    },
+    {
+      "log": "/tmp/financial-review-build-20261123.log",
+      "bytes": 147,
+      "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+    },
+    {
+      "log": "/tmp/financial-review-card-reconciliation-final-acceptance.log",
+      "bytes": 313,
+      "sha256": "b351445246b5f88ef0679a49581555a6ea8582baf8ecde11120fb4ba33440e62"
+    },
+    {
+      "log": "/tmp/financial-review-card-statement-import-final-acceptance.log",
+      "bytes": 195,
+      "sha256": "f89714e0ee5bcb6c43b9c0392789a8bcc464860ea41dbb2e8d8f42f58c1e9563"
+    },
+    {
+      "log": "/tmp/financial-review-tax-source-review-final-acceptance.log",
+      "bytes": 209,
+      "sha256": "9b9557dca2c3a49481f7c46284200fd251500c23911ce17b12442078de235408"
+    },
+    {
+      "log": "/tmp/financial-review-issuer-final-acceptance.log",
+      "bytes": 1641,
+      "sha256": "308f5709be399da3facd0f06f63fc319978532e884e4784661c3537a09b428a0"
+    }
+  ],
+  "financialApproval": false,
+  "deploymentApproval": false
+}

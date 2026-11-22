@@ -1,0 +1,350 @@
+{
+  "asOf": "2026-11-23",
+  "scope": "PR115 current financial package only; no merge/deployment/hosted data changes",
+  "requirements": [
+    {
+      "id": "1.1",
+      "blockerKind": "integration_dependency",
+      "safeWorkCompleted": "المحركات المالية والضريبية ومصادر التقارير قائمة؛ لا إعادة بناء.",
+      "remainingEngineeringOrAcceptance": "قبول مترابط لكل الوحدات بعد حسم تبعيات البنود أدناه.",
+      "ownerDecision": "لا قرار مستقل؛ يتبع القرارات المالية والضريبية في هذه القائمة.",
+      "externalEvidence": null,
+      "evidence": [
+        "E1",
+        "E46",
+        "E80",
+        "E90"
+      ],
+      "complete": false
+    },
+    {
+      "id": "2.6",
+      "blockerKind": "owner_policy",
+      "safeWorkCompleted": "أصل التمويل والأقساط والرسوم منفصلة في المصادر؛ نموذج الوكالة معزول ومختبر.",
+      "remainingEngineeringOrAcceptance": "تفعيل وربط نموذج الوكالة بعد اعتماد العقد والحسابات؛ لا تفعيل تلقائي.",
+      "ownerDecision": "معالجة أصل المستثمر والعائد والخسارة ومصدر الاستحقاق وفق الاتفاق المعتمد.",
+      "externalEvidence": null,
+      "evidence": [
+        "E1",
+        "E3",
+        "E6"
+      ],
+      "complete": false
+    },
+    {
+      "id": "3.1",
+      "blockerKind": "operational_evidence",
+      "safeWorkCompleted": "TRN مستقل وشهادة ونسخ مراجعة وبصمة ومنع التكرار موجودة.",
+      "remainingEngineeringOrAcceptance": "التحقق التشغيلي من شهادات الشركات الحقيقية لا ينفذ على بيانات التشغيل أثناء هذه المهمة.",
+      "ownerDecision": null,
+      "externalEvidence": "شهادات التسجيل الفعلية ومرجع التحقق لكل شركة؛ النموذج البرمجي ليس إثبات تسجيل.",
+      "evidence": [
+        "E7",
+        "E75"
+      ],
+      "complete": false
+    },
+    {
+      "id": "3.2",
+      "blockerKind": "owner_policy",
+      "safeWorkCompleted": "ملف VAT مستقل وتصنيفات وفترات ومصادر دفترية ومطابقة وتصدير.",
+      "remainingEngineeringOrAcceptance": "استكمال ربط المعالجات المعتمدة بالإقرار والمطابقة النهائية بعد اعتمادها.",
+      "ownerDecision": "قواعد التوريد والاسترداد والتعديلات والفترات القانونية؛ لا تحويل المراجعة إلى إقرار.",
+      "externalEvidence": null,
+      "evidence": [
+        "E1",
+        "E7",
+        "E25",
+        "E45",
+        "E71",
+        "E90"
+      ],
+      "complete": false
+    },
+    {
+      "id": "3.3",
+      "blockerKind": "owner_policy",
+      "safeWorkCompleted": "دليل واحد وتصنيف مستقل لكل ملف مع مرجع وحالات مراجعة.",
+      "remainingEngineeringOrAcceptance": "ربط قواعد التصنيف المعتمدة بالعمليات المستقبلية فقط بعد اعتمادها.",
+      "ownerDecision": "تصنيف كل بند ونوع توريده ومعدل الضريبة وأساس عدم الخضوع عند انطباقه.",
+      "externalEvidence": null,
+      "evidence": [
+        "E7",
+        "E71",
+        "E90"
+      ],
+      "complete": false
+    },
+    {
+      "id": "3.5",
+      "blockerKind": "owner_policy",
+      "safeWorkCompleted": "الفصل بين العهدة والذمم وأصل المال والبطاقة موجود ومختبر.",
+      "remainingEngineeringOrAcceptance": "القبول المتكامل لنموذج الوكالة بعد حسم المعالجة؛ لا إيراد تلقائي من أصل التمويل.",
+      "ownerDecision": "الوكالة والأصيل والعائد والمعالجة الضريبية للأموال المحصلة نيابة عن الغير.",
+      "externalEvidence": null,
+      "evidence": [
+        "E1",
+        "E6",
+        "E19",
+        "E20",
+        "E23"
+      ],
+      "complete": false
+    },
+    {
+      "id": "3.6",
+      "blockerKind": "owner_policy",
+      "safeWorkCompleted": "تقارير أصلية للربح المحاسبي وملف CT مستقل وشرائح وأمثلة غير معتمدة.",
+      "remainingEngineeringOrAcceptance": "احتساب نهائي وربط التسويات المصادق عليها؛ taxDue يبقى غير محسوم.",
+      "ownerDecision": "الدخل الخاضع والاستبعادات والإضافات والتصنيفات والشرائح المعتمدة.",
+      "externalEvidence": null,
+      "evidence": [
+        "E7",
+        "E25",
+        "E47",
+        "E71",
+        "E90"
+      ],
+      "complete": false
+    },
+    {
+      "id": "3.7",
+      "blockerKind": "mixed",
+      "safeWorkCompleted": "مصادر الخصم والتصحيح والضريبة المسجلة محفوظة، دون اختراع تاريخ أو رقم قانوني.",
+      "remainingEngineeringOrAcceptance": "إصدار المستند الضريبي المتكامل ومعايير قبوله بعد تثبيت الهوية والمتطلبات القانونية.",
+      "ownerDecision": "صيغة المستند والبيانات القانونية ومعالجة التصحيحات والإشعارات الدائنة.",
+      "externalEvidence": "هوية البائع وشهادة TRN والمستند الأصلي القانوني.",
+      "evidence": [
+        "E1",
+        "E2",
+        "E7",
+        "E25",
+        "E63",
+        "E64",
+        "E71"
+      ],
+      "complete": false
+    },
+    {
+      "id": "3.8",
+      "blockerKind": "external_resource",
+      "safeWorkCompleted": "مصدر فاتورة وبصمة ونسخ مراجعة ثابتة وتصدير محكوم دون إرسال.",
+      "remainingEngineeringOrAcceptance": "XML والتحقق الرسمي غير مكتملين؛ تنزيل المورد الرسمي ما زال محجوباً بـ403.",
+      "ownerDecision": "اختيار ASP واعتماد النسخة الرسمية المنطبقة وإجراء الإرسال.",
+      "externalEvidence": "حزمة PINT-AE الرسمية الموثقة وقواعد تحققها؛ لا بديل غير رسمي أو امتثال مفترض.",
+      "evidence": [
+        "E7",
+        "E57",
+        "E75"
+      ],
+      "complete": false
+    },
+    {
+      "id": "4.4",
+      "blockerKind": "owner_policy",
+      "safeWorkCompleted": "مصروف مشترك وتسوية بنكية جزئية وذمم متبادلة ومصادر منفصلة مختبرة.",
+      "remainingEngineeringOrAcceptance": "ربط VAT وإعادة التحميل بعد اعتمادها؛ التفعيل المالي للشركتين مستقل.",
+      "ownerDecision": "استرداد المدخلات وإعادة تحميل المصروف وموافقة المعالجة للحالتين.",
+      "externalEvidence": null,
+      "evidence": [
+        "E1",
+        "E7",
+        "E17",
+        "E46",
+        "E58",
+        "E59"
+      ],
+      "complete": false
+    },
+    {
+      "id": "4.5",
+      "blockerKind": "owner_policy",
+      "safeWorkCompleted": "مطالبات غير بيعية تستخدم السندات الأصلية؛ حارس الشطب يمنع استرداداً مضاعفاً.",
+      "remainingEngineeringOrAcceptance": "استرداد المدفوع نيابة عن العميل وتصحيح أو استرداد الشطب بعد اعتماد مساره.",
+      "ownerDecision": "الاسترداد من المورد والعميل ومعالجة الدين المشطوب أو الملغى وحساباته.",
+      "externalEvidence": null,
+      "evidence": [
+        "E1",
+        "E5",
+        "E32",
+        "E33",
+        "E43",
+        "E65"
+      ],
+      "complete": false
+    },
+    {
+      "id": "5.1",
+      "blockerKind": "operational_evidence",
+      "safeWorkCompleted": "العامل الأصلي والفواتير الشهرية وعزل خطأ شركة والتكرار مختبرة.",
+      "remainingEngineeringOrAcceptance": "اختبار تشغيل مجدول فعلي وتفعيل العامل على العقود المعتمدة؛ محظور ضمن هذه المهمة.",
+      "ownerDecision": "موافقة تفعيل محددة بعد قبول إعدادات العقود؛ لا تفعيل من مجرد نشر الكود.",
+      "externalEvidence": "إعدادات الجدولة التشغيلية ودليل أول تشغيل معتمد.",
+      "evidence": [
+        "E8",
+        "E54",
+        "E69",
+        "E80"
+      ],
+      "complete": false
+    },
+    {
+      "id": "5.2",
+      "blockerKind": "owner_policy",
+      "safeWorkCompleted": "توقعات منفصلة للعقود الجديدة واعتماد مستقبلي صريح للعقد السابق.",
+      "remainingEngineeringOrAcceptance": "قبول تبني العقود الفعلية عند اعتماده؛ لا تحويل أو إلغاء لفواتير قائمة.",
+      "ownerDecision": "تحديد العقود القديمة المؤهلة وتاريخ السريان وفحص اتفاق كل عقد.",
+      "externalEvidence": null,
+      "evidence": [
+        "E8",
+        "E69"
+      ],
+      "complete": false
+    },
+    {
+      "id": "5.3",
+      "blockerKind": "mixed",
+      "safeWorkCompleted": "تعديل مستقبلي للعقود الجديدة أو المتبناة صراحة، مع حماية الفواتير الصادرة.",
+      "remainingEngineeringOrAcceptance": "تكامل تغيير رسوم اتفاق المستثمر واختبارات قبوله بعد تحديد نسخته ومعالجة حصصه؛ لا يعد مكتملاً.",
+      "ownerDecision": "أثر تغيير الرسوم على حصة المستثمر والعقد وتاريخ السريان، دون إعادة تسعير تاريخي.",
+      "externalEvidence": "الاتفاق المستثمر المعتمد ونسخته المؤرخة.",
+      "evidence": [
+        "E8",
+        "E69"
+      ],
+      "complete": false
+    },
+    {
+      "id": "5.6",
+      "blockerKind": "operational_evidence",
+      "safeWorkCompleted": "سالك والمخالفات تستخدم المسؤولية والشركة وتاريخ الواقعة وتعيد الفحص قبل الإصدار.",
+      "remainingEngineeringOrAcceptance": "حسم الحدود اليومية والتواريخ المفقودة يتطلب أدلة علاقة فعلية؛ تبقى للمراجعة.",
+      "ownerDecision": "معالجة الحالات المتنازع عليها فقط؛ لا افتراض مالك أو مسؤول تاريخي.",
+      "externalEvidence": "تواريخ انتقال مسؤولية موثقة وسجلات علاقة لكل حالة غامضة.",
+      "evidence": [
+        "E1",
+        "E16",
+        "E51",
+        "E60"
+      ],
+      "complete": false
+    },
+    {
+      "id": "7.3",
+      "blockerKind": "mixed",
+      "safeWorkCompleted": "استيراد كشف البطاقة ومعاينة الأرصدة وتصنيفات الصرف القائمة؛ إصلاح الردود المتأخرة للكشف E91.",
+      "remainingEngineeringOrAcceptance": "رد المورد والتصحيح والتصنيف الأوسع غير مكتملة؛ لا يصنف الرصيد الدائن كسداد للبطاقة تلقائياً.",
+      "ownerDecision": "معالجة رد المورد والمبالغ الشخصية والاسترداد وربط كل نوع بالمطالبة أو المصروف الأصلي.",
+      "externalEvidence": "إثبات رد المورد والمصدر المدفوع والجهة المستحقة لكل مبلغ.",
+      "evidence": [
+        "E1",
+        "E19",
+        "E34",
+        "E38",
+        "E40",
+        "E91"
+      ],
+      "complete": false
+    },
+    {
+      "id": "9.5",
+      "blockerKind": "integration_dependency",
+      "safeWorkCompleted": "تقارير البنوك والمستثمر والأقساط ومصادر الفواتير وفتحها وتصديرها قائمة.",
+      "remainingEngineeringOrAcceptance": "قبول الوكالة والتسويات النهائية يعتمد على تفعيل النموذج المعتمد؛ لا تقرير إيراد مفترض.",
+      "ownerDecision": "يتبع 2.6 و3.5؛ لا قرار حسابي جديد من التقرير.",
+      "externalEvidence": null,
+      "evidence": [
+        "E3",
+        "E4",
+        "E6",
+        "E79"
+      ],
+      "complete": false
+    },
+    {
+      "id": "9.8",
+      "blockerKind": "owner_policy",
+      "safeWorkCompleted": "تقارير VAT وCT دفترية مستقلة مع المصدر والتصدير وحسابات رقابة مسماة.",
+      "remainingEngineeringOrAcceptance": "التقرير الضريبي النهائي يعتمد على التصنيف والاسترداد والتعديلات المعتمدة.",
+      "ownerDecision": "يتبع 3.2 و3.3 و3.6؛ لا تعتبر ورقة المراجعة إقراراً.",
+      "externalEvidence": null,
+      "evidence": [
+        "E1",
+        "E7",
+        "E25",
+        "E45",
+        "E47",
+        "E71",
+        "E85",
+        "E90"
+      ],
+      "complete": false
+    },
+    {
+      "id": "9.10",
+      "blockerKind": "integration_dependency",
+      "safeWorkCompleted": "نجح 681/681 محلياً وGitHub Actions354 بجميع خطواته؛ اختبارات E91 منفصلة.",
+      "remainingEngineeringOrAcceptance": "قبول جميع 95 والتشغيل المعتمد بعد قرارات البنود الجزئية؛ نجاح الاختبارات الحالية ليس اكتمال المشروع.",
+      "ownerDecision": "اعتماد القرارات والتفعيل ثم قبول الحزمة النهائية قبل أي نشر.",
+      "externalEvidence": null,
+      "evidence": [
+        "E10",
+        "E39",
+        "E40",
+        "E41",
+        "E42",
+        "E43",
+        "E44",
+        "E45",
+        "E46",
+        "E47",
+        "E48",
+        "E49",
+        "E50",
+        "E51",
+        "E52",
+        "E53",
+        "E54",
+        "E55",
+        "E56",
+        "E57",
+        "E58",
+        "E59",
+        "E60",
+        "E61",
+        "E62",
+        "E63",
+        "E64",
+        "E65",
+        "E66",
+        "E67",
+        "E68",
+        "E69",
+        "E70",
+        "E71",
+        "E72",
+        "E73",
+        "E74",
+        "E75",
+        "E76",
+        "E77",
+        "E78",
+        "E79",
+        "E80",
+        "E81",
+        "E82",
+        "E83",
+        "E84",
+        "E85",
+        "E86",
+        "E87",
+        "E88",
+        "E89",
+        "E90",
+        "E91",
+        "E92"
+      ],
+      "complete": false
+    }
+  ]
+}

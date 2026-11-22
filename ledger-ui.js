@@ -3,6 +3,11 @@
     'use strict';
     let preferencesLoaded = false;
     let cap = null, book = null, co = '', tab = 'dashboard', actor = '', epoch = 0, busy = false, notice = '', customers = [], vehicles = [], docs = [], bills = [], report = null, preview = null, selected = '', drafts = {}, context = null, importJob = null, importInputRevision=0, reportInputRevision=0, closingInputRevision=0;
+    let statementRequestVersion=0;
+    function statementContext(){
+        const version=++statementRequestVersion,host=document.querySelector('#ld-dialog'),company=co,generation=epoch,who=ABCentral.actor?.id,csrf=ABCentral.csrf,locale=getLocale(),sourceTab=tab;
+        return {statement:null,current:()=>version===statementRequestVersion&&host?.isConnected&&epoch===generation&&co===company&&document.querySelector('#ld-company')?.value===company&&tab===sourceTab&&ABCentral.actor?.id===who&&ABCentral.csrf===csrf&&getLocale()===locale&&app.state.currentPage==='financialManagement'&&!ABCentral.viewAs&&!ABCentral.previewUncertain};
+    }
     const t = (a, b) => getLocale() === 'ar' ? a : b, e = x => WorkspaceUI.esc(x ?? ''), now = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dubai' }).format(new Date()), L = LedgerPolicy;
     const labels = { receivables:['مستحقات العملاء','Customer receivables'], dashboard: ['الرقابة المالية', 'Financial control'], invoices: ['الفواتير', 'Invoices'], collect: ['تنظيم تحصيل', 'Organize collection'], custody: ['العهد والتسليم', 'Custody & handover'], deposits: ['الإيداعات', 'Deposits'], vouchers: ['سندات الصرف المعلقة', 'Pending payment vouchers'], funds: ['الصناديق والنثريات', 'Funds & petty cash'], cards: ['بطاقات الائتمان', 'Credit cards'], journals: ['القيود', 'Journals'], reports: ['القوائم والتقارير', 'Statements & reports'], work: ['Work Amount', 'Work Amount'], intercompany: ['التحويلات بين الشركات', 'Intercompany transfers'], reconciliation: ['المطابقة البنكية والبطاقات', 'Bank/card reconciliation'], setup: ['دليل الحسابات والبنود', 'Accounts & financial items'], import: ['استيراد الفواتير', 'Invoice import'], closing: ['الإغلاق المالي', 'Financial closing'] };
     Object.assign(labels,FinancialPackageUI.names);
@@ -202,7 +207,8 @@
     async function refresh() { book = null; await load(); }
     function show(err) { notice = message(err.message);if(typeof err.reference==='string'&&/^(?:req-[A-Za-z0-9_-]{1,80}|client-[A-Fa-f0-9-]{36})$/.test(err.reference))notice+=' · '+t('مرجع المتابعة: ','Reference: ')+err.reference;const target=document.getElementById('ld-notice');if(target)target.textContent = notice; }
     async function submit(form) {
-        const key = form.dataset.ldForm, d = serialize(form), fd = new FormData(form);
+        const key = form.dataset.ldForm, d = serialize(form), fd = new FormData(form),sourceView=['statement-match','issuer-payment-match','card-vouchers'].includes(key)?form._statementView:null;
+        if(['statement-match','issuer-payment-match','card-vouchers'].includes(key)&&(!sourceView?.current()||!form.isConnected))throw Error('staleSession');
         drafts[key] = { ...d };
         let endpoint = '', payload = d, refreshAfter = true, httpMethod = 'POST';
         const date = d.effectiveOn || now();
@@ -221,9 +227,9 @@
             endpoint = 'bank-statements';
             payload = { ...d, companyId: co };
         }
-        if(key==='issuer-payment-match'){if(form._issuerReviewed!==d.lineId+':'+d.issuerPaymentReference.trim())throw Error('issuerPaymentReviewRequired');endpoint='card-statements/'+report.statement.id+'/match';payload={pairs:[{lineId:d.lineId,issuerPaymentReference:d.issuerPaymentReference.trim()}]};}
+        if(key==='issuer-payment-match'){if(form._issuerReviewed!==d.lineId+':'+d.issuerPaymentReference.trim())throw Error('issuerPaymentReviewRequired');endpoint='card-statements/'+sourceView.statement.id+'/match';payload={pairs:[{lineId:d.lineId,issuerPaymentReference:d.issuerPaymentReference.trim()}]};}
         if (key === 'statement-match') {
-            const st = report.statement;
+            const st = sourceView.statement;
             if (st.card_id) {
                 endpoint = 'card-statements/' + st.id + '/match';
                 payload = { pairs: [{ lineId: d.lineId, ...(d.entryId.startsWith('voucher:') ? { voucherId: d.entryId.slice(8) } : { chargeId: d.entryId }) }] };
@@ -379,7 +385,7 @@
             payload = { periodFrom: d.periodFrom, periodTo: d.periodTo, openingBalance: d.openingBalance, closingBalance: d.closingBalance, documentVersionId: d.documentVersionId, lines: FinancePolicy.parseCsv(d.csv).map(r => ({ date: r.date, amount: r.amount, reference: r.reference })) };
         }
         if (key === 'card-vouchers') {
-            endpoint = 'card-statements/' + report.statement.id + '/vouchers';
+            endpoint = 'card-statements/' + sourceView.statement.id + '/vouchers';
         }
         if (key === 'card-link') {
             endpoint = 'card-splits/' + selected + '/invoice';payload={invoiceId:d.invoiceId};
@@ -448,6 +454,7 @@
         if (!endpoint)
             throw Error('unsupportedAction');
         const result = await api(endpoint, httpMethod, payload, form._key ??= crypto.randomUUID());
+        if(sourceView&&!sourceView.current())return;
         notice = t('تم الحفظ في قاعدة البيانات المركزية.', 'Saved in the central database.');
         if (result.receipts)
             notice += ' ' + t('عدد السندات: ', 'Receipts: ') + result.receipts.length;
@@ -471,7 +478,7 @@
                     await submit(form);
                 }
                 catch (err) {
-                    if (err.message !== 'staleSession')
+                    if (err.message !== 'staleSession'&&(!form._statementView||form._statementView.current()))
                         show(err);
                 }
                 finally {
@@ -609,17 +616,18 @@
                 if (action === 'intercompany-deposit')
                     dialog(t('تأكيد إيداع الشركة المستفيدة', 'Confirm beneficiary deposit'), action, [f('effectiveOn', 'تاريخ البنك', 'Bank date', 'date', now()), f('bankConfirmation', 'مرجع البنك', 'Bank confirmation'), proofField()]);
                 if (action === 'statement-open') {
-                    report = await api('statements/' + key);
-                    const st = report.statement;
+                    const view=statementContext();let result;try{result=await api('statements/'+key);}catch(err){if(view.current())throw err;return;}if(!view.current())return;report=result;view.statement=result.statement;
+                    const st = view.statement;
                     document.querySelector('#ld-dialog').innerHTML = '<h3>' + t('مراجعة الكشف', 'Statement review') + '</h3>' + table(report.lines, st.card_id?['line_no','effective_on','amount','matched_amount','remaining_amount','reference']:['id','effective_on','amount','reference','entry_id']) + form('statement-match', t('مطابقة السطر بالمستند الفعلي', 'Match statement line to actual document'), [f('lineId', 'السطر', 'Statement line', 'select', '', report.lines.map(r => ({ ...r, name: r.line_no + ' — ' + r.amount + ' — ' + r.reference }))), f('entryId', 'الحركة الفعلية', 'Actual ledger/charge', 'select', '', (st.card_id ? [...report.charges, ...(report.paymentVouchers || []).map(v => ({ ...v, id: 'voucher:' + v.id, amount: '-' + v.amount, reference: t('سداد بطاقة', 'Card payment') }))] : report.entries).map(r => ({ ...r, name: (r.reference || r.id) + ' — ' + (r.amount || r.debit + '/' + r.credit) })))]) + (report.issuerPaymentMatching&&st.status==='Review'?form('issuer-payment-match',t('مطابقة إثبات سداد البنك المصدر المستقل','Match independently verified issuer payment'),[f('lineId','سطر ائتمان البنك','Issuer credit line','select','',report.lines.filter(r=>String(r.amount).startsWith('-')).map(r=>({id:r.id,name:r.line_no+' — '+r.amount+' AED — '+r.reference}))),f('issuerPaymentReference','مرجع إثبات السداد المعتمد','Verified issuer payment reference')],undefined,null,btn('issuer-payment-review',t('مراجعة إثبات السداد','Review payment proof'),st.id)+'<p data-issuer-payment-review role="status"></p>'):'') + btn('statement-approve', t('اعتماد بعد زوال الفروقات', 'Approve after differences resolved'), st.id) + (st.card_id ? (book.finance_cards.find(c=>c.id===st.card_id)?.ownership==='personal_owner'?'<p>'+t('تسوية مستحقات المالك وتوقيعه مسار مستقل عن سداد البنك المصدر للبطاقة.','Owner reimbursement/signature is separate from payment to the card issuer.')+'</p>':form('card-vouchers', t('إنشاء سند صرف مجمع لكل شركة', 'Create consolidated voucher per company'), itemFields())) : '');
                     bind();
+                    for(const element of document.querySelectorAll('#ld-dialog form,#ld-dialog [data-ld=statement-approve],#ld-dialog [data-ld=issuer-payment-review]'))element._statementView=view;
                     const issuerForm=document.querySelector('[data-ld-form=issuer-payment-match]');if(issuerForm){const invalidate=()=>{issuerForm._issuerReviewed=null;issuerForm.querySelector('[type=submit]').disabled=true;issuerForm.querySelector('[data-issuer-payment-review]').textContent='';};invalidate();issuerForm.addEventListener('input',invalidate);issuerForm.addEventListener('change',invalidate);}
                     return;
                 }
-                if(action==='issuer-payment-review'){const form=document.querySelector('[data-ld-form=issuer-payment-match]');if(!form?.reportValidity())return;const reference=form.elements.issuerPaymentReference.value.trim(),lineId=form.elements.lineId.value;button.disabled=true;try{const review=await api('card-statements/'+key+'/issuer-payment-review?'+new URLSearchParams({reference}));if(!form.isConnected||reference!==form.elements.issuerPaymentReference.value.trim()||lineId!==form.elements.lineId.value)return;if(review.alreadyMatched&&!review.sameStatement)throw Error('issuerPaymentAlreadyReconciled');form.querySelector('[data-issuer-payment-review]').textContent=review.reference+' · '+WorkspaceUI.date(review.paidOn)+' · '+review.amount+' AED · '+t('إثبات مستقل؛ لا قيد أو سند جديد.','Independent proof; no new journal or voucher.');form._issuerReviewed=lineId+':'+reference;form.querySelector('[type=submit]').disabled=false;}finally{if(button.isConnected)button.disabled=false;}return;}
+                if(action==='issuer-payment-review'){const form=document.querySelector('[data-ld-form=issuer-payment-match]'),view=button._statementView;if(!view?.current()||!form?.reportValidity())return;const reference=form.elements.issuerPaymentReference.value.trim(),lineId=form.elements.lineId.value;button.disabled=true;try{const review=await api('card-statements/'+key+'/issuer-payment-review?'+new URLSearchParams({reference}));if(!view.current()||!form.isConnected||reference!==form.elements.issuerPaymentReference.value.trim()||lineId!==form.elements.lineId.value)return;if(review.alreadyMatched&&!review.sameStatement)throw Error('issuerPaymentAlreadyReconciled');form.querySelector('[data-issuer-payment-review]').textContent=review.reference+' · '+WorkspaceUI.date(review.paidOn)+' · '+review.amount+' AED · '+t('إثبات مستقل؛ لا قيد أو سند جديد.','Independent proof; no new journal or voucher.');form._issuerReviewed=lineId+':'+reference;form.querySelector('[type=submit]').disabled=false;}catch(err){if(view.current())throw err;}finally{if(button.isConnected)button.disabled=false;}return;}
                 if (action === 'statement-approve') {
-                    await api((report.statement.card_id ? 'card-statements/' : 'bank-statements/') + key + '/approve', 'POST', {}, crypto.randomUUID());
-                    await refresh();
+                    const view=button._statementView;if(!view?.current()||button._saving)return;button._saving=true;button.disabled=true;
+                    try{await api((view.statement.card_id?'card-statements/':'bank-statements/')+view.statement.id+'/approve','POST',{},button._key??=crypto.randomUUID());if(view.current())await refresh();}catch(err){if(view.current())throw err;}finally{button._saving=false;if(button.isConnected)button.disabled=false;}
                     return;
                 }
                 if (action === 'credit-apply')
