@@ -5,14 +5,16 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "E71–E74 integrated build, Owner UI wire/calendar and legacy test expectation corrected",
+    "module": "E75–E78 integrated: documentary TRN, localized original ledger acceptance, human collection grouping and bounded original source",
     "acceptance": [
-      "Last full632 native accepted; next637 attempt636 passed/1 obsolete expectation now corrected",
-      "Corrected statement/GL/Owner targeted12/12 passed",
-      "Actual combined Owner/source/GL/package UI passed at657c068 tree3ce61e59",
-      "No hosted changes or delivery request"
+      "E75:9/9 related native and actual private-PDF/Owner-history AR/EN browser passed",
+      "E77:12/12 related native and actual original collections all five groupings AR/EN PDF/Excel passed",
+      "E78:27/27 related native and actual collections browser passed;175 static/type/provider-free build passed",
+      "Original Owner/source/GL/package integrated browsers passed",
+      "Full644 attempt643 passed/1 ENOSPC copying portable PDF test dependencies; same unchanged PDF worker passes using separate memory temporary directory",
+      "Remote447:638 native passed but old locale assertion failed; E76 corrected and original browser passed; no protected workflow touched"
     ],
-    "next": "Build E75 documentary TRN review and complete final cumulative native/actual UI acceptance; no staging delivery."
+    "next": "Run full648 integrated native acceptance in own synthetic DB5442 using per-process memory temp; preserve remaining20 partial and build-only hold."
   },
   "nextIndependentWork": [
     "Complete original-source scoped output for package registers and remaining dashboard drill-downs; preserve report/export rights and all filters",
@@ -53,12 +55,12 @@
     "مكتمل ومنشور": 27,
     "مكتمل وغير منشور": 48
   },
-  "lastRemoteCommit": "6d06573e6a2dd97fdbb1df608a9dce3a401af2ea",
-  "lastRemoteTree": "c174f1835e4c7737f2fe7589e41a3f747f16c21a",
+  "lastRemoteCommit": "447c750a7c8b79869c6c20b36e932a04d7e2b835",
+  "lastRemoteTree": "935ec64d52e2a0f257002cb46b7de0843ab0e8ca",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44992177320",
-    "head": "052c9a0f5f62a4008640295747fab24041d8536d",
-    "status": "completed failure in card-reconciliation browser trace assertion; no protected delivery job",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/45019473013",
+    "head": "447c750a7c8b79869c6c20b36e932a04d7e2b835",
+    "status": "completed failure: native638 passed; legacy ledger-output browser expected English posted-source wording in Arabic output; later steps skipped",
     "deployment": false,
     "protectedRunsTouched": false
   },
@@ -234,5 +236,43 @@
     "qualification": "UI wire had been omitted from the first E72 commit; no deployment occurred; now included on completion branch.",
     "calendarGuard": "213c17e: prospective payment minimum day uses UAE review date;5/5 native passed",
     "unsupportedGuard": "1e5c99e:12/12 statement/GL/Owner related native passed; no financial or authorization bypass"
+  },
+  "documentaryTaxRegistration": {
+    "commit": "381581beb6ef75d76af17903064f48ecf759ffc2",
+    "tree": "ef1ffb4de243cde5a570683fe0bebce17565ab0d",
+    "integratedCommit": "dbd3680",
+    "nativeRelatedPassed": 9,
+    "staticPassed": 175,
+    "actualPrivatePdfBrowser": "passed AR/EN desktop tablet phone, explicit Owner confirmation, late preview invalidation,503 outcome recovery, history and scoped reader",
+    "officialAuthorityVerified": false,
+    "taxTreatmentApproved": false,
+    "hostedChange": false,
+    "countsChanged": false
+  },
+  "cumulative644Attempt": {
+    "sourceCommit": "dbd3680000ba223a187380d6faa5896d18dd949a",
+    "sourceTree": "eaa4a15b70674c9b527b54b96fcd5365e0558cd7",
+    "tests": 644,
+    "pass": 643,
+    "fail": 1,
+    "skipped": 0,
+    "durationMs": 1119827.744987,
+    "failure": "ENOSPC copying document-text-portable synthetic worker dependencies into /tmp/ab-test-tmp-e60; no product assertion failed",
+    "log": "/tmp/financial-tax-registration-cumulative.log",
+    "portableRetest": "1/1 passed unchanged worker with temporary directory created and used in the same command under /dev/shm/ab-finance-tests-20261122",
+    "portableLog": "/tmp/e75-portable-worker-memory-tmp.log",
+    "originalDatabaseTouched": false
+  },
+  "collectionOutputBuild": {
+    "sourceCommit": "601233fe76816614b93ad9ceec265bab5525aac2",
+    "sourceTree": "0ebe3c6bc5ee1bd0896dcc021313ac2309952bd3",
+    "integratedExecutableCommit": "b313b077e8487094fd91b65d48b67a18d3b09174",
+    "executableTreesEqual": true,
+    "nativeRelatedPass": 27,
+    "staticPass": 175,
+    "actualBrowser": "AR/EN five groupings, three widths, exact amounts, PDF/Excel passed; original ledger/operational browsers also passed",
+    "sourceLimit": 20000,
+    "egressBillingSavingMeasured": false,
+    "hostedChange": false
   }
 }

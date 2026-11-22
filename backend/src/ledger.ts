@@ -1,3 +1,4 @@
+import {collectionReportSource} from './collection-report-source.js';
 import {configuredReciprocalReview,closingReciprocalSource} from './group-reciprocal-source.js';
 import {financialStatementPresentation,financialStatementFile,humanStatementKinds} from './financial-statement-presentation.js';
 import {originalInvoiceCorrectionSource} from './invoice-correction-source.js';
@@ -925,7 +926,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
             if(rows.some((r:any)=>r.ownedBy==='investor')){rows=rows.map((r:any)=>({ownership:r.ownedBy==='investor'?'investor_managed_right':'company_receivable',...r}));scope='operational invoice balances; investor_managed_right is an investor-owned subledger right, not a company asset; pending cheques are not payments';}else scope = 'classified invoice balances; pending cheques are not payments';
         }
         else if (q.kind === 'collections') {
-            const rs = (await c.query("select r.*,j.effective_on cleared_on,jr.effective_on returned_on from ab.finance_receipts r left join ab.finance_journals j on j.source_key='receipt:'||r.id::text and j.company_id=r.company_id and j.status='Posted'left join ab.finance_journals jr on jr.reversal_of=j.id and jr.status='Posted'where r.company_id=any($1::uuid[])and r.item_id is not null and r.kind<>'credit'and($2::uuid is null or r.created_by=$2)and($3::uuid is null or r.item_id=$3)", [selected, q.employeeId || null, q.itemId || null])).rows;
+            const rs = await collectionReportSource(c,selected,q);
             const groups = new Map<string, any>();
             for (const r of rs) {
                 if (r.kind === 'cheque' && !r.cleared_on)
@@ -970,8 +971,8 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
             if(reciprocal.balanced)rows=rows.filter((r:any)=>!r.eliminate);
             scope += '; consolidation removes only configured balanced reciprocal accounts, no FX conversion';
         }
-        const reportItems=q.presentation&&q.kind==='profitability'?(await c.query('select id,name_ar,name_en,payload_cipher from ab.finance_items where id=any($1::uuid[])',[[...new Set(rows.map((r:any)=>r.item_id).filter((id:any)=>typeof id==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(id)))]])).rows.map((r:any)=>({...cipher.open(r.payload_cipher),id:r.id,nameAr:r.name_ar,nameEn:r.name_en})):[];
-        const humanStatement=q.presentation?financialStatementPresentation(rows,m.state.companies,q,eliminationStatus,reportItems):null;if(humanStatement)rows=humanStatement.rows;
+        const reportItems=q.presentation&&(q.kind==='profitability'||q.kind==='collections'&&q.groupBy==='item')?(await c.query('select id,name_ar,name_en,payload_cipher from ab.finance_items where id=any($1::uuid[])',[[...new Set(rows.map((r:any)=>q.kind==='collections'?r.period:r.item_id).filter((id:any)=>typeof id==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(id)))]])).rows.map((r:any)=>({...cipher.open(r.payload_cipher),id:r.id,nameAr:r.name_ar,nameEn:r.name_en})):[];
+        const humanStatement=q.presentation?financialStatementPresentation(rows,m.state.companies,q,eliminationStatus,reportItems,m.state.users):null;if(humanStatement)rows=humanStatement.rows;
         if(q.full==='true'||q.search||q.grid!=='{}'||humanStatement)rows=filterRegister(rows,q,humanStatement?.statementColumns,humanStatement?.statementTypes).rows;
         const total = rows.length, totals: any = {};
         for (const r of rows)

@@ -346,3 +346,9 @@ jobs:
 
       - name: Original general ledger and journal keep exact human output and native source links
         run: node backend/tests/general-ledger-suite.browser.cjs
+
+      - name: Documentary TRN review preserves company identity, Owner authority and immutable certificate history
+        run: node backend/tests/tax-registration-suite.browser.cjs
+
+      - name: Original collections keep actual receipt totals and scoped human group captions
+        run: node backend/tests/collection-report-suite.browser.cjs

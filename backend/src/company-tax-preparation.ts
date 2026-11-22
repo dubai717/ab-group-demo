@@ -1,3 +1,4 @@
+import {registerTaxRegistrationReview} from './tax-registration-review.js';
 import {registerTaxSourceReview} from './tax-source-review.js';
 import {corporateAccounting,registerCorporateTaxSources} from './corporate-tax-workpaper.js';
 import {vatControlsSchema,validateVatControls,registerVatWorkpaper} from './vat-workpaper.js';
@@ -38,6 +39,7 @@ export function taxBridge(profit:string,adjustments:any[],from:string,to:string)
   adjustments:rows,filingReady:false,status:'DraftForTaxReview',source:'posted income/expense journals and approved bank operations; exact selected period only'};
 }
 export function registerCompanyTaxPreparation(app:any,route:any,cipher:any){
+ registerTaxRegistrationReview(app,route,cipher,companyTaxDraft);
  registerVatWorkpaper(app,route,cipher,companyTaxDraft);
  registerTaxSourceReview(app,route,cipher,companyTaxDraft);
  registerCorporateTaxSources(app,route);

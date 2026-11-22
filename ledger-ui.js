@@ -489,7 +489,7 @@
     async function loadReport(format = 'json', page = 0) {
         const generation=epoch,requestActor=ABCentral.actor?.id,requestCompany=co,requestLocale=getLocale(),revision=reportInputRevision;
         const d = drafts.report || {}, q = { companies: d.companies || co, from: d.from || now().slice(0, 4) + '-01-01', to: d.to || now(), kind: d.kind || 'trial', format, page: '0',...FinancialTables.state(registerScope(),'report') };
-        if(['trial','balance','profit','cashflow','profitability','cost-centres','ledger','journal'].includes(q.kind)){q.presentation='human_statement_v1';q.locale=requestLocale;if(d.consolidated&&['trial','balance','profit'].includes(q.kind))q.consolidated='true';}
+        if(['trial','balance','profit','cashflow','profitability','cost-centres','ledger','journal','collections'].includes(q.kind)){q.presentation='human_statement_v1';q.locale=requestLocale;if(d.consolidated&&['trial','balance','profit'].includes(q.kind))q.consolidated='true';}
         if (d.groupBy)
             q.groupBy = d.groupBy;
         if (d.currency)
