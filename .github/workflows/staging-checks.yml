@@ -357,6 +357,14 @@ jobs:
         run: node backend/tests/invoice-report-suite.browser.cjs
       - name: Original treasury document reports in Arabic and English
         run: node backend/tests/treasury-report-suite.browser.cjs
+      - name: Recorded VAT account movements retain source facts without inferred recovery or filing
+        run: node backend/tests/recorded-vat-suite.browser.cjs
+      - name: Original receivables and own custody preserve current balances and source rights
+        run: node backend/tests/operational-balance-suite.browser.cjs
+      - name: Original remaining report sources preserve Owner card and audit scope without inferred money
+        run: node backend/tests/remaining-report-suite.browser.cjs
+      - name: Original report context and cleared server-filtered sources recover without stale output
+        run: node backend/tests/report-context-suite.browser.cjs
 
       - name: All original financial dashboard counts open exact scoped sources despite old filters
         run: node backend/tests/dashboard-complete-source-suite.browser.cjs

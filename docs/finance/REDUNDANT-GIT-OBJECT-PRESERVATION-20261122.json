@@ -1,0 +1,10 @@
+{
+  "action": "Removed only redundant loose Git object copies already stored in verified existing packs; no prune of unreachable objects or history",
+  "before": "count: 2702\nsize: 23876\nin-pack: 4425\npacks: 3\nsize-pack: 4285\nprune-packable: 378\ngarbage: 0\nsize-garbage: 0\n",
+  "after": "count: 2324\nsize: 20424\nin-pack: 4425\npacks: 3\nsize-pack: 4285\nprune-packable: 0\ngarbage: 0\nsize-garbage: 0\n",
+  "allRefsSha256": "77ff8484472b89146ea5f85628e5282a6ac5f07493b92b7873d0f7cc0b6dcf4a",
+  "allRefsUnchanged": true,
+  "headAndTreeUnchanged": true,
+  "fullIntegrityBeforeAndAfterPassed": true,
+  "sourceDatabaseTouched": false
+}

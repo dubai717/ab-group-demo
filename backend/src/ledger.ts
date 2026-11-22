@@ -1,3 +1,4 @@
+import {remainingReportSource} from './remaining-report-source.js';
 import {invoiceReportSource} from './invoice-report-source.js';
 import {collectionReportSource} from './collection-report-source.js';
 import {configuredReciprocalReview,closingReciprocalSource} from './group-reciprocal-source.js';
@@ -842,7 +843,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
                 need(m, 'export', co);
         }
         const selected = cos.filter((co: any) => { const row = m.state.companies.find((x: any) => x.id === co); return row && (!q.emirate || [row.emirate, row.emirateId].includes(q.emirate)) && (!q.areaId || row.areaId === q.areaId); });
-        const humanMovements=!!q.presentation&&['ledger','journal'].includes(q.kind),humanInvoiceFacts=!!q.presentation&&['installments','adjustments'].includes(q.kind),statementSourceLinks=new Map<string,any>();
+        const humanMovements=!!q.presentation&&['ledger','journal','vat'].includes(q.kind),humanInvoiceFacts=!!q.presentation&&['installments','adjustments'].includes(q.kind),statementSourceLinks=new Map<string,any>();
         let eliminationStatus = 'not_requested';
         let rows: any[] = [], scope = 'posted entries only; no inferred historical balances';
         if (['trial', 'balance', 'profit', 'cashflow', 'ledger', 'journal', 'vat', 'profitability','cost-centres'].includes(q.kind)) {
@@ -927,7 +928,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         else if (q.kind === 'receivables') {
             for (const co of selected)
                 rows.push(...(await invoices(c, { companyId: co, currency: q.currency })).filter((r: any) => (!q.itemId || r.item_id === q.itemId) && r.dueOn <= q.to).map((r: any) => ({ ...r, overdue: r.dueOn < today() ? r.outstanding : '0.000', ageDays: Math.max(0, Math.floor((Date.now() - new Date(r.dueOn).getTime()) / 86400000)) })));
-            if(rows.some((r:any)=>r.ownedBy==='investor')){rows=rows.map((r:any)=>({ownership:r.ownedBy==='investor'?'investor_managed_right':'company_receivable',...r}));scope='operational invoice balances; investor_managed_right is an investor-owned subledger right, not a company asset; pending cheques are not payments';}else scope = 'classified invoice balances; pending cheques are not payments';
+            if(rows.some((r:any)=>r.ownedBy==='investor')){rows=rows.map((r:any)=>({ownership:r.ownedBy==='investor'?'investor_managed_right':'company_receivable',...r}));scope='operational invoice balances; investor_managed_right is an investor-owned subledger right, not a company asset; pending cheques are not payments';}else scope = 'classified invoice balances; pending cheques are not payments';if(q.presentation)for(const r of rows){r.report_source_key=cipher.digest('receivable-report-row:'+s.tenant_id+':'+r.company_id+':'+r.id);statementSourceLinks.set(r.report_source_key,{invoiceId:financeRight(m,'ledger_view',r.company_id)&&(!r.contracting_company_id||contractingRight(m,'view',r.company_id))?r.id:null});}
         }
         else if (q.kind === 'collections') {
             const rs = await collectionReportSource(c,selected,q);
@@ -955,7 +956,8 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
             scope='Original cash/petty fund accounts only; posted balances through period end. Existing fund management/audit scope or own custody; currencies separate. Collection custody, advances and cheque instruments are not added to these balances.';
         }
         else if(humanInvoiceFacts){rows=await invoiceReportSource(c,selected,q);for(const r of rows){r.report_source_key=cipher.digest('invoice-report-row:'+q.kind+':'+r.company_id+':'+r.id);statementSourceLinks.set(r.report_source_key,{invoiceId:financeRight(m,'ledger_view',r.company_id)&&(!r.contracting_company_id||contractingRight(m,'view',r.company_id))?r.invoice_id:null});}}
-        else if(q.presentation&&['vouchers','deposits','cheques'].includes(q.kind)){rows=await treasuryReportSource(c,selected,q);scope='Original treasury documents; document states do not imply bank settlement or new customer collections';}
+        else if(q.presentation&&['vouchers','deposits','cheques'].includes(q.kind)){rows=await treasuryReportSource(c,selected,q);for(const r of rows)if(['vouchers','deposits'].includes(q.kind)){r.report_source_key=cipher.digest('treasury-report-row:'+s.tenant_id+':'+q.kind+':'+r.company_id+':'+r.id);statementSourceLinks.set(r.report_source_key,{[q.kind==='vouchers'?'voucherId':'depositId']:financeRight(m,'ledger_view',r.company_id)?r.id:null});}scope='Original treasury documents; document states do not imply bank settlement or new customer collections';}
+        else if(q.presentation&&['cards','kpi','intercompany'].includes(q.kind)){rows=await remainingReportSource(c,selected,q);if(q.kind==='intercompany')for(const r of rows){const target=financeRight(m,'ledger_report',r.to_company_id)?m.state.companies.find((co:any)=>co.id===r.to_company_id):null;r.counterparty_name_ar=target?.arabicName||'';r.counterparty_name_en=target?.englishName||'';r.report_source_key=cipher.digest('intercompany-report-row:'+s.tenant_id+':'+r.company_id+':'+r.id);statementSourceLinks.set(r.report_source_key,{voucherId:r.amount!==null&&financeRight(m,'ledger_view',r.company_id)?r.voucher_id:null});}}
         else if (['deposits', 'cheques', 'intercompany', 'installments', 'adjustments'].includes(q.kind)) {
             const defs: any = { deposits: ['finance_deposits', 'effective_on'], cheques: ['finance_cheques', 'due_on'], intercompany: ['finance_intercompany', 'created_at'], installments: ['vehicle_invoices', 'due_on'], adjustments: ['vehicle_invoice_adjustments', 'created_at'] };
             const [table, date] = defs[q.kind];
@@ -969,6 +971,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
             const tables: any = { vouchers: 'finance_vouchers', cards: 'finance_card_charges', kpi: 'finance_kpi_facts' };
             rows = (await c.query('select * from ab.' + tables[q.kind] + ' where company_id=any($1::uuid[])and created_at::date between $2 and $3 order by created_at,id', [selected, q.from, q.to])).rows.map((r: any) => ({ ...r, payload_cipher: undefined }));
         }
+        if(q.presentation&&q.currency&&q.kind==='custody')rows=rows.filter((r:any)=>r.currency===q.currency);
         if(q.kind==='cards'){const hidden=await hiddenPersonalCardIds(c,m);rows=rows.filter((r:any)=>!hidden.has(r.card_id));}
         if (q.consolidated === 'true' && ['trial', 'balance', 'profit'].includes(q.kind)) {
             const active = m.state.companies.filter((x: any) => x.status === 'Active').map((x: any) => x.id);
@@ -994,7 +997,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         if (q.kind === 'profit')
             for (const [cur, net] of Object.entries(totals))
                 profitByCurrency[cur] = L.money(-L.units(net));
-        const result = { ...((humanMovements||humanInvoiceFacts)&&q.format==='json'?{statementSourceLinks:Object.fromEntries(rows.map((r:any)=>[r.id,statementSourceLinks.get(r.id)]))}:{}),companies:selected.map((id:string)=>{const co=m.state.companies.find((r:any)=>r.id===id);return{id,nameAr:co?.arabicName||'',nameEn:co?.englishName||''};}),profitByCurrency, unpostedInvoiceAdjustments: unpostedAdjustments, rows, total, page: q.page, pageSize: 200, totals, scope, unclassifiedInvoices: Number(coverage), groupEliminations: eliminationStatus, groupClosingRequired: true, vatReturnCertified: false,...(humanStatement?{...humanStatement,rows,statementColumns:humanStatement.statementColumns,complete:q.full==='true'||q.format!=='json'}:{}) };
+        const result = { ...((humanMovements||humanInvoiceFacts||q.presentation&&['vouchers','deposits','receivables','intercompany'].includes(q.kind))&&q.format==='json'?{statementSourceLinks:Object.fromEntries(rows.map((r:any)=>[r.id,statementSourceLinks.get(r.id)]))}:{}),companies:selected.map((id:string)=>{const co=m.state.companies.find((r:any)=>r.id===id);return{id,nameAr:co?.arabicName||'',nameEn:co?.englishName||''};}),profitByCurrency, unpostedInvoiceAdjustments: unpostedAdjustments, rows, total, page: q.page, pageSize: 200, totals, scope, unclassifiedInvoices: Number(coverage), groupEliminations: eliminationStatus, groupClosingRequired: true, vatReturnCertified: false,...(humanStatement?{...humanStatement,rows,statementColumns:humanStatement.statementColumns,complete:q.full==='true'||q.format!=='json'}:{}) };
         if(humanStatement&&['csv','excel'].includes(q.format))return{...result,...financialStatementFile(rows,q,result)};
         if (q.format === 'json' || q.format === 'print')
             return result;

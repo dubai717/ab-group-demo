@@ -1,7 +1,7 @@
 (function(root){'use strict';
  let epoch=0;
  const text=(ar,en)=>getLocale()==='ar'?ar:en;
- async function open(type,id,options={}){const actor=ABCentral.actor?.id,locale=getLocale(),requestEpoch=epoch,current=()=>!!actor&&ABCentral.actor?.id===actor&&getLocale()===locale&&epoch===requestEpoch&&(!options.current||options.current());if(!current())return null;if(!/^[a-z]+$/.test(type)||!/^[a-f0-9-]{36}$/i.test(id))throw Error('invalidRecordLink');let record;try{record=await CenterForms.api('record-links/'+type+'/'+id+(type==='journal'?'?locale='+encodeURIComponent(locale):''));}catch(err){if(!current())return null;throw err;}if(!current())return null;
+ async function open(type,id,options={}){const actor=ABCentral.actor?.id,locale=getLocale(),requestEpoch=epoch,current=()=>!!actor&&ABCentral.actor?.id===actor&&getLocale()===locale&&epoch===requestEpoch&&(!options.current||options.current());if(!current())return null;if(!/^[a-z]+$/.test(type)||!/^[a-f0-9-]{36}$/i.test(id))throw Error('invalidRecordLink');let record;try{record=await CenterForms.api('record-links/'+type+'/'+id+(['journal','voucher','deposit'].includes(type)?'?locale='+encodeURIComponent(locale):''));}catch(err){if(!current())return null;throw err;}if(!current())return null;
  if(type==='company')return ABCentral.openCompany(id);
  if(type==='customer')return CustomerUI.open(id);
  if(type==='vehicle')return VehicleUI.openNotification(id);

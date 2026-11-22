@@ -5,15 +5,18 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "E75–E81 integrated build;651 native accepted before E80/E81; combined656 acceptance next",
+    "module": "E79–E88 accepted original-source reports; central financial summary drilldown remains",
     "acceptance": [
-      "Full651/6510fail/skip94a98be tree8d119b51",
-      "E80:14/14 related native, then5/5 final privacy/fault cases; financial/vehicle company rollback and safe continuation; global maintenance/53100 still stop",
-      "E81: actual receipt dashboard0versus1 before fix; Owner/reader all three remaining counters AR/EN filters/search/full print/three widths passed after fix",
-      "Original Pending voucher/Review deposit dashboard browser passed;175 static and provider-free build passed",
-      "No source database, historical balance/grant change, staging merge, protected workflow action or delivery request"
+      "Full immutable b485cae/tree8df5311d668/6680fail/skip",
+      "E83:9/9 related native,175 static, six actual PDFs, AR/EN original three treasury reports; original ledger/collections/invoice browser regressions passed",
+      "E84:7/7 related native,175 static, type/build, original voucher/deposit row links and changed-period late-response discard; original session and GL/journal browsers passed",
+      "No hosting operations, financial activation or source/historical/grant changes",
+      "E85:12/12 related native,175 static,type/build, actual recorded VAT AR/EN two PDFs/Excel/native JV; original source-review and GL browsers passed",
+      "E86:8/8 related native;175 static/type/build; actual Owner/reader AR/EN own-only custody, current native receivables, invoice sources, four PDFs and Excel including empty scope",
+      "E87:10/10 related native, all21 report presentations supported; Owner/reader AR/EN eight actual PDFs/full Excel; original package/ledger/operational browser regressions passed",
+      "E88 actual before0 versus2; after AR/EN clear-source recovery,503 manual retry and obsolete report reply discard; original ledger/package/personnel regressions and stricter upload-response checks passed"
     ],
-    "next": "Run combined656 native suite on isolated DB5442 with per-command memory temp; continue independent work while approved tax classification reference remains pending."
+    "next": "Preserve draft source with unprivileged tests only; implement exact central invoice/posted-ledger/current-bank detail navigation and retain unresolved HR CI diagnosis without assuming cause."
   },
   "nextIndependentWork": [
     "Complete original-source scoped output for package registers and remaining dashboard drill-downs; preserve report/export rights and all filters",
@@ -54,12 +57,13 @@
     "مكتمل ومنشور": 27,
     "مكتمل وغير منشور": 48
   },
-  "lastRemoteCommit": "3a76b6a36e046b605a0d4950836b6beb06d6628f",
-  "lastRemoteTree": "66da8b59605870f7c664ea6a1c9f830d0b74c266",
+  "lastRemoteCommit": "69a19b8103efc21a4913be31fffc487e1ec2e14f",
+  "lastRemoteTree": "12affab9c0f88fa8ca1c5a3e4cd570055e17a953",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/45024068037",
-    "head": "3a76b6a36e046b605a0d4950836b6beb06d6628f",
-    "status": "completed success;175 static and648 native passed, all actual browsers passed; unprivileged checks only",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/45031886523",
+    "head": "69a19b8103efc21a4913be31fffc487e1ec2e14f",
+    "status": "completed failure: personnel-directory document form remained visible; no HTTP cause present in original CI log; same test passes locally with new safe diagnostics and stricter actual upload HTTP assertions",
+    "native": "661/661 passed;175 static passed",
     "deployment": false,
     "protectedRunsTouched": false
   },
@@ -184,15 +188,15 @@
     "hostedActivation": false
   },
   "latestCumulativeAcceptance": {
-    "commit": "3dbc0b39a59e13bb0e7be75268cb813edf3307fe",
-    "tree": "89e54c1db103f925cd2d1d30a4fca54f5d1f9f89",
-    "tests": 656,
-    "passed": 656,
+    "commit": "b485caefc789ca9c0abbbb5a0292080934cdcf9c",
+    "tree": "8df5311df715855241f65c1ecb74f9918bf3b627",
+    "tests": 668,
+    "passed": 668,
     "failed": 0,
     "skipped": 0,
-    "durationMs": 1082638.270144,
-    "log": "/tmp/financial-scheduled-dashboard-cumulative.log",
-    "scope": "Immutable full E80/E81 native acceptance; E82 is a subsequent independently verified addition. Not all95 acceptance.",
+    "durationMs": 1140879.781634,
+    "log": "/tmp/financial-all-report-sources-cumulative.log",
+    "scope": "Full immutable E86/E87 acceptance; UI-only E88 later separately verified. Not all95 acceptance.",
     "noHostedOperations": true
   },
   "prospectiveLegacyService": {
@@ -365,8 +369,97 @@
     "hostedChange": false
   },
   "nextCumulativeAcceptance": {
-    "expectedTests": 661,
-    "scope": "Full E83 native suite pending;659 suite currently runs on immutablec0a7d1e before E83",
+    "expectedTests": 668,
+    "scope": "Native668 already passed before UI-only E88. New saved-head CI requires separate verification.",
     "notAll95Acceptance": true
+  },
+  "treasuryOriginalRecordLinks": {
+    "relatedNativePass": 7,
+    "staticPass": 175,
+    "actualBrowser": "AR/EN original voucher/deposit row links, changed-report late source discarded, six actual PDFs/Excel; original session and GL/journal regressions passed",
+    "financialEffect": false,
+    "hostedChange": false
+  },
+  "syntheticArtifactArchive": "docs/finance/SYNTHETIC-ARTIFACT-PRESERVATION-20261122.json",
+  "previous656CumulativeAcceptance": {
+    "commit": "3dbc0b39a59e13bb0e7be75268cb813edf3307fe",
+    "tree": "89e54c1db103f925cd2d1d30a4fca54f5d1f9f89",
+    "tests": 656,
+    "passed": 656,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 1082638.270144,
+    "log": "/tmp/financial-scheduled-dashboard-cumulative.log",
+    "scope": "Immutable full E80/E81 native acceptance; E82 is a subsequent independently verified addition. Not all95 acceptance.",
+    "noHostedOperations": true
+  },
+  "recordedVatAccountOutput": {
+    "relatedNativePass": 12,
+    "newNativeCases": 1,
+    "actualBrowser": "AR/EN three widths, original5 and negative0.5, nativeJV row opening, two actual PDFs and Excel; tax source and GL/journal regressions passed",
+    "taxTreatmentOrFilingApproved": false,
+    "hostedChange": false
+  },
+  "currentCumulativeRun": {
+    "commit": "b485caefc789ca9c0abbbb5a0292080934cdcf9c",
+    "tree": "8df5311df715855241f65c1ecb74f9918bf3b627",
+    "status": "completed success668/668, source unchanged",
+    "log": "/tmp/financial-all-report-sources-cumulative.log"
+  },
+  "operationalBalancePresentation": {
+    "newNativeCases": 2,
+    "relatedNativePass": 8,
+    "staticPass": 175,
+    "actualBrowser": "Owner/reader AR/EN current original receivables, own-only custody, four actual PDFs, full Excel and source links; financial rows unchanged",
+    "currentNotHistoricalInvoiceBalances": true,
+    "hostedChange": false
+  },
+  "redundantGitCopies": "docs/finance/REDUNDANT-GIT-OBJECT-PRESERVATION-20261122.json",
+  "previous659CumulativeAcceptance": {
+    "commit": "c0a7d1e08e9bcadf5f727aaa40abfce381bebf14",
+    "tree": "9985e25078236b88e71df0667be41c3e466ac3e7",
+    "tests": 659,
+    "passed": 659,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 1157281.032465,
+    "log": "/tmp/financial-register-scope-cumulative.log",
+    "scope": "Immutable E82 integrated native suite; E83–E85 later separately verified additions. Not all95 acceptance.",
+    "noHostedOperations": true
+  },
+  "remainingReportPresentation": {
+    "newNativeCases": 4,
+    "relatedNativePass": 10,
+    "staticPass": 175,
+    "actualBrowser": "Owner/reader AR/EN four families, private cards/audit/counterparty/fund scope, original voucher links, eight PDFs/full Excel; three original regression suites passed",
+    "initialFixtureFailure": "205 funds with410 setup API calls exceeded unchanged300/minute limit; local scale seeds now retain native chart/Posted journal sources without disabling rate protection or adding API bypass",
+    "financialOrHostedChange": false
+  },
+  "previous662CumulativeAcceptance": {
+    "commit": "696df1af1f57f120d92d5fb95ee2d2795e1b9879",
+    "tree": "c58141b433cc7684172ade4558786b9faab697d5",
+    "tests": 662,
+    "passed": 662,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 1166192.848667,
+    "log": "/tmp/financial-treasury-tax-output-cumulative.log",
+    "scope": "Immutable full E83–E85 acceptance; E86/E87 later additions separately verified. Not all95 acceptance.",
+    "noHostedOperations": true
+  },
+  "reportFilterRecovery": {
+    "actualBaseline": "0 rows after clearing a restored filtered result versus2 original rows",
+    "actualAcceptance": "AR/EN clear-source reload, manual503 recovery, exact print, obsolete reply discarded without ghost error; existing context isolation retained",
+    "backendFinancialChanges": false,
+    "nativeCasesAdded": 0
+  },
+  "hrCiFollowup": {
+    "run": "45031886523",
+    "failedStep": "Unified registers company profiles AR EN desktop tablet phone",
+    "failureAtUtc": "2026-11-22T14:43:45",
+    "rootCauseVerified": false,
+    "actualLocalDiagnostic": "personnel-directory browser passed; only intentional syntheticLostUploadResponse503 observed",
+    "strictResponseAssertionsPassed": true,
+    "hrProductOrPermissionsChanged": false
   }
 }
