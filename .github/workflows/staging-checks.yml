@@ -241,6 +241,8 @@ jobs:
         run: node backend/tests/manual-claim-chain-suite.browser.cjs
       - name: Non-sales claims use isolated reviewed custody proposal only
         run: node backend/tests/manual-claims-suite.browser.cjs
+      - name: Ledger output uses existing export authority and complete scoped print sources
+        run: node backend/tests/ledger-output-suite.browser.cjs
       - name: Investor agency proposal uses isolated synthetic schema and providers only
         run: node backend/tests/investor-monthly-suite.browser.cjs
       - name: Financial package and completion use independent rate-limited fixtures

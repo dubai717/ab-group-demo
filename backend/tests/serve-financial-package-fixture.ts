@@ -5,6 +5,7 @@ import { build } from '../src/app.js';
 import { readFile, writeFile } from 'node:fs/promises';
 import { today } from '../src/vehicle-domain.js';
 const f = await businessCentersFixture(), proof = await f.proof(), bank = await f.bank(), bill = await f.bill('500', f.items.salik);
+if(process.env.AB_TEST_LEDGER_OUTPUT_FIXTURE==='1')for(let i=0;i<60;i++)await f.bill('1.001',f.items.salik,{sourceKey:'SYN-OUTPUT-ROW-'+i});
 if(process.env.AB_TEST_CARD_ISSUER_MATCH_SCHEMA==='1')await f.admin.query(await readFile('docs/proposals/card-issuer-payment-match.review-only.sql','utf8'));
 if(process.env.AB_TEST_MANUAL_CLAIM_SCHEMA==='1')await f.admin.query(await readFile('docs/proposals/manual-claim-receipts.review-only.sql','utf8'));
 if(process.env.AB_TEST_MANUAL_CLAIM_BANK_SCHEMA==='1')await f.admin.query(await readFile('docs/proposals/manual-claim-bank-receipts.review-only.sql','utf8'));

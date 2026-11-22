@@ -5,16 +5,16 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "Original cash/petty fund workbench/report scope and batched actual balances",
+    "module": "Existing export authorization for complete ledger PDF/print, original source/date/JV filters and actual PDF acceptance",
     "acceptance": [
-      "Two new native cases and 44 related native tests passed; own fund only, explicitly scoped manager, same export scope, one query, Draft/date cutoff, archived holder, two companies and distinct currencies",
-      "Actual ordinary-user fund/report browser passed with named holder/company and no raw IDs or unauthorized cash actions; original two-actor handover browser passed, AR/EN at three widths",
-      "TypeScript, 172 static checks and portable runtime graph passed; no checklist promotion from this guard/report improvement alone"
+      "Three new native cases and 62 related native tests passed; real gate failures reproduced, empty statement export scope enforced, private Owner/other companies denied, grants and entries unchanged",
+      "Actual separate reader/exporter browser passed: complete >50 invoice print with localized headers and real multi-page PDF, complete named journal source in AR/EN, typed date filter plus Excel, three widths",
+      "TypeScript, 172 static checks and portable runtime graph passed; requirement 7.1 reevaluated against already accepted E34/E40 rather than rebuilt"
     ],
-    "next": "Save E44; fix the unregistered ledger_print output gate using the existing export authorization, then continue remaining tax/shared-expense/Owner exception requirements. No deployment."
+    "next": "Save E45 and freeze it for cumulative native acceptance. Then complete original approved-commitment payment methods using existing bank operations/cash journals/PV register; no hosted activation or deployment."
   },
   "nextIndependentWork": [
-    "Align ledger PDF/print authorization with the existing export catalog; no automatic grants or new parallel role",
+    "Complete cash/bank payment methods of approved commitments through original bank operations, fund journals and PV register, keeping existing cheque controls and future financial activation approval",
     "Original noncash employee/external receivable claims using approved actual bank operations and original RV/collection/report sources",
     "Shared-expense reviewed VAT and intercompany settlement acceptance",
     "Owner-card broad classification and exceptional personal requests; supplier refund/correction review",
@@ -43,26 +43,27 @@
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
   "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
   "checklistCounts": {
-    "منفذ جزئياً": 27,
+    "منفذ جزئياً": 26,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 40,
+    "مكتمل وغير منشور": 41,
     "لم يُنفذ": 1
   },
-  "lastRemoteCommit": "68653b017d10af867501ffb49c580e64da71448f",
-  "lastRemoteTree": "857f10f16f5d00dc43d10dceb42c1ac49d44346d",
+  "lastRemoteCommit": "1a9c29962175acfd5c2353059df05ad60f1c697e",
+  "lastRemoteTree": "dc33d77459c99dcc60d8e9873463c8bcb5e74414",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44961309947",
-    "head": "68653b017d10af867501ffb49c580e64da71448f",
-    "status": "in_progress at last read",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44963014630",
+    "head": "1a9c29962175acfd5c2353059df05ad60f1c697e",
+    "status": "success",
+    "deployment": false,
     "protectedRunsTouched": false
   },
   "lastSuccessfulDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44959551655",
-    "head": "1c31863ce4af63edda7934906045800fa227401d",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/44963014630",
+    "head": "1a9c29962175acfd5c2353059df05ad60f1c697e",
     "status": "success",
-    "includes": "Cash / bank / customer-AR role separation and every earlier saved source",
     "deployment": false,
-    "protectedRunsTouched": false
+    "protectedRunsTouched": false,
+    "includes": "Original scoped fund projection and every preceding saved checkpoint"
   },
   "lastCumulativeAcceptance": {
     "localCommit": "e7dbd4f103808787884e78233aa9e43d06706c8c",
