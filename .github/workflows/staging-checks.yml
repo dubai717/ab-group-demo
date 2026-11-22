@@ -368,3 +368,6 @@ jobs:
 
       - name: All original financial dashboard counts open exact scoped sources despite old filters
         run: node backend/tests/dashboard-complete-source-suite.browser.cjs
+
+      - name: Central financial figures open exact original sources with independent read and export rights
+        run: node backend/tests/central-financial-source-suite.browser.cjs

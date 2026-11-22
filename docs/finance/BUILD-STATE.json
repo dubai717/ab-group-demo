@@ -5,7 +5,7 @@
   "releaseHold": true,
   "all95Complete": false,
   "currentWork": {
-    "module": "E79–E88 accepted original-source reports; central financial summary drilldown remains",
+    "module": "E89 central original financial source output accepted; cumulative acceptance and independent remaining financial decisions",
     "acceptance": [
       "Full immutable b485cae/tree8df5311d668/6680fail/skip",
       "E83:9/9 related native,175 static, six actual PDFs, AR/EN original three treasury reports; original ledger/collections/invoice browser regressions passed",
@@ -14,9 +14,10 @@
       "E85:12/12 related native,175 static,type/build, actual recorded VAT AR/EN two PDFs/Excel/native JV; original source-review and GL browsers passed",
       "E86:8/8 related native;175 static/type/build; actual Owner/reader AR/EN own-only custody, current native receivables, invoice sources, four PDFs and Excel including empty scope",
       "E87:10/10 related native, all21 report presentations supported; Owner/reader AR/EN eight actual PDFs/full Excel; original package/ledger/operational browser regressions passed",
-      "E88 actual before0 versus2; after AR/EN clear-source recovery,503 manual retry and obsolete report reply discard; original ledger/package/personnel regressions and stricter upload-response checks passed"
+      "E88 actual before0 versus2; after AR/EN clear-source recovery,503 manual retry and obsolete report reply discard; original ledger/package/personnel regressions and stricter upload-response checks passed",
+      "E89:18/18 related native,175 static/type/build; Owner and three scoped readers AR/EN, eight actual PDFs/Excel and held native response/export guards; read-only original sources"
     ],
-    "next": "Preserve draft source with unprivileged tests only; implement exact central invoice/posted-ledger/current-bank detail navigation and retain unresolved HR CI diagnosis without assuming cause."
+    "next": "Freeze accepted E89 source, run cumulative672 acceptance and regress original dashboards/GL; continue independent builds while approved tax/agency/legal references remain pending."
   },
   "nextIndependentWork": [
     "Complete original-source scoped output for package registers and remaining dashboard drill-downs; preserve report/export rights and all filters",
@@ -53,17 +54,17 @@
   "draftPullRequest": "https://github.com/dubai717/ab-group-demo/pull/115",
   "sourceSchemaFinding": "023 receipt_exact_party retained: staff cash repayments use the pre-existing general receipt without customer, vehicle or sales item; no schema change or fake customer.",
   "checklistCounts": {
-    "منفذ جزئياً": 20,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 48
+    "مكتمل وغير منشور": 49,
+    "منفذ جزئياً": 19,
+    "لم يُنفذ": 0
   },
-  "lastRemoteCommit": "69a19b8103efc21a4913be31fffc487e1ec2e14f",
-  "lastRemoteTree": "12affab9c0f88fa8ca1c5a3e4cd570055e17a953",
+  "lastRemoteCommit": "8cee6bad69d3df9ce0043bd7965c4e47f59b7c95",
+  "lastRemoteTree": "3e6c14382e5f4a78ccf8e25ae5f4d2387a61788e",
   "lastDraftCi": {
-    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/45031886523",
-    "head": "69a19b8103efc21a4913be31fffc487e1ec2e14f",
-    "status": "completed failure: personnel-directory document form remained visible; no HTTP cause present in original CI log; same test passes locally with new safe diagnostics and stricter actual upload HTTP assertions",
-    "native": "661/661 passed;175 static passed",
+    "run": "https://github.com/dubai717/ab-group-demo/actions/runs/45038268907",
+    "head": "8cee6bad69d3df9ce0043bd7965c4e47f59b7c95",
+    "status": "in_progress; original HR directory step passed; whole run not yet accepted",
     "deployment": false,
     "protectedRunsTouched": false
   },
@@ -177,9 +178,10 @@
     "noDeliveryRequested": true
   },
   "requirementCounts": {
-    "منفذ جزئياً": 20,
     "مكتمل ومنشور": 27,
-    "مكتمل وغير منشور": 48
+    "مكتمل وغير منشور": 49,
+    "منفذ جزئياً": 19,
+    "لم يُنفذ": 0
   },
   "groupClosingAcceptance": {
     "review": "docs/reviews/cross-flow-group-closing-acceptance-2026-11-22.md",
@@ -369,8 +371,8 @@
     "hostedChange": false
   },
   "nextCumulativeAcceptance": {
-    "expectedTests": 668,
-    "scope": "Native668 already passed before UI-only E88. New saved-head CI requires separate verification.",
+    "expectedTests": 672,
+    "scope": "E89 adds4 native cases; prior668 is not final E89 acceptance",
     "notAll95Acceptance": true
   },
   "treasuryOriginalRecordLinks": {
@@ -461,5 +463,14 @@
     "actualLocalDiagnostic": "personnel-directory browser passed; only intentional syntheticLostUploadResponse503 observed",
     "strictResponseAssertionsPassed": true,
     "hrProductOrPermissionsChanged": false
+  },
+  "centralFinancialSourceOutput": {
+    "review": "docs/reviews/central-financial-source-drilldown-2026-11-22.md",
+    "relatedNativePassed": 18,
+    "newNativeCases": 4,
+    "staticPassed": 175,
+    "browser": "Owner/ledger-exporter/bank-print-only/summary-only AR/EN; eight actual PDFs and full Excel; held native source and closed-print replies discarded",
+    "financialWrites": false,
+    "hostedChanges": false
   }
 }
