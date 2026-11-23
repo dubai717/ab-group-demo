@@ -23,7 +23,7 @@ export function standardExceptionImpact(m:any, actorId:string, roleId:string, po
    individualGrantsRetained:!direct.some((g:any)=>selected.has(g.entry.id)),
    selectedRemovalCount:direct.filter((g:any)=>selected.has(g.entry.id)).length,
    retainedAdditionCount:direct.filter((g:any)=>!selected.has(g.entry.id)).length,
-   directAdditions:direct.map((g:any)=>({id:g.entry.id,action:g.entry.action,scope:g.entry.scope,scopeNameAr:(m.state.companies||[]).find((x:any)=>x.id===g.entry.scope.id)?.nameAr||(m.state.departments||[]).find((x:any)=>x.id===g.entry.scope.id)?.name||null,scopeNameEn:(m.state.companies||[]).find((x:any)=>x.id===g.entry.scope.id)?.nameEn||(m.state.departments||[]).find((x:any)=>x.id===g.entry.scope.id)?.name||null,delegable:g.entry.delegable,
+   directAdditions:direct.map((g:any)=>({id:g.entry.id,action:g.entry.action,scope:g.entry.scope,scopeNameAr:(m.state.companies||[]).find((x:any)=>x.id===g.entry.scope.id)?.nameAr||(m.state.companies||[]).find((x:any)=>x.id===g.entry.scope.id)?.arabicName||(m.state.departments||[]).find((x:any)=>x.id===g.entry.scope.id)?.name||null,scopeNameEn:(m.state.companies||[]).find((x:any)=>x.id===g.entry.scope.id)?.nameEn||(m.state.companies||[]).find((x:any)=>x.id===g.entry.scope.id)?.englishName||(m.state.departments||[]).find((x:any)=>x.id===g.entry.scope.id)?.name||null,delegable:g.entry.delegable,
     selectedForRemoval:selected.has(g.entry.id),removalRequiresDownstreamReview:m.grants.some((x:any)=>x.issuer_id===u.id&&x.user_id!==u.id)}))
   };})};
 }

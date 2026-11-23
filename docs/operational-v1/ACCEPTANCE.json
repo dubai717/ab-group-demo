@@ -781,6 +781,24 @@
       "sha256": "4cac00dd6a1420e67a6353597d69f615ea130ec6b3d454517cd573341d392f60",
       "bytes": 3565,
       "scope": "isolated selected-exception source and original regressions; no hosted changes"
+    },
+    {
+      "path": "work/operational-evidence/selected-exceptions-captions.log",
+      "sha256": "c2409530bfc606c8a3d61998d074972aec6bfe64d0a41f07d6edb79e98e0576a",
+      "bytes": 332,
+      "scope": "Original company arabicName/englishName aliases; focused native and actual UI rerun after caption correction"
+    },
+    {
+      "path": "work/operational-evidence/selected-exceptions-captions-browser.log",
+      "sha256": "148db0d118c144c5f2d68cf1ce4371d845f7db05a52472acab7dcc9de297f39f",
+      "bytes": 272,
+      "scope": "Original company arabicName/englishName aliases; focused native and actual UI rerun after caption correction"
+    },
+    {
+      "path": "work/operational-evidence/selected-exceptions-captions-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "scope": "Original company arabicName/englishName aliases; focused native and actual UI rerun after caption correction"
     }
   ],
   "failedAttemptsNotAcceptance": [

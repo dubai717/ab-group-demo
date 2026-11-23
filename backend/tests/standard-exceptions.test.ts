@@ -3,9 +3,9 @@ import {personnelFixture} from './personnel-fixture.js';
 import {standardExceptionImpact} from '../src/standard-exceptions.js';
 test('selected exception preview never cascades to unselected or inherited sources',()=>{
  const user=randomUUID(),actor=randomUUID(),a=randomUUID(),b=randomUUID(),outside=randomUUID();
- const m:any={state:{users:[{id:user,roleId:'standard',revision:1}]},initialGrants:[{userId:user,entry:{id:a,action:'customer_view',scope:{type:'company',id:'x'}}},{userId:user,entry:{id:b,action:'vehicle_view',scope:{type:'company',id:'x'}}}],grants:[]};
+ const m:any={state:{users:[{id:user,roleId:'standard',revision:1}],companies:[{id:'x',arabicName:'شركة اصطناعية',englishName:'Synthetic company'}]},initialGrants:[{userId:user,entry:{id:a,action:'customer_view',scope:{type:'company',id:'x'}}},{userId:user,entry:{id:b,action:'vehicle_view',scope:{type:'company',id:'x'}}}],grants:[]};
  const keep=standardExceptionImpact(m,actor,'standard','retain_all',[]);assert.equal(keep.affectedUsers[0].retainedAdditionCount,2);
- const selected=standardExceptionImpact(m,actor,'standard','remove_selected',[a]);assert.equal(selected.affectedUsers[0].retainedAdditionCount,1);assert.equal(selected.affectedUsers[0].selectedRemovalCount,1);assert.equal(selected.individualDenySupported,false);
+ const selected=standardExceptionImpact(m,actor,'standard','remove_selected',[a]);assert.equal(selected.affectedUsers[0].retainedAdditionCount,1);assert.equal(selected.affectedUsers[0].selectedRemovalCount,1);assert.equal(selected.individualDenySupported,false);assert.equal(selected.affectedUsers[0].directAdditions[0].scopeNameAr,'شركة اصطناعية');assert.equal(selected.affectedUsers[0].directAdditions[0].scopeNameEn,'Synthetic company');
  for(const ids of [[],[a,a],[outside]])assert.throws(()=>standardExceptionImpact(m,actor,'standard','remove_selected',ids));
  assert.throws(()=>standardExceptionImpact(m,actor,'standard','retain_all',[a]));
  m.grants=[{issuer_id:user,user_id:outside}];assert.throws(()=>standardExceptionImpact(m,actor,'standard','remove_selected',[a]),/reviewDownstreamGrantsFirst/);assert.equal(standardExceptionImpact(m,actor,'standard','retain_all',[]).affectedUsers[0].individualAdditionCount,2);
