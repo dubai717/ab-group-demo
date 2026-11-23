@@ -2275,7 +2275,24 @@
     "originalIsolatedRestore": 1,
     "static": 189,
     "browserFocused": 1,
-    "fullCurrentNative": "running",
+    "fullCurrentNative": {
+      "commit": "f78d6c263987dab57064d94214f7f558f5e52826",
+      "tests": 789,
+      "pass": 784,
+      "fail": 5,
+      "status": "failed-environment-OCI-scratch-full",
+      "overlappingRetry": {
+        "tests": 61,
+        "pass": 61,
+        "method": "same packaged PostgreSQL17.11 tools constrained to dedicated synthetic localhost; no assertion changes"
+      },
+      "canonicalCI": {
+        "run": 28,
+        "id": 45241304807,
+        "conclusion": "success"
+      },
+      "ephemeralRetryLogsAvailable": false
+    },
     "fullCurrentUI": {
       "status": "passed",
       "journeys": 32,
@@ -2433,6 +2450,18 @@
       {
         "path": "work/evidence/financial95.log",
         "sha256": "22ba1e29583a8da2ec0942d6cd361e35091d7c0cc1a090614dc767487a043a04"
+      },
+      {
+        "path": "work/evidence/types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "work/evidence/build.log",
+        "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+      },
+      {
+        "path": "work/evidence/static.log",
+        "sha256": "1af77a711215c5db7b17376f0ceeb46d46dacd9913028466dbbc6e16908bb158"
       }
     ],
     "native": {
@@ -2450,6 +2479,13 @@
       "CI29 original regression timed out on locale render wait; scoped exact test rerun passed without assertion changes",
       "Financial95 unchanged",
       "No original data, merge, deployment or external send"
-    ]
+    ],
+    "static": {
+      "tests": 162,
+      "pass": 162,
+      "scope": "tests/*.test.cjs only, not the wider 189-file-pattern check"
+    },
+    "types": "pass",
+    "providerFreeBuild": "pass"
   }
 }

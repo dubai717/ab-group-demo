@@ -136,3 +136,16 @@ flowchart LR
 ```
 
 No finance or historical balances are imported. Real operating-data import remains prohibited pending final approval and backup. This diagram does not claim missing entity adapters are implemented.
+
+### Explicit original conversation-task successor (unpublished)
+
+```mermaid
+flowchart LR
+  A[Original completed case task] --> B[Explicit completed-parent selection]
+  B --> C[Original source and task authority]
+  C --> D[Atomic original task / optional UAE clock / encrypted link / audit]
+  D --> E[One future successor, safe same-request retry]
+  E --> F[Original task execution and independent review]
+  A --> G[Completed history and actual performer retained]
+  D --> H[No financial settlement or case closure]
+```
