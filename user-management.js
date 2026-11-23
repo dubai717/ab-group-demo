@@ -20,22 +20,24 @@
     for(const row of persistence.initialGrants||[]) { const list=grants.get(row.userId)||[];list.push(copy(row.entry));grants.set(row.userId,list); }
     const grantSnapshot=()=>[...grants].flatMap(([userId,entries])=>entries.map(entry=>({userId,entry:copy(entry)})));
     let sequence = 0;
+    const scopeUsers = new Map((persistence.scopeReferences?.reportingUsers||[]).map(row=>[row.id,{id:row.id,managerId:row.managerId||''}]));
     const user = id => records.get(id);
+    const scopeUser = id => records.get(id)||scopeUsers.get(id);
     const isOwner = id => user(id)?.roleId === 'owner';
     const associations = (u, type) => u[`${type}Ids`] || (u[`${type}Id`] ? [u[`${type}Id`]] : []);
     function descendants(manager, target) {
-      const visited = new Set(); let current = user(target);
+      const visited = new Set(); let current = scopeUser(target);
       while (current?.managerId && !visited.has(current.id)) {
         visited.add(current.id);
         if (current.managerId === manager) return true;
-        current = user(current.managerId);
+        current = scopeUser(current.managerId);
       }
       return false;
     }
     function validScope(scope) {
       if (!scope || !['group', 'company', 'department', 'reports'].includes(scope.type)) return false;
       if (scope.type === 'group') return scope.id === '';
-      const options = scope.type === 'company' ? companies : scope.type === 'department' ? departments : [...records.values()];
+      const options = scope.type === 'company' ? companies : scope.type === 'department' ? departments : [...records.values(),...scopeUsers.values()];
       return options.some(row => row.id === scope.id);
     }
     function inScope(scope, target) {
@@ -81,7 +83,13 @@
     function visible(id, target) {
       if (!target?.id) return false;
       const actor = user(id);
-      const legacyViewer = actor?.status === 'Active' && (actor.roleId === 'general_manager' || roles.find(r => r.id === actor.roleId)?.permissions.includes('view_users'));
+      const role = roles.find(r => r.id === actor?.roleId);
+      // Tenant-managed standards inherit user visibility only inside real company membership.
+      // Explicit individual grants still use their original independently authorized scope below.
+      const sharedCompany = actor && associations(actor, 'company').some(id => associations(target, 'company').includes(id));
+      const legacyViewer = actor?.status === 'Active' && (role?.securityManaged === true
+        ? role.permissions.includes('view_users') && sharedCompany
+        : actor.roleId === 'general_manager' || role?.permissions.includes('view_users'));
       return actor?.status === 'Active' && (id === target.id || legacyViewer || actions.filter(action => !action.startsWith('contracting_')&&!action.startsWith('bank_')&&!action.startsWith('finance_')&&!action.startsWith('customer_')&&!action.startsWith('vehicle_')&&!action.startsWith('ledger_')&&!action.startsWith('hr_')).some(action => can(id, action, target)));
     }
     function validate(data, targetId) {
@@ -121,6 +129,15 @@
         requireAction(actorId, action, candidate);
         if (previous) requireAction(actorId, action, previous);
       }
+      const priorCompanies=previous?associations(previous,'company'):[],priorDepartments=previous?associations(previous,'department'):[];
+      const addedCompanies=candidate.companyIds.filter(id=>!priorCompanies.includes(id)),removedCompanies=priorCompanies.filter(id=>!candidate.companyIds.includes(id)),addedDepartments=candidate.departmentIds.filter(id=>!priorDepartments.includes(id)),removedDepartments=priorDepartments.filter(id=>!candidate.departmentIds.includes(id));
+      const membershipChanged=addedCompanies.length||removedCompanies.length||addedDepartments.length||removedDepartments.length;
+      // A managed standard's data boundary is Owner-controlled; generic assignment cannot change it.
+      // Generic assignment must not expand inherited authority through user memberships.
+      if(previous&&membershipChanged&&roles.find(r=>r.id===previous.roleId)?.securityManaged===true&&!isOwner(actorId))throw new Error('denied');
+      function membershipAuthority(action,record,companyIds){const rights=effective(actorId,action).filter(g=>inScope(g.scope,record));if(companyIds.some(id=>!rights.some(g=>g.scope.type!=='company'||g.scope.id===id)))throw new Error('denied');}
+      if(isNew)membershipAuthority('create',candidate,candidate.companyIds);
+      else if(membershipChanged){membershipAuthority('assign',candidate,[...addedCompanies,...addedDepartments.map(id=>departments.find(d=>d.id===id).companyId)]);membershipAuthority('assign',previous,[...removedCompanies,...removedDepartments.map(id=>departments.find(d=>d.id===id).companyId)]);}
       if (isNew) check('create'); else if (changed(profileKeys).length) check('edit');
       if (changed(assignmentKeys).length) check('assign');
       if (candidate.status !== (previous?.status || 'Pending')) check('status');
@@ -182,7 +199,7 @@
     }
     return {
       actions, companies, departments,
-      summary() { const rows=[...records.values()];return {total:rows.length,active:rows.filter(u=>u.status==='Active').length,byRole:Object.fromEntries(roles.map(r=>[r.id,rows.filter(u=>u.roleId===r.id).length]))}; },
+      summary(actorId) { const rows=[...records.values()].filter(u=>!actorId||visible(actorId,u));return {total:rows.length,active:rows.filter(u=>u.status==='Active').length,byRole:Object.fromEntries(roles.map(r=>[r.id,rows.filter(u=>u.roleId===r.id).length]))}; },
       bankPermissions(id, companyId) { return bankActions.filter(action => effective(id, 'bank_' + action).some(g => g.scope.type === 'group' || g.scope.type === 'company' && g.scope.id === companyId)); },
       syncDirectories(state) { companies.splice(0, companies.length, ...copy(state.companies)); departments.splice(0, departments.length, ...copy(state.departments)); },
       get: (actorId, id) => visible(actorId, user(id) || {}) ? clean(user(id)) : null,
@@ -256,7 +273,7 @@
   for(const [key,names]of Object.entries(ledgerPermissionLabels)){messages.ar['ledger_'+key]='الخزينة والمحاسبة: '+names[0];messages.en['ledger_'+key]='Treasury and ledger: '+names[1];}
   function t(key) { return messages[getLocale() === 'ar' ? 'ar' : 'en'][key] || key; }
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  function getService() { if (!service) service = createService({...app.state, users:[...app.state.users, ...DemoCredentials.directory()]}, undefined, {initialGrants:globalThis.ABCentral?.enabled?globalThis.ABCentral.grants:[],initialAudit:globalThis.ABCentral?.enabled?globalThis.ABCentral.audit:[],save:(candidate, verifier)=>DemoCredentials.saveProfile(candidate, verifier)}); else service.syncDirectories(app.state); return service; }
+  function getService() { if (!service) service = createService({...app.state, companies:[...new Map([...app.state.companies,...(globalThis.ABCentral?.enabled?globalThis.ABCentral.userScopeReferences?.companies||[]:[])].map(c=>[c.id,c])).values()], users:[...app.state.users, ...DemoCredentials.directory()]}, undefined, {scopeReferences:globalThis.ABCentral?.enabled?globalThis.ABCentral.userScopeReferences:undefined,initialGrants:globalThis.ABCentral?.enabled?globalThis.ABCentral.grants:[],initialAudit:globalThis.ABCentral?.enabled?globalThis.ABCentral.audit:[],save:(candidate, verifier)=>DemoCredentials.saveProfile(candidate, verifier)}); else service.syncDirectories({...app.state,companies:[...new Map([...app.state.companies,...(globalThis.ABCentral?.enabled?globalThis.ABCentral.userScopeReferences?.companies||[]:[])].map(c=>[c.id,c])).values()]}); return service; }
   function actorId() { return app.state.currentUser?.id; }
   function name(user) { return (getLocale() === 'ar' ? user.nameAr : user.nameEn) || user.fullName || user.username; }
   function hydrated(u) {
@@ -277,6 +294,7 @@
     const has=(action)=>isNew?s.has(actor,action):s.can(actor,action,existing);
     const owner=existing?.roleId==='owner';
     const basic=isNew?s.has(actor,'create'):has('edit'), assign=has('assign'), status=has('status')&&!owner&&selected!==actor;
+    const scopeAssignable=assign&&(isNew||s.actor(actor)?.roleId==='owner'||!app.state.roles.find(r=>r.id===existing?.roleId)?.securityManaged);
     const companyOptions=s.companies.map(c=>({id:c.id,label:((getLocale()==='ar'?c.arabicName:c.englishName)||c.name||c.id)+' — '+(c.tradeLicenseNumber||c.id)}));
     const departmentOptions=s.departments.map(d=>({id:d.id,label:d.name}));
     const managerOptions=s.list(actor).filter(v=>v.id!==selected).map(v=>({id:v.id,label:name(v)}));
@@ -290,8 +308,8 @@
       </div>${isNew&&globalThis.ABCentral?.enabled?`<fieldset class="um-login-setup" data-central-credentials="true"><legend>${getLocale()==='ar'?'بيانات الدخول المركزية':'Central sign-in credentials'}</legend><p class="muted">${getLocale()==='ar'?'كلمة مرور من 12 إلى 128 خانة، تشمل حرفاً كبيراً وصغيراً ورقماً ورمزاً دون مسافات. تُنشأ لدى خدمة المصادقة ولا تُحفظ في المتصفح.':'Use 12–128 characters including uppercase, lowercase, a number and a symbol, without spaces. Credentials are enrolled through the authentication service, not browser storage.'}</p><div class="form-grid">${field('demoPassword','',false,'password',true)}${field('demoConfirm','',false,'password',true)}<div><label for="um-base-role">${t('baseRole')}</label><select class="input" id="um-base-role" name="baseRole" ${s.actor(actor)?.roleId==='owner'?'':'disabled'}>${app.state.roles.filter(r=>r.id!=='owner').map(r=>option(r.id,r.name,r.id==='employee')).join('')}</select></div></div></fieldset>`:''}${isNew&&!globalThis.ABCentral?.enabled?`<fieldset class="um-login-setup"><legend>${t('demoLogin')}</legend><p class="muted">${t('demoLoginNote')}</p><label class="um-checkbox"><input type="checkbox" id="um-local-login" name="localLogin" />${t('enableDemoLogin')}</label><div class="form-grid">${field('demoPassword','',true,'password')}${field('demoConfirm','',true,'password')}<div><label for="um-base-role">${t('baseRole')}</label><select class="input" id="um-base-role" name="baseRole" ${s.actor(actor)?.roleId==='owner'?'':'disabled'}>${app.state.roles.filter(r=>r.id!=='owner').map(r=>option(r.id,r.name,r.id==='employee')).join('')}</select></div></div></fieldset>`:''}<h3>${globalThis.ABCentral?.enabled?(getLocale()==='ar'?'نطاق الوصول الأمني — مستقل عن ملف الموظف':'Security access scope — independent of employee profile'):t('assignment')}</h3><div class="form-grid">
       ${globalThis.ABCentral?.enabled?'':field('jobTitle',u.jobTitle,!assign)+field('hireDate',u.hireDate,!assign,'date')}
       ${globalThis.ABCentral?.enabled?`<details class="full"><summary>${getLocale()==='ar'?'إعدادات متقدمة — نطاق الإشراف الأمني':'Advanced settings — security reporting scope'}</summary><p>${getLocale()==='ar'?'اختياري؛ يستخدم فقط في تفويض نطاق المرؤوسين. لا يُستمد من المسؤول المباشر للموظف.':'Optional; used only by explicit reports-scope delegation. It is independent of the employee supervisor.'}</p>${selectField('managerId',managerOptions,[u.managerId],!assign)}</details>`:selectField('managerId',managerOptions,[u.managerId],!assign)}
-      ${selectField('companyIds',companyOptions,u.companyIds,!assign,true)}
-      ${selectField('departmentIds',departmentOptions,u.departmentIds,!assign,true)}
+      ${selectField('companyIds',companyOptions,u.companyIds,!scopeAssignable,true)}
+      ${selectField('departmentIds',departmentOptions,u.departmentIds,!scopeAssignable,true)}
       </div>
       ${attachmentAllowed?`<h3>${t('attachmentsTitle')}</h3><p class="muted">${t('fileHint')}</p><div class="form-grid">${['photo','idFront','idBack','passport','contract','driving'].map(slot=>`<div class="form-group"><label for="um-file-${slot}">${t(slot)}</label>${attachmentWritable?`<input id="um-file-${slot}" name="file-${slot}" type="file" accept="${slot==='photo'?'image/png,image/jpeg':'image/png,image/jpeg,application/pdf'}" />`:``}${attachmentList.some(f=>f.slot===slot)?`<button type="button" class="ghost-btn" data-um="file" data-slot="${slot}">${t('open')}: ${esc(attachmentList.find(f=>f.slot===slot).name)}</button>`:''}</div>`).join('')}</div>`:''}
       <p role="status" aria-live="polite" data-user-save-status></p>${basic||assign||status||attachmentWritable?`<button type="submit" class="primary-btn">${t('save')}</button>`:`<p>${t('readOnly')}</p>`}</form>

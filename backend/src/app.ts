@@ -432,6 +432,17 @@ export async function build(options: Options) {
       const grants = m.initialGrants.filter((g: any) =>
         visibleUsers.some((u: any) => u.id === g.userId),
       );
+      // Minimal references preserve explicit user-admin grants in a scoped client
+      // bootstrap. They are not accounts or company-document access grants.
+      const ownScopes = grants.filter((g:any)=>g.userId===s.user_id&&['create','edit','status','assign','grant','reset','attachments','redelegate'].includes(g.entry.action)).map((g:any)=>g.entry.scope);
+      const reportingUsers = new Map<string,{id:string;managerId:string}>();
+      for(const scope of ownScopes.filter((v:any)=>v.type==='reports')){
+        for(const row of visibleUsers){let current:any=row;const seen=new Set<string>(),path:{id:string;managerId:string}[]=[];
+          while(current&&!seen.has(current.id)){seen.add(current.id);path.push({id:current.id,managerId:current.managerId||''});if(current.id===scope.id){for(const node of path)reportingUsers.set(node.id,node);break;}current=m.state.users.find((u:any)=>u.id===current.managerId);}
+        }
+        const root=m.state.users.find((u:any)=>u.id===scope.id);if(root)reportingUsers.set(root.id,{id:root.id,managerId:''});
+      }
+      const userScopeReferences={companies:m.state.companies.filter((co:any)=>ownScopes.some((v:any)=>v.type==='company'&&v.id===co.id)).map((co:any)=>({id:co.id,englishName:co.englishName,arabicName:co.arabicName})),reportingUsers:[...reportingUsers.values()]};
       const settings = (await c.query("select key,value from ab.settings"))
         .rows;
       return {
@@ -440,7 +451,7 @@ export async function build(options: Options) {
         resetTestDatabaseAvailable: options.resetEnabled===true&&m.actor.roleId==='owner'&&m.actor.username==='trial_4db27b82b8bf',
         testUsersAvailable: options.testUsersEnabled===true&&m.actor.roleId==='owner',
         audit: ownAudit,
-        summary: m.policy.summary(),
+        summary: m.policy.summary(s.user_id),
         bankAccountAudit,
         csrfToken: cipher.digest("csrf:" + s.sid),
         users,
@@ -452,6 +463,7 @@ export async function build(options: Options) {
         bankAccountPurposes: m.state.bankAccountPurposes,
         areas,
         grants,
+        userScopeReferences,
         companyDocumentAlertDays: settings.find(
           (r) => r.key === "companyDocumentAlertDays",
         )?.value || [60, 30, 7],
@@ -634,6 +646,8 @@ export async function build(options: Options) {
     if (id) {
       previous = m.policy.actor(id);
       requireOk(previous, 404, "notFound");
+      // Authorize before private fields, revision checks, or no-op persistence.
+      requireOk(m.policy.get(s.user_id, previous.id) && (m.actor.roleId === 'owner' || ['edit','assign','status'].some(action => m.policy.can(s.user_id, action, previous))), 403, 'denied');
       assertRevision(previous.revision, input.revision);
       if((await c.query("select to_regclass('ab.hr_employees') ok")).rows[0].ok&&(await c.query('select 1 from ab.hr_employees where user_id=$1',[id])).rowCount){for(const key of ['nameAr','nameEn','emiratesId','nationality','phone','jobTitle','hireDate'])if(Object.hasOwn(input,key))requireOk(String(input[key]||'')===String(previous[key]||''),409,'employeeProfileRequired');}
       input = { ...previous, ...input };

@@ -66,9 +66,12 @@
       "status": "موجود ناقص",
       "evidence": [
         "user-management.js",
-        "backend/tests/operational-permission-matrix.browser.cjs"
+        "backend/tests/operational-permission-matrix.browser.cjs",
+        "docs/operational-v1/MANAGED-USER-SCOPE.md",
+        "backend/tests/managed-user-visibility.test.ts",
+        "backend/tests/managed-user-visibility.browser.cjs"
       ],
-      "remaining": "الإضافات محفوظة؛ الإزالة المحددة للإضافات متاحة في معاينة الستاندرد المختبرة. المنع الفردي الموروث وإعادة ضبطه والنطاق الجغرافي باقية."
+      "remaining": "نطاق دليل المستخدمين والعدادات وتغيير عضوية الستاندرد محمي ومختبر مع بقاء الاستثناءات الصريحة؛ المنع الفردي الموروث والنطاق الجغرافي والقبول الشامل غير مكتملة."
     },
     {
       "id": "3.3",

@@ -10,7 +10,7 @@
   "decision": "last_two_actual_due_months",
   "policyActivated": false,
   "next": [
-    "Upload topic workflow and verify newest CI; no merge/deployment",
+    "Continue remaining source guards, inherited denials and integration; verify new CI without merge/deployment",
     "Complete inherited individual denials, geography and atomic widget inheritance",
     "Remaining leave/source adapters, source eligibility and cross-branch collection after PR115 stabilizes",
     "Verified case deadlines and final follow-up, official provider/use-case review",
@@ -100,9 +100,9 @@
     "mergeAuthorized": false
   },
   "CI": {
-    "run": 14,
-    "runId": 45150735038,
-    "head": "4cfc11722dac3e7ab7f917419c51fde8a38157f8",
+    "run": 15,
+    "runId": 45158709019,
+    "head": "7811dc134eaa308fea590dceddc00a36251699c5",
     "status": "in_progress",
     "notProofForCurrentUnpushedChanges": true
   },
@@ -280,8 +280,8 @@
     ]
   },
   "latestRemoteBeforeThisBuild": {
-    "head": "4cfc11722dac3e7ab7f917419c51fde8a38157f8",
-    "tree": "74898c3bcc651b781232c6ced5bab637055d9c7b"
+    "head": "7811dc134eaa308fea590dceddc00a36251699c5",
+    "tree": "df15d23cd38da76f2021e138bcdf5daa54c19eac"
   },
   "communicationCases": {
     "state": "basic topic workflow in original conversation; unpublished",
@@ -384,6 +384,35 @@
       "approved configurable scope and limited employee output",
       "timed explicit exceptions",
       "full integration and release acceptance"
+    ]
+  },
+  "managedUserScope": {
+    "state": "implemented and tested; unpublished",
+    "sharedOriginalPolicy": true,
+    "managedVisibility": "actual company membership plus explicit authorized individual grants",
+    "standardMembershipChanges": "Owner controlled",
+    "partialCompanyIntersectionCannotExpandMembership": true,
+    "earlySaveAuthorization": true,
+    "summaryUsesVisibleUsers": true,
+    "referenceUsersBecomeAccounts": false,
+    "minimalExplicitScopeAliasesOnly": true,
+    "nativeFocused": {
+      "pass": 9,
+      "fail": 0
+    },
+    "static": {
+      "pass": 186,
+      "fail": 0
+    },
+    "uiJourneys": 19,
+    "financialEffect": false,
+    "hostedDataOrPermissionsChanged": false,
+    "releaseReady": false,
+    "remaining": [
+      "inherited individual denials",
+      "geographic scope",
+      "full dashboard inheritance/reset",
+      "full release acceptance and reviewed database action enforcement"
     ]
   }
 }

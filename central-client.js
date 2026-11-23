@@ -90,6 +90,7 @@
     C.csrf = b.csrfToken;
     C.areas = b.areas;
     C.grants = b.grants;
+    C.userScopeReferences = b.userScopeReferences || {companies:[],reportingUsers:[]};
     C.audit = b.audit;
     C.summary = b.summary;
     Object.assign(app.state, {

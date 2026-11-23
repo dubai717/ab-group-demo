@@ -713,6 +713,86 @@
         "PASS authenticated base dashboard: actual custom role without view_dashboard, preserved legacy content denial, visible landing/menu after reload, no financial/count/filter data, denied direct sources, zero hidden MyWork fetches, AR/EN three widths. Synthetic only.",
         "PASS original widget previews and plus/remove controls: exact authorized cached counts without repeated dataset reads, employee/standard settings, no write until review/confirmation, no automatic drilldown/data grant or employee assignment, preserved cancel and dirty standard, AR/EN three widths. Synthetic only."
       ]
+    },
+    {
+      "log": "work/operational-evidence/managed-scope-final-pure.log",
+      "sha256": "0a03e23cadbc4ca59380154575defb1137aea19d3b97509f7b14a6121c129fd7",
+      "tail": [
+        "✔ managed view_users inherits only actual shared companies; self and explicit individual additions remain independent (9.496728ms)",
+        "✔ a standard without assigned company access never gains a directory from its department or job title (0.705387ms)",
+        "✔ a managed assignment cannot add another company while retaining an authorized one or change its own access boundary (1.869908ms)",
+        "✔ filtered client directory preserves server-authorized company and reporting exceptions without inventing user accounts (0.895887ms)",
+        "ℹ tests 4",
+        "ℹ suites 0",
+        "ℹ pass 4",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 126.019341"
+      ]
+    },
+    {
+      "log": "work/operational-evidence/managed-scope-exact-native.log",
+      "sha256": "5ce68490a91e46806edbe953cb31440e4ac73432a4472470d10c0736b22ab873",
+      "tail": [
+        "✔ Reviewed security role SQL preserves the old catalog, blocks unapproved writes and uses existing tenant-isolated roles only (2522.389153ms)",
+        "✔ Custom role company scope also protects original document and communication boundaries (2.556979ms)",
+        "✔ selected exception preview never cascades to unselected or inherited sources (2.078947ms)",
+        "✔ reviewed selected removal is atomic, scoped, deduplicated and retains every unselected original grant (2885.295517ms)",
+        "ℹ tests 9",
+        "ℹ suites 0",
+        "ℹ pass 9",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 25710.944377"
+      ]
+    },
+    {
+      "log": "work/operational-evidence/managed-scope-static-final.log",
+      "sha256": "d427e6a266ca92b2e7ab3a3facac1ed1cbf83faa64481da8ae583172e3899c5b",
+      "tail": [
+        "✔ bank-only access never expands personal user-profile visibility (0.655945ms)",
+        "✔ installments use exact integer arithmetic and only first installment absorbs remainder (2.510702ms)",
+        "✔ grace period ends before first day of following month, including leap years and pending dates (0.374671ms)",
+        "✔ service months remain separate from finance installments and margins may be positive, zero or negative (0.261244ms)",
+        "ℹ tests 186",
+        "ℹ suites 0",
+        "ℹ pass 186",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 2692.610706"
+      ]
+    },
+    {
+      "log": "work/operational-evidence/managed-scope-build-final.log",
+      "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "tail": [
+        "PASS: compiled runtime module graph loads without provider connections",
+        "PASS: staging JavaScript build complete; no migrations or cloud connections"
+      ]
+    },
+    {
+      "log": "work/operational-evidence/managed-scope-full-browser-final.log",
+      "sha256": "f0a1b5ace3465dc5e265aa0174974ef5a981a85d7d8218cddaeab13502684afe",
+      "tail": [
+        "PASS original conversation exact task deadline: retained UAE date mismatch and trace, actual bounded request abort with client reference, no partial task, uncertain successful reply retries original receipt, one source task/clock, controls usable while actual open-receipt request is held, parent context restored, AR/EN three widths, no external send or financial effect",
+        "PASS original conversation topics: mandatory retained fields, committed readback recovery without another POST, uncertain reply and edited-input guard, fresh revision review, actual source history without search polling, distinct case/task identities, no-response closure withheld, administrative resolution leaves task/debt independent, same-topic reopening and original history, AR/EN three widths",
+        "PASS user UX: name aliases/prefix/department picker, explicit readonly preview and unchanged owner session, demo IBAN/slow one-save/readback, confirmed permission plan, committed retry without repeat, delayed spinner, AR/EN responsive.",
+        "PASS restricted leave-return API/UI: failed work login, limited Auth without work cookie, retained validation/API/lost-response inputs, one canonical review, suppressed late old-company opening, duplicate prevention, return-for-info, actual manager completion count, successful original work login, unchanged rights, AR/EN desktop/tablet/mobile.",
+        "PASS actual dated work calendar: explicit X/half/off grid, missing hours retain inputs, lost successful response retries one version, read failure removes stale cells and recovers, original API source readback, AR/EN desktop/tablet/mobile. Synthetic only.",
+        "PASS actual task deadline and approved waiting UI: no invented hour, field retention on invalid interval and lost committed reply, one stored version, source task entry/readback, UTC storage/UAE display, AR/EN three widths, no financial or penalty effect. Synthetic only.",
+        "PASS original manual-task creation: optional explicit UAE time, retained mismatch fields and human trace, atomic same-task clock readback, AR/EN three widths; date-only tasks unchanged. Synthetic only.",
+        "PASS original delegation history UI: actual source task/actor/time/note, no substitute credit for Owner action, preserved returned source and task link rights, no raw IDs, readable failed-read reference and suppressed late context, AR/EN three widths. Synthetic only.",
+        "PASS existing delegation form: shared in-flight profile load with delayed task source, approved source/UAE dates, retained bounds/trace, one POST despite committed readback failure, no false dirty warning, original task identity, AR/EN three widths. Synthetic only.",
+        "PASS authenticated base dashboard: actual custom role without view_dashboard, preserved legacy content denial, visible landing/menu after reload, no financial/count/filter data, denied direct sources, zero hidden MyWork fetches, AR/EN three widths. Synthetic only.",
+        "PASS atomic new job-standard indicators and permissions: stage before first save without writes or employee assignment, original fresh review, lost committed response retries the same key/body, one role revision and stored restriction, AR/EN three widths. Synthetic only.",
+        "PASS original widget previews and plus/remove controls: exact authorized cached counts without repeated dataset reads, employee/standard settings, no write until review/confirmation, no automatic drilldown/data grant or employee assignment, preserved cancel and staged dirty standard with atomic indicator/permission save, AR/EN three widths. Synthetic only."
+      ]
     }
   ],
   "limitations": [
@@ -1581,5 +1661,46 @@
       "data": "synthetic only",
       "visualReview": "Automated source-content and responsive assertions; not a manual pixel review"
     }
-  ]
+  ],
+  "managedUserScope": {
+    "document": "docs/operational-v1/MANAGED-USER-SCOPE.md",
+    "nativeFocusedPass": 9,
+    "staticPass": 186,
+    "operationalUIJourneysPass": 19,
+    "countsOverlapOtherEvidence": true,
+    "originalPolicyAndActualHTTP": true,
+    "negativeProof": [
+      "managed-user-visibility-before.log",
+      "managed-scope-expansion-before-native.log",
+      "managed-scope-full-browser.log"
+    ],
+    "negativeProofLocation": "local synthetic work/operational-evidence; failures are not acceptance",
+    "screenshots": [
+      {
+        "name": "operational-managed-user-scope-en-390.png",
+        "sha256": "9413898ee56d25c65a9ec23fcd3df276f0b7197d09d999473df30c2781be261e"
+      },
+      {
+        "name": "operational-managed-user-scope-en-768.png",
+        "sha256": "0edcdb282002b472a6e482a945acb7185284adcb831fac3b5a0d0ee399d28b96"
+      },
+      {
+        "name": "operational-managed-user-scope-en-1440.png",
+        "sha256": "43295b9c6dae5baad566cb583363eba27bf7398501a536c84245320212300ed0"
+      },
+      {
+        "name": "operational-managed-user-scope-ar-390.png",
+        "sha256": "2aa4e10e6c88bcc386eed122de5d24dc2bbab4ef5658fa5e6dcf6ff81aab1712"
+      },
+      {
+        "name": "operational-managed-user-scope-ar-768.png",
+        "sha256": "a9be53fe7e4a80b05dc083e0f7391d830e415a440d668f36939c7c33d2428225"
+      },
+      {
+        "name": "operational-managed-user-scope-ar-1440.png",
+        "sha256": "e24cb38ddb7fe9063b8fd008bfa9f9bbbf64be6c88ae0517546d50367684a999"
+      }
+    ],
+    "liveAcceptance": false
+  }
 }
