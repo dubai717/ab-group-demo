@@ -1,3 +1,4 @@
+import{backupStatusSigner,backupStatusPath,backupSourceHash}from'../src/backup-status-proof.js';
 import {businessCatalog,validateBusinessLedger} from './business-centers-catalog.mjs';
 import {approvedCatalog} from './safe-staging-additives.js';
 import {controllerContext} from './v2/context.mjs';
@@ -58,6 +59,7 @@ export async function main(){
   const cfg=drillGuard(process.env),keys=supabaseKeys();check(keys.secret,'STORE_SECRET_MISSING');
   check(process.env.DATA_ENCRYPTION_KEY&&Buffer.from(process.env.DATA_ENCRYPTION_KEY,'base64').length===32,'DATA_KEY');
   console.log('CHECK: BACKUP_KEY=CANONICAL_32_BYTES_INDEPENDENT');
+  const statusSigner=process.env.BACKUP_STATUS_SIGNING_KEY?backupStatusSigner(process.env.BACKUP_STATUS_SIGNING_KEY):undefined;
   const retain=process.env.AB_BACKUP_RETAIN_APPROVED==='private-bucket-no-overwrite';
   check(!process.env.AB_BACKUP_RETAIN_APPROVED||retain,'RETENTION_APPROVAL');
   const store=privateBackupStore(cfg.endpoint,keys.secret),paths=newBackupPaths();
@@ -84,6 +86,7 @@ export async function main(){
    const roles=(await c.query("select rolname from pg_roles where rolname not like 'pg\\_%' escape '\\' order by rolname")).rows;
    const extensions=(await c.query('select e.extname,n.nspname from pg_extension e join pg_namespace n on n.oid=e.extnamespace order by e.extname')).rows;
    context={excludedBackupArchiveBytes:true,format:'AB-DRILL-CONTEXT-1',createdAt:new Date().toISOString(),snapshotId:snapshot,manifest:before,roles,extensions,ledger};
+   if(statusSigner){const tenants=(await c.query('select id from ab.organizations order by id')).rows;context.sourceTenantCount=tenants.length;context.sourceTenantId=tenants.length===1?tenants[0].id:null;}
    stage='CAPTURE_DUMP';
    const pg={...cfg.pg,PGSSLROOTCERT:'/tmp/ab-ca.crt'};
    dump=await docker(['exec','-i',...Object.keys(pg).filter(k=>k!=='PATH').flatMap(k=>['--env',k]),container,'pg_dump','--format=custom','--no-owner','--lock-wait-timeout=15000',...schemas.map(s=>'--schema='+s),'--snapshot='+snapshot],pg);
@@ -157,6 +160,7 @@ export async function main(){
    await store.upload(paths.metadata,metadata);
    const downloaded=await store.downloadVerified(paths.metadata,metadata);await store.verifyNotPublic(paths.metadata);await store.verifyBucket(sealed.length);
    check(JSON.stringify(security(cfg.key).open(downloaded.toString().slice('AB-BACKUP-META-1\n'.length)))===JSON.stringify(proof),'BACKUP_METADATA_INTEGRITY');
+   if(statusSigner){stage='PRIVATE_STATUS_UPLOAD';const path=backupStatusPath(paths.archive),bytes=statusSigner({format:'AB-BACKUP-STATUS-PAYLOAD-1',createdAt:new Date().toISOString(),archivePath:paths.archive,archiveSha256:sha(sealed),archiveBytes:sealed.length,sourceProjectHash:backupSourceHash(cfg.endpoint),sourceTenantId:context.sourceTenantId,sourceTenantCount:context.sourceTenantCount,sourceCommit:process.env.AB_STAGING_SOURCE_SHA||process.env.GITHUB_SHA,databaseRestoreVerified:true,storageArchiveIntegrityVerified:true,authRowsIncluded:true,authServiceLoginVerified:false,storageServiceRestoreVerified:false,storageObjects:objects.size-1,schemas:['ab','public','auth','storage']});await store.upload(path,bytes);await store.downloadVerified(path,bytes);await store.verifyNotPublic(path);}
    console.log('CHECK: ENCRYPTED_METADATA_DOWNLOAD_DECRYPT_AND_PUBLIC_DENIAL=PASS');
    console.log('LOCATION: BUCKET=ab-private-test; ARCHIVE='+paths.archive+'; METADATA='+paths.metadata);
    console.log('RESULT: PRIVATE_RETAINED_BACKUP_DOWNLOADED_AND_RESTORED_PASS; SOURCE_SQL_READ_ONLY; ONLY_NEW_BACKUP_OBJECTS_CREATED; NO_MIGRATIONS_OR_DEPLOYMENT');

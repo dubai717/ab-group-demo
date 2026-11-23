@@ -1,3 +1,4 @@
+import{backupStatusFromEnvironment}from'./backup-status-source.js';
 import { startReportSchedules } from './report-jobs.js';
 import {remoteControl,markerPath} from '../reset/remote-control.js';
 import {actionsGateway,installMaintenance} from '../reset/gateway.js';
@@ -62,6 +63,7 @@ const resetEnabled=resetEnvironment(process.env);
 const resetStore=resetEnabled?remoteControl(process.env.SUPABASE_URL!,keys.secret,process.env.DATA_ENCRYPTION_KEY!):undefined;
 const resetWorker=resetStore&&process.env.RESET_WORKER_GITHUB_TOKEN?actionsGateway(pool,process.env.DATA_ENCRYPTION_KEY!,process.env.RESET_WORKER_GITHUB_TOKEN,resetStore):undefined;
 const app = await build({
+  backupStatusRead:backupStatusFromEnvironment(process.env,{endpoint:process.env.SUPABASE_URL!,secret:keys.secret}),
   pool,
   key: process.env.DATA_ENCRYPTION_KEY!,
   origin,

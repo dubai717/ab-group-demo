@@ -565,9 +565,13 @@
     "financialEffect": false
   },
   "latestCI": {
-    "run": 26,
-    "status": "pending_at_last_check",
-    "commit": "b32db2e07b4c5c275ec5d6f86578cbaa9fbc0760"
+    "run": 27,
+    "id": 45231987856,
+    "head": "1e4d21d144981242a8aff65b7978e3c3b33cb6ce",
+    "status": "in_progress_at_last_read",
+    "latestVerifiedSuccess": 22,
+    "successfulHead": "2ac1284aae433bf8aa8f4f820448bbb9d8e0b6ef",
+    "notEvidenceForUncommittedStatusCode": true
   },
   "workScopeSources": {
     "status": "read-only-tested-unpublished",
@@ -601,5 +605,57 @@
     "hostedRead": false,
     "historicalEgressAttributionProved": false,
     "documentation": "docs/operational-v1/BACKUP-SOURCE-CAPTURE.md"
+  },
+  "backupStatus": {
+    "status": "implemented-tested-unpublished-default-disabled",
+    "nativeFocused": 19,
+    "originalIsolatedRestore": 1,
+    "static": 189,
+    "browserFocused": 1,
+    "fullCurrentNative": "running",
+    "fullCurrentUI": "running",
+    "hostedSourceRead": false,
+    "actualBackupCreated": false,
+    "systemRestoreOnOriginal": false,
+    "decryptionKeyInRuntime": false,
+    "automaticPolling": false,
+    "documentation": "docs/operational-v1/BACKUP-STATUS.md",
+    "logs": [
+      {
+        "path": "work/operational-evidence/backup-status-native.log",
+        "sha256": "7d70f8733e6baee83a9acf5b8aa9e454b9d78aaa0c5b04d30bd16126f9ef28b3",
+        "bytes": 2305
+      },
+      {
+        "path": "work/operational-evidence/backup-status-original-backup.log",
+        "sha256": "a6e4cd6fec4846b1e00cb8591f90b3cba008a1f6f4b5325de4f2f136573619e6",
+        "bytes": 370
+      },
+      {
+        "path": "work/operational-evidence/backup-status-static.log",
+        "sha256": "a6d5a518b123363644c3dfd99189460e9f71428875b5b1afc83ff60bee6a2a8a",
+        "bytes": 16149
+      },
+      {
+        "path": "work/operational-evidence/backup-status-deploy-static.log",
+        "sha256": "f4384a228a0da3b620ef72ba8a1bdc9b184f52ac4e43b7858b73a261c1398eee",
+        "bytes": 2563
+      },
+      {
+        "path": "work/operational-evidence/backup-status-types.log",
+        "sha256": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+        "bytes": 277
+      },
+      {
+        "path": "work/operational-evidence/backup-status-build.log",
+        "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+        "bytes": 147
+      },
+      {
+        "path": "work/operational-evidence/backup-status-browser.log",
+        "sha256": "c7f334949cdbee7bc55df7f6b08e839391141600032d9bc4046cb2fef73f39d7",
+        "bytes": 217
+      }
+    ]
   }
 }

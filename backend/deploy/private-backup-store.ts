@@ -3,7 +3,7 @@ import {randomUUID} from 'node:crypto';
 import {sha} from '../src/core.js';
 const bucket='ab-private-test',mime='application/octet-stream';
 export const backupPrefix='ab-group-backups/v1/';
-const pattern=/^ab-group-backups\/v1\/\d{8}T\d{9}Z-[a-f0-9-]{36}\/(database\.abbackup|metadata\.abmeta)$/;
+const pattern=/^ab-group-backups\/v1\/\d{8}T\d{9}Z-[a-f0-9-]{36}\/(database\.abbackup|metadata\.abmeta|status\.absig)$/;
 function need(ok:unknown,label:string):asserts ok {if(!ok)throw Error(label);}
 export function newBackupPaths(){
  const prefix=backupPrefix+new Date().toISOString().replace(/[-:.]/g,'')+'-'+randomUUID();
@@ -20,12 +20,17 @@ export function checkBackupBucket(value:any,size:number){
 export function privateBackupStore(endpoint:string,secret:string,fetcher:typeof fetch=fetch){
  const base=new URL(endpoint);need(base.protocol==='https:'&&/^[a-z0-9]{20}\.supabase\.co$/.test(base.hostname)&&base.pathname==='/'&&!base.search&&!base.hash&&!base.username&&!base.password,'BACKUP_ENDPOINT');
  const path=(name:string)=>{need(pattern.test(name),'BACKUP_OBJECT_PATH');return bucket+'/'+name.split('/').map(encodeURIComponent).join('/');};
- const request=(url:string,init:RequestInit={})=>fetcher(base.origin+url,{...init,redirect:'error',signal:AbortSignal.timeout(30000)});
+ const request=(url:string,init:RequestInit={})=>fetcher(base.origin+url,{...init,redirect:'error',signal:init.signal?AbortSignal.any([init.signal,AbortSignal.timeout(30000)]):AbortSignal.timeout(30000)});
  async function verifyBucket(size:number){const r=await request('/storage/v1/bucket/'+bucket,{headers:{apikey:secret}});need(r.ok,'BACKUP_BUCKET_READ');checkBackupBucket(await r.json(),size);}
  return {
   verifyBucket,
+  async readStatusBucket(signal:AbortSignal){const r=await request('/storage/v1/bucket/'+bucket,{signal,headers:{apikey:secret}});need(r.ok,'BACKUP_STATUS_BUCKET_READ');const v=JSON.parse((await statusBytes(r,16384,signal)).toString());need(v?.id===bucket&&v.name===bucket&&v.public===false,'BACKUP_STATUS_BUCKET_NOT_PRIVATE');return true;},
+  async listStatusFolders(signal:AbortSignal){const r=await request('/storage/v1/object/list/'+bucket,{method:'POST',signal,headers:{apikey:secret,'content-type':'application/json'},body:JSON.stringify({prefix:backupPrefix,limit:4,offset:0,sortBy:{column:'name',order:'desc'}})});need(r.ok,'BACKUP_STATUS_LIST_ACCESS');const v=JSON.parse((await statusBytes(r,32768,signal)).toString());need(Array.isArray(v)&&v.length<=4,'BACKUP_STATUS_LIST_LIMIT');return v.map((x:any)=>({name:typeof x?.name==='string'?x.name:'',folder:x?.id===null}));},
+  async readStatusProof(name:string,signal:AbortSignal){need(name.endsWith('/status.absig'),'BACKUP_STATUS_PATH');const r=await request('/storage/v1/object/'+path(name),{signal,headers:{apikey:secret}});if([400,404].includes(r.status)){await r.body?.cancel();return null;}need(r.ok,'BACKUP_STATUS_PROOF_ACCESS');return statusBytes(r,16384,signal);},
+  async inspectRetainedObject(name:string,signal:AbortSignal){const r=await request('/storage/v1/object/'+path(name),{method:'HEAD',signal,headers:{apikey:secret}});if([400,404].includes(r.status))return{present:false,bytes:null};need(r.ok,'BACKUP_STATUS_OBJECT_ACCESS');const value=r.headers.get('content-length'),size=value&&/^\d+$/.test(value)?Number(value):null;return{present:true,bytes:size!==null&&Number.isSafeInteger(size)?size:null};},
+
   async upload(name:string,bytes:Buffer){
-   const object=path(name),header=name.endsWith('.abbackup')?'AB-BACKUP-1\n':'AB-BACKUP-META-1\n';
+   const object=path(name),header=name.endsWith('/status.absig')?'AB-BACKUP-STATUS-1\n':name.endsWith('.abbackup')?'AB-BACKUP-1\n':'AB-BACKUP-META-1\n';
    need(bytes.subarray(0,header.length).toString()===header&&bytes.length>header.length,'BACKUP_ENCRYPTED_FORMAT');
    await verifyBucket(bytes.length);
    const r=await request('/storage/v1/object/'+object,{method:'POST',headers:{apikey:secret,'content-type':mime,'x-upsert':'false'},body:new Uint8Array(bytes)});
@@ -42,3 +47,5 @@ export function privateBackupStore(endpoint:string,secret:string,fetcher:typeof 
   },
  };
 }
+
+async function statusBytes(response:Response,limit:number,signal:AbortSignal){const size=response.headers.get('content-length');if(size&&(!/^\d+$/.test(size)||Number(size)>limit)){await response.body?.cancel();throw Error('BACKUP_STATUS_READ_LIMIT');}if(!response.body)throw Error('BACKUP_STATUS_BODY');const reader=response.body.getReader(),chunks:Buffer[]=[];let bytes=0;try{for(;;){if(signal.aborted)throw Error('BACKUP_STATUS_TIMEOUT');let cancel:()=>void=()=>{};const aborted=new Promise<never>((_,reject)=>{cancel=()=>reject(Error('BACKUP_STATUS_TIMEOUT'));signal.addEventListener('abort',cancel,{once:true});});let chunk:ReadableStreamReadResult<Uint8Array>;try{chunk=await Promise.race([reader.read(),aborted]);}finally{signal.removeEventListener('abort',cancel);}if(chunk.done)break;bytes+=chunk.value.length;if(bytes>limit)throw Error('BACKUP_STATUS_READ_LIMIT');chunks.push(Buffer.from(chunk.value));}return Buffer.concat(chunks);}catch(e){void reader.cancel().catch(()=>{});throw e;}finally{reader.releaseLock();}}

@@ -34,3 +34,5 @@ Owner: Reset to job standard previews saved individual exceptions and requires a
 In employee permissions, Inherited follows the job standard. Individual addition and Individual denial remain when that standard changes. Inherit standard clears only the selected item's draft exception: review and confirm to save, or close to cancel. Selecting an indicator grants no additional data authority. Standard review shows each affected account's indicator counts and retained exceptions; refresh the preview if an intervening change makes it stale.
 
 Individual indicator inheritance requires approved database protection. If the guard notice is shown, previous-format settings remain available without automatic conversion. A newer-format record with incomplete protection is read-only until protection is restored; do not bypass the notice.
+
+Owner: the dashboard Backup status section reads only after Check backup status. An unconfigured source does not establish absence of backups. Review capture/test dates and storage location; artifact presence does not prove full recoverability. This section has no restore or download action.

@@ -102,3 +102,20 @@ flowchart LR
 ```
 
 This review does not automatically extend a deadline or assign historic delay to a substitute. Terminal tasks do not generate review notices.
+
+## Read-only Owner backup status (default disabled)
+
+```mermaid
+flowchart LR
+ A[Owner opens dashboard] --> B[Explicit status check]
+ B --> C{Configured public key and private source?}
+ C -- no --> D[Unconfigured; no absence claim]
+ C -- yes --> E[Bounded four-folder technical scan]
+ E --> F{Signature + source + organization match?}
+ F -- no --> G[Needs review; no foreign metadata]
+ F -- yes --> H[HEAD archive and encrypted metadata]
+ H --> I[Recorded capture/test facts + current presence and size]
+ I --> J[Current full integrity and service restoration still need evidence]
+```
+
+The display cannot start capture, download archives, change a schedule or run restore. The protected original backup job may publish an optional signed technical companion only after its original checks. Its private signing key remains outside application runtime. Independent storage and real restore acceptance remain release prerequisites.
