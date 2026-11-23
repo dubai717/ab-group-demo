@@ -5,3 +5,5 @@
 - Annual leave plans are tentative. Saving does not approve leave or deduct balances. Add suggested dates, or explain why dates are not decided. Actual leave requests follow the existing approval workflow.
 - Failed saves retain your input. Correct the error and retry; a spinner does not prove completion.
 - The two-month service policy and WhatsApp contract are isolated computations/tests, not activated operational features.
+
+When approved leave suspends work access, use Leave return self-service on the login screen. This limited portal does not open work data. Submit the actual return date and note, then await authorized confirmation. Confirmation does not clear an independent security restriction; historical holds without evidence need a separate authorized access review.

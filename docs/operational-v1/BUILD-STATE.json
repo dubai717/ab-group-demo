@@ -26,7 +26,10 @@
     "/tmp/ab-v1-standards-native.log",
     "/tmp/ab-v1-primary-browser-fixed.log",
     "/tmp/ab-v1-clock-unit.log",
-    "/tmp/ab-v1-whatsapp-unit.log"
+    "/tmp/ab-v1-whatsapp-unit.log",
+    "/tmp/ab-v1-leave-resume-proof-native.log",
+    "/tmp/ab-v1-leave-resume-proof-types.log",
+    "/tmp/ab-v1-leave-proof-browser.log"
   ],
   "financialBaselineCI": {
     "run": 355,
@@ -51,15 +54,57 @@
       "passed": 1,
       "failed": 0
     },
-    "operationalBrowser": "passed: five actual independent fixture journeys, including original user UX and authorized/unauthorized conversation links",
+    "operationalBrowser": "six actual independent fixture journeys passed; newest application source, synthetic Auth and local PostgreSQL only",
     "completeReleaseAcceptance": false,
     "annualBrowser": "passed: invalid date retention, checkbox draft retention, save/readback/participation and three widths",
-    "originalOrganizationAndPersonnelBrowser": "passed after opening actual advanced role controls; original assertions retained"
+    "originalOrganizationAndPersonnelBrowser": "passed after opening actual advanced role controls; original assertions retained",
+    "standardImpact": {
+      "nativePassed": 10,
+      "nativeFailed": 0,
+      "browser": "five journeys passed, including actual affected staff grant-count preview and preserved additions/company scope"
+    }
   },
   "fullNativeRun": {
-    "testedLocalCommit": "90240e4d0907526d005a1441ed7d265d623d52cd",
-    "status": "running; temporary artifact volume previously exhausted, full output not yet accepted",
-    "backendSourceUnchangedSinceStart": true
+    "exit": 0,
+    "passed": 705,
+    "failed": 0,
+    "logSha256": "59672cb1a8639ef8d0dfcc6643985f43b7ab1ad68f6a25d28cbb9b670b31125e",
+    "scope": "previous independent core plus original regressions; portal tests were added afterwards and are not covered by this count",
+    "sameFinalCommitAcceptance": false
   },
-  "artifactHandling": "Local screenshot capture uses configurable RAM artifact root after ENOSPC; CI default work output is retained as synthetic PNG artifacts. No database or business backup cleanup."
+  "artifactHandling": "Local screenshot capture uses configurable RAM artifact root after ENOSPC; CI default work output is retained as synthetic PNG artifacts. No database or business backup cleanup.",
+  "pullRequest": {
+    "number": 116,
+    "url": "https://github.com/dubai717/ab-group-demo/pull/116",
+    "draft": true,
+    "base": "feature/finance-completion-build",
+    "mergeAuthorized": false
+  },
+  "CI": {
+    "run": 45093055481,
+    "commit": "76174281215606bf70364e1898fbccfc1be982fa",
+    "status": "both jobs completed success",
+    "deployment": false,
+    "scope": "uploaded foundations only; later local standard-impact and leave-return changes not covered"
+  },
+  "leaveReturn": {
+    "state": "local API and bilingual portal/review UI tested; source integration partially complete, unpublished",
+    "nativePassed": 72,
+    "nativeScope": "10 portal cases plus original personnel and View As regression, same prospective-proof implementation",
+    "sourceSQL": "backend/review/leave-return-portal.sql",
+    "hostedSchemaApplied": false,
+    "originalWorkGuardChanged": false,
+    "browser": "six actual independent fixture journeys passed, including bilingual portal and manager review; AR/EN desktop/tablet/mobile",
+    "resumeSafety": "Only immutable prospective Active-before-leave proof at unchanged user revision can restore access. Historical and pre-existing Pending holds require separate authorized review. No backfill.",
+    "next": [
+      "Return only leave-linked delegations and summarize substitute actions",
+      "Complete exact-source aggregate browser and CI acceptance",
+      "Review SQL candidate under final protected release approval"
+    ],
+    "proofSafetyTests": {
+      "passed": 11,
+      "failed": 0,
+      "scope": "portal-only rerun adds immutable proof and newer independent Pending account revision case"
+    }
+  }
 }

@@ -1,3 +1,4 @@
+import {registerLeaveReturnPortal}from'./leave-return-portal.js';
 import {userEnrollment} from './user-enrollment.js';
 import {securityRoleCompany} from './security-role-access.js';
 import {assertEmployeeLoginHierarchy} from './personnel-structure.js';
@@ -166,7 +167,7 @@ export async function build(options: Options) {
     const customerSaveRequest=['POST','PATCH'].includes(req.method)&&/^\/api\/customers(?:\/[0-9a-f-]+)?(?:\?|$)/i.test(req.url);const customerRequest=/^\/api\/(?:customers|customer-drafts)(?:[/?]|$)/.test(req.url);if(customerRequest)console.error(JSON.stringify({event:customerSaveRequest?'customer_save_failed':'customer_request_failed',reference:req.id,stage:req.url.includes('/files')?'attachment':req.method==='GET'?'read':customerSaveRequest?'save':'validation',status,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),sqlState:typeof e.code==='string'&&/^[0-9A-Z]{5}$/.test(e.code)?e.code:undefined}));
     const enrollmentRequest=req.method==='POST'&&req.url.split('?')[0]==='/api/users';
     if(enrollmentRequest){const sqlState=typeof e.code==='string'&&/^[0-9A-Z]{5}$/.test(e.code)?e.code:undefined,providerCode=['email_exists','user_already_exists','email_address_invalid','email_address_not_authorized','weak_password','unexpected_failure'].includes(e.providerCode)?e.providerCode:undefined;console.error(JSON.stringify({event:'user_enrollment_failed',reference:req.id,stage:(req as any).enrollmentStage||'request',code:sqlState||String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),providerCode,constraint:typeof e.constraint==='string'&&/^[a-z_0-9]{1,80}$/.test(e.constraint)?e.constraint:undefined}));if((req as any).enrollmentAuthCreated&&!(e instanceof ApiError)){code='enrollmentIncomplete';status=503;}}
-    const ledgerReadReviewRequest=req.method==='GET'&&/^\/api\/ledger\/manual-claims\/[0-9a-f-]+\/bank-source(?:\?|$)/i.test(req.url);const ledgerActionRequest=req.method!=='GET'&&/^\/api\/ledger\//.test(req.url);if(ledgerActionRequest||ledgerReadReviewRequest)console.error(JSON.stringify({event:ledgerReadReviewRequest?'ledger_read_review_failed':'ledger_action_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),status}));const bankApprovalRequest=req.method==='POST'&&/^\/api\/finance\/operations\/[0-9a-f-]+\/approve(?:\?|$)/i.test(req.url);if(bankApprovalRequest)console.error(JSON.stringify({event:'bank_approval_failed',reference:req.id,status,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60)}));const vehicleDecisionRequest=req.method==='POST'&&/^\/api\/vehicle-requests\/[0-9a-f-]+\/funding-decision(?:\?|$)/i.test(req.url);const collectionAttemptRequest=req.method==='POST'&&/^\/api\/collections\/tasks\/[0-9a-f-]+\/attempts(?:\?|$)/i.test(req.url);if(collectionAttemptRequest)console.error(JSON.stringify({event:'collection_attempt_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),status}));if(vehicleDecisionRequest)console.error(JSON.stringify({event:'vehicle_decision_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),status}));reply.code(status).send({ error: code, ...(customerRequest||enrollmentRequest||vehicleDecisionRequest||collectionAttemptRequest||ledgerActionRequest||ledgerReadReviewRequest||bankApprovalRequest?{reference:req.id}:{}), ...(e instanceof ApiError && (e as any).fieldErrors ? {fieldErrors:(e as any).fieldErrors}: {}) });
+    const leaveReturnRequest=/^\/api\/personnel\/leaves\/[0-9a-f-]+\/return(?:\/|\?|$)/i.test(req.url);if(leaveReturnRequest)console.error(JSON.stringify({event:'leave_return_review_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,''),status}));const ledgerReadReviewRequest=req.method==='GET'&&/^\/api\/ledger\/manual-claims\/[0-9a-f-]+\/bank-source(?:\?|$)/i.test(req.url);const ledgerActionRequest=req.method!=='GET'&&/^\/api\/ledger\//.test(req.url);if(ledgerActionRequest||ledgerReadReviewRequest)console.error(JSON.stringify({event:ledgerReadReviewRequest?'ledger_read_review_failed':'ledger_action_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),status}));const bankApprovalRequest=req.method==='POST'&&/^\/api\/finance\/operations\/[0-9a-f-]+\/approve(?:\?|$)/i.test(req.url);if(bankApprovalRequest)console.error(JSON.stringify({event:'bank_approval_failed',reference:req.id,status,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60)}));const vehicleDecisionRequest=req.method==='POST'&&/^\/api\/vehicle-requests\/[0-9a-f-]+\/funding-decision(?:\?|$)/i.test(req.url);const collectionAttemptRequest=req.method==='POST'&&/^\/api\/collections\/tasks\/[0-9a-f-]+\/attempts(?:\?|$)/i.test(req.url);if(collectionAttemptRequest)console.error(JSON.stringify({event:'collection_attempt_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),status}));if(vehicleDecisionRequest)console.error(JSON.stringify({event:'vehicle_decision_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),status}));reply.code(status).send({ error: code, ...(customerRequest||enrollmentRequest||vehicleDecisionRequest||collectionAttemptRequest||ledgerActionRequest||ledgerReadReviewRequest||bankApprovalRequest||leaveReturnRequest?{reference:req.id}:{}), ...(e instanceof ApiError && (e as any).fieldErrors ? {fieldErrors:(e as any).fieldErrors}: {}) });
   });
   const uuid = (v: any) => z.uuid().parse(v);
   const session = async (req: any,realOnly=false) => {
@@ -176,7 +177,7 @@ export async function build(options: Options) {
       401,
       "loginRequired",
     );
-    if((await pool.query("select to_regprocedure('ab.hr_enforce_session(text)') ok")).rows[0].ok)await pool.query("select ab.hr_enforce_session($1)",[sha(sid)]);
+    const employment=(await pool.query("select to_regprocedure('ab.hr_enforce_session(text)') ok,to_regprocedure('ab.hr_enforce_session_with_evidence(text)') evidenced")).rows[0];if(employment.evidenced)await pool.query("select ab.hr_enforce_session_with_evidence($1)",[sha(sid)]);else if(employment.ok)await pool.query("select ab.hr_enforce_session($1)",[sha(sid)]);
     const r = await pool.query("select * from ab.read_session($1)", [sha(sid)]);
     requireOk(r.rowCount === 1, 401, "loginRequired");
     const s = r.rows[0];
@@ -281,7 +282,7 @@ export async function build(options: Options) {
   registerRequestDrafts(app,call,cipher,(options as any).requestCreators);
   registerRegisters(app,call,cipher);
   registerLedger(app,call,cipher,{objects});
-  registerPersonnel(app,call,cipher,options);
+  registerPersonnel(app,call,cipher,options);registerLeaveReturnPortal(app,options);
   app.get("/api/health", async () => {
     await pool.query("select 1");
     return {
@@ -312,7 +313,7 @@ export async function build(options: Options) {
         requireOk(email, 401, "loginFailed");
         const actual = await auth.verify(user.token);
         requireOk(actual === user.id, 401, "loginFailed");
-        if((await pool.query("select to_regprocedure('ab.hr_enforce_auth(uuid)') ok")).rows[0].ok)await pool.query("select ab.hr_enforce_auth($1)",[uuid(user.id)]);
+        const employment=(await pool.query("select to_regprocedure('ab.hr_enforce_auth(uuid)') ok,to_regprocedure('ab.hr_enforce_auth_with_evidence(uuid)') evidenced")).rows[0];if(employment.evidenced)await pool.query("select ab.hr_enforce_auth_with_evidence($1)",[uuid(user.id)]);else if(employment.ok)await pool.query("select ab.hr_enforce_auth($1)",[uuid(user.id)]);
         const p = (
           await pool.query("select * from ab.principal($1)", [uuid(user.id)])
         ).rows[0];
@@ -1229,6 +1230,7 @@ export async function build(options: Options) {
       "company-documents.js",
       "bank-accounts.js",
       "annual-leave-plans-ui.js",
+      "leave-return-ui.js",
       "permission-matrix-ui.js",
       "user-management.js",
       "demo-credentials.js",

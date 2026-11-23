@@ -102,6 +102,65 @@
         "PASS customer save: required focus, invalid identity, visible 503/reference, lost committed response and immutable retry once, timeout, readonly file number, immediate document-tab access during held background refresh without input loss, refreshed distinct counts, duplicate candidate link and rejection. Independent rate-limited synthetic fixture.",
         "PASS customer workspace: real distinct summaries, optional staged PDF uploads and partial-failure retry without duplicate customer/files, unverified upload, separate reviewed verification and limited-role denial, first-page preview/download exact bytes/print, passport custody history, unchanged request composer and vehicle file, canonical financial totals, uncomputed score, Arabic/English desktop/tablet/phone and dark card contrast. Synthetic providers only."
       ]
+    },
+    {
+      "log": "/tmp/ab-v1-leave-resume-proof-native.log",
+      "sha256": "a5d647f1abc9d7db391ef23eac8ff70bd3e3d7edec31e476d1d2621583820b03",
+      "tail": [
+        "  ✔ return restores the original owner without changing accounts or grants (48.967887ms)",
+        "✔ Owner View As uses target RLS and immutable owner identity with a read-only database transaction (2052.562617ms)",
+        "ℹ tests 72",
+        "ℹ suites 0",
+        "ℹ pass 72",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 31936.302052"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-leave-resume-proof-types.log",
+      "sha256": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+      "tail": [
+        "",
+        "> ab-group-demo@1.0.0 backend:check",
+        "> tsc -p backend/tsconfig.json",
+        "",
+        "npm notice",
+        "npm notice New major version of npm available! 11.9.0 -> 12.2.3",
+        "npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.3",
+        "npm notice To update run: npm install -g npm@12.2.3",
+        "npm notice"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-proof-immutability-native.log",
+      "sha256": "b8271d9dd1f0303e95d2cd64da6a8aac4db19889c7d9f34d0d46f82d4215446a",
+      "tail": [
+        "✔ a pre-existing Pending restriction is never misidentified as an Active-to-leave suspension (1637.926729ms)",
+        "✔ prospective resume proof is immutable and an account revision change requires separate access review (1473.744706ms)",
+        "ℹ tests 11",
+        "ℹ suites 0",
+        "ℹ pass 11",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 21761.837759"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-final-six-browser.log",
+      "sha256": "8523a4603307ce046410ca7dc74dfab6cfd2023b9ea321fae8460188267711cb",
+      "tail": [
+        "PASS independent job standard and employee matrices: real actions, no section auto-grant, protected approval, no job-based account assignment, staged cancel/confirm, actual affected-user grant-count preview and preserved exceptions on standard update, AR/EN three widths and actual screenshots",
+        "PASS minimal prospect save: original file number, view mode, no optional documents, retained source/responsible, distinct real/prospect counters, clickable filter and AR/EN three widths",
+        "PASS annual plan actual API/UI: reversed-date error preserves inputs, tentative checkbox retains dates, save/view revision, no leave/balance/access effect, participation row, desktop/tablet/mobile. Synthetic only.",
+        "PASS original conversation deep link: real authorized thread, query consumed once with context retained, login required, known-ID unauthorized request rejected without private content.",
+        "PASS user UX: name aliases/prefix/department picker, explicit readonly preview and unchanged owner session, demo IBAN/slow one-save/readback, confirmed permission plan, committed retry without repeat, delayed spinner, AR/EN responsive.",
+        "PASS restricted leave-return API/UI: failed work login, limited Auth without work cookie, retained validation/API/lost-response inputs, one canonical review, suppressed late old-company opening, duplicate prevention, return-for-info, actual manager completion count, successful original work login, unchanged rights, AR/EN desktop/tablet/mobile."
+      ]
     }
   ],
   "limitations": [
@@ -152,7 +211,60 @@
     "Advanced role selector hidden in closed details; test opens actual advanced view, assertions retained",
     "Original employee advanced panel collapsed after save; UI now retains its open state",
     "Conversation-link fixture waited for dashboard instead of authenticated state; auth/access assertions retained",
-    "Local screenshot output ENOSPC; only disposable synthetic PNGs and byte-verified Node/TSX caches cleaned, screenshots redirected to RAM for accepted run"
+    "Local screenshot output ENOSPC; only disposable synthetic PNGs and byte-verified Node/TSX caches cleaned, screenshots redirected to RAM for accepted run",
+    "Concurrent isolated fixture role setup collided; ten targeted tests rerun serially and passed. Do not run another native fixture on5442 during the complete retry."
   ],
-  "screenshots": "CI preserves work/operational-*.png and work/dual-permissions-*.png for seven days; local RAM copies are temporary."
+  "screenshots": "CI preserves work/operational-*.png and work/dual-permissions-*.png for seven days; local RAM copies are temporary.",
+  "standardImpactEvidence": [
+    {
+      "log": "/tmp/ab-v1-standard-impact-native-serial.log",
+      "sha256": "523f92ba385ee180594e03097f2752553a7e89a33434a493cf9cfd1116db9bfa",
+      "tail": [
+        "✔ test IBAN UI is opt-in; format/checksum, normalized persisted save and duplicates remain authoritative (1214.373661ms)",
+        "✔ summary includes legacy company denials and actual company-scoped bank rights, not just direct grant rows (1277.218ms)",
+        "ℹ tests 10",
+        "ℹ suites 0",
+        "ℹ pass 10",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 20697.960623"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-standard-impact-browser.log",
+      "sha256": "113148b7ce5b0047f455f1d9cb2c53a300cb1a76b089e7179cece9379bd39f4f",
+      "tail": [
+        "PASS independent job standard and employee matrices: real actions, no section auto-grant, protected approval, no job-based account assignment, staged cancel/confirm, actual affected-user grant-count preview and preserved exceptions on standard update, AR/EN three widths and actual screenshots",
+        "PASS minimal prospect save: original file number, view mode, no optional documents, retained source/responsible, distinct real/prospect counters, clickable filter and AR/EN three widths",
+        "PASS annual plan actual API/UI: reversed-date error preserves inputs, tentative checkbox retains dates, save/view revision, no leave/balance/access effect, participation row, desktop/tablet/mobile. Synthetic only.",
+        "PASS original conversation deep link: real authorized thread, query consumed once with context retained, login required, known-ID unauthorized request rejected without private content.",
+        "PASS user UX: name aliases/prefix/department picker, explicit readonly preview and unchanged owner session, demo IBAN/slow one-save/readback, confirmed permission plan, committed retry without repeat, delayed spinner, AR/EN responsive."
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-standard-impact-types-fixed.log",
+      "sha256": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+      "tail": [
+        "",
+        "> ab-group-demo@1.0.0 backend:check",
+        "> tsc -p backend/tsconfig.json",
+        "",
+        "npm notice",
+        "npm notice New major version of npm available! 11.9.0 -> 12.2.3",
+        "npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.3",
+        "npm notice To update run: npm install -g npm@12.2.3",
+        "npm notice"
+      ]
+    }
+  ],
+  "standardImpactScope": "Actual assigned user, two direct grants in native acceptance, standard permission addition, review without mutation, default retained grants and companies unchanged; inherited deny count is explicitly unsupported/null.",
+  "leaveReturnBackendEvidence": {
+    "log": "/tmp/ab-v1-leave-portal-security-native-fixed.log",
+    "sha256": "614957ad50b1a630dc5d7f037d1e69dbfa5dc2c3b33255a71efc958baa9138a4",
+    "passed": 6,
+    "failed": 0,
+    "scope": "backend candidate only, not operational release acceptance"
+  }
 }

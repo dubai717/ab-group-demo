@@ -68,9 +68,11 @@
       "requirement": "معاينة أثر الستاندرد والمؤشرات",
       "status": "موجود ناقص",
       "evidence": [
-        "backend/src/security-roles.ts"
+        "backend/src/security-roles.ts",
+        "backend/tests/job-standards.test.ts",
+        "backend/tests/operational-permission-matrix.browser.cjs"
       ],
-      "remaining": "مسار المعاينة الحالي يعاد استخدامه؛ تخصيص معاينات المؤشرات +/× غير مكتمل."
+      "remaining": "معاينة الموظفين وفرق الصلاحيات وأعداد المنح المحفوظة مختبرة؛ المنع الموروث والإزالة الانتقائية ومعاينات المؤشرات +/× غير مكتملة."
     },
     {
       "id": "4.a",

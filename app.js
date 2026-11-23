@@ -1015,6 +1015,8 @@ function renderLogin() {
             <div id="login-error" class="error-box" role="alert" aria-live="polite"></div>
           </form>
 
+          <button class="auth-link" type="button" data-leave-portal-open hidden>${locale === 'ar' ? 'خدمة الموظف أثناء الإجازة — إشعار العودة' : 'Leave self-service — report return'}</button>
+
           <div class="demo-box">
             <h4>${localeText('demoAccess')}</h4>
             <div class="demo-users">
@@ -1029,6 +1031,7 @@ function renderLogin() {
   `;
 
   AuthFlows.mountLogin();
+  globalThis.LeaveReturnUI?.bindLogin();
   globalThis.ABCentral?.enabled&&globalThis.ABCentral.bind();
   const form = document.getElementById('login-form');
   if (form) form.addEventListener('submit', handleLogin);
