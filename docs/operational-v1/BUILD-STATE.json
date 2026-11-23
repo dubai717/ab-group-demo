@@ -100,12 +100,12 @@
     "mergeAuthorized": false
   },
   "CI": {
-    "runId": 45123873099,
-    "commit": "d91ac3720e40fa0d3e4aa400043f3168973c13d9",
-    "operationalUI": "success",
-    "originalRegressions": "success",
-    "includesLocalSelectedExceptions": false,
-    "includesLocalCommunicationClock": false
+    "run": 12,
+    "runId": 45141828553,
+    "head": "51bb401cef6f3ab10b483a2179f391db61ceba75",
+    "status": "in_progress",
+    "ui": "success",
+    "notProofForCurrentUnpushedChanges": true
   },
   "leaveReturn": {
     "state": "local API and bilingual portal/review UI tested; source integration partially complete, unpublished",
@@ -238,11 +238,11 @@
     ]
   },
   "independentVerifiedCI": {
-    "runId": 45123873099,
-    "commit": "d91ac3720e40fa0d3e4aa400043f3168973c13d9",
+    "run": 11,
+    "runId": 45130587080,
+    "head": "6d3891b687658bb4030b76c6ef0b80c0c21fed8a",
     "conclusion": "success",
-    "operationalUIJourneys": 13,
-    "coversLatestUnpublishedBuild": false
+    "notProofForCurrentUnpushedChanges": true
   },
   "durableCodeCheckpoint": {
     "patch": "/tmp/ab-v1-durable-code-diff.patch.gz",
@@ -312,5 +312,28 @@
       "Official inbound topic association and messaging/reminders",
       "Complete reporting and wider leave/source integration"
     ]
+  },
+  "communicationCaseCoverage": {
+    "state": "implemented and locally tested; unpublished",
+    "supportedSources": [
+      "manual",
+      "employee_document",
+      "case-linked communication"
+    ],
+    "newSourceGrants": false,
+    "activationRechecksCurrentSourceAccess": true,
+    "pendingOriginalAccountRemainsRestricted": true,
+    "genericOrResolvedCaseTasksAutoCompleted": false,
+    "nativeFocused": {
+      "passed": 26,
+      "failed": 0
+    },
+    "targetBrowser": "AR/EN 1440/768/390 passed after automation fix",
+    "releaseReady": false,
+    "hrRegression": {
+      "passed": 68,
+      "failed": 0,
+      "notAdditiveToEarlierEvidence": true
+    }
   }
 }

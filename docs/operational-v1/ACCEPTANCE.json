@@ -859,6 +859,48 @@
       "bytes": 400,
       "sha256": "e44d85f1e43f4a756ce86631000047432a9f32022d32936282381fc2df057e39",
       "scope": "original conversation topic workflow, current access on replay, linked original tasks, canonical IDs and responsive UI; synthetic only"
+    },
+    {
+      "path": "work/operational-evidence/case-assignee-native.log",
+      "bytes": 5293,
+      "sha256": "9805e0b1e446d1f54e115efcfca760af2b8f21bb96a329fdaaefe526c04bef44",
+      "scope": "21 focused native: active original source participant required, no partial task"
+    },
+    {
+      "path": "work/operational-evidence/case-assignee-browser.log",
+      "bytes": 4393,
+      "sha256": "7abfe94215fd188bdb858a5a9ea787c4991786a22154cd0b9350157f875ae8c6",
+      "scope": "16 complete operational UI journeys after assignee guard; before case delegation adapter"
+    },
+    {
+      "path": "work/operational-evidence/case-delegation-final-native.log",
+      "bytes": 5987,
+      "sha256": "7e5c78d9b8d144918ecbdf53693aa9ceddbdf0ee1e8c325ff066720dfe5edb45",
+      "scope": "26 focused native: source assignment, approved leave, activation revocation, expiry review, actual verified return, original completion guard, clocks and communications"
+    },
+    {
+      "path": "work/operational-evidence/case-delegation-final-build.log",
+      "bytes": 147,
+      "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "scope": "Compiled runtime graph and staging build; no hosted connections"
+    },
+    {
+      "path": "work/operational-evidence/case-delegation-final-static.log",
+      "bytes": 17697,
+      "sha256": "e02ac2502ead35e3023ccdfd7c06e4922f632af76635ec4d19403728725a8e14",
+      "scope": "182 static/regression checks"
+    },
+    {
+      "path": "work/operational-evidence/case-delegation-target-ui.log",
+      "bytes": 400,
+      "sha256": "e44d85f1e43f4a756ce86631000047432a9f32022d32936282381fc2df057e39",
+      "scope": "Actual original case UI and source followup worker after automation fix; AR/EN at 1440/768/390"
+    },
+    {
+      "path": "work/operational-evidence/case-delegation-hr-regressions.log",
+      "bytes": 8094,
+      "sha256": "48dc19eebae04675e4f7921a10f421d5ba3f8682aab1f94c07d14d41fd33759e",
+      "scope": "68 HR, leave-return portal and original delegation history regressions passed; isolated synthetic providers only"
     }
   ],
   "failedAttemptsNotAcceptance": [
@@ -891,6 +933,21 @@
       "path": "work/operational-evidence/communication-cases-linked-native.log",
       "sha256": "fbad37cd84055c64db4c8689b34491c97b9ed0f205f81da24be132f37b72655c",
       "reason": "Test setup attempted to update an immutable participant record; original history guard correctly rejected it. Permission-loss test now uses an isolated synthetic user role change. No trigger or policy disabled."
+    },
+    {
+      "path": "work/operational-evidence/case-delegation-native.log",
+      "sha256": "50a3c38c1fc9aa3ee2b7659c41eb857f340b0d7bd58f7d37cadbadebfa0a7f9f",
+      "reason": "Initial synthetic fixture omitted existing communications schema; switched to original business-centers fixture, no production schema change"
+    },
+    {
+      "path": "work/operational-evidence/case-delegation-source-fixed-native.log",
+      "sha256": "809eb0b060c88309d97e9f492df8d9ee2d152a9476b09a9e252a1c2bb665fa61",
+      "reason": "Synthetic early-return setup attempted ends-before-start; corrected original leave dates without disabling check constraint"
+    },
+    {
+      "path": "work/operational-evidence/case-delegation-state-native.log",
+      "sha256": "28cec269db94b12022ae2f0c5bebba5794b0cf1d30c8c06110f0ec62a4906c5b",
+      "reason": "Acceptance exposed actual followup worker incorrectly auto-completing conversation tasks; fixed source completion gating, retained submit/review predicate"
     }
   ],
   "screenshots": "CI preserves work/operational-*.png and work/dual-permissions-*.png for seven days; local RAM copies are temporary.",

@@ -8,7 +8,7 @@ and no historical backfill. Unlinked legacy behavior stays Owner-reviewed.
 The API verifies employee/company/approved-leave identity, bounds, substitute's
 active linked account/work assignment, overlapping absence/delegation, duplicate
 IDs and original task scope. Current adapters support manual and employee-document
-tasks. Financial/custody sources are rejected; signing, payment, final approvals
+tasks and original case-linked conversation tasks with existing participant/source authority. Financial/custody sources are rejected; signing, payment, final approvals
 and financial liability are not transferred. Different-key repeats recover the
 same source. Current followup rechecks sources and assigns each task once.
 
@@ -42,3 +42,5 @@ Remaining: other source adapters, cross-company coverage, substitute-leave actua
 start/return continuity, bulk distribution, clock adoption, full self-service and
 unlinked message/attachment contributions. Requirement4.b and the whole release
 remain partial. No hosted SQL or protected financial worktree was modified.
+
+Case coverage adds no participant or grant. Creation, activation and linked explicit return recheck current source rights. Pending original accounts require management review instead of automatic case-task return; verified return restores only previously held access through the original independent proof. See COMMUNICATION-CASES.md and communication-leave-delegation.test.ts.

@@ -1,4 +1,4 @@
-import {validateLeaveDelegation,reconcileLeaveDelegations,linkedDelegationActivationReview,notifyLeaveDelegationReviews}from'./leave-linked-delegations.js';
+import {communicationTaskReview,validateLeaveDelegation,reconcileLeaveDelegations,linkedDelegationActivationReview,notifyLeaveDelegationReviews}from'./leave-linked-delegations.js';
 import{taskWorkingEscalations}from'./task-working-clock.js';
 import {remindAnnualLeavePlans} from './annual-leave-planning.js';
 import {ownerChequeClearance} from './owner-card-settlements.js';
@@ -84,7 +84,8 @@ export async function personnelFollowup(c: any, cipher: any, m: any, s: any, co:
     const tasks = (await c.query("select t.*,e.manager_id from ab.tasks t join ab.hr_employees e on e.id=t.employee_id where t.company_id=$1 and t.state not in('Completed','Closed')", [co])).rows;
     const pendingClockTasks=[];
     for (const t of tasks) {
-        if (t.source_type !== 'manual' && await sourceComplete(c, cipher, t)) {
+        // Conversation work, like manual work, requires actual submit-and-review; source readability is not completion.
+        if (!['manual','communication'].includes(t.source_type) && await sourceComplete(c, cipher, t)) {
             await c.query("update ab.tasks set state='Completed',completed_at=now(),revision=revision+1 where id=$1", [t.id]);
             await taskEvent(c, cipher, s, t.id, 'source_verified', { sourceType: t.source_type, sourceId: t.source_id });
             await auditHR(c, cipher, s, { id: t.employee_id, company_id: co }, 'task_source_verified', { state: t.state }, { taskId: t.id, sourceType: t.source_type, sourceId: t.source_id });
@@ -155,7 +156,8 @@ export function registerPersonnelWorkflows(app: any, route: any, cipher: any) {
         requireOk((await c.query("select 1 from ab.tasks where id=$1 and company_id=$2 and employee_id=$3 and state not in('Completed','Closed')", [tid, d.companyId, d.originalId])).rowCount, 422, 'invalidTaskScope'); const key = randomUUID(); await c.query('insert into ab.hr_delegations(id,tenant_id,company_id,original_id,substitute_id,starts_on,ends_on,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9)', [key, s.tenant_id, d.companyId, d.originalId, d.substituteId, d.startsOn, d.endsOn, cipher.seal({...d,...(linked?{leaveLinkedVersion:1,leaveLinkedDigest:linked.digest}:{})}), s.user_id]); await auditHR(c, cipher, s, { id: d.originalId, company_id: d.companyId }, 'delegation_created', null, d); return { id: key, saved: true, authorityTransferred: false }; }));
     app.post('/api/personnel/delegations/:id/decision', route(async (c: any, m: any, s: any, r: any) => { requireOk(m.actor.roleId === 'owner'); const d = z.object({ action: z.enum(['return', 'extend', 'transfer']), endsOn: day.optional(), reason: text }).strict().parse(r.body), row = (await c.query('select * from ab.hr_delegations where id=$1', [id.parse(r.params.id)])).rows[0]; requireOk(row, 404, 'notFound'); requireOk(['Active', 'Extended'].includes(row.state), 409, 'invalidState'); const data = cipher.open(row.payload_cipher);if(data.leaveLinkedVersion===1){requireOk(d.action!=='transfer',409,'linkedDelegationReassignmentReviewRequired');if(d.action==='extend'){const leave=(await c.query("select * from ab.hr_leaves where id=$1 and state='Approved'",[data.leaveId])).rows[0];requireOk(leave&&d.endsOn&&d.endsOn<=leave.ends_on.toISOString().slice(0,10),409,'delegationOutsideApprovedLeave');}} if (d.action === 'extend')
         requireOk(d.endsOn && d.endsOn >= today() && d.endsOn > row.ends_on.toISOString().slice(0, 10), 422, 'invalidDate'); if (d.action === 'return') {
-        await employeeIn(c, row.original_id, row.company_id);
+        const original=await employeeIn(c, row.original_id, row.company_id);
+        if(data.leaveLinkedVersion===1){const tasks=(await c.query("select * from ab.tasks where id=any($1::uuid[]) and company_id=$2 and employee_id=$3 and state not in('Completed','Closed') for update",[data.taskIds,row.company_id,row.substitute_id])).rows;const review=await communicationTaskReview(c,cipher,s.tenant_id,tasks,original);requireOk(!review,409,review||'communicationDelegateSourceReviewRequired');}
         for (const tid of data.taskIds) {
             const t = (await c.query("select * from ab.tasks where id=$1 and employee_id=$2 and state not in('Completed','Closed')", [tid, row.substitute_id])).rows[0];
             if (t) {

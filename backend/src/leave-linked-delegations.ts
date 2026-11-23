@@ -2,10 +2,25 @@
 import {z} from 'zod';
 import {requireOk,sha,ApiError} from './core.js';
 import {employee,employeeIn,scope,hrRight,taskEvent,auditHR,notice,leaders} from './personnel-domain.js';
+import {model} from './data.js';
+import {authorizedCommunicationThread} from './communications.js';
+import {readCommunicationCase} from './communication-cases.js';
 import {today} from './vehicle-domain.js';
-const supported=new Set(['manual','employee_document']);
+const supported=new Set(['manual','employee_document','communication']);
 const date=(v:any)=>v instanceof Date?v.toISOString().slice(0,10):String(v).slice(0,10);
 const field=(ok:any,status:number,code:string,keys:string[])=>{if(!ok)throw Object.assign(new ApiError(status,code),{fieldErrors:Object.fromEntries(keys.map(k=>[k,code]))});};
+// Delegation never supplies missing source access or grants conversation membership.
+export async function communicationTaskReview(c:any,cipher:any,tenantId:string,tasks:any[],target:any){
+ const linked=tasks.filter(t=>t.source_type==='communication');if(!linked.length)return null;
+ if(!target?.user_id||!(await c.query("select 1 from ab.users where id=$1 and status='Active'",[target.user_id])).rowCount)return'communicationDelegateSourceReviewRequired';
+ const m=await model(c,target.user_id,cipher),threads=new Map<string,any>(),cases=new Set<string>();
+ for(const task of linked){const p=cipher.open(task.payload_cipher);if(!z.uuid().safeParse(p.caseId).success||p.threadId!==task.source_id)return'communicationDelegateSourceReviewRequired';
+  try{if(!threads.has(task.source_id)){const thread=await authorizedCommunicationThread(c,m,cipher,task.source_id);if(thread.company_id!==task.company_id||cipher.open(thread.subject_cipher).general)return'communicationDelegateSourceReviewRequired';threads.set(task.source_id,thread);}
+   const identity=task.source_id+':'+p.caseId;if(!cases.has(identity)){await readCommunicationCase(c,cipher,{tenant_id:tenantId},task.source_id,p.caseId);cases.add(identity);}
+  }catch(error){if(error instanceof ApiError&&[401,403,404,409].includes(error.status))return'communicationDelegateSourceReviewRequired';throw error;}
+ }
+ return null;
+}
 export async function validateLeaveDelegation(c:any,cipher:any,m:any,s:any,d:any){
  if(!d.leaveId)return null;
  requireOk(hrRight(m,'task_delegate',d.companyId),403,'denied');
@@ -24,6 +39,7 @@ export async function validateLeaveDelegation(c:any,cipher:any,m:any,s:any,d:any
  const tasks=(await c.query('select * from ab.tasks where company_id=$1 and id=any($2::uuid[]) for update',[d.companyId,d.taskIds])).rows;
  requireOk(tasks.length===chosen.size&&tasks.every((t:any)=>t.employee_id===original.id&&!['Completed','Closed'].includes(t.state)),422,'invalidTaskScope');
  requireOk(tasks.every((t:any)=>supported.has(t.source_type)),409,'leaveDelegationSourceReviewRequired');
+ const sourceReview=await communicationTaskReview(c,cipher,s.tenant_id,tasks,sub);requireOk(!sourceReview,409,sourceReview||'communicationDelegateSourceReviewRequired');
  return{existingId:null,digest};
 }
 export async function reconcileLeaveDelegations(c:any,cipher:any,m:any,s:any,co:string,asOf=today(),onlyLeaveId?:string){
@@ -39,6 +55,7 @@ export async function reconcileLeaveDelegations(c:any,cipher:any,m:any,s:any,co:
   const original=(await c.query('select e.*,u.status linked_status from ab.hr_employees e left join ab.users u on u.id=e.user_id where e.id=$1',[row.original_id])).rows[0];if(!original||['Ended','Inactive'].includes(original.state)||!(await scope(c,original,asOf)).includes(co)){review.push({delegationId:row.id,reason:'originalEmployeeReviewRequired'});continue;}
   const ids=z.array(z.uuid()).min(1).max(1000).parse(meta.taskIds),tasks=(await c.query('select * from ab.tasks where company_id=$1 and id=any($2::uuid[]) for update',[co,ids])).rows;
   if(tasks.length!==new Set(ids).size||tasks.some((t:any)=>!supported.has(t.source_type))){review.push({delegationId:row.id,reason:'leaveDelegationSourceReviewRequired'});continue;}
+  const sourceReview=await communicationTaskReview(c,cipher,s.tenant_id,tasks.filter((t:any)=>t.employee_id===row.substitute_id&&!['Completed','Closed'].includes(t.state)),original);if(sourceReview){review.push({delegationId:row.id,reason:sourceReview});continue;}
   const result={returnedTaskIds:[]as string[],completedPreserved:[]as string[],externalAssignmentPreserved:[]as string[],reviewTaskIds:[]as string[]};
   await c.query('SAVEPOINT leave_delegation_row');
   for(const t of tasks){if(['Completed','Closed'].includes(t.state)){result.completedPreserved.push(t.id);continue;}if(t.employee_id!==row.substitute_id){result.externalAssignmentPreserved.push(t.id);continue;}
@@ -60,9 +77,9 @@ export async function linkedDelegationActivationReview(c:any,cipher:any,row:any,
  const sub=(await c.query('select e.*,u.status account_status from ab.hr_employees e left join ab.users u on u.id=e.user_id where e.id=$1',[row.substitute_id])).rows[0];
  if(!sub||sub.state!=='Active'||sub.account_status!=='Active'||!(await scope(c,sub,asOf)).includes(row.company_id))return'substituteUnavailable';
  if((await c.query("select 1 from ab.hr_leaves where employee_id=$1 and state='Approved'and starts_on<=$2 and ends_on>=$2 limit 1",[sub.id,asOf])).rowCount)return'substituteLeaveOverlap';
- const ids=z.array(z.uuid()).min(1).max(1000).parse(meta.taskIds),tasks=(await c.query('select id,source_type from ab.tasks where company_id=$1 and id=any($2::uuid[])',[row.company_id,ids])).rows;
+ const ids=z.array(z.uuid()).min(1).max(1000).parse(meta.taskIds),tasks=(await c.query('select * from ab.tasks where company_id=$1 and id=any($2::uuid[])',[row.company_id,ids])).rows;
  if(tasks.length!==new Set(ids).size||tasks.some((t:any)=>!supported.has(t.source_type)))return'leaveDelegationSourceReviewRequired';
- return null;
+ return await communicationTaskReview(c,cipher,row.tenant_id,tasks,sub);
 }
 export async function notifyLeaveDelegationReviews(c:any,cipher:any,m:any,s:any,co:string,reviews:any[]){
  if(!reviews.length)return;const ids=[...new Set(reviews.map(r=>r.delegationId))],rows=(await c.query('select d.*,e.manager_id from ab.hr_delegations d join ab.hr_employees e on e.id=d.original_id where d.company_id=$1 and d.id=any($2::uuid[])',[co,ids])).rows;
