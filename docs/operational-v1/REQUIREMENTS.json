@@ -109,9 +109,19 @@
         "operating-centres-ui.js",
         "backend/tests/operating-centre-editor.browser.cjs",
         "backend/tests/operational-v1-suite.browser.cjs",
-        "backend/tests/operating-centre-restore.test.ts"
+        "backend/tests/operating-centre-restore.test.ts",
+        "backend/review/employee-work-locations.sql",
+        "backend/src/employee-work-location.ts",
+        "backend/src/employee-work-location-readiness.ts",
+        "employee-work-location-ui.js",
+        "backend/tests/employee-work-location-review.test.ts",
+        "backend/tests/employee-work-location.test.ts",
+        "backend/tests/employee-work-location.browser.cjs",
+        "backend/tests/serve-organization-security-fixture.ts",
+        "index.html",
+        "docs/operational-v1/WORK-LOCATIONS.md"
       ],
-      "remaining": "عرض المراكز وتاريخها ومحرر المالك المؤرخ ومعاينة قبل الحفظ واسترداد النتيجة غير المؤكدة اجتازت اختبارات معزولة؛ لا تمنح علاقات الدليل صلاحيات. يبقى الربط المرجعي الثابت وموقع عمل الموظف ونطاق المراكز الجغرافي الفعلي في API وRLS ومراجعة المتأثرين والتراجع. غير منشور.",
+      "remaining": "دليل المراكز المؤرخ ومرجعه الثابت وموقع العمل الأساسي لحساب الموظف ومعاينة/حفظ آمن وسجل غير قابل للتعديل منفذة ومختبرة ببيانات وهمية؛ لا تغير عضويات الشركات أو المنح. يبقى اختيار نطاق الوصول الجغرافي وأثره الفعلي في API وRLS والتراجع وربط العرض الذاتي/شؤون الموظفين وفق صلاحياته. غير منشور.",
       "additionalVerifiedSource": [
         "docs/operational-v1/SELECTED-DENIALS.md",
         "docs/operational-v1/AUTHORITY-CACHE.md"

@@ -3026,5 +3026,98 @@
     "remaining": [
       "Employee primary work location and actual geographic permission scope still unfinished"
     ]
+  },
+  "primaryWorkLocationVerification": {
+    "published": false,
+    "syntheticOnly": true,
+    "nativePass": 3,
+    "rootStaticPass": 162,
+    "browser": "AR/EN three widths; actual source/dated-options failures, retained fields and employee draft, same receipt on uncertain committed reply, GET-only acknowledged readback, unassignment/date continuity, held obsolete employee review suppression",
+    "focusedBrowserLimit": "The additional exact internal dialog/form width assertions were added before this journey started inside the ongoing37 suite; its entry has passed, full suite still running. Focused log predates that added layout assertion.",
+    "fullSuite": {
+      "journeys": 37,
+      "status": "running"
+    },
+    "fingerprint": "4b27352af150afd90556f98e2c5a890ac44bf1157310876f85ac4c23a7ec38ba",
+    "logs": [
+      {
+        "path": "work/evidence/work-location-native-restore.log",
+        "sha256": "8cf638e30f82542220cc9c21bf6318c7179081909d2310fbfc5bb6cc0ed156c4"
+      },
+      {
+        "path": "work/evidence/work-location-browser.log",
+        "sha256": "001cc00bf307777fcfdebdb844df5b98564bdc717af1f3ea7c581c2a09a19d98"
+      },
+      {
+        "path": "work/evidence/work-location-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "work/evidence/work-location-static.log",
+        "sha256": "02c3ebd2149fac4597c81db6cbc1457cb2eb8db3d80713a08d0dee6e682a6c75"
+      },
+      {
+        "path": "work/evidence/work-location-build.log",
+        "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+      }
+    ],
+    "sourceChecksums": {
+      "backend/review/employee-work-locations.sql": "5196f1ebdc0dd95e79b69989c091a056a0bb8ab3a101d87f3f74d9f260a96958",
+      "backend/src/employee-work-location.ts": "0a5f590378bbabd8011ee957ab9812b9fc2948d37bee51bb1400cecb2b223f5d",
+      "backend/src/employee-work-location-readiness.ts": "731b43ec2d3b477d05441346e00ad84b976818db40e32d687c20ecccf91617e7",
+      "employee-work-location-ui.js": "4e74205fda3afaa0719bf62f6b4bcd9ce0ca96ed50be474c6339ed2dc30a0e96",
+      "backend/tests/employee-work-location-review.test.ts": "27c347f981de20011a46eef3555b41880ff6fc3d8f9ff63e6b3412d6a5c37ee9",
+      "backend/tests/employee-work-location.test.ts": "71e338163f5c1a6e845b988697ce52d45e929faed4b2fc22d05e8f4f436c9b0e",
+      "backend/tests/employee-work-location.browser.cjs": "28339c9c4890dd7d1a208ba6903952ae10c4a23c1185e5d3b047b7a8325313dd",
+      "backend/tests/operating-centre-restore.test.ts": "9c973de4efd7015d59d76486e41528940459f3431453a96ca30a9b6efb4ef485",
+      "backend/tests/operational-v1-suite.browser.cjs": "07aea65dbee705c69ed60b8afeaf11865ac42b825ae8dbb750384408e0487fbf",
+      "backend/tests/serve-organization-security-fixture.ts": "bd80372b20782a9a287341d6232cb5eb9dc76df4f36e865abfc0256c7ef6fcb8",
+      "backend/src/app.ts": "a323f95fc13156e95715511258dfd5cc9dfecb8d3cb1c932aae6781403dd766b",
+      "operating-centres-ui.js": "7c85a6b2363723d170938e02c576da8ffee2b2f92b40cdfdaad325738a8183ba",
+      "user-management.js": "a3ce3ef42cfc843c9a8a6aaeac4c9b5bb10cc422564dac5e49ed2c8a4e034a32",
+      "index.html": "40724385e40d115c9dfc253f949583c1a3aa63baa33bdd04e650ae7c26a4bd39"
+    },
+    "screenshots": [
+      {
+        "path": "work/operational-primary-location-ar-1440.png",
+        "sha256": "01fef50682c265f1d7ac86a8b960f6eb836cef36ea3e12e041677f2495be2f19",
+        "syntheticOnly": true
+      },
+      {
+        "path": "work/operational-primary-location-ar-390.png",
+        "sha256": "45f9610d3abe33e75537fbad0726539d6dae659a81d9caadcdef436313d9ec60",
+        "syntheticOnly": true
+      },
+      {
+        "path": "work/operational-primary-location-ar-768.png",
+        "sha256": "9ebf710499a9ec9f08c91a7c94028fb9eb1097b28df663fe11ffcfe1a29cf169",
+        "syntheticOnly": true
+      },
+      {
+        "path": "work/operational-primary-location-en-1440.png",
+        "sha256": "a525b9bbec018fcdbbb6d52339e0e281803d1a8f653df1192516b748de9da10c",
+        "syntheticOnly": true
+      },
+      {
+        "path": "work/operational-primary-location-en-390.png",
+        "sha256": "6239ff2b9a002ccb3d175b12b8f78c85468de6612f7b1cbc0316276cc3d7066f",
+        "syntheticOnly": true
+      },
+      {
+        "path": "work/operational-primary-location-en-768.png",
+        "sha256": "daeb07591859e87ece1b87ea9134ace08d2382285e6dd9db32d6a458f0f7c3d5",
+        "syntheticOnly": true
+      }
+    ],
+    "visualReview": [
+      "Arabic phone390 inspected"
+    ],
+    "authorityChanged": false,
+    "hostedCandidateInstalled": false,
+    "remaining": [
+      "effective geographic access selection/impact and original API/DB enforcement",
+      "HR/self-service projection under original rights",
+      "full release acceptance"
+    ]
   }
 }
