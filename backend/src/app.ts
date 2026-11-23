@@ -547,8 +547,9 @@ export async function build(options: Options) {
     "/api/companies/:id",
     call(async (c, m, s, req) => {const companyId=uuid(req.params.id);requireOk(securityRoleCompany(m,companyId),403,'companyScopeDenied');return m.company.get(companyId);}),
   );
+  const visibleBank=(m:any,id:string)=>{requireOk(m.state.companies.some((co:any)=>m.bank.can('view',co.id)),403,'denied');requireOk(m.state.bankAccounts.some((b:any)=>b.id===id),404,'notFound');return m.bank.get(id);};
   const saveBank=async(c:any,m:any,s:any,req:any,bankId?:string)=>{
-    const prior=bankId?m.bank.get(bankId):null;
+    const prior=bankId?visibleBank(m,bankId):null;
     const saved=await persistBank(c,m,cipher,s.tenant_id,req.body,bankId);
     const row=(await c.query('select company_id,status,revision from ab.bank_accounts where id=$1',[saved])).rows[0];
     const action=!prior?'created':prior.status!==row.status?(row.status==='Closed'?'closed':'status'):'updated';
@@ -559,7 +560,7 @@ export async function build(options: Options) {
   app.patch('/api/bank-accounts/:id',call((c,m,s,req)=>saveBank(c,m,s,req,uuid(req.params.id))));
   app.get(
     "/api/bank-accounts/:id",
-    call(async (c, m, s, req) => m.bank.get(uuid(req.params.id))),
+    call(async (c, m, s, req) => visibleBank(m,uuid(req.params.id))),
   );
   app.post(
     "/api/references/:kind",

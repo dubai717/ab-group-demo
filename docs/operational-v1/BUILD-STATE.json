@@ -10,7 +10,7 @@
   "decision": "last_two_actual_due_months",
   "policyActivated": false,
   "next": [
-    "Implement actual geographic access selection/impact/enforcement/rollback. Original account primary location is now tested independently of original company grants; no HR/account identity is manufactured.",
+    "Complete scope source/signature/compiled readiness and real FK/customer/personnel/task/self-service/cross-branch rules before original membership apply. Pure preview and direct-company DB prototype are tested but cannot apply.",
     "Verify current-head CI and remaining integration without merge or deployment",
     "Recorded operating-centre/company mapping and effective geographic scope; original geography source projection now tested, no automatic grants",
     "Remaining leave/source adapters, source eligibility and cross-branch collection after PR115 stabilizes",
@@ -1552,6 +1552,62 @@
       "original membership apply and downstream rights",
       "actual API and complete DB bounds",
       "rollback and acceptance"
+    ]
+  },
+  "companyScopePrototypeVerification": {
+    "reviewCandidateOnly": true,
+    "automaticMigration": false,
+    "hostedInstalled": false,
+    "scopeApplyAvailable": false,
+    "directCompanyTablePolicies": 93,
+    "specialRulesRequired": [
+      "customers",
+      "customer_files",
+      "customer_drafts",
+      "hr_employees",
+      "tasks"
+    ],
+    "sourceChecksums": {
+      "backend/review/company-scope-upper-bound.sql": "458932d74782235f1b22a90d97668ac6bb28d3556f83519c1b08f827082b041c",
+      "backend/review/company-scope-coverage.json": "d933c5629c0eca02bdd7cab3f808b9fa3b29d38ab6fe371dcdc220b8477ef103",
+      "backend/tests/company-scope-upper-bound.test.ts": "14d93837ff0c8dc2eb65ef807d614b173def7bc77e764304fe0164246d1477bc",
+      "backend/src/app.ts": "833b3da250297a95da27db88293c3086322c2e29db33076bc0aa32627d4fbd46"
+    },
+    "coherentApplicationNative": {
+      "tests": 36,
+      "pass": 36,
+      "path": "work/evidence/company-bound-current-native.log",
+      "sha256": "47c8622124c01391d38a7e651da6feb8ff69cfc13ea4bb8a29d3fa4a6fb9ea8d",
+      "limit": "Before the final prototype-only SQL hardening; final application bank source unchanged."
+    },
+    "finalFocusedSQL": {
+      "tests": 1,
+      "pass": 1,
+      "path": "work/evidence/company-bound-hardened.log",
+      "sha256": "d30c87a0243605c0ad6a86639e5fcbeb5c372da1a583313c4194c6d7ca649a1b"
+    },
+    "types": {
+      "path": "work/evidence/company-bound-current-types.log",
+      "exitCode": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "build": {
+      "path": "work/evidence/company-bound-current-build.log",
+      "exitCode": 0,
+      "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+    },
+    "static": {
+      "tests": 162,
+      "pass": 162,
+      "path": "work/evidence/company-bound-current-static.log",
+      "sha256": "c3715fa353d4a2e9c87d220de1509011cd4df7edb39e86b3f16e002d4f5abcaf"
+    },
+    "noOriginalFinancialRowsChanged": true,
+    "limits": [
+      "not complete API/DB action/relationship coverage",
+      "no membership or financial activation",
+      "no current full UI acceptance promoted from older37 journey run",
+      "no historical migration or hosted restore"
     ]
   }
 }

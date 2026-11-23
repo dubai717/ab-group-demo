@@ -123,9 +123,13 @@
         "backend/src/work-scope-preview.ts",
         "backend/src/view-as.ts",
         "backend/tests/work-scope-preview.test.ts",
-        "docs/operational-v1/WORK-SCOPE-PREVIEW.md"
+        "docs/operational-v1/WORK-SCOPE-PREVIEW.md",
+        "backend/review/company-scope-upper-bound.sql",
+        "backend/review/company-scope-coverage.json",
+        "backend/tests/company-scope-upper-bound.test.ts",
+        "docs/operational-v1/COMPANY-SCOPE-PROTOTYPE.md"
       ],
-      "remaining": "موقع العمل الأساسي ودليل المراكز منفصلان عن الصلاحيات. معاينة نطاق المالك تستعمل الحقائق ومحرك الصلاحيات الأصلي وتكشف المنح العامة الباقية خارج الاختيار؛ للقراءة فقط ولا تسمح بالتطبيق. يبقى تطبيق العضويات المعتمد وحدود API وقاعدة البيانات والفروع التابعة ومراجعة المتأثرين والتراجع. غير منشور.",
+      "remaining": "معاينة النطاق تستعمل الحقائق والمحرك الأصلي ولا تطبّق صلاحيات. مقترح SQL معزول اختبر الحصر في جداول الشركة المباشرة، مع استبعاد الأشخاص والمستندات والموظفين والمهام التي تحتاج علاقاتها الخاصة. يبقى التحقق البنيوي الكامل والفروع التابعة والتحصيل عبر الفروع والخدمة الذاتية وتطبيق العضويات المعتمد والاستثناءات وسلطة التفويض والتراجع والقبول الشامل. غير منشور.",
       "additionalVerifiedSource": [
         "docs/operational-v1/SELECTED-DENIALS.md",
         "docs/operational-v1/AUTHORITY-CACHE.md"
