@@ -571,7 +571,7 @@
     "conclusion": "failure",
     "operationalUI": "success",
     "serverAndRestore": "success",
-    "failure": "tax-source-review.browser.cjs locale detach wait timed out; scoped unchanged rerun passed",
+    "failure": "tax-source-review.browser.cjs numeric-filter state wait timed out at line3:2044; exact unchanged scoped rerun passed; cause not established",
     "previousFullSuccess": {
       "run": 28,
       "id": 45241304807,
@@ -790,6 +790,10 @@
       {
         "path": "work/evidence/static.log",
         "sha256": "1af77a711215c5db7b17376f0ceeb46d46dacd9913028466dbbc6e16908bb158"
+      },
+      {
+        "path": "work/evidence/static-full.log",
+        "sha256": "222f0e1cab3bc146724f2a31648d2ab84d3ab683262b7d3a0fa243c9705e3c8c"
       }
     ],
     "native": {
@@ -804,16 +808,23 @@
     "source": "docs/operational-v1/CONVERSATION-FOLLOWUPS.md",
     "limitations": [
       "Not full release acceptance",
-      "CI29 original regression timed out on locale render wait; scoped exact test rerun passed without assertion changes",
+      "CI29 original regression timed out on numeric-filter state wait; scoped exact test rerun passed without assertion changes",
       "Financial95 unchanged",
       "No original data, merge, deployment or external send"
     ],
     "static": {
-      "tests": 162,
-      "pass": 162,
-      "scope": "tests/*.test.cjs only, not the wider 189-file-pattern check"
+      "tests": 189,
+      "pass": 189,
+      "scope": "tests/*.test.cjs backend/deploy/v2/*.test.mjs"
     },
     "types": "pass",
     "providerFreeBuild": "pass"
+  },
+  "currentCI": {
+    "run": 30,
+    "id": 45256610817,
+    "commit": "44ada49cd5e770e4353bd251192f6b25de17f0e3",
+    "status": "in_progress",
+    "conclusion": null
   }
 }
