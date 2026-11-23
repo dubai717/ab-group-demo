@@ -35,3 +35,5 @@
 ## Final local verification
 
 The full server suite passed 754 tests. One additional encrypted synthetic restore test passed separately. The full browser suite passed 21 journeys before later browser-only recovery changes; three overlapping focused journeys subsequently passed, including an acknowledged response held across a language change, same-key retry and unlocked post-save controls. Root tests passed 189 cases. These are local results, not final-commit CI or hosted activation. No source database or PR115 was changed.
+
+Selected denial removal during standard updates is now implemented and tested separately; see SELECTED-DENIALS.md. The full reset, geographic scope and widget inheritance remain unfinished.

@@ -13,7 +13,7 @@
     csrf: "",
   });
   if (!C.enabled) return;
-  let bootstrapRevision = 0;
+  let bootstrapRevision = 0, authorityRevision = 0;
   let activeBank = null,
     activeCompany = null,
     activeUser = null;
@@ -31,6 +31,7 @@
         })[c],
     );
   async function api(path, method = "GET", body, key, options = {}) {
+    const requestAuthority=authorityRevision,endpoint=path.split("?")[0],authenticationTransition=["login","logout","view-as/start","view-as/stop"].includes(endpoint);
     if((C.viewAs||C.previewUncertain)&&!["GET","HEAD"].includes(method)&&!["view-as/start","view-as/stop","logout","central-reports/preview","central-reports/export","personnel/export","communication-templates/preview","communications/from-template/preview"].includes(path.split("?")[0]))throw Error("viewAsReadOnly");
     if(!['GET','HEAD'].includes(method)&&['login','logout','view-as/start','view-as/stop'].includes(path.split('?')[0]))bootstrapRevision++;
     const controller=options.timeoutMs?new AbortController():null, timeout=controller?setTimeout(()=>controller.abort(),options.timeoutMs):null;
@@ -56,6 +57,7 @@
         "-" +
         h.slice(20, 32);
     }
+    if(endpoint!=="bootstrap"&&!authenticationTransition&&requestAuthority!==authorityRevision)throw Error("staleSession");
     const r = await fetch("/api/" + path, {
       method,
       ...(controller?{signal:controller.signal}:{}),
@@ -68,11 +70,13 @@
       },
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
+    if(endpoint!=="bootstrap"&&!authenticationTransition&&requestAuthority!==authorityRevision)throw Error("staleSession");
     if (!r.ok) {
       const d = await r.json().catch(() => ({ error: "unavailable" }));
       throw Object.assign(Error(d.error || "unavailable"),{fields:d.fieldErrors,reference:d.reference,status:r.status});
     }
     const result=await r.json();
+    if(endpoint!=="bootstrap"&&!authenticationTransition&&requestAuthority!==authorityRevision)throw Error("staleSession");
     if(!["GET","HEAD"].includes(method))globalThis.DashboardUI?.invalidate();
     return result;
     }catch(error){if(controller?.signal.aborted)throw Object.assign(Error("requestTimeout"),{reference:"client-"+crypto.randomUUID()});if(options.timeoutMs&&error instanceof TypeError)throw Object.assign(Error("requestUnavailable"),{reference:"client-"+crypto.randomUUID()});throw error;}finally{clearTimeout(timeout);finish?.();}
@@ -83,11 +87,18 @@
   C.openBank=async id=>{if(!await WorkspaceUI.leave())return;await api('bank-accounts/'+id);activeBank=id;await readDocuments({bankAccountId:id}).catch(()=>[]);BankAccounts.centralSelect(id);FinanceWorkbench.select('accounts',false);app.state.currentPage='bankAccounts';await load();};
   C.companyClosed=()=>{activeCompany=null;};
   C.openCompany=async id=>{if(!await WorkspaceUI.leave())return;await api('companies/'+id);activeCompany=id;app.state.currentPage='companies';await readDocuments({companyId:id}).catch(()=>[]);CompanyDocuments.centralSelect(id);await load();};
+  function authorityReduced(b){
+    const old=C.actor,next=b.actor;if(!old||old.id!==next.id)return false;
+    const removed=(before=[],after=[])=>{const allowed=new Set(Array.isArray(after)?after:[]);return(Array.isArray(before)?before:[]).some(value=>!allowed.has(value));};
+    const ownGrants=rows=>(rows||[]).filter(g=>g.userId===old.id).map(g=>JSON.stringify({id:g.entry.id,action:g.entry.action,scope:g.entry.scope,delegable:g.entry.delegable}));
+    const ownDenials=rows=>(rows||[]).find(d=>d.userId===old.id)?.actions||[];
+    return old.roleId!==next.roleId||removed(old.permissions,next.permissions)||removed(old.companyIds,next.companyIds)||removed(old.departmentIds,next.departmentIds)||removed(ownGrants(C.grants),ownGrants(b.grants))||removed(ownDenials(b.individualDenials),ownDenials(C.individualDenials))||['edit','activate','deactivate'].some(action=>{const a=old.companyPermissions?.[action]||'inherit',n=next.companyPermissions?.[action]||'inherit';return a==='allow'&&n!=='allow'||a!=='deny'&&n==='deny';});
+  }
   async function load(draw = true) {
     const revision = ++bootstrapRevision;
     const b = await api("bootstrap");
     if(revision!==bootstrapRevision)return false;
-    if(C.actor?.id!==b.actor.id){C.hiddenUserId=null;globalThis.CenterForms?.clear();globalThis.RecordLinks?.reset?.();globalThis.AttachmentViewer?.close();globalThis.FinanceWorkbench?.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();globalThis.LedgerUI?.reset();globalThis.RegisterStore?.clear();globalThis.RegisterView?.clear();globalThis.FinancialTables?.clear();C.documents.clear();C.enrollment.clear();activeUser=activeCompany=activeBank=null;globalThis.CompanyDocuments?.centralSelect?.(null);globalThis.UserManagement?.centralSelect?.(null);}
+    if(C.actor?.id!==b.actor.id||authorityReduced(b)||JSON.stringify(C.viewAs||null)!==JSON.stringify(b.viewAs||null)){authorityRevision++;C.hiddenUserId=null;globalThis.CenterForms?.clear();globalThis.RecordLinks?.reset?.();globalThis.AttachmentViewer?.close();globalThis.FinanceWorkbench?.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();globalThis.LedgerUI?.reset();globalThis.RegisterStore?.clear();globalThis.RegisterView?.clear();globalThis.FinancialTables?.clear();C.documents.clear();C.documentOwnerKey=null;C.documentHistory=false;C.enrollment.clear();globalThis.TaxControlUI?.reset();globalThis.DashboardUI?.invalidate();activeUser=activeCompany=activeBank=null;globalThis.CompanyDocuments?.centralSelect?.(null);globalThis.UserManagement?.centralSelect?.(null);}
     C.actor = b.actor;
     C.viewAs=b.viewAs||null;C.previewUncertain=false;
     C.resetTestDatabaseAvailable=b.resetTestDatabaseAvailable===true;

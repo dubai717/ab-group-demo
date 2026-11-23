@@ -1986,5 +1986,97 @@
         "sha256": "04a1a1acafbf5521523d49d65c5b84ebc7a03749c6ee7a7ec322ea10f7ac3ad0"
       }
     ]
+  },
+  "selectedDenialRemoval": {
+    "status": "implemented-tested-unpublished",
+    "nativeFocusedPassed": 10,
+    "focusedBrowserJourneys": 4,
+    "scope": "Existing standard and employee workflows; counts overlap",
+    "hostedChanges": false,
+    "evidence": [
+      {
+        "path": "work/operational-evidence/selected-denials-native.log",
+        "sha256": "d2eb09788e343967ca332b3f4632f3d1d10db3bc50e5cdb5fbbf3638c2927993"
+      },
+      {
+        "path": "work/operational-evidence/selected-denials-browser-final.log",
+        "sha256": "99be6de29a4f76943654af0d6e61dfe452e313faecaf49b6221c7479f2824477"
+      },
+      {
+        "path": "work/operational-evidence/selected-denials-full-browser.log",
+        "sha256": "e58d40a5fa0ef410309ac359ba35e1ccf6ad4867033d11518636557ffdf5cfd9"
+      }
+    ],
+    "fullNative": {
+      "passed": 757,
+      "failed": 0,
+      "log": "work/operational-evidence/selected-denials-full-native.log",
+      "sha256": "fe737f4e50372bbf791b37162c4670f016034f41e003aa1a1fe7b440bb0bd69d"
+    },
+    "denialOnlyGuardCase": "Included in full757; no grant-removal procedure required or invoked"
+  },
+  "authorityCache": {
+    "status": "implemented-tested-unpublished",
+    "fullBrowserJourneys": 23,
+    "rootTests": 189,
+    "providerFreeBuild": "passed",
+    "typecheck": "passed",
+    "nativeChanges": "None beyond selected-denial server package",
+    "evidence": [
+      {
+        "path": "work/operational-evidence/permission-context-cache-before.log",
+        "sha256": "43c85ba79333e6dec583b71511a3c16f6b51f469d783c0cd68d2259f388cf855"
+      },
+      {
+        "path": "work/operational-evidence/permission-context-cache-final.log",
+        "sha256": "4103705051faf9e3fd6c09e1bd15638ad5cd9fe6127133cdcc00c5cfc92437dc"
+      },
+      {
+        "path": "work/operational-evidence/permission-context-full-browser.log",
+        "sha256": "99a2c28978ddb08836fff443246717332256ec6538cbee63b336b85f3b65621f"
+      },
+      {
+        "path": "work/operational-evidence/permission-context-final-static.log",
+        "sha256": "2dfb32da869c5345e2a884949c2ec801e3bf3c111005bed6d63cba26d423d6c2"
+      },
+      {
+        "path": "work/operational-evidence/permission-context-final-build.log",
+        "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+      },
+      {
+        "path": "work/operational-evidence/permission-context-final-types.log",
+        "sha256": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10"
+      }
+    ]
+  },
+  "CI19": {
+    "status": "failure",
+    "nativeTestsPassed": 755,
+    "operationalUI": "success",
+    "failedStep": "Fee and entitlement source exports preserve customer scope",
+    "originalCauseEvidence": "Print hook wait timed out; original CI did not capture the alert, so exact timing cause was not proved. Unmodified local rerun passed.",
+    "verificationFix": "Test verifies source200/count and deliberately checks stale-view rejection/current-view retry. Existing product guard is unchanged.",
+    "evidence": [
+      {
+        "path": "work/operational-evidence/ci19-entitlement-reproduction.log",
+        "sha256": "4b1e1ccd123de8e365ce7ad76a62ea958040387e373b863000f05d65bdaba214"
+      },
+      {
+        "path": "work/operational-evidence/ci19-entitlement-current-view.log",
+        "sha256": "5169b4300b27ba6ff022e1111959868ca485a276cc81aa623ed93f010acafe83"
+      }
+    ]
+  },
+  "currentSourceChecksums": {
+    "backend/src/individual-denials-write.ts": "e58cb96af139cb4f85bce1d34e916a435bac6eaf8c1d3bc79210b21b1a0270a0",
+    "backend/src/permission-admin.ts": "c9728ff3a60e67099a1f6cb19a804972fe6d5195a4caa89fc6765560f527526e",
+    "backend/src/security-roles.ts": "a71d65ee4042270a0da439e6e85f740579b01032acd000c48b7de66581e35751",
+    "backend/src/standard-exceptions.ts": "ace729f48c0415e9f657f8424cc4b3fafd5cf9a2b22ed8599f5dad30b0dbf5a5",
+    "central-client.js": "0fa2fed4e0f9d1d4757417bd1912e3399ee726a3a6b54597e41c270d108d98cc",
+    "register-tools.js": "26fda24568b3e77e2d07b0be3669bec4b28a4e233f6a94fd9b7c0c389f22acdc",
+    "user-management.js": "1ebe74b146542f310a83f43c401e4e02f8160288719b6ee21da6c64e67328c44",
+    "backend/tests/standard-denials.test.ts": "c0c47bb65c958d327716adfa79893c99e660901a02d7509501b59f9819800eae",
+    "backend/tests/permission-context-cache.browser.cjs": "31e5a8a8bd34eef23d410820a0affc4bca94a50939e7020d6d5c7d723b79c4f9",
+    "backend/tests/package-entitlement-sources.browser.cjs": "ff8cba583fe86a688de2a438704411e4ce8bc14f626e375bd609b10e7d82f6d3"
   }
 }

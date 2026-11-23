@@ -1,4 +1,5 @@
-import{individualDenialKey,individualDenialSchema,individualDenialWriteReady}from'./individual-denials-source.js';
+import{persistIndividualDenialChange}from'./individual-denials-write.js';
+import{individualDenialWriteReady}from'./individual-denials-source.js';
 import {randomUUID} from 'node:crypto';
 import {z} from 'zod';
 import {requireOk} from './core.js';
@@ -16,10 +17,7 @@ export function registerPermissionAdmin(app:any,call:any,cipher:any){
  app.post('/api/users/:id/permission-apply',call(async(c:any,m:any,s:any,r:any)=>{const parsed=changes.extend({confirm:z.literal(true),planHash:z.string().length(64)}).strict().parse(r.body),{confirm,planHash,...d}=parsed;const u=target(m,s,r.params.id,true);if(d.deniedActions!==undefined)requireOk(await individualDenialWriteReady(c),503,'individualDenialReviewRequired');const p=plan(m,s,u,d);requireOk(p.hash===planHash,409,'permissionsChanged');
   for(const row of p.revoked){await c.query('update ab.permission_grants set revoked_at=now() where id=$1 and revoked_at is null',[row.id]);await audit(c,s.tenant_id,s.user_id,'revoked','user',row.user_id,[row.permission_id,'grant:'+row.id]);}
   for(const row of p.added){const g=row.entry,id=randomUUID();await c.query('insert into ab.permission_grants(id,tenant_id,user_id,issuer_id,permission_id,scope_type,company_id,department_id,manager_id,delegable)values($1,$2,$3,$4,$5,$6,$7,$8,$9,false)',[id,s.tenant_id,row.userId,s.user_id,g.action,g.scope.type,g.scope.type==='company'?g.scope.id:null,g.scope.type==='department'?g.scope.id:null,g.scope.type==='reports'?g.scope.id:null]);await audit(c,s.tenant_id,s.user_id,'granted','user',row.userId,[g.action,g.scope.type,g.scope.id]);}
-  if(p.denials.changed){const record=individualDenialSchema.parse({version:1,tenantId:s.tenant_id,userId:u.id,revision:p.denials.revision+1,actions:p.denials.after,updatedBy:s.user_id,updatedAt:new Date().toISOString()});
-   await c.query('insert into ab.settings(tenant_id,key,value)values($1,$2,$3)',[s.tenant_id,'user-denials-history-v1:'+u.id+':'+String(record.revision).padStart(10,'0'),{cipher:cipher.seal({...record,beforeActions:p.denials.before,reason:p.denials.reason})}]);
-   await c.query('insert into ab.settings(tenant_id,key,value)values($1,$2,$3)on conflict(tenant_id,key)do update set value=excluded.value',[s.tenant_id,individualDenialKey(u.id),{cipher:cipher.seal(record)}]);
-   await audit(c,s.tenant_id,s.user_id,'owner_individual_denials_applied','user',u.id,['before:'+JSON.stringify(p.denials.before),'after:'+JSON.stringify(p.denials.after),'revision:'+record.revision,'reason-sha256:'+cipher.digest(p.denials.reason),'original_grants_retained','standard_unchanged']);}
+  await persistIndividualDenialChange(c,cipher,s,u,p.denials);
   if(p.revoked.length||p.added.length||p.denials.changed)await c.query('update ab.users set revision=revision+1,updated_at=now() where id=$1',[u.id]);await audit(c,s.tenant_id,s.user_id,'owner_permission_plan_applied','user',u.id,['added:'+p.added.length,'revoked:'+p.revoked.length,'before:'+JSON.stringify(m.initialGrants.filter((g:any)=>g.userId===u.id).map((g:any)=>({action:g.entry.action,scope:g.entry.scope}))), 'after:'+JSON.stringify(p.next.filter((g:any)=>g.userId===u.id).map((g:any)=>({action:g.entry.action,scope:g.entry.scope})))]);return {saved:true,id:u.id,added:p.added.length,revoked:p.revoked.length,individualDenialsChanged:p.denials.changed};
  }));
 }

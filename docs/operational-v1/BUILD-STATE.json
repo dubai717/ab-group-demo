@@ -10,8 +10,8 @@
   "decision": "last_two_actual_due_months",
   "policyActivated": false,
   "next": [
-    "Continue remaining source guards, inherited denials and integration; verify new CI without merge/deployment",
-    "Complete selected denial removal during standard updates, full reset, geography and widget inheritance",
+    "Verify current-head CI and remaining integration without merge or deployment",
+    "Full employee exception reset, real geographic scope, widget inheritance and chart/table previews",
     "Remaining leave/source adapters, source eligibility and cross-branch collection after PR115 stabilizes",
     "Verified case deadlines and final follow-up, official provider/use-case review",
     "Remaining documents/backups/imports and full acceptance"
@@ -84,12 +84,12 @@
     }
   },
   "fullNativeRun": {
-    "exit": 0,
-    "passed": 754,
+    "status": "passed",
+    "tests": 757,
     "failed": 0,
-    "logSha256": "7e84fc36f8700717d66e037fd6bdd4381b1163a202b2ad5c04fd64e9bc5a0594",
-    "scope": "complete backend suite at final API/RLS implementation; browser-only save recovery was corrected afterwards; one separate encrypted restore test passed later",
-    "sameFinalCommitAcceptance": false
+    "log": "work/operational-evidence/selected-denials-full-native.log",
+    "sha256": "fe737f4e50372bbf791b37162c4670f016034f41e003aa1a1fe7b440bb0bd69d",
+    "scope": "Final selected-denial server code; all backend test files. Final browser/shared API cache changes separately passed23 UI journeys."
   },
   "artifactHandling": "Local screenshot capture uses configurable RAM artifact root after ENOSPC; CI default work output is retained as synthetic PNG artifacts. No database or business backup cleanup.",
   "pullRequest": {
@@ -187,10 +187,10 @@
     "staticAndDeliveryPolicyPassed": 182
   },
   "independentLatestCI": {
-    "runNumber": 19,
-    "id": 45189061261,
-    "head": "93daa8bb7fd773a8765253da3f16cb6065b5c2d9",
-    "status": "in_progress",
+    "runNumber": 20,
+    "id": 45191382840,
+    "head": "d8804afd6e7ce8cb518344cc4337c9354d70b114",
+    "status": "pending",
     "conclusion": null,
     "deployment": false
   },
@@ -281,8 +281,8 @@
     ]
   },
   "latestRemoteBeforeThisBuild": {
-    "commit": "93daa8bb7fd773a8765253da3f16cb6065b5c2d9",
-    "tree": "8de563e5d510094c63fe61a143aaf5c59b43f9e4"
+    "commit": "d8804afd6e7ce8cb518344cc4337c9354d70b114",
+    "tree": "61a7f128a04133f56ec1a692757438df5bb7513c"
   },
   "communicationCases": {
     "state": "basic topic workflow in original conversation; unpublished",
@@ -503,5 +503,41 @@
     "fullBrowserJourneys": 22,
     "rootTests": 189,
     "providerFreeBuild": "passed"
+  },
+  "selectedDenialRemoval": {
+    "status": "implemented-tested-unpublished",
+    "source": "docs/operational-v1/SELECTED-DENIALS.md",
+    "nativeFocusedPassed": 10,
+    "browserFocusedJourneys": 4,
+    "hostedSchemaChanged": false,
+    "sourceDataChanged": false,
+    "fullEmployeeResetComplete": false,
+    "fullBrowserJourneys": 22,
+    "fullNativePassed": 757
+  },
+  "authorityCache": {
+    "status": "implemented-tested-unpublished",
+    "source": "docs/operational-v1/AUTHORITY-CACHE.md",
+    "fullBrowserJourneys": 23,
+    "rootTests": 189,
+    "hostedChanges": false
+  },
+  "activeNativeRun": {
+    "status": "passed",
+    "tests": 757,
+    "failed": 0,
+    "log": "work/operational-evidence/selected-denials-full-native.log",
+    "sha256": "fe737f4e50372bbf791b37162c4670f016034f41e003aa1a1fe7b440bb0bd69d",
+    "scope": "Final selected-denial server code; all backend test files. Final browser/shared API cache changes separately passed23 UI journeys."
+  },
+  "CI19": {
+    "status": "completed",
+    "conclusion": "failure",
+    "runId": 45189061261,
+    "head": "93daa8bb7fd773a8765253da3f16cb6065b5c2d9",
+    "nativeTests": 755,
+    "nativeFailures": 0,
+    "operationalUI": "success",
+    "failure": "Original entitlement print-output wait timed out. Original local rerun passed. Test now asserts source HTTP/count and explicitly exercises obsolete-view guard plus at most one current-view retry; unchanged production export guard."
   }
 }

@@ -75,9 +75,18 @@
         "backend/review/individual-denials.sql",
         "backend/tests/individual-denials.test.ts",
         "backend/tests/individual-denials.browser.cjs",
-        "docs/operational-v1/INDIVIDUAL-DENIALS.md"
+        "docs/operational-v1/INDIVIDUAL-DENIALS.md",
+        "backend/tests/standard-denials.test.ts",
+        "backend/tests/permission-context-cache.browser.cjs",
+        "docs/operational-v1/SELECTED-DENIALS.md",
+        "docs/operational-v1/AUTHORITY-CACHE.md"
       ],
-      "remaining": "المنع الفردي داخل السياسة الأصلية ومراجعة المالك والحفظ الذري والاستبقاء بعد تحديث الستاندرد وأعداد المنع منفذة ومختبرة، وحارس SQL مرشح غير مطبق فعلياً. تبقى إزالة منع محدد ضمن دفعة الستاندرد وإعادة جميع الاستثناءات والنطاق الجغرافي وتوريث المؤشرات والقبول المتكامل."
+      "remaining": "المنع الفردي وإزالته الانتقائية ضمن دفعة الستاندرد منفذان ومختبران وغير منشورين؛ حارس SQL مرشح غير مطبق فعلياً. تبقى إعادة جميع الاستثناءات والنطاق الجغرافي وتوريث المؤشرات ومعاينات الجداول والرسوم والقبول المتكامل.",
+      "additionalVerifiedSource": [
+        "docs/operational-v1/SELECTED-DENIALS.md",
+        "docs/operational-v1/AUTHORITY-CACHE.md"
+      ],
+      "remainingEngineering": "Full employee reset including company/bank/widget exceptions; widget inheritance and chart/table previews; real geographic scope. All current changes remain unpublished; original financial dependency remains unmerged."
     },
     {
       "id": "3.3",
@@ -102,9 +111,18 @@
         "backend/review/individual-denials.sql",
         "backend/tests/individual-denials.test.ts",
         "backend/tests/individual-denials.browser.cjs",
-        "docs/operational-v1/INDIVIDUAL-DENIALS.md"
+        "docs/operational-v1/INDIVIDUAL-DENIALS.md",
+        "backend/tests/standard-denials.test.ts",
+        "backend/tests/permission-context-cache.browser.cjs",
+        "docs/operational-v1/SELECTED-DENIALS.md",
+        "docs/operational-v1/AUTHORITY-CACHE.md"
       ],
-      "remaining": "المنع الفردي داخل السياسة الأصلية ومراجعة المالك والحفظ الذري والاستبقاء بعد تحديث الستاندرد وأعداد المنع منفذة ومختبرة، وحارس SQL مرشح غير مطبق فعلياً. تبقى إزالة منع محدد ضمن دفعة الستاندرد وإعادة جميع الاستثناءات والنطاق الجغرافي وتوريث المؤشرات والقبول المتكامل."
+      "remaining": "المنع الفردي وإزالته الانتقائية ضمن دفعة الستاندرد منفذان ومختبران وغير منشورين؛ حارس SQL مرشح غير مطبق فعلياً. تبقى إعادة جميع الاستثناءات والنطاق الجغرافي وتوريث المؤشرات ومعاينات الجداول والرسوم والقبول المتكامل.",
+      "additionalVerifiedSource": [
+        "docs/operational-v1/SELECTED-DENIALS.md",
+        "docs/operational-v1/AUTHORITY-CACHE.md"
+      ],
+      "remainingEngineering": "Full employee reset including company/bank/widget exceptions; widget inheritance and chart/table previews; real geographic scope. All current changes remain unpublished; original financial dependency remains unmerged."
     },
     {
       "id": "4.a",
