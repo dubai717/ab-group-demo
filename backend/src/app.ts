@@ -1228,6 +1228,8 @@ export async function build(options: Options) {
       "area-reference.js",
       "company-documents.js",
       "bank-accounts.js",
+      "annual-leave-plans-ui.js",
+      "permission-matrix-ui.js",
       "user-management.js",
       "demo-credentials.js",
       "auth-flows.js",

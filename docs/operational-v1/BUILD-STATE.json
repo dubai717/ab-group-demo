@@ -1,0 +1,59 @@
+{
+  "asOf": "2026-11-23",
+  "branch": "feature/operational-v1-independent",
+  "financialPR": 115,
+  "financialPREdited": false,
+  "published": false,
+  "mergeAuthorized": false,
+  "deploymentAuthorized": false,
+  "sourceDataChanged": false,
+  "decision": "last_two_actual_due_months",
+  "policyActivated": false,
+  "next": [
+    "Annual leave API/UI acceptance",
+    "Communications deep-link access tests",
+    "Original browser regressions",
+    "Complete static/types/native checks",
+    "Independent non-deploying CI and draft PR"
+  ],
+  "limitations": [
+    "Financial package dependency unresolved",
+    "Individual inherited deny/selective reset incomplete",
+    "WhatsApp official provider not connected",
+    "Service policy original-source API integration incomplete"
+  ],
+  "evidenceLogs": [
+    "/tmp/ab-v1-prospect-native.log",
+    "/tmp/ab-v1-standards-native.log",
+    "/tmp/ab-v1-primary-browser-fixed.log",
+    "/tmp/ab-v1-clock-unit.log",
+    "/tmp/ab-v1-whatsapp-unit.log"
+  ],
+  "financialBaselineCI": {
+    "run": 355,
+    "conclusion": "success",
+    "url": "https://github.com/dubai717/ab-group-demo/actions/runs/45085785393",
+    "commit": "3802e2595ee35ad2978334c22d8cfbde741bf9b4"
+  },
+  "localAcceptance": {
+    "static": {
+      "passed": 182,
+      "failed": 0
+    },
+    "policyClockWhatsApp": {
+      "passed": 19,
+      "failed": 0
+    },
+    "focusedNative": {
+      "passed": 16,
+      "failed": 0
+    },
+    "annualPlanUpdated": {
+      "passed": 1,
+      "failed": 0
+    },
+    "operationalBrowser": "passed: original file, prospect, matrix AR/EN desktop/tablet/mobile",
+    "completeReleaseAcceptance": false,
+    "annualBrowser": "passed: invalid date retention, checkbox draft retention, save/readback/participation and three widths"
+  }
+}

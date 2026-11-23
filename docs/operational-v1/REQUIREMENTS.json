@@ -1,0 +1,170 @@
+{
+  "asOf": "2026-11-23",
+  "scope": "Operational V1 independent of PR115; not a completed release",
+  "rows": [
+    {
+      "id": "0",
+      "requirement": "الفحص والعزل وحماية PR115",
+      "status": "موجود ناقص",
+      "evidence": [
+        "backend/src",
+        "backend/tests"
+      ],
+      "remaining": "فرع مستقل؛ الحزمة المالية لم تدمج؛ لا نشر."
+    },
+    {
+      "id": "1",
+      "requirement": "ملف العميل المتكامل",
+      "status": "موجود ويعمل",
+      "evidence": [
+        "customer-workspace-ui.js",
+        "backend/src/customer-workspace.ts"
+      ],
+      "remaining": "الحفاظ على الأقسام الأصلية؛ يلزم إعادة اختبار الانحدار النهائي."
+    },
+    {
+      "id": "2.1",
+      "requirement": "العميل المحتمل ومؤشراته والتحويل",
+      "status": "موجود ناقص",
+      "evidence": [
+        "backend/tests/operational-prospect.test.ts",
+        "backend/tests/operational-prospect.browser.cjs"
+      ],
+      "remaining": "إضافات الفرع غير منشورة؛ الاختبارات المحددة نجحت قبل آخر إضافات اللغة."
+    },
+    {
+      "id": "2.2",
+      "requirement": "منع الخدمات بمرجع الشهرين",
+      "status": "موجود ناقص",
+      "evidence": [
+        "backend/src/service-eligibility-policy.ts",
+        "backend/tests/service-eligibility-policy.test.ts"
+      ],
+      "remaining": "الحساب المعزول مكتوب؛ ربط المصدر والتحقق الخادمي في الخدمات غير منجز."
+    },
+    {
+      "id": "3.1",
+      "requirement": "ستاندرد الوظيفة والأقسام والإجراءات",
+      "status": "موجود ناقص",
+      "evidence": [
+        "permission-matrix-ui.js",
+        "backend/src/security-roles.ts",
+        "backend/tests/job-standards.test.ts"
+      ],
+      "remaining": "مصفوفة مستقلة فوق الصلاحيات الحالية؛ نقل القسم لا يمنح الإجراءات."
+    },
+    {
+      "id": "3.2",
+      "requirement": "تخصيص صلاحيات الموظف",
+      "status": "موجود ناقص",
+      "evidence": [
+        "user-management.js",
+        "backend/tests/operational-permission-matrix.browser.cjs"
+      ],
+      "remaining": "الإضافات الحالية محفوظة؛ المنع الفردي الموروث وإعادة الاستثناءات المحددة غير مكتملين."
+    },
+    {
+      "id": "3.3",
+      "requirement": "معاينة أثر الستاندرد والمؤشرات",
+      "status": "موجود ناقص",
+      "evidence": [
+        "backend/src/security-roles.ts"
+      ],
+      "remaining": "مسار المعاينة الحالي يعاد استخدامه؛ تخصيص معاينات المؤشرات +/× غير مكتمل."
+    },
+    {
+      "id": "4.a",
+      "requirement": "التخطيط السنوي المبدئي للإجازة",
+      "status": "موجود ناقص",
+      "evidence": [
+        "backend/src/annual-leave-planning.ts",
+        "annual-leave-plans-ui.js"
+      ],
+      "remaining": "تنفيذ أولي غير منشور؛ اختبارات قبول جديدة مطلوبة."
+    },
+    {
+      "id": "4.b",
+      "requirement": "التفويض والعودة والرواتب ونهاية الخدمة",
+      "status": "موجود ناقص",
+      "evidence": [
+        "backend/src/personnel.ts",
+        "backend/src/personnel-workflows.ts"
+      ],
+      "remaining": "تعاد مراجعة الوظائف القائمة؛ لا ادعاء اكتمال المتطلبات الجديدة."
+    },
+    {
+      "id": "4.c",
+      "requirement": "تقويم العمل",
+      "status": "موجود ناقص",
+      "evidence": [
+        "backend/src/operational-work-clock.ts",
+        "backend/tests/operational-work-clock.test.ts"
+      ],
+      "remaining": "حساب زمني معزول؛ واجهة الجدول وربط جميع المهام غير مكتملين."
+    },
+    {
+      "id": "5",
+      "requirement": "التحصيل عبر الفروع والعهد والإيداع",
+      "status": "موجود ناقص",
+      "evidence": [
+        "backend/src"
+      ],
+      "remaining": "تابع للمالية في PR115؛ لا دفتر مواز ولا تفعيل هنا."
+    },
+    {
+      "id": "6",
+      "requirement": "المهام والتصعيد كل 30 دقيقة",
+      "status": "موجود ناقص",
+      "evidence": [
+        "backend/src/operational-work-clock.ts"
+      ],
+      "remaining": "حساب اختباري؛ دمج التسلسل الإداري والعامل الدوري غير منجز."
+    },
+    {
+      "id": "7",
+      "requirement": "WhatsApp الرسمي وصندوق المراسلات",
+      "status": "موجود ناقص",
+      "evidence": [
+        "backend/src/communications.ts",
+        "backend/src/whatsapp-cloud-contract.ts"
+      ],
+      "remaining": "المراسلات القائمة محفوظة؛ عقد اختباري فقط؛ لا مزود أو إرسال فعلي."
+    },
+    {
+      "id": "8",
+      "requirement": "المستندات والخدمات",
+      "status": "موجود ناقص",
+      "evidence": [
+        "customer-workspace-ui.js"
+      ],
+      "remaining": "الموجود محفوظ؛ تحتاج قواعد التذكير والنسخ وتكامل الأهلية إلى قبول شامل."
+    },
+    {
+      "id": "9",
+      "requirement": "النسخ والاستعادة ولوحة المالك",
+      "status": "موجود ناقص",
+      "evidence": [
+        "backend"
+      ],
+      "remaining": "يلزم جرد أدلة النسخ الحالية؛ لم تنفذ نسخة أو استعادة ضمن هذا الفرع."
+    },
+    {
+      "id": "10",
+      "requirement": "الاستيراد والقبول المعزول",
+      "status": "موجود ناقص",
+      "evidence": [
+        "backend/tests/operational-v1-suite.browser.cjs"
+      ],
+      "remaining": "اختبارات محددة فقط؛ قوالب الاستيراد الشاملة والقبول النهائي غير مكتملين."
+    },
+    {
+      "id": "11",
+      "requirement": "التسليم ودليل الموظف والإصدار",
+      "status": "لم ينفذ",
+      "evidence": [
+        "docs/operational-v1"
+      ],
+      "remaining": "لا موافقة نشر مطلوبة الآن لأن الحزمة غير جاهزة للإطلاق."
+    }
+  ]
+}

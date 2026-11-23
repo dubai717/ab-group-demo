@@ -1,0 +1,26 @@
+import {test}from'node:test';import assert from'node:assert/strict';import{randomUUID}from'node:crypto';import{personnelFixture}from'./personnel-fixture.js';import{remindAnnualLeavePlans}from'../src/annual-leave-planning.js';import{security}from'../src/core.js';
+test('annual plans are versioned tentative self-service, safely retried, scoped and have no leave/ledger/permission effect',async()=>{const f=await personnelFixture();try{
+ const worker=await f.employee(),other=await f.employee(),y=Number(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dubai'}).format(new Date()).slice(0,4))+1;
+ const person=(nameEn:string,userId:string,companyId=f.co1)=>({companyId,nameAr:'موظف اصطناعي',nameEn,userId,jobTitle:'Test',hiredOn:'2024-01-01'});
+ const e=(await f.req('POST','/api/personnel/employees',person('Synthetic plan worker',worker.id))).id;
+ const e2=(await f.req('POST','/api/personnel/employees',person('Synthetic other worker',other.id))).id;
+ const source=async()=>Object.fromEntries(await Promise.all(['hr_leaves','hr_leave_balances','finance_journals','permission_grants','users'].map(async name=>[name,(await f.admin.query('select row_to_json(t) r from ab.'+name+' t order by row_to_json(t)::text')).rows])));
+ const before=await source(),path='/api/personnel/employees/'+e+'/annual-leave-plan';
+ await f.login(worker.username,worker.password);assert.equal((await f.req('GET',path+'?year='+y)).plan,null);
+ const body={year:y,revision:0,periods:[{startsOn:y+'-03-01',endsOn:y+'-03-10'}],noDatesYet:false,note:'Synthetic tentative dates'},key=randomUUID();
+ const [a,b]=await Promise.all([f.req('POST',path,body,200,key),f.req('POST',path,body,200,key)]);assert.equal(a.revision,1);assert.equal(b.revision,1);assert.equal((await f.req('POST',path,body)).revision,1);
+ const read=await f.req('GET',path+'?year='+y);assert.equal(read.plan.status,'Tentative');assert.equal(read.balanceDeduction,false);assert.equal(read.approval,false);
+ await f.req('POST',path,{...body,note:'Conflicting stale revision'},409);
+ await f.req('POST',path,{...body,revision:1,periods:[{startsOn:y+'-04-10',endsOn:y+'-04-01'}]},422);
+ await f.req('GET','/api/personnel/employees/'+e2+'/annual-leave-plan?year='+y,undefined,403);
+ await f.req('GET','/api/personnel/leave-planning?companyId='+f.co1+'&year='+y,undefined,403);
+ await f.req('POST',path,{year:y,revision:1,periods:[],noDatesYet:true,note:'Dates not decided; entitlement retained'});
+ await f.login();const summary=await f.req('GET','/api/personnel/leave-planning?companyId='+f.co1+'&year='+y);assert.equal(summary.rows.find((r:any)=>r.id===e).participated,true);assert.equal(summary.rows.find((r:any)=>r.id===e2).participated,false);
+ assert.equal((await f.req('GET',path+'?year='+y)).plan.revision,2);assert.equal(Number((await f.admin.query("select count(*) n from ab.settings where key like $1",['personnel:annual-plan-v1:'+e+':'+y+':version:%'])).rows[0].n),2);
+ const ctx={tenant_id:f.org.tenant,user_id:f.org.user},actor={actor:{id:f.org.user,roleId:'owner'}},cipher=security(f.secret.key);
+ assert.equal((await remindAnnualLeavePlans(f.admin,cipher,actor,ctx,f.co1,y+'-01-16')).created,0);
+ assert.equal((await remindAnnualLeavePlans(f.admin,cipher,actor,ctx,f.co1,y+'-01-01')).created,1);
+ assert.equal((await remindAnnualLeavePlans(f.admin,cipher,actor,ctx,f.co1,y+'-01-15')).created,0);
+ const notice=(await f.admin.query("select user_id,entity_id from ab.finance_notifications where action=$1",['personnel:annual_leave_plan:'+y])).rows;assert.deepEqual(notice,[{user_id:other.id,entity_id:e2}]);
+ assert.deepEqual(await source(),before);
+ }finally{await f.close();}});

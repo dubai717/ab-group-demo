@@ -1,0 +1,37 @@
+name: Independent operational V1 checks (no deployment)
+on:
+  pull_request:
+    branches: [feature/finance-completion-build]
+permissions:
+  contents: read
+concurrency:
+  group: operational-v1-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  original-regressions:
+    uses: ./.github/workflows/staging-checks.yml
+  operational-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node backend/deploy/build.mjs
+      - run: npm run backend:test:db
+      - name: Prepare browser without external provider credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          browser_path=$(command -v google-chrome || true)
+          if test -n "$browser_path"; then
+            echo "AB_BROWSER_EXECUTABLE=$browser_path" >> "$GITHUB_ENV"
+          else
+            node node_modules/playwright/cli.js install --with-deps chromium
+          fi
+      - name: Actual prospect and permissions flows with synthetic providers only
+        run: node backend/tests/operational-v1-suite.browser.cjs

@@ -495,6 +495,7 @@ function render() {
     return;
   }
 
+  if(globalThis.CommunicationsUI?.pendingLink?.())app.state.currentPage='notifications';
   const sidebarItems = getSidebarItems(currentUser).filter(i=>!['roles','departments'].includes(i.id));
   if(CustomerUI.canEnter())sidebarItems.push({id:'customers',label:getLocale()==='ar'?'العملاء':'Customers'});
   if(PersonnelUI.canEnter())sidebarItems.push({id:'personnel',label:getLocale()==='ar'?'شؤون الموظفين':'Personnel'});

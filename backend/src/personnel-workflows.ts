@@ -1,3 +1,4 @@
+import {remindAnnualLeavePlans} from './annual-leave-planning.js';
 import {ownerChequeClearance} from './owner-card-settlements.js';
 import {employeeAdvanceClearance} from './employee-advances.js';
 import { randomUUID } from 'node:crypto';
@@ -15,6 +16,7 @@ export async function personnelFollowup(c: any, cipher: any, m: any, s: any, co:
         await c.query('select ab.hr_enforce_auth($1)', [u.auth_id]);
     const cfg = await settings(c, cipher, co), now = today(), employees = (await c.query("select e.* from ab.hr_employees e where e.state<>'Ended'and(e.company_id=$1 or exists(select 1 from ab.hr_assignments a where a.employee_id=e.id and a.company_id=$1 and a.effective_on<=timezone('Asia/Dubai',now())::date and(a.until_on is null or a.until_on>=timezone('Asia/Dubai',now())::date)))", [co])).rows;
     let created = 0;
+    await remindAnnualLeavePlans(c,cipher,m,s,co,now);
     for (const e of employees) {
         if(e.company_id!==co)continue;
         const docs = (await c.query("select distinct on(r.kind) r.*,v.scan_status from ab.hr_document_records r join ab.document_versions v on v.id=r.version_id where employee_id=$1 and state='Approved'and v.scan_status='clean'order by r.kind,r.created_at desc,r.id desc", [e.id])).rows;

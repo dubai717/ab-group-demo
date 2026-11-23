@@ -5,7 +5,7 @@ import {vehicleRight,vehicleData,vehicleInvoices,today,V} from './vehicle-domain
 import {invoices} from './ledger-domain.js';
 import {requireOk} from './core.js';
 const has=async(c:any,name:string)=>!!(await c.query('select to_regclass($1) ok',['ab.'+name])).rows[0].ok;
-export const customerBucket=(s:string)=>s==='Active'?'Active':['Ended','Archived'].includes(s)?'Ended':'Pending';
+export const customerBucket=(s:string)=>s==='Prospect'?'Prospect':s==='Active'?'Active':['Ended','Archived'].includes(s)?'Ended':'Pending';
 const sum=(rows:any[],key:string)=>V.money(rows.reduce((n:bigint,r:any)=>n+V.units(String(r[key]||'0')),0n));
 export async function customerRegisterSummary(c:any,m:any,cipher:any){
  const companies=m.state.companies.filter((co:any)=>customerCan(m,'view',co.id)),allowed=companies.map((x:any)=>x.id);
@@ -16,11 +16,11 @@ export async function customerRegisterSummary(c:any,m:any,cipher:any){
  const vehicleAvailable=await has(c,'vehicles'),vehicleScope=m.state.companies.filter((co:any)=>vehicleRight(m,'view',co.id)).map((co:any)=>co.id);
  const vehicles=vehicleAvailable?(await c.query('select v.id,v.customer_id,v.company_id,v.status,r.finance_type from ab.vehicles v join ab.vehicle_requests r on r.id=v.request_id where v.company_id=any($1::uuid[])',[vehicleScope])).rows:[];
  for(const v of vehicles)if(allowed.includes(v.company_id)){links.get(v.customer_id)?.add(v.company_id);operational.add(v.customer_id);}
- const cells:any={Active:{},Pending:{},Ended:{}},totals:any={Active:0,Pending:0,Ended:0};
+ const cells:any={Active:{},Prospect:{},Pending:{},Ended:{}},totals:any={Active:0,Prospect:0,Pending:0,Ended:0};
  for(const r of clients){const bucket=customerBucket(r.status);totals[bucket]++;for(const co of links.get(r.id)||[])cells[bucket][co]=(cells[bucket][co]||0)+1;}
  const matrix:any={Active:{cash:0,group:0,bank:0,investor:0},Pending:{cash:0,group:0,bank:0,investor:0},Ended:{cash:0,group:0,bank:0,investor:0}};
  for(const v of vehicles){matrix[v.status==='Active'?'Active':v.status==='Terminated'?'Ended':'Pending'][v.finance_type]++;}
- return{companies:companies.map((x:any)=>({id:x.id,nameAr:x.arabicName,nameEn:x.englishName,licence:x.tradeLicenseNumber})),customers:{cells,totals,total:clients.length,withoutOperationalCompany:clients.filter((r:any)=>!operational.has(r.id)).length,relationTypes:['record_scope','residency','sponsor','registered_vehicle'],distinctTotal:true},vehicles:vehicleAvailable&&vehicleScope.length?{cells:matrix,total:vehicles.length}:null,asOf:new Date().toISOString()};
+ return{companies:companies.map((x:any)=>({id:x.id,nameAr:x.arabicName,nameEn:x.englishName,licence:x.tradeLicenseNumber})),customers:{cells,totals,total:clients.length,actualActiveTotal:totals.Active,prospectTotal:totals.Prospect,otherStatusTotal:totals.Pending+totals.Ended,withoutOperationalCompany:clients.filter((r:any)=>!operational.has(r.id)).length,relationTypes:['record_scope','residency','sponsor','registered_vehicle'],distinctTotal:true},vehicles:vehicleAvailable&&vehicleScope.length?{cells:matrix,total:vehicles.length}:null,asOf:new Date().toISOString()};
 }
 export async function customerOverview(c:any,m:any,cipher:any,client:any,events:any[]){
  const companyIds=m.state.companies.map((co:any)=>co.id),vehicleScope=companyIds.filter((co:string)=>vehicleRight(m,'view',co)),financialScope=companyIds.filter((co:string)=>financeRight(m,'ledger_view',co)),vehicleAvailable=await has(c,'vehicles'),ledger=await has(c,'finance_invoice_links');

@@ -1,0 +1,114 @@
+{
+  "asOf": "2026-11-23",
+  "data": "isolated synthetic PostgreSQL and fake external providers only",
+  "releaseReady": false,
+  "evidence": [
+    {
+      "log": "/tmp/ab-v1-policy-confirmation.log",
+      "sha256": "1783fa34da4c566ac1b1d01e292e93f1917da7bb12b9af2471262dc70a4f2a06",
+      "tail": [
+        "✔ late or duplicate delivery notifications cannot downgrade delivered/read to sent/failed or treat them as a financial receipt (0.182698ms)",
+        "ℹ tests 19",
+        "ℹ suites 0",
+        "ℹ pass 19",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 776.017294"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-all-static.log",
+      "sha256": "d280a264d6ab5627f593c94690c614e81d6b19da3689bbb4010e15c191b3e3d3",
+      "tail": [
+        "✔ service months remain separate from finance installments and margins may be positive, zero or negative (0.216439ms)",
+        "ℹ tests 182",
+        "ℹ suites 0",
+        "ℹ pass 182",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 1340.093547"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-current-types.log",
+      "sha256": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+      "tail": [
+        "",
+        "> ab-group-demo@1.0.0 backend:check",
+        "> tsc -p backend/tsconfig.json",
+        "",
+        "npm notice",
+        "npm notice New major version of npm available! 11.9.0 -> 12.2.3",
+        "npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.3",
+        "npm notice To update run: npm install -g npm@12.2.3",
+        "npm notice"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-provider-free-build.log",
+      "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "tail": [
+        "PASS: compiled runtime module graph loads without provider connections",
+        "PASS: staging JavaScript build complete; no migrations or cloud connections"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-focused-native.log",
+      "sha256": "97bec08cc0e3b0bfbb90d2cb6d682ff9af91f32ff5236645baa0f79609be2654",
+      "tail": [
+        "✔ prospect responsibility is explicit existing view/follow-up authority, never an automatic job or company grant (2363.227194ms)",
+        "ℹ tests 16",
+        "ℹ suites 0",
+        "ℹ pass 16",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 12518.263208"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-annual-final-native.log",
+      "sha256": "ae042612ca0afe754d7fe80c5fc4e2fe06ef7b1c883c4ba0a21be9a076908625",
+      "tail": [
+        "✔ annual plans are versioned tentative self-service, safely retried, scoped and have no leave/ledger/permission effect (2817.981333ms)",
+        "ℹ tests 1",
+        "ℹ suites 0",
+        "ℹ pass 1",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 4996.576322"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-all-new-browser.log",
+      "sha256": "c344a3f76e778fb9ab843c5bccb818e8465fc235f91658e44a5a384f0a706689",
+      "tail": [
+        "PASS independent job standard and employee matrices: real actions, no section auto-grant, protected approval, no job-based account assignment, staged cancel/confirm, AR/EN three widths and actual screenshots",
+        "PASS minimal prospect save: original file number, view mode, no optional documents, retained source/responsible, distinct real/prospect counters, clickable filter and AR/EN three widths",
+        "PASS annual plan actual API/UI: reversed-date error preserves inputs, tentative checkbox retains dates, save/view revision, no leave/balance/access effect, participation row, desktop/tablet/mobile. Synthetic only."
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-customer-regression.log",
+      "sha256": "551c8d62002b436a8f9d44779aa7a152460d288c79f93d73c54e1a20f94c538c",
+      "tail": [
+        "PASS customer save: required focus, invalid identity, visible 503/reference, lost committed response and immutable retry once, timeout, readonly file number, immediate document-tab access during held background refresh without input loss, refreshed distinct counts, duplicate candidate link and rejection. Independent rate-limited synthetic fixture.",
+        "PASS customer workspace: real distinct summaries, optional staged PDF uploads and partial-failure retry without duplicate customer/files, unverified upload, separate reviewed verification and limited-role denial, first-page preview/download exact bytes/print, passport custody history, unchanged request composer and vehicle file, canonical financial totals, uncomputed score, Arabic/English desktop/tablet/phone and dark card contrast. Synthetic providers only."
+      ]
+    }
+  ],
+  "limitations": [
+    "Targeted evidence is not complete operational acceptance",
+    "Original complete native suite not yet accepted for this branch",
+    "GitHub CI outcome pending new PR",
+    "Policy is not an activated API guard",
+    "Official WhatsApp is not connected"
+  ]
+}
