@@ -38,3 +38,5 @@ Individual indicator inheritance requires approved database protection. If the g
 Owner: the dashboard Backup status section reads only after Check backup status. An unconfigured source does not establish absence of backups. Review capture/test dates and storage location; artifact presence does not prove full recoverability. This section has no restore or download action.
 
 Existing customer/vehicle import: choose CSV UTF-8, Excel or Access, then company and file. Failed attempts retain the file with a clear reference; explicit removal is available. Review mapping, duplicates and company before confirmation. Preview creates no customer or vehicle and imports no balances. Real operating-data import requires final approval and an approved backup.
+
+To follow up a completed conversation-topic task, open Topic follow-up task, explicitly select the completed parent, then the employee, deadline and expected outcome. Leaving the parent blank preserves the original link. If a different successor exists, open the current task for review. Completing a call does not collect the debt.

@@ -127,7 +127,8 @@ export async function build(options: Options) {
   app.setErrorHandler((e: any, req, reply) => {
     let status = e.status || e.statusCode || 422,
       code = e.code || e.message;
-    if (!(e instanceof ApiError)&&databaseServiceFailure(e)) {
+    const dbFault=!(e instanceof ApiError)&&databaseServiceFailure(e);
+    if (dbFault) {
       status=503;code="unavailable";
     } else if (code === "duplicate") {
       status = 409;
@@ -171,6 +172,7 @@ export async function build(options: Options) {
       code = status >= 500 ? "unavailable" : "invalid";
     }
     if (status < 400 || status > 599) status = 422;
+    if(dbFault)console.error(JSON.stringify({event:'database_service_failure',reference:req.id,sqlState:e.code,status,stage:['GET','HEAD'].includes(req.method)?'read':'write'}));
     const customerSaveRequest=['POST','PATCH'].includes(req.method)&&/^\/api\/customers(?:\/[0-9a-f-]+)?(?:\?|$)/i.test(req.url);const customerRequest=/^\/api\/(?:customers|customer-drafts)(?:[/?]|$)/.test(req.url);if(customerRequest)console.error(JSON.stringify({event:customerSaveRequest?'customer_save_failed':'customer_request_failed',reference:req.id,stage:req.url.includes('/files')?'attachment':req.method==='GET'?'read':customerSaveRequest?'save':'validation',status,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),sqlState:typeof e.code==='string'&&/^[0-9A-Z]{5}$/.test(e.code)?e.code:undefined}));
     const enrollmentRequest=req.method==='POST'&&req.url.split('?')[0]==='/api/users';
     if(enrollmentRequest){const sqlState=typeof e.code==='string'&&/^[0-9A-Z]{5}$/.test(e.code)?e.code:undefined,providerCode=['email_exists','user_already_exists','email_address_invalid','email_address_not_authorized','weak_password','unexpected_failure'].includes(e.providerCode)?e.providerCode:undefined;console.error(JSON.stringify({event:'user_enrollment_failed',reference:req.id,stage:(req as any).enrollmentStage||'request',code:sqlState||String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),providerCode,constraint:typeof e.constraint==='string'&&/^[a-z_0-9]{1,80}$/.test(e.constraint)?e.constraint:undefined}));if((req as any).enrollmentAuthCreated&&!(e instanceof ApiError)){code='enrollmentIncomplete';status=503;}}

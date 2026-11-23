@@ -231,9 +231,13 @@
         "backend/tests/communication-leave-delegation.test.ts",
         "docs/operational-v1/TASK-CLOCK-ASSIGNMENT-REVIEW.md",
         "backend/tests/task-clock-assignment-review.test.ts",
-        "backend/tests/task-clock-assignment-review.browser.cjs"
+        "backend/tests/task-clock-assignment-review.browser.cjs",
+        "backend/src/communication-followup.ts",
+        "backend/tests/communication-followup.test.ts",
+        "backend/tests/communication-followup.browser.cjs",
+        "docs/operational-v1/CONVERSATION-FOLLOWUPS.md"
       ],
-      "remaining": "الساعة الأصلية للمهام اليدوية ومهام المحادثة وتوقيت الإمارات والتكرار والتصعيد مختبرة؛ بقية المصادر والتكليفات وتقارير التأخير والقبول النهائي ما زالت جزئية. أُصلح الإغلاق الآلي الخاطئ لمهام المحادثات؛ الإنجاز الفعلي يتبع تقديم النتيجة والمراجعة. مراجعة الساعة بعد إعادة الإسناد وإشعار المسؤول دون تكرار منفذان ومختبران محلياً، دون تمديد آلي أو افتراض احتساب تأخير البديل."
+      "remaining": "الساعة الأصلية للمهام اليدوية ومهام المحادثة وتوقيت الإمارات والتكرار والتصعيد مختبرة؛ بقية المصادر والتكليفات وتقارير التأخير والقبول النهائي ما زالت جزئية. أُصلح الإغلاق الآلي الخاطئ لمهام المحادثات؛ الإنجاز الفعلي يتبع تقديم النتيجة والمراجعة. مراجعة الساعة بعد إعادة الإسناد وإشعار المسؤول دون تكرار منفذان ومختبران محلياً، دون تمديد آلي أو افتراض احتساب تأخير البديل. أضيفت متابعة لاحقة صريحة لمهمة محادثة منجزة عبر المهمة الأصلية نفسها، مع رابط خاص مشفر ومنع التكرار وبقاء الدين والإنجاز السابق دون تغيير. تبقى بقية مصادر الدورة والتفويض ومواعيد الحالات والتكامل الرسمي والقبول النهائي غير مكتملة؛ ليست جميع النواقص قرارات مالك."
     },
     {
       "id": "7",
@@ -246,9 +250,13 @@
         "backend/src/communication-cases.ts",
         "backend/tests/communication-cases.test.ts",
         "backend/tests/communication-cases.browser.cjs",
-        "docs/operational-v1/COMMUNICATION-CASES.md"
+        "docs/operational-v1/COMMUNICATION-CASES.md",
+        "backend/src/communication-followup.ts",
+        "backend/tests/communication-followup.test.ts",
+        "backend/tests/communication-followup.browser.cjs",
+        "docs/operational-v1/CONVERSATION-FOLLOWUPS.md"
       ],
-      "remaining": "موضوعات المتابعة الإدارية داخل المحادثة والسجل الأصلي والإشعار الداخلي وربط المهمة ومنع التكرار مختبرة وغير منشورة. مهلة العمل والمتابعة الأخيرة وعدم الاستجابة والربط التلقائي بالوارد والمزود الرسمي والتذكيرات ما زالت غير مكتملة."
+      "remaining": "موضوعات المتابعة الإدارية داخل المحادثة والسجل الأصلي والإشعار الداخلي وربط المهمة ومنع التكرار مختبرة وغير منشورة. مهلة العمل والمتابعة الأخيرة وعدم الاستجابة والربط التلقائي بالوارد والمزود الرسمي والتذكيرات ما زالت غير مكتملة. أضيفت متابعة لاحقة صريحة لمهمة محادثة منجزة عبر المهمة الأصلية نفسها، مع رابط خاص مشفر ومنع التكرار وبقاء الدين والإنجاز السابق دون تغيير. تبقى بقية مصادر الدورة والتفويض ومواعيد الحالات والتكامل الرسمي والقبول النهائي غير مكتملة؛ ليست جميع النواقص قرارات مالك."
     },
     {
       "id": "8",
