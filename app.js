@@ -334,6 +334,7 @@ function getLocale() {
 }
 
 function setLocale(locale) {
+  if(globalThis.OperatingCentresUI?.leave&&!OperatingCentresUI.leave())return;
   localStorage.setItem(LOCALE_KEY, locale);
   document.body.dir = locale === 'ar' ? 'rtl' : 'ltr';
   document.documentElement.lang = locale;

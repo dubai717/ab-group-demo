@@ -2,7 +2,7 @@
 import{createHash}from'node:crypto';import{operatingCentreSourceReady}from'./operating-centre-readiness.js';
 const tables=['operating_centre_versions','operating_centre_companies'];
 // Build-time fingerprint of the uninstalled candidate from a synthetic database; not installation approval.
-const reviewedFingerprint='8476b573d77821e3287910367d9f5f8eeae02b3a458e15d9a9d4816daed26465';
+const reviewedFingerprint='b0550ee45700108888ace75c4957b376b962128f9f213b9831424236393462e9';
 const dependencies=(catalogue:'pg_attrdef'|'pg_constraint',sourceId:'defaults.oid'|'k.oid')=>`coalesce((select jsonb_agg(jsonb_build_object('class',dep.refclassid::regclass::text,'identity',(pg_identify_object(dep.refclassid,dep.refobjid,dep.refobjsubid)).identity)order by dep.refclassid::regclass::text,(pg_identify_object(dep.refclassid,dep.refobjid,dep.refobjsubid)).identity)from pg_depend dep where dep.classid='${catalogue}'::regclass and dep.objid=${sourceId} and dep.deptype='n'),'[]'::jsonb)`;
 export async function operatingCentreSchemaFingerprint(c:any){
  const attributes=(await c.query(`select t.relname,a.attname,format_type(a.atttypid,a.atttypmod)type,a.attnotnull,a.attgenerated,a.attidentity,

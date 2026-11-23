@@ -2969,5 +2969,58 @@
       "effective geographic permission/API/DB enforcement",
       "full operational release acceptance"
     ]
+  },
+  "stableCentreIdentityVerification": {
+    "syntheticOnly": true,
+    "published": false,
+    "schemaFingerprint": "b0550ee45700108888ace75c4957b376b962128f9f213b9831424236393462e9",
+    "nativePass": 7,
+    "rootStaticPass": 162,
+    "browser": "AR/EN three widths; explicit declined sidebar/locale navigation retains original centre inputs; prior source-save/readback/context protections retained",
+    "logs": [
+      {
+        "path": "work/evidence/centre-stable-native.log",
+        "sha256": "4263002d5771edc43acab699090d269c8a515cb0402247bc778d832f5e4a3627"
+      },
+      {
+        "path": "work/evidence/centre-stable-browser.log",
+        "sha256": "b1079f403bd76d85b0ac781d27d50bf0aecf928482e85840ba870ac972507c81"
+      },
+      {
+        "path": "work/evidence/centre-stable-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "work/evidence/centre-stable-static.log",
+        "sha256": "a1eeb85cfce96e224d827426d2d5deaa5523686184a2ed72f66dfc90738b132c"
+      },
+      {
+        "path": "work/evidence/centre-stable-build.log",
+        "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+      }
+    ],
+    "sourceChecksums": {
+      "backend/review/operating-centres.sql": "fe85f7d953a59752c8e49e8ae5cdf689f61dcbb385393be96f0a565629df85fb",
+      "backend/src/operating-centre-schema.ts": "fe43be12ce30650470462768e796e5d4fe3aaedd18a1fc2827305b35cfe47b44",
+      "backend/tests/operating-centre-identity.test.ts": "0cd788ba78df39b0fc1494d5f28d247d6a6402f28ff71a23d10d00e2493c294c",
+      "operating-centres-ui.js": "9d0562d0179c9ff644568a630bf18e1821b00720abc60c8eb5142d38bb5a5fe1",
+      "app.js": "10e87a9ea421d69891091ee00256354de8a98b95e321055f7c032221d6b33b1c",
+      "workspace-ui.js": "156aa0a80b29912d4538910341351be8a2dd327ad63a9c3cee718f51674fb68c",
+      "backend/tests/operating-centre-editor.browser.cjs": "ecfe6baa0b43588b346744cec235bb3e1bfd86b3d24f8d458d01d8aded452155"
+    },
+    "fullSuite": {
+      "journeys": 36,
+      "status": "running after stable-root/navigation changes; earlier editor36 passed separately"
+    },
+    "notes": [
+      "Candidate only; no automatic or hosted migration",
+      "Generated root key on immutable first snapshot is unique per tenant and formally FK-referenceable",
+      "Later snapshots retain the same logical centre, without pretending a source revision is the centre identity",
+      "Probe rejects arbitrary revision ID, foreign tenant, manual generated-key override, runtime delete; isolated restore and guarded read/write passed",
+      "Initial capture intentionally retained the previous pin and failed writer readiness until new synthetic structural fingerprint was reviewed and committed; no runtime auto-learning"
+    ],
+    "remaining": [
+      "Employee primary work location and actual geographic permission scope still unfinished"
+    ]
   }
 }
