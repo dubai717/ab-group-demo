@@ -12,8 +12,9 @@ import { today,vehicleData } from './vehicle-domain.js';
 import { L, resolve, line, journal, balance, createFinancialVoucher } from './ledger-domain.js';
 export async function personnelFollowup(c: any, cipher: any, m: any, s: any, co: string) {
     need(m, 'configure', co);
+    const leaveEvidence=!!(await c.query("select to_regprocedure('ab.hr_enforce_auth_with_evidence(uuid)') ok")).rows[0].ok;
     for (const u of (await c.query('select u.auth_id from ab.users u join ab.hr_employees e on e.user_id=u.id where e.company_id=$1', [co])).rows)
-        await c.query('select ab.hr_enforce_auth($1)', [u.auth_id]);
+        await c.query(leaveEvidence?'select ab.hr_enforce_auth_with_evidence($1)':'select ab.hr_enforce_auth($1)', [u.auth_id]);
     const cfg = await settings(c, cipher, co), now = today(), employees = (await c.query("select e.* from ab.hr_employees e where e.state<>'Ended'and(e.company_id=$1 or exists(select 1 from ab.hr_assignments a where a.employee_id=e.id and a.company_id=$1 and a.effective_on<=timezone('Asia/Dubai',now())::date and(a.until_on is null or a.until_on>=timezone('Asia/Dubai',now())::date)))", [co])).rows;
     let created = 0;
     await remindAnnualLeavePlans(c,cipher,m,s,co,now);

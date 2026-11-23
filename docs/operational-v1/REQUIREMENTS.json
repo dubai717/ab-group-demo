@@ -30,7 +30,7 @@
         "backend/tests/operational-prospect.test.ts",
         "backend/tests/operational-prospect.browser.cjs"
       ],
-      "remaining": "إضافات الفرع غير منشورة؛ الاختبارات المحددة نجحت قبل آخر إضافات اللغة."
+      "remaining": "إضافات الفرع غير منشورة؛ اجتاز الحفظ والفتح والمؤشرات واللغة اختبارات خادم ومتصفح، والقبول الشامل النهائي باقٍ."
     },
     {
       "id": "2.2",
@@ -72,7 +72,7 @@
         "backend/tests/job-standards.test.ts",
         "backend/tests/operational-permission-matrix.browser.cjs"
       ],
-      "remaining": "معاينة الموظفين وفرق الصلاحيات وأعداد المنح المحفوظة مختبرة؛ المنع الموروث والإزالة الانتقائية ومعاينات المؤشرات +/× غير مكتملة."
+      "remaining": "معاينة الفرق وأسماء الموظفين وأعداد الإضافات الفردية المحفوظة منفذة ومختبرة؛ المنع الموروث والإزالة الانتقائية ومعاينات مؤشرات +/× غير مكتملة."
     },
     {
       "id": "4.a",
@@ -82,7 +82,7 @@
         "backend/src/annual-leave-planning.ts",
         "annual-leave-plans-ui.js"
       ],
-      "remaining": "تنفيذ أولي غير منشور؛ اختبارات قبول جديدة مطلوبة."
+      "remaining": "حفظ ونسخ ومشاركة وتنبيه داخلي وفشل المدخلات وإعادة الفتح AR/EN والقراءة التاريخية مختبرة؛ غير منشورة والقبول الشامل باقٍ."
     },
     {
       "id": "4.b",
@@ -90,9 +90,13 @@
       "status": "موجود ناقص",
       "evidence": [
         "backend/src/personnel.ts",
-        "backend/src/personnel-workflows.ts"
+        "backend/src/personnel-workflows.ts",
+        "backend/src/leave-return-portal.ts",
+        "leave-return-ui.js",
+        "backend/tests/leave-return-portal.test.ts",
+        "backend/tests/leave-return-portal.browser.cjs"
       ],
-      "remaining": "تعاد مراجعة الوظائف القائمة؛ لا ادعاء اكتمال المتطلبات الجديدة."
+      "remaining": "بوابة عودة محدودة ومراجعة المسؤول ومهامه والحماية من إعادة تفعيل تعليق مستقل مختبرة. SQL مرشح غير مطبق؛ استرجاع التفويض المرتبط بالإجازة وملخص البدلاء والتفويض التشغيلي الكامل غير مكتمل."
     },
     {
       "id": "4.c",
@@ -100,9 +104,13 @@
       "status": "موجود ناقص",
       "evidence": [
         "backend/src/operational-work-clock.ts",
-        "backend/tests/operational-work-clock.test.ts"
+        "backend/tests/operational-work-clock.test.ts",
+        "backend/src/employee-work-calendar.ts",
+        "backend/tests/employee-work-calendar.test.ts",
+        "employee-work-calendar-ui.js",
+        "backend/tests/employee-work-calendar.browser.cjs"
       ],
-      "remaining": "حساب زمني معزول؛ واجهة الجدول وربط جميع المهام غير مكتملين."
+      "remaining": "مصدر مؤرخ وAPI مجمعة وجدول موقع/شركة مع أعمدة الموظفين والخانات الدوارة AR/EN منفذة ومختبرة دون ساعات مفترضة؛ تكامل المهام وعامل التصعيد والقبول الشامل غير مكتمل."
     },
     {
       "id": "5",

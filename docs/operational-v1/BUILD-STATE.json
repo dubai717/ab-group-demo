@@ -56,12 +56,17 @@
     },
     "operationalBrowser": "six actual independent fixture journeys passed; newest application source, synthetic Auth and local PostgreSQL only",
     "completeReleaseAcceptance": false,
-    "annualBrowser": "passed: invalid date retention, checkbox draft retention, save/readback/participation and three widths",
+    "annualBrowser": "AR/EN saved-plan reopening and historical read-only passed in addition to retained inputs/participation/three widths",
     "originalOrganizationAndPersonnelBrowser": "passed after opening actual advanced role controls; original assertions retained",
     "standardImpact": {
       "nativePassed": 10,
       "nativeFailed": 0,
       "browser": "five journeys passed, including actual affected staff grant-count preview and preserved additions/company scope"
+    },
+    "latestCombinedNative": {
+      "passed": 72,
+      "failed": 0,
+      "scope": "portal, initial calendar, original personnel, my-work and job-standards; later calendar View As case verified separately"
     }
   },
   "fullNativeRun": {
@@ -85,7 +90,10 @@
     "commit": "76174281215606bf70364e1898fbccfc1be982fa",
     "status": "both jobs completed success",
     "deployment": false,
-    "scope": "uploaded foundations only; later local standard-impact and leave-return changes not covered"
+    "scope": "uploaded foundations only; later local standard-impact and leave-return changes not covered",
+    "newerRun": 45101351627,
+    "newerCommit": "188c1c437e07ad734d269f4abc53e7c1994b134c",
+    "newerStatus": "operational UI completed success; original regressions in progress, not final calendar source"
   },
   "leaveReturn": {
     "state": "local API and bilingual portal/review UI tested; source integration partially complete, unpublished",
@@ -97,7 +105,7 @@
     "browser": "six actual independent fixture journeys passed, including bilingual portal and manager review; AR/EN desktop/tablet/mobile",
     "resumeSafety": "Only immutable prospective Active-before-leave proof at unchanged user revision can restore access. Historical and pre-existing Pending holds require separate authorized review. No backfill.",
     "next": [
-      "Return only leave-linked delegations and summarize substitute actions",
+      "Return only explicitly leave-linked delegations and summarize substitute actions",
       "Complete exact-source aggregate browser and CI acceptance",
       "Review SQL candidate under final protected release approval"
     ],
@@ -105,6 +113,24 @@
       "passed": 11,
       "failed": 0,
       "scope": "portal-only rerun adds immutable proof and newer independent Pending account revision case"
+    },
+    "followupPath": {
+      "passed": 67,
+      "failed": 0,
+      "scope": "12 portal cases plus original personnel regressions; followup and login both capture prospective proof, old schema preserves original enforcement"
     }
+  },
+  "workCalendar": {
+    "state": "dated original-source API and bilingual area/company grid locally tested, unpublished",
+    "nativePassed": 3,
+    "nativeFailed": 0,
+    "originalPersonnelCombinedPassed": 57,
+    "browser": "actual profile entry, explicit hours, lost-response deduplication, stale-cell removal/retry, AR/EN three widths",
+    "financialEffect": false,
+    "tasksRescheduled": false,
+    "remaining": [
+      "Integrate task and escalation workers with recorded schedules",
+      "Broaden multi-area/multi-column acceptance"
+    ]
   }
 }

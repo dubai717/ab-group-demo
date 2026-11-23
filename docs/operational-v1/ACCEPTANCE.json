@@ -161,6 +161,119 @@
         "PASS user UX: name aliases/prefix/department picker, explicit readonly preview and unchanged owner session, demo IBAN/slow one-save/readback, confirmed permission plan, committed retry without repeat, delayed spinner, AR/EN responsive.",
         "PASS restricted leave-return API/UI: failed work login, limited Auth without work cookie, retained validation/API/lost-response inputs, one canonical review, suppressed late old-company opening, duplicate prevention, return-for-info, actual manager completion count, successful original work login, unchanged rights, AR/EN desktop/tablet/mobile."
       ]
+    },
+    {
+      "log": "/tmp/ab-v1-leave-followup-native.log",
+      "sha256": "9111a945468bcf9594480ad80806a51c3828280fd53590a673264ed5781daffc",
+      "tail": [
+        "  ✔ runtime cross-tenant reads are blocked with RLS (1.541917ms)",
+        "✔ Personnel: isolated PostgreSQL, profiles, tasks, leave, evaluation and shared payroll (7291.023843ms)",
+        "ℹ tests 67",
+        "ℹ suites 0",
+        "ℹ pass 67",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 28212.236936"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-annual-expanded-browser-retry.log",
+      "sha256": "44c4881344a9bafdfb1039e9c6e864ef656f0b691a9064f0a40b56bae27ac4c0",
+      "tail": [
+        "PASS independent job standard and employee matrices: real actions, no section auto-grant, protected approval, no job-based account assignment, staged cancel/confirm, actual affected-user grant-count preview and preserved exceptions on standard update, AR/EN three widths and actual screenshots",
+        "PASS minimal prospect save: original file number, view mode, no optional documents, retained source/responsible, distinct real/prospect counters, clickable filter and AR/EN three widths",
+        "PASS annual plan actual API/UI: reversed-date error preserves inputs, tentative checkbox retains dates, save/view revision, no leave/balance/access effect, participation row, AR/EN saved reopening, historical read-only, desktop/tablet/mobile. Synthetic only.",
+        "PASS original conversation deep link: real authorized thread, query consumed once with context retained, login required, known-ID unauthorized request rejected without private content.",
+        "PASS user UX: name aliases/prefix/department picker, explicit readonly preview and unchanged owner session, demo IBAN/slow one-save/readback, confirmed permission plan, committed retry without repeat, delayed spinner, AR/EN responsive.",
+        "PASS restricted leave-return API/UI: failed work login, limited Auth without work cookie, retained validation/API/lost-response inputs, one canonical review, suppressed late old-company opening, duplicate prevention, return-for-info, actual manager completion count, successful original work login, unchanged rights, AR/EN desktop/tablet/mobile."
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-current-combined-native.log",
+      "sha256": "99921fefe1b707ce36966673f6b7c4ca29bdaf6fdba5d4ef5ccdc01457707010",
+      "tail": [
+        "  ✔ runtime cross-tenant reads are blocked with RLS (1.388251ms)",
+        "✔ Personnel: isolated PostgreSQL, profiles, tasks, leave, evaluation and shared payroll (7520.464681ms)",
+        "ℹ tests 72",
+        "ℹ suites 0",
+        "ℹ pass 72",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 46033.873118"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-current-combined-types.log",
+      "sha256": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+      "tail": [
+        "",
+        "> ab-group-demo@1.0.0 backend:check",
+        "> tsc -p backend/tsconfig.json",
+        "",
+        "npm notice",
+        "npm notice New major version of npm available! 11.9.0 -> 12.2.3",
+        "npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.3",
+        "npm notice To update run: npm install -g npm@12.2.3",
+        "npm notice"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-calendar-bulk-native.log",
+      "sha256": "2e6acee4c32f608436d3a661631b116759dba680437c33154153b218d6915b95",
+      "tail": [
+        "  ✔ runtime cross-tenant reads are blocked with RLS (1.743103ms)",
+        "✔ Personnel: isolated PostgreSQL, profiles, tasks, leave, evaluation and shared payroll (9334.408843ms)",
+        "ℹ tests 57",
+        "ℹ suites 0",
+        "ℹ pass 57",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 19699.010589"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-calendar-viewas-native.log",
+      "sha256": "8bbfcb6f292f06bd2f921dd5d3e03aa2c0f660ed9f2f3d28b46ad06e5b32beea",
+      "tail": [
+        "✔ a company-limited scheduler cannot alter a shared employee or a future assignment outside their authority (1467.51648ms)",
+        "✔ calendar mutation stays disabled in Owner View As even when the real target can configure it (1438.322347ms)",
+        "ℹ tests 3",
+        "ℹ suites 0",
+        "ℹ pass 3",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 7260.748697"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-calendar-viewas-types.log",
+      "sha256": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+      "tail": [
+        "",
+        "> ab-group-demo@1.0.0 backend:check",
+        "> tsc -p backend/tsconfig.json",
+        "",
+        "npm notice",
+        "npm notice New major version of npm available! 11.9.0 -> 12.2.3",
+        "npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.3",
+        "npm notice To update run: npm install -g npm@12.2.3",
+        "npm notice"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-calendar-final-browser.log",
+      "sha256": "64e41410fcb50729aad59994c40a602b46277acb5ad95701606c1d0338f17ed3",
+      "tail": [
+        "PASS actual dated work calendar: explicit X/half/off grid, missing hours retain inputs, lost successful response retries one version, read failure removes stale cells and recovers, original API source readback, AR/EN desktop/tablet/mobile. Synthetic only."
+      ]
     }
   ],
   "limitations": [
@@ -266,5 +379,37 @@
     "passed": 6,
     "failed": 0,
     "scope": "backend candidate only, not operational release acceptance"
-  }
+  },
+  "calendarSyntheticScreenshots": [
+    {
+      "name": "operational-work-calendar-en-390.png",
+      "bytes": 50069,
+      "sha256": "f36ab911497c9f5bd7bc12fdc60bac68176ba29a37abb63b8dd4ade3f39430a6"
+    },
+    {
+      "name": "operational-work-calendar-en-768.png",
+      "bytes": 57308,
+      "sha256": "b6ef414993b49b6f04d55e6ece9ba816fb276eb5a7f1c96ce77ab0f59dadc8a4"
+    },
+    {
+      "name": "operational-work-calendar-en-1440.png",
+      "bytes": 61629,
+      "sha256": "6d6b7e0bba209e455cf543b840298f2a4bdca83583acb6b5e25cf105d0213eb7"
+    },
+    {
+      "name": "operational-work-calendar-ar-390.png",
+      "bytes": 43607,
+      "sha256": "127c7d9803dc9c514f6795b73e902c1a8341ef89735424ef08e8a34e0a4cba0b"
+    },
+    {
+      "name": "operational-work-calendar-ar-768.png",
+      "bytes": 53804,
+      "sha256": "c2918773d4e076a117fe43292cd884e3c25a40c17371fda789463e7e5317eb81"
+    },
+    {
+      "name": "operational-work-calendar-ar-1440.png",
+      "bytes": 57190,
+      "sha256": "71a96ea2c1bc4adc066e905bbe5d7f9d0d15baedeef9f314c471f0259b3bb90c"
+    }
+  ]
 }

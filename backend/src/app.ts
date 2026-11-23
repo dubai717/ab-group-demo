@@ -1230,6 +1230,7 @@ export async function build(options: Options) {
       "company-documents.js",
       "bank-accounts.js",
       "annual-leave-plans-ui.js",
+      "employee-work-calendar-ui.js",
       "leave-return-ui.js",
       "permission-matrix-ui.js",
       "user-management.js",

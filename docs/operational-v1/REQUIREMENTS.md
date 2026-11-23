@@ -6,14 +6,14 @@
 |---|---|---|---|---|
 | 0 | الفحص والعزل وحماية PR115 | موجود ناقص | `backend/src`، `backend/tests` | فرع مستقل؛ الحزمة المالية لم تدمج؛ لا نشر. |
 | 1 | ملف العميل المتكامل | موجود ويعمل | `customer-workspace-ui.js`، `backend/src/customer-workspace.ts` | الحفاظ على الأقسام الأصلية؛ يلزم إعادة اختبار الانحدار النهائي. |
-| 2.1 | العميل المحتمل ومؤشراته والتحويل | موجود ناقص | `backend/tests/operational-prospect.test.ts`، `backend/tests/operational-prospect.browser.cjs` | إضافات الفرع غير منشورة؛ الاختبارات المحددة نجحت قبل آخر إضافات اللغة. |
+| 2.1 | العميل المحتمل ومؤشراته والتحويل | موجود ناقص | `backend/tests/operational-prospect.test.ts`، `backend/tests/operational-prospect.browser.cjs` | الحفظ والفتح والمؤشرات واللغة اجتازت الخادم والمتصفح؛ غير منشور والقبول الشامل باقٍ. |
 | 2.2 | منع الخدمات بمرجع الشهرين | موجود ناقص | `backend/src/service-eligibility-policy.ts`، `backend/tests/service-eligibility-policy.test.ts` | الحساب المعزول مكتوب؛ ربط المصدر والتحقق الخادمي في الخدمات غير منجز. |
 | 3.1 | ستاندرد الوظيفة والأقسام والإجراءات | موجود ناقص | `permission-matrix-ui.js`، `backend/src/security-roles.ts`، `backend/tests/job-standards.test.ts` | مصفوفة مستقلة فوق الصلاحيات الحالية؛ نقل القسم لا يمنح الإجراءات. |
 | 3.2 | تخصيص صلاحيات الموظف | موجود ناقص | `user-management.js`، `backend/tests/operational-permission-matrix.browser.cjs` | الإضافات الحالية محفوظة؛ المنع الفردي الموروث وإعادة الاستثناءات المحددة غير مكتملين. |
-| 3.3 | معاينة أثر الستاندرد والمؤشرات | موجود ناقص | `backend/src/security-roles.ts` | مسار المعاينة الحالي يعاد استخدامه؛ تخصيص معاينات المؤشرات +/× غير مكتمل. |
-| 4.a | التخطيط السنوي المبدئي للإجازة | موجود ناقص | `backend/src/annual-leave-planning.ts`، `annual-leave-plans-ui.js` | تنفيذ أولي غير منشور؛ اختبارات قبول جديدة مطلوبة. |
-| 4.b | التفويض والعودة والرواتب ونهاية الخدمة | موجود ناقص | `backend/src/personnel.ts`، `backend/src/personnel-workflows.ts` | تعاد مراجعة الوظائف القائمة؛ لا ادعاء اكتمال المتطلبات الجديدة. |
-| 4.c | تقويم العمل | موجود ناقص | `backend/src/operational-work-clock.ts`، `backend/tests/operational-work-clock.test.ts` | حساب زمني معزول؛ واجهة الجدول وربط جميع المهام غير مكتملين. |
+| 3.3 | معاينة أثر الستاندرد والمؤشرات | موجود ناقص | `backend/src/security-roles.ts` | معاينة الموظفين والفرق وأعداد الإضافات المحفوظة مختبرة؛ المنع الموروث والإزالة الانتقائية والمؤشرات +/× غير مكتملة. |
+| 4.a | التخطيط السنوي المبدئي للإجازة | موجود ناقص | `backend/src/annual-leave-planning.ts`، `annual-leave-plans-ui.js` | حفظ ونسخ ومشاركة وتنبيه داخلي واختبارات AR/EN/قراءة تاريخية نجحت؛ غير منشور. |
+| 4.b | التفويض والعودة والرواتب ونهاية الخدمة | موجود ناقص | `backend/src/personnel.ts`، `backend/src/personnel-workflows.ts` | بوابة العودة ومراجعتها ومصدر مهامها وحمايتها مختبرة؛ SQL مرشح غير مطبق، وإرجاع التفويض وملخص البدلاء غير مكتملين. |
+| 4.c | تقويم العمل | موجود ناقص | `backend/src/operational-work-clock.ts`، `backend/tests/operational-work-clock.test.ts` | أضيف مصدر مؤرخ وAPI في `backend/src/employee-work-calendar.ts` واختباره؛ واجهة الموقع/الشركة والخانات AR/EN واختبارها أضيفت في `employee-work-calendar-ui.js`؛ ربط المهام والتصعيد غير مكتمل. |
 | 5 | التحصيل عبر الفروع والعهد والإيداع | موجود ناقص | `backend/src` | تابع للمالية في PR115؛ لا دفتر مواز ولا تفعيل هنا. |
 | 6 | المهام والتصعيد كل 30 دقيقة | موجود ناقص | `backend/src/operational-work-clock.ts` | حساب اختباري؛ دمج التسلسل الإداري والعامل الدوري غير منجز. |
 | 7 | WhatsApp الرسمي وصندوق المراسلات | موجود ناقص | `backend/src/communications.ts`، `backend/src/whatsapp-cloud-contract.ts` | المراسلات القائمة محفوظة؛ عقد اختباري فقط؛ لا مزود أو إرسال فعلي. |
