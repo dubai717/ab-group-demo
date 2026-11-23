@@ -829,6 +829,36 @@
       "bytes": 17689,
       "sha256": "9b133d47009c67d7cb647c358ec1961f5a1c5ffe84c91fdf06a45fc3966e9cb9",
       "scope": "original communication source, task clock and public personnel loading; synthetic only"
+    },
+    {
+      "path": "work/operational-evidence/communication-cases-canonical-native.log",
+      "bytes": 5177,
+      "sha256": "54beaace1e40f61d12c86213a1687c28791ef985cf84841648ec40f696d00667",
+      "scope": "original conversation topic workflow, current access on replay, linked original tasks, canonical IDs and responsive UI; synthetic only"
+    },
+    {
+      "path": "work/operational-evidence/communication-cases-sixteen-responsive-final.log",
+      "bytes": 4393,
+      "sha256": "7abfe94215fd188bdb858a5a9ea787c4991786a22154cd0b9350157f875ae8c6",
+      "scope": "original conversation topic workflow, current access on replay, linked original tasks, canonical IDs and responsive UI; synthetic only"
+    },
+    {
+      "path": "work/operational-evidence/communication-cases-build-final.log",
+      "bytes": 147,
+      "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "scope": "original conversation topic workflow, current access on replay, linked original tasks, canonical IDs and responsive UI; synthetic only"
+    },
+    {
+      "path": "work/operational-evidence/communication-cases-static-final.log",
+      "bytes": 17684,
+      "sha256": "22631d9c2f3ad66261e2cc0d12d5eb0ef2a9eac15d8fa5237ad09abcc06888cb",
+      "scope": "original conversation topic workflow, current access on replay, linked original tasks, canonical IDs and responsive UI; synthetic only"
+    },
+    {
+      "path": "work/operational-evidence/communication-cases-responsive-browser.log",
+      "bytes": 400,
+      "sha256": "e44d85f1e43f4a756ce86631000047432a9f32022d32936282381fc2df057e39",
+      "scope": "original conversation topic workflow, current access on replay, linked original tasks, canonical IDs and responsive UI; synthetic only"
     }
   ],
   "failedAttemptsNotAcceptance": [
@@ -856,6 +886,11 @@
       "path": "work/operational-evidence/communication-clock-fifteen-browser-final.log",
       "sha256": "fe50338291051e3cf226390b5a33743758d431dfc8358ce6d22083947e262e92",
       "reason": "Original task options captured incomplete public personnel load; API contained source rows. Public source loading/actor initialization corrected and delayed concurrent-entry acceptance passed"
+    },
+    {
+      "path": "work/operational-evidence/communication-cases-linked-native.log",
+      "sha256": "fbad37cd84055c64db4c8689b34491c97b9ed0f205f81da24be132f37b72655c",
+      "reason": "Test setup attempted to update an immutable participant record; original history guard correctly rejected it. Permission-loss test now uses an isolated synthetic user role change. No trigger or policy disabled."
     }
   ],
   "screenshots": "CI preserves work/operational-*.png and work/dual-permissions-*.png for seven days; local RAM copies are temporary.",
@@ -1235,5 +1270,50 @@
       "sha256": "95f96cb3796c0f859942df4103ec7732ef2b9e23008d329432776436eb9e0e55"
     }
   ],
-  "localPathsAreEphemeral": true
+  "localPathsAreEphemeral": true,
+  "caseScreenshots": [
+    {
+      "name": "operational-communication-cases-en-390.png",
+      "bytes": 89279,
+      "sha256": "a95a28ef35ebc4b3da6d9229ca712dc6d55c49aba17ca0936560c5441c9e8468",
+      "synthetic": true
+    },
+    {
+      "name": "operational-communication-cases-en-768.png",
+      "bytes": 155312,
+      "sha256": "7baff3740670e87dffcaa2c9e156e0b0b6a03cfb2903e8c5f00ff44a44f7ff63",
+      "synthetic": true
+    },
+    {
+      "name": "operational-communication-cases-en-1440.png",
+      "bytes": 241758,
+      "sha256": "49f0451f94683dc023ec657dd25e6b50e24e0c0acdd1e38e7d13e116f15ce794",
+      "synthetic": true
+    },
+    {
+      "name": "operational-communication-cases-ar-390.png",
+      "bytes": 80881,
+      "sha256": "aa123272fd4f278aac36d70aadf6301ed652f3844f7d5725e48ae9704555adb1",
+      "synthetic": true
+    },
+    {
+      "name": "operational-communication-cases-ar-768.png",
+      "bytes": 140454,
+      "sha256": "fcba9ac3dd2ea8588efc6623fc8390fee72df5ce939a1bee5cab6348634ec685",
+      "synthetic": true
+    },
+    {
+      "name": "operational-communication-cases-ar-1440.png",
+      "bytes": 202702,
+      "sha256": "8e156f60679b45bef1c01406c7c0228524b6f18f3bbcec44fa1f761c21b0e481",
+      "synthetic": true
+    }
+  ],
+  "caseVisualReview": {
+    "phone": "Arabic actions visible without horizontal page scrolling",
+    "desktop": "English original brown identity and canonical history",
+    "localPreviewManifest": "/tmp/ab-v1-case-preview-manifest.json",
+    "temporaryJPEGCopiesRemovedAfterReview": true,
+    "databaseBackup": false
+  }
 }

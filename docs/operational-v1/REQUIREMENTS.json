@@ -147,7 +147,8 @@
         "backend/src/communications.ts",
         "backend/tests/communication-task-clock.test.ts",
         "backend/tests/communication-task-clock.browser.cjs",
-        "docs/operational-v1/COMMUNICATION-TASK-CLOCK.md"
+        "docs/operational-v1/COMMUNICATION-TASK-CLOCK.md",
+        "backend/tests/communication-cases.test.ts"
       ],
       "remaining": "الساعة الأصلية للمهام اليدوية ومهام المحادثة وتوقيت الإمارات والتكرار والتصعيد مختبرة؛ بقية المصادر والتكليفات وتقارير التأخير والقبول النهائي ما زالت جزئية."
     },
@@ -158,9 +159,13 @@
       "evidence": [
         "backend/src/communications.ts",
         "backend/src/whatsapp-cloud-contract.ts",
-        "backend/tests/communication-task-clock.browser.cjs"
+        "backend/tests/communication-task-clock.browser.cjs",
+        "backend/src/communication-cases.ts",
+        "backend/tests/communication-cases.test.ts",
+        "backend/tests/communication-cases.browser.cjs",
+        "docs/operational-v1/COMMUNICATION-CASES.md"
       ],
-      "remaining": "المراسلات القائمة محفوظة؛ عقد اختباري فقط؛ لا مزود أو إرسال فعلي."
+      "remaining": "موضوعات المتابعة الإدارية داخل المحادثة والسجل الأصلي والإشعار الداخلي وربط المهمة ومنع التكرار مختبرة وغير منشورة. مهلة العمل والمتابعة الأخيرة وعدم الاستجابة والربط التلقائي بالوارد والمزود الرسمي والتذكيرات ما زالت غير مكتملة."
     },
     {
       "id": "8",

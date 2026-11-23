@@ -10,11 +10,11 @@
   "decision": "last_two_actual_due_months",
   "policyActivated": false,
   "next": [
-    "Verify CI on newest PR116 source; no merge/deployment",
-    "Complete inherited individual denials and geography, remaining widget inheritance",
-    "Remaining leave coverage and source clock adapters",
-    "Integrate eligibility and cross-branch collection after PR115 stabilizes",
-    "Official provider/use-case review, documents/backups/imports and final acceptance"
+    "Upload topic workflow and verify newest CI; no merge/deployment",
+    "Complete inherited individual denials, geography and atomic widget inheritance",
+    "Remaining leave/source adapters, source eligibility and cross-branch collection after PR115 stabilizes",
+    "Verified case deadlines and final follow-up, official provider/use-case review",
+    "Remaining documents/backups/imports and full acceptance"
   ],
   "limitations": [
     "Financial package dependency unresolved",
@@ -208,13 +208,12 @@
     ]
   },
   "localLatestAcceptance": {
-    "focusedNativePassed": 17,
+    "focusedNativePassed": 21,
     "previousSelectedExceptionNativePassed": 8,
     "previousLeaveHRNativePassed": 75,
     "countsNotAdditive": true,
     "staticPassed": 182,
-    "browserJourneysPassed": 15,
-    "typecheck": "passed",
+    "browserJourneysPassed": 16,
     "compiledRuntime": "passed without provider connections",
     "releaseReady": false,
     "data": "synthetic PostgreSQL and fake providers only"
@@ -249,7 +248,8 @@
     "patch": "/tmp/ab-v1-durable-code-diff.patch.gz",
     "manifest": "/tmp/ab-v1-durable-code-diff.json",
     "scope": "code only; not a database backup",
-    "baseRemoteCommit": "510a191bf9d68613fc060c6fcd000767e38266f5"
+    "baseRemoteCommit": "6d3891b687658bb4030b76c6ef0b80c0c21fed8a",
+    "rotationEvidence": "/tmp/ab-v1-code-checkpoint-rotation.json"
   },
   "selectedExceptions": {
     "default": "retain_all",
@@ -282,8 +282,35 @@
   },
   "latestRemoteBeforeThisBuild": {
     "pr": 116,
-    "commit": "4fbca7dbfd70413582d0143df6f1e34ebfa63e6f",
-    "ciRunId": 45127011595,
-    "state": "pending at last inspection; does not include local communication-clock source"
+    "commit": "6d3891b687658bb4030b76c6ef0b80c0c21fed8a",
+    "ciRunId": 45130587080,
+    "state": "in_progress at last inspection; does not cover local topic workflow"
+  },
+  "communicationCases": {
+    "state": "basic topic workflow in original conversation; unpublished",
+    "types": [
+      "payment_claim",
+      "financial_dispute",
+      "complaint"
+    ],
+    "states": [
+      "Open",
+      "Investigating",
+      "AwaitingCustomer",
+      "Resolved"
+    ],
+    "financialEffect": false,
+    "taskCompletionEffect": false,
+    "externalSend": false,
+    "historySource": "original immutable communication messages with content-free index, 50 events/page",
+    "ownerNoticeCreatesPersonalTask": false,
+    "cacheRecoveryRechecksCurrentSourceAccess": true,
+    "replayAndReadbackVerified": true,
+    "mobileActionsVisible": true,
+    "remaining": [
+      "Verified three-working-day reference and last-follow-up/no-response action",
+      "Official inbound topic association and messaging/reminders",
+      "Complete reporting and wider leave/source integration"
+    ]
   }
 }

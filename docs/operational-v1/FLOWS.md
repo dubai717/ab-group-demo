@@ -50,3 +50,23 @@ flowchart TD
  J -->|No| K[Preserve security hold; management followup]
  J -->|Yes| L[Existing authorized task access]
 ```
+
+## Original conversation topics and tasks
+
+```mermaid
+flowchart LR
+ C[Authorized original conversation] --> O[Open topic]
+ O --> H[Qualified participant handles]
+ H --> W[Await customer: deadline review]
+ H --> R[Administrative resolution by actual actor]
+ W --> R
+ R --> E[Reopen same topic with reason]
+ E --> H
+ O --> T[Explicit original task plus optional clock]
+ T --> S[Existing submit and review workflow]
+ R -.does not complete.-> T
+ R -.does not settle.-> L[Original approved receivables]
+ H --> M[Original immutable message history]
+ H --> N[Owner notification: no personal task]
+ W --> P[No-response action remains unavailable]
+```
