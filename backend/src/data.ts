@@ -1,3 +1,4 @@
+import {decodeIndividualDenials} from './individual-denials-source.js';
 import {companyAuditFields} from './company-audit.js';
 import { createRequire } from "node:module";
 import { randomUUID } from "node:crypto";
@@ -27,7 +28,7 @@ export async function audit(
 }
 export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
   // One simple-protocol packet, on this caller's existing transaction and RLS context.
-  // Statements and transformations are unchanged; no actor input is interpolated,
+  // The optional narrowing overrides share this packet; no actor input is interpolated,
   // no parallel clients or cross-request/user cache are introduced.
   const reads = await c.query([
     "select data from ab.roles",
@@ -37,8 +38,9 @@ export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
     "select * from ab.permission_grants where revoked_at is null",
     "select * from ab.bank_references",
     "select * from ab.bank_accounts",
+    "select key,value,tenant_id from ab.settings where key like 'user-denials-v1:%' and length(key)=52",
   ].join(';\n')) as unknown as { rows: any[] }[];
-  requireOk(Array.isArray(reads) && reads.length === 7 && reads.every(r => Array.isArray(r.rows)), 502, 'modelReadIncomplete');
+  requireOk(Array.isArray(reads) && reads.length === 8 && reads.every(r => Array.isArray(r.rows)), 502, 'modelReadIncomplete');
   const roles = reads[0].rows.map(
     (r) => r.data,
   );
@@ -99,8 +101,9 @@ export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
     bankReference: [],
     bankAccountPurposes: [],
   };
+  const initialDenials = decodeIndividualDenials(reads[7].rows,cipher,users);
   const policy = UserPolicy.createService(state, undefined, {
-    initialGrants,
+    initialGrants,initialDenials,
     auditCipher:cipher,
     grantsChanged: (rows: any[]) => {
       nextGrants = rows;
@@ -111,12 +114,13 @@ export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
   const actor = {
     ...user,
     permissions:
-      roles.find((r: any) => r.id === user.roleId)?.permissions || [],
+      (roles.find((r: any) => r.id === user.roleId)?.permissions || []).filter((right:string)=>!policy.isDenied(user.id,right)),
     companyBankPermissions: companies.map((co: any) => ({
       companyId: co.id,
       permissions: policy.bankPermissions(user.id, co.id),
     })),
   };
+  for(const action of ['edit','activate','deactivate'])if(policy.isDenied(actor.id,action==='edit'?'edit_company':action+'_company'))actor.companyPermissions={...(actor.companyPermissions||{}),[action]:'deny'};
   const references = reads[5].rows;
   state.bankReference = references
     .filter((r) => r.kind === "bank")
@@ -153,6 +157,7 @@ export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
     company,
     grants,
     initialGrants,
+    initialDenials,
     auditCipher:cipher,
     getNextGrants: () => nextGrants,
   };

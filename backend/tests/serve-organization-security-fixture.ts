@@ -1,6 +1,7 @@
 // Local synthetic providers only. The reviewed SQL is exercised here, never installed by the application.
 import {businessCentersFixture} from './business-centers-fixture.js';import {build} from '../src/app.js';import {readFile,writeFile} from 'node:fs/promises';
 const f=await businessCentersFixture();if(!/^ab_backup_[a-f0-9]{32}$/.test(f.sourceDatabase))throw Error('Synthetic database required');await f.admin.query(await readFile('backend/review/security-roles.sql','utf8'));
+if(process.env.AB_TEST_INDIVIDUAL_DENIALS==='1')await f.admin.query(await readFile('backend/review/individual-denials.sql','utf8'));
 if(process.env.AB_TEST_STANDARD_EXCEPTIONS==='1')await f.admin.query(await readFile('backend/review/security-role-exceptions.sql','utf8'));
 const user=await f.employee(process.env.AB_TEST_COMMUNICATION_CASES==='1'?'general_manager':'employee'),unit=await f.req('POST','/api/personnel/departments',{companyId:f.co1,typeCode:'COL',scope:'company'}),group=await f.req('POST','/api/personnel/departments',{companyId:f.co1,typeCode:'ADM',scope:'group'}),position=await f.req('POST','/api/personnel/positions',{nameAr:'اختبار الهيكل',nameEn:'Organization browser position',departmentId:unit.id});
 const employee=await f.req('POST','/api/personnel/employees',{companyId:f.co1,departmentId:unit.id,additionalDepartmentIds:[group.id],workCompanyIds:[f.co1,f.co2],positionId:position.id,nameAr:'موظف هيكل معزول',nameEn:'Isolated organization staff',jobTitle:'Synthetic',hiredOn:'2026-01-01'});

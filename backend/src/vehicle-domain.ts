@@ -5,7 +5,7 @@ import {createRequire} from 'node:module';
 import {randomUUID} from 'node:crypto';
 import {requireOk} from './core.js';
 export const V=createRequire(import.meta.url)('../../vehicle-policy.js');
-export const vehicleRight=(m:any,a:string,co:string)=>m.actor.status==='Active'&&(m.actor.roleId==='owner'||securityRoleRight(m,'vehicle_'+a,co)||m.grants.some((g:any)=>g.user_id===m.actor.id&&g.permission_id==='vehicle_'+a&&(g.scope_type==='group'||g.scope_type==='company'&&g.company_id===co)));
+export const vehicleRight=(m:any,a:string,co:string)=>!m.policy?.isDenied?.(m.actor.id,'vehicle_'+a)&&m.actor.status==='Active'&&(m.actor.roleId==='owner'||securityRoleRight(m,'vehicle_'+a,co)||m.grants.some((g:any)=>g.user_id===m.actor.id&&g.permission_id==='vehicle_'+a&&(g.scope_type==='group'||g.scope_type==='company'&&g.company_id===co)));
 export const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dubai'}).format(new Date());
 export const vehicleData=(r:any,cipher:any)=>({...cipher.open(r.payload_cipher),id:r.id,companyId:r.company_id,customerId:r.customer_id,requestId:r.request_id,assetId:r.asset_id,fileNumber:String(r.file_number),status:r.status,revision:r.revision});
 export async function number(c:any,tenant:string,kind:string){await c.query('insert into ab.vehicle_numbers values($1,$2,1)on conflict do nothing',[tenant,kind]);return (await c.query('update ab.vehicle_numbers set next_number=next_number+1 where tenant_id=$1 and kind=$2 returning next_number-1 value',[tenant,kind])).rows[0].value;}

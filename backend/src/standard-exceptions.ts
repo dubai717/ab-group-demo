@@ -16,10 +16,10 @@ export function standardExceptionImpact(m:any, actorId:string, roleId:string, po
   requireOk(!m.grants.some((x:any)=>x.issuer_id===target.id&&x.user_id!==target.id),409,'reviewDownstreamGrantsFirst');
  }
  const selected=new Set(ids);
- return {individualExceptionPolicy:policy,selectedGrantIds:ids,individualDenySupported:false,
+ return {individualExceptionPolicy:policy,selectedGrantIds:ids,individualDenySupported:true,
   affectedUsers:people.map((u:any)=>{const direct=additions.filter((g:any)=>g.userId===u.id);return {
    id:u.id,nameAr:u.nameAr,nameEn:u.nameEn,username:u.username,revision:u.revision,
-   individualAdditionCount:direct.length,individualDenyCount:null,individualDenySupported:false,
+   individualAdditionCount:direct.length,individualDenyCount:(m.initialDenials||[]).find((d:any)=>d.userId===u.id)?.actions.length||0,individualDenialsRetained:true,individualDenySupported:true,
    individualGrantsRetained:!direct.some((g:any)=>selected.has(g.entry.id)),
    selectedRemovalCount:direct.filter((g:any)=>selected.has(g.entry.id)).length,
    retainedAdditionCount:direct.filter((g:any)=>!selected.has(g.entry.id)).length,

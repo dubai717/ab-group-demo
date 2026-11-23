@@ -69,9 +69,15 @@
         "backend/tests/operational-permission-matrix.browser.cjs",
         "docs/operational-v1/MANAGED-USER-SCOPE.md",
         "backend/tests/managed-user-visibility.test.ts",
-        "backend/tests/managed-user-visibility.browser.cjs"
+        "backend/tests/managed-user-visibility.browser.cjs",
+        "backend/src/individual-denials-source.ts",
+        "backend/src/permission-admin.ts",
+        "backend/review/individual-denials.sql",
+        "backend/tests/individual-denials.test.ts",
+        "backend/tests/individual-denials.browser.cjs",
+        "docs/operational-v1/INDIVIDUAL-DENIALS.md"
       ],
-      "remaining": "نطاق دليل المستخدمين والعدادات وتغيير عضوية الستاندرد محمي ومختبر مع بقاء الاستثناءات الصريحة؛ المنع الفردي الموروث والنطاق الجغرافي والقبول الشامل غير مكتملة."
+      "remaining": "المنع الفردي داخل السياسة الأصلية ومراجعة المالك والحفظ الذري والاستبقاء بعد تحديث الستاندرد وأعداد المنع منفذة ومختبرة، وحارس SQL مرشح غير مطبق فعلياً. تبقى إزالة منع محدد ضمن دفعة الستاندرد وإعادة جميع الاستثناءات والنطاق الجغرافي وتوريث المؤشرات والقبول المتكامل."
     },
     {
       "id": "3.3",
@@ -90,9 +96,15 @@
         "backend/tests/standard-exceptions.browser.cjs",
         "backend/tests/standard-dashboard-atomic.test.ts",
         "backend/tests/standard-dashboard-atomic.browser.cjs",
-        "docs/operational-v1/ATOMIC-STANDARD-DASHBOARD.md"
+        "docs/operational-v1/ATOMIC-STANDARD-DASHBOARD.md",
+        "backend/src/individual-denials-source.ts",
+        "backend/src/permission-admin.ts",
+        "backend/review/individual-denials.sql",
+        "backend/tests/individual-denials.test.ts",
+        "backend/tests/individual-denials.browser.cjs",
+        "docs/operational-v1/INDIVIDUAL-DENIALS.md"
       ],
-      "remaining": "أضيف حفظ ذري للصلاحيات ومؤشرات الستاندرد، بما فيه تصميم جديد قبل الحفظ، ومعاينة قبل/بعد ورفض نسخة مؤشرات قديمة واستعادة نتيجة الحفظ مرة واحدة. الاستثناءات الفردية باقية. تبقى صلاحيات المنع الفردي الموروث والنطاق الجغرافي وتوريث/إعادة تخصيص المؤشرات الفردية ومعاينات الرسوم والجداول والقبول الشامل جزئية."
+      "remaining": "المنع الفردي داخل السياسة الأصلية ومراجعة المالك والحفظ الذري والاستبقاء بعد تحديث الستاندرد وأعداد المنع منفذة ومختبرة، وحارس SQL مرشح غير مطبق فعلياً. تبقى إزالة منع محدد ضمن دفعة الستاندرد وإعادة جميع الاستثناءات والنطاق الجغرافي وتوريث المؤشرات والقبول المتكامل."
     },
     {
       "id": "4.a",

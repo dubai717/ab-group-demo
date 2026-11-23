@@ -1900,5 +1900,53 @@
     ],
     "financialEffect": false,
     "releaseReady": false
+  },
+  "individualDenials": {
+    "status": "implemented-tested-unpublished",
+    "fullNative": {
+      "passed": 754,
+      "scope": "Final server code; before subsequent browser-only save recovery fixes"
+    },
+    "additionalRestoreTest": {
+      "passed": 1,
+      "scope": "Synthetic isolated encrypted archive restore only; not a hosted backup"
+    },
+    "rootTests": {
+      "passed": 189
+    },
+    "browser": {
+      "fullSuiteJourneys": 21,
+      "subsequentFocusedJourneys": 3,
+      "overlap": true,
+      "scope": "Later focused run includes held response, language change, safe retry and post-save controls"
+    },
+    "hostedSQLApplied": false,
+    "releaseReady": false,
+    "evidence": [
+      {
+        "path": "work/operational-evidence/individual-denials-full-native.log",
+        "sha256": "7e84fc36f8700717d66e037fd6bdd4381b1163a202b2ad5c04fd64e9bc5a0594"
+      },
+      {
+        "path": "work/operational-evidence/individual-denials-backup-native.log",
+        "sha256": "7a3a8006c8fac2d18665742e5d23b073ca04bca2a546396ff25398474dd58afa"
+      },
+      {
+        "path": "work/operational-evidence/individual-denials-postsave-static.log",
+        "sha256": "503ca33b70a07ffe046fc419d707ee843bb0aa46387fc4b38798f6b8560f91b5"
+      },
+      {
+        "path": "work/operational-evidence/individual-denials-postsave-build.log",
+        "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+      },
+      {
+        "path": "work/operational-evidence/individual-denials-full-browser-final.log",
+        "sha256": "80488fdc4ffa98e976ec133748dd2623c7892380fbc8a24664b9706e2869ffb9"
+      },
+      {
+        "path": "work/operational-evidence/individual-denials-held-locale-browser.log",
+        "sha256": "2ba696ec70c51a3fb4688da55cc727dc99cf9ba5f3dc3da5241fdbbc3fd170ee"
+      }
+    ]
   }
 }

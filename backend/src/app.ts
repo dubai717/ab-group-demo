@@ -464,6 +464,7 @@ export async function build(options: Options) {
         areas,
         grants,
         userScopeReferences,
+        individualDenials:m.initialDenials.filter((r:any)=>m.actor.roleId==='owner'||r.userId===s.user_id).map((r:any)=>({userId:r.userId,actions:r.actions})),
         companyDocumentAlertDays: settings.find(
           (r) => r.key === "companyDocumentAlertDays",
         )?.value || [60, 30, 7],

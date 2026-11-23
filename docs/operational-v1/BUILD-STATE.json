@@ -11,14 +11,14 @@
   "policyActivated": false,
   "next": [
     "Continue remaining source guards, inherited denials and integration; verify new CI without merge/deployment",
-    "Complete inherited individual denials, geography and atomic widget inheritance",
+    "Complete selected denial removal during standard updates, full reset, geography and widget inheritance",
     "Remaining leave/source adapters, source eligibility and cross-branch collection after PR115 stabilizes",
     "Verified case deadlines and final follow-up, official provider/use-case review",
     "Remaining documents/backups/imports and full acceptance"
   ],
   "limitations": [
     "Financial package dependency unresolved",
-    "Inherited individual denials, geography and atomic widget inheritance incomplete",
+    "Selected denial removal during standard updates, full reset, geography and widget inheritance incomplete",
     "WhatsApp official provider not connected",
     "Service policy original-source API integration incomplete"
   ],
@@ -85,10 +85,10 @@
   },
   "fullNativeRun": {
     "exit": 0,
-    "passed": 705,
+    "passed": 754,
     "failed": 0,
-    "logSha256": "59672cb1a8639ef8d0dfcc6643985f43b7ab1ad68f6a25d28cbb9b670b31125e",
-    "scope": "previous independent core plus original regressions; portal tests were added afterwards and are not covered by this count",
+    "logSha256": "7e84fc36f8700717d66e037fd6bdd4381b1163a202b2ad5c04fd64e9bc5a0594",
+    "scope": "complete backend suite at final API/RLS implementation; browser-only save recovery was corrected afterwards; one separate encrypted restore test passed later",
     "sameFinalCommitAcceptance": false
   },
   "artifactHandling": "Local screenshot capture uses configurable RAM artifact root after ENOSPC; CI default work output is retained as synthetic PNG artifacts. No database or business backup cleanup.",
@@ -100,10 +100,11 @@
     "mergeAuthorized": false
   },
   "CI": {
-    "run": 17,
-    "runId": 45168919077,
-    "head": "8835fb60f5c2ef9feb993bdfd7e2922cc82c260b",
-    "status": "pending",
+    "run": 18,
+    "runId": 45172612052,
+    "head": "a40ecfdf96781e49c44e3c88c5d27c4553ebc9b0",
+    "status": "completed",
+    "conclusion": "success",
     "notProofForCurrentUnpushedChanges": true
   },
   "leaveReturn": {
@@ -237,9 +238,9 @@
     ]
   },
   "independentVerifiedCI": {
-    "run": 12,
-    "runId": 45141828553,
-    "head": "51bb401cef6f3ab10b483a2179f391db61ceba75",
+    "run": 18,
+    "runId": 45172612052,
+    "head": "a40ecfdf96781e49c44e3c88c5d27c4553ebc9b0",
     "conclusion": "success",
     "notProofForCurrentUnpushedChanges": true
   },
@@ -247,7 +248,7 @@
     "patch": "/tmp/ab-v1-durable-code-diff.patch.gz",
     "manifest": "/tmp/ab-v1-durable-code-diff.json",
     "scope": "code only; not a database backup",
-    "baseRemoteCommit": "8835fb60f5c2ef9feb993bdfd7e2922cc82c260b",
+    "baseRemoteCommit": "a40ecfdf96781e49c44e3c88c5d27c4553ebc9b0",
     "rotationEvidence": "/tmp/ab-v1-code-checkpoint-rotation.json"
   },
   "selectedExceptions": {
@@ -257,7 +258,7 @@
     "auditAndAtomicRollback": true,
     "unselectedGrantsPreserved": true,
     "downstreamCascadeAllowed": false,
-    "inheritedDenySupported": false
+    "inheritedDenySupported": true
   },
   "communicationTaskClock": {
     "state": "original conversation task supports optional atomic exact UAE deadline",
@@ -280,8 +281,8 @@
     ]
   },
   "latestRemoteBeforeThisBuild": {
-    "head": "8835fb60f5c2ef9feb993bdfd7e2922cc82c260b",
-    "tree": "b31c175814bd8f22d4dd9208ed09b19781864ca7"
+    "head": "a40ecfdf96781e49c44e3c88c5d27c4553ebc9b0",
+    "tree": "c4887ddf09ddfee4542e4d90785ae6a151b0a46f"
   },
   "communicationCases": {
     "state": "basic topic workflow in original conversation; unpublished",
@@ -461,6 +462,37 @@
       "substitute coverage continuity",
       "automatic reminders and official provider",
       "full release acceptance"
+    ]
+  },
+  "individualDenials": {
+    "state": "implemented and locally tested; unpublished",
+    "originalPolicyAndOwnerPlanReused": true,
+    "storedGrantsAndStandardRetained": true,
+    "reasonAndBeforeAfterReviewRequired": true,
+    "freshVersionAndIdempotentReplay": true,
+    "mixedGrantAndDenialAtomicRollback": true,
+    "schemaReview": "backend/review/individual-denials.sql",
+    "hostedSchemaApplied": false,
+    "writesBeforeReviewedGuard": false,
+    "scope": "personal action denial across current authorized scope; no added company access",
+    "standardUpdateShowsAdditionAndDenialCounts": true,
+    "defaultStandardUpdateRetainsDenials": true,
+    "fullBackendPass": 754,
+    "laterIsolatedBackupPass": 1,
+    "operationalUIJourneys": 21,
+    "laterUIRecoveryJourneys": 3,
+    "staticPass": 189,
+    "postSaveControlsEnabled": true,
+    "pendingLocaleKeepsInputsFrozenAndRetained": true,
+    "uncertainSaveRetriesConfirmedSnapshot": true,
+    "financialEffect": false,
+    "releaseReady": false,
+    "remaining": [
+      "selected denial removal in the standard update batch",
+      "full employee exception reset",
+      "geographic scope",
+      "complete widget inheritance/reset and chart/table previews",
+      "wider integration acceptance"
     ]
   }
 }
