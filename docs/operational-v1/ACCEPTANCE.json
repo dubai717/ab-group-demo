@@ -3202,10 +3202,10 @@
     "authorityChanged": false,
     "canApply": false,
     "sourceChecksums": {
-      "backend/src/work-scope-preview.ts": "cf7ee01b838a171469b4599bcd65d69574270068a238115fdc394eff4a0208bb",
+      "backend/src/work-scope-preview.ts": "b7bf8e4c2f193c3c22ebe7b2c6dac86b78c58d65cefd6af6e536c0edeb907511",
       "backend/src/app.ts": "998db5d4860587ae3a2d03d893856c06304a5f1b098c781fe71ead991558d377",
       "backend/src/view-as.ts": "832158c4a4e367b11fd3359e65a162eebe2be1fb024c9bc2a4602ff1411bb092",
-      "backend/tests/work-scope-preview.test.ts": "a3a23a63711f70973a8349767ac90ac762518ad7b1d5cde7b4fc691e57aa039d"
+      "backend/tests/work-scope-preview.test.ts": "b904e9b92b31b2f6fa0d01f7b20c430d004446553335a651edc4e28895344ae6"
     },
     "native": {
       "tests": 25,
@@ -3284,6 +3284,37 @@
       "no membership or financial activation",
       "no current full UI acceptance promoted from older37 journey run",
       "no historical migration or hosted restore"
+    ]
+  },
+  "companyScopeCompiledReadinessVerification": {
+    "asOf": "2026-11-23",
+    "state": "tested_unpublished_core_only",
+    "canApply": false,
+    "sourcePayloadVerified": false,
+    "relationshipRulesComplete": false,
+    "native": {
+      "passed": 3,
+      "failed": 0,
+      "log": "work/evidence/company-scope-readiness-integrated.log",
+      "sha256": "07163c1b11f25bab3426274f6ffc0fb3834cc55c8119452e34365eb9e5406711"
+    },
+    "typecheck": "passed",
+    "schemaFingerprint": "8c6114290ae45532a92137e0e4ed40762595f516a13bd25a213e708158a5a6d6",
+    "sourceChecksums": {
+      "backend/src/company-scope-manifest.ts": "18fb3b344d2a3f17d0fa4bd8ef93793b425f50a1f782ad8186c1ff58a8ae69c9",
+      "backend/src/company-scope-readiness.ts": "99596f1690e4a8d4d9f886fcdb905a489493f29570daba1d63e87ca4b3b6721f",
+      "backend/src/work-scope-preview.ts": "b7bf8e4c2f193c3c22ebe7b2c6dac86b78c58d65cefd6af6e536c0edeb907511",
+      "backend/tests/company-scope-readiness.test.ts": "086dfb876fb90609612765f6971248ccc1833d2458b1e8570a259a245fe54b63",
+      "backend/tests/work-scope-preview.test.ts": "b904e9b92b31b2f6fa0d01f7b20c430d004446553335a651edc4e28895344ae6",
+      "docs/operational-v1/COMPANY-SCOPE-PROTOTYPE.md": "48ab55a92505587eb26b11585877fd2cb995a5ee5a0cb484e7a2df039f6e654e"
+    },
+    "hostedChanges": false,
+    "financial95Promoted": false,
+    "remaining": [
+      "signed original source apply",
+      "special and FK relationship policies",
+      "privileged function review",
+      "compatible rollback and full API/export acceptance"
     ]
   }
 }
