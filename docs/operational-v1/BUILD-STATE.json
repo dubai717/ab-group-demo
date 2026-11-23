@@ -11,7 +11,7 @@
   "policyActivated": false,
   "next": [
     "Verify current-head CI and remaining integration without merge or deployment",
-    "Actual geographic scope and broader remaining acceptance; widget overlay now wired and tested locally",
+    "Recorded operating-centre/company mapping and effective geographic scope; original geography source projection now tested, no automatic grants",
     "Remaining leave/source adapters, source eligibility and cross-branch collection after PR115 stabilizes",
     "Verified case deadlines and final follow-up, official provider/use-case review",
     "Remaining documents/backups/imports and full acceptance"
@@ -279,8 +279,8 @@
     ]
   },
   "latestRemoteBeforeThisBuild": {
-    "commit": "2ac1284aae433bf8aa8f4f820448bbb9d8e0b6ef",
-    "tree": "d715a3294a458ba2aca3035caf7eb5d6cbd7b662"
+    "commit": "8b788d83a06b66bead608d6602d4db0cdc095edd",
+    "tree": "7a8f0d6a5219667b7f358dd7d8c25810f161d33c"
   },
   "communicationCases": {
     "state": "basic topic workflow in original conversation; unpublished",
@@ -568,5 +568,12 @@
     "run": 22,
     "status": "in_progress_at_last_check",
     "commit": "2ac1284aae433bf8aa8f4f820448bbb9d8e0b6ef"
+  },
+  "workScopeSources": {
+    "status": "read-only-tested-unpublished",
+    "effectiveGeographicScopeComplete": false,
+    "centreMappingsAvailable": false,
+    "authorityChanged": false,
+    "documentation": "docs/operational-v1/WORK-SCOPE-SOURCES.md"
   }
 }

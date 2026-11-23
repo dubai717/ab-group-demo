@@ -2185,5 +2185,22 @@
       "backend/src/security-roles.ts": "08607f472ef282d809f72ad1f0e10afa43fd82123e039574af8243d66be586be",
       "user-management.js": "0c2476eabb51b21df9718eabcdac8a0414d00f55d8d68f1bcbab78d5de2cba8f"
     }
+  },
+  "workScopeSources": {
+    "status": "read-only-tested-unpublished",
+    "native": 9,
+    "browser": 2,
+    "static": 189,
+    "types": "passed",
+    "build": "passed",
+    "centreMappingsAvailable": false,
+    "authorityChanged": false,
+    "evidence": {
+      "work-scope-sources-native.log": "a3c9bfe2f1cbfd90373dd26fe27dfca02ce2697a504ea4131703b1afe61b870d",
+      "work-scope-sources-browser.log": "7f0be1c91b382a2706ed1937edffa1c05369bebdedac84594f1a7e6178366d26",
+      "work-scope-sources-types.log": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+      "work-scope-sources-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "work-scope-sources-static.log": "3f5cc38399b49aceb4c451ba48590976fa618889d4b232fc84958d9062f304a6"
+    }
   }
 }

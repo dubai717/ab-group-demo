@@ -88,7 +88,10 @@
         "backend/tests/dashboard-component-preview.browser.cjs",
         "docs/operational-v1/DASHBOARD-INHERITANCE.md",
         "backend/tests/dashboard-inheritance.test.ts",
-        "backend/tests/dashboard-inheritance.browser.cjs"
+        "backend/tests/dashboard-inheritance.browser.cjs",
+        "docs/operational-v1/WORK-SCOPE-SOURCES.md",
+        "backend/tests/work-scope-source-api.test.ts",
+        "backend/tests/work-scope-sources.browser.cjs"
       ],
       "remaining": "توريث المؤشرات وإضافاتها ومنعها الفردي وإعادة الضبط ومعاينة أثر التحديث منفذة ومختبرة محلياً وغير منشورة. يبقى النطاق الجغرافي الحقيقي والقبول المتكامل واعتماد SQL والنشر النهائي.",
       "additionalVerifiedSource": [
