@@ -279,8 +279,8 @@
     ]
   },
   "latestRemoteBeforeThisBuild": {
-    "commit": "483acdac874317b137df0a919228cd60625e4c6f",
-    "tree": "911260f129d5c043fada538379fdbc1d062832ad"
+    "commit": "b32db2e07b4c5c275ec5d6f86578cbaa9fbc0760",
+    "tree": "74a65b73398ad9ff0b3daf0c91da1499c6d60894"
   },
   "communicationCases": {
     "state": "basic topic workflow in original conversation; unpublished",
@@ -565,9 +565,9 @@
     "financialEffect": false
   },
   "latestCI": {
-    "run": 25,
-    "status": "in_progress_at_last_check",
-    "commit": "483acdac874317b137df0a919228cd60625e4c6f"
+    "run": 26,
+    "status": "pending_at_last_check",
+    "commit": "b32db2e07b4c5c275ec5d6f86578cbaa9fbc0760"
   },
   "workScopeSources": {
     "status": "read-only-tested-unpublished",
@@ -593,5 +593,13 @@
     "focusedUIAfter": 6,
     "legacyPathPreserved": true,
     "compatibleRollbackReaderRequired": true
+  },
+  "backupSourceCapture": {
+    "status": "code-fixed-tested-unpublished",
+    "nativeUnitCases": 10,
+    "actualBackupCreated": false,
+    "hostedRead": false,
+    "historicalEgressAttributionProved": false,
+    "documentation": "docs/operational-v1/BACKUP-SOURCE-CAPTURE.md"
   }
 }

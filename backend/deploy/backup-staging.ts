@@ -1,3 +1,4 @@
+import{isRetainedBackupPath}from'./private-backup-store.js';
 // Read-only source capture. Not scheduled/enabled; no restore or cleanup operations.
 import {Pool} from 'pg';
 import {personnelReleasePlan,personnelReleaseGuard} from './personnel-release.js';
@@ -34,6 +35,14 @@ async function objectBytes(endpoint:string,key:string,name:string,remaining:numb
  const chunks:Buffer[]=[];let total=0;for await(const bytes of r.body as any){total+=bytes.length;if(total>remaining)throw Error('object size limit');chunks.push(Buffer.from(bytes));}
  return Buffer.concat(chunks);
 }
+// Shared source capture seam: bounded reads only, no upload/delete/restore operations.
+export async function captureBackupStorageObjects(names:Array<{name:string}>,remainingBudget:number,read:(name:string,remaining:number)=>Promise<Buffer>){
+ if(!Number.isSafeInteger(remainingBudget)||remainingBudget<0||remainingBudget>backupLimit)throw Error('backupObjectBudgetReviewRequired');
+ const seen=new Set<string>();for(const row of names){if(typeof row.name!=='string'||row.name.split('/').some(s=>!s||s==='.'||s==='..')||seen.has(row.name))throw Error('backupObjectSourceReviewRequired');seen.add(row.name);}
+ const objects=new Map<string,Buffer>();let bytesRead=0,excludedRetainedBackupObjects=0;
+ for(const row of names){if(isRetainedBackupPath(row.name)){excludedRetainedBackupObjects++;continue;}const bytes=await read(row.name,remainingBudget-bytesRead);if(!Buffer.isBuffer(bytes)||bytes.length>remainingBudget-bytesRead)throw Error('backupObjectBudgetExceeded');bytesRead+=bytes.length;objects.set('storage/'+row.name,bytes);}
+ return{objects,bytesRead,copiedObjectCount:objects.size,excludedRetainedBackupObjects,totalSourceObjectCount:names.length};
+}
 async function run(){
  let pool:Pool|undefined;
  try{
@@ -49,12 +58,12 @@ async function run(){
    const release=personnelRelease?await personnelReleasePlan():financialRelease?await financialReleasePlan():vehicleRelease?await releasePlan():null;if(approved.migrations.some((m:any)=>!ledger.some(r=>r.name===m.name&&r.sha256===m.sha256))||(!release&&ledger.length!==8)||ledger.some(r=>![...approved.migrations,...(release?.migrations||[])].some(m=>m.name===r.name&&m.sha256===r.sha256)))throw Error('approved schema mismatch');
    const snapshot=(await c.query('select pg_export_snapshot() id')).rows[0].id;
    if(!/^[A-Fa-f0-9-]+$/.test(snapshot))throw Error('snapshot invalid');
-   const database=await dump(cfg.pg,snapshot),objects=new Map<string,Buffer>();let size=database.length;
+   const database=await dump(cfg.pg,snapshot);
    const names=(await c.query("select name from storage.objects where bucket_id='ab-private-test' order by name")).rows;
-   for(const row of names){const b=await objectBytes(cfg.endpoint,keys.secret,row.name,backupLimit-size);size+=b.length;objects.set('storage/'+row.name,b);}
+   const captured=await captureBackupStorageObjects(names,backupLimit-database.length,(name,remaining)=>objectBytes(cfg.endpoint,keys.secret,name,remaining)),objects=captured.objects;
    const roles=(await c.query("select rolname,rolcanlogin,rolsuper,rolcreatedb,rolcreaterole,rolreplication,rolbypassrls from pg_roles where rolname in('ab_runtime','ab_scanner') order by rolname")).rows;
    const policies=(await c.query("select * from pg_policies where schemaname='ab' order by tablename,policyname")).rows;
-   objects.set('metadata/restore-context.json',Buffer.from(JSON.stringify({format:'AB-STAGING-CONTEXT-1',createdAt:new Date().toISOString(),ledger,roles,policies,objectCount:names.length,authIncluded:true,schemas:['ab','public','auth','storage'],notes:'Isolated compatible Supabase restore only after approval; no role passwords, API keys or DATA_ENCRYPTION_KEY included. Expire restored sessions. Provider config and bucket bytes must be restored separately.'})));
+   objects.set('metadata/restore-context.json',Buffer.from(JSON.stringify({format:'AB-STAGING-CONTEXT-1',createdAt:new Date().toISOString(),ledger,roles,policies,objectCount:captured.copiedObjectCount,totalSourceObjectCount:captured.totalSourceObjectCount,excludedRetainedBackupObjects:captured.excludedRetainedBackupObjects,excludedBackupArchiveBytes:true,authIncluded:true,schemas:['ab','public','auth','storage'],notes:'Isolated compatible Supabase restore only after approval; no role passwords, API keys or DATA_ENCRYPTION_KEY included. Expire restored sessions. Storage bytes are included and require the compatible Storage restoration procedure. Retained backup archive bytes are intentionally excluded. Provider configuration and separately secured encryption keys are not included.'})));
    const sealed=archive(database,objects,cfg.key),verified=restoreArchive(sealed,cfg.key);
    if(verified.objects.size!==objects.size||!verified.database.equals(database))throw Error('archive verification failed');
    await mkdir('work/backups',{recursive:true,mode:0o700});

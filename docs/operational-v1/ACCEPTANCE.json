@@ -2247,5 +2247,26 @@
       "backend/src/permission-standard-reset.ts": "cafbfef4904a6acb52b492121b72d6fd19d43c31c8ecf82d17a3e3c7165a2855",
       "user-management.js": "5c921ba15cbf43dc7cc588cce027879d4243afe8848dffdcf3d902a4a784081a"
     }
+  },
+  "backupSourceCapture": {
+    "status": "code-fixed-tested-unpublished",
+    "unitCases": 10,
+    "static": 189,
+    "types": "passed",
+    "build": "passed",
+    "actualBackupCreated": false,
+    "actualRestorePerformed": false,
+    "hostedReads": false,
+    "evidence": {
+      "backup-source-capture-before.log": "60e2869073840f4f012b7db462a1888a48d3d6e0ffc3cc697008e248027eea77",
+      "backup-source-capture-final.log": "28b736adfff62331767971690d704011ea571cc0dbb0bc243820be96eef47cc9",
+      "backup-source-capture-types.log": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+      "backup-source-capture-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "backup-source-capture-static.log": "fc7a9d08a61d5b971bc97ec5a47b6222c1f9c5b1bf8a0967df7961da3731e9ad"
+    },
+    "sourceSha256": {
+      "backend/deploy/backup-staging.ts": "fed7e7a8ad68fa804aeb18dc175732d22832f5aeaaa7f74c67ae6b0c018c61fc",
+      "backend/tests/backup-source-capture.test.ts": "15d45eb3d42b650d1c20d419ff9920ccba803c6ed234f1cb90300208a88a0903"
+    }
   }
 }
