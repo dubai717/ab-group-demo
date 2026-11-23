@@ -818,7 +818,20 @@
       "scope": "tests/*.test.cjs backend/deploy/v2/*.test.mjs"
     },
     "types": "pass",
-    "providerFreeBuild": "pass"
+    "providerFreeBuild": "pass",
+    "sourceChecksums": {
+      "backend/src/communication-followup.ts": "31d17b2e1f0722ef104a68f56d7010fdadf0434cad1ffcfe8dd33f6b302f3327",
+      "backend/src/database-errors.ts": "a98aae65d4bd16baced65f23ef6407de726b237f9bedf3bb1bf5b578792bdb2b",
+      "backend/src/communications.ts": "cedeed964574eae1b4099c539cdf46785e1c794eee1911288b37a3ae35127c63",
+      "backend/src/personnel-domain.ts": "f4e2433931ffeb889af55c784d8741c2f230dbb94b73da817ba99558f985c64f",
+      "backend/src/app.ts": "486143849461aca3ca3e9151961a6cc331d51a68f5c078d75ce2e01947224b0e",
+      "communications-ui.js": "8e3e59c3ef23a24ddc4499ae438be60def23a5abf17c5f9e1cf04db4d87d1910",
+      "backend/tests/communication-followup.test.ts": "5768a038fa4d27fa32032413c157bc425ed96ecef752adbe837de13759ce95aa",
+      "backend/tests/database-errors.test.ts": "da6bcd39b8bd03b58b518b8b6940916a66689204a5f703f436e90bd352fe3cd8",
+      "backend/tests/communication-followup.browser.cjs": "9a20a9cd47fcbb888f62fc45542c4b94234ed50a62a4ee783f60473a3a718e92",
+      "backend/tests/serve-case-followup-fixture.ts": "57fced9cfa74499c8b410eab40ef9677d8f36eb5ef1d3b0e142cbac4f072a0a2",
+      "backend/tests/operational-v1-suite.browser.cjs": "439c081215017b2fa8263f88419557ea09fdb547290cb5db56e3b727018a0736"
+    }
   },
   "currentCI": {
     "run": 30,
