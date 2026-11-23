@@ -2466,6 +2466,14 @@
       {
         "path": "work/evidence/static-full.log",
         "sha256": "222f0e1cab3bc146724f2a31648d2ab84d3ab683262b7d3a0fa243c9705e3c8c"
+      },
+      {
+        "path": "work/evidence/task-regressions.log",
+        "sha256": "527b50c52edb9c8d1523527c8676063866bbde363b57bf741d9955050de2294b"
+      },
+      {
+        "path": "work/evidence/eligibility-policy.log",
+        "sha256": "fb255d46a16d048f6f237623fad4d48111ae682a8b4eb68a640ecd078b3a2c3c"
       }
     ],
     "native": {
@@ -2500,9 +2508,61 @@
       "communications-ui.js": "8e3e59c3ef23a24ddc4499ae438be60def23a5abf17c5f9e1cf04db4d87d1910",
       "backend/tests/communication-followup.test.ts": "5768a038fa4d27fa32032413c157bc425ed96ecef752adbe837de13759ce95aa",
       "backend/tests/database-errors.test.ts": "da6bcd39b8bd03b58b518b8b6940916a66689204a5f703f436e90bd352fe3cd8",
-      "backend/tests/communication-followup.browser.cjs": "9a20a9cd47fcbb888f62fc45542c4b94234ed50a62a4ee783f60473a3a718e92",
+      "backend/tests/communication-followup.browser.cjs": "fa9a672d9ebbe8c403f44159b38e3214697668dda81ed3fb1a70042c396b6305",
       "backend/tests/serve-case-followup-fixture.ts": "57fced9cfa74499c8b410eab40ef9677d8f36eb5ef1d3b0e142cbac4f072a0a2",
       "backend/tests/operational-v1-suite.browser.cjs": "439c081215017b2fa8263f88419557ea09fdb547290cb5db56e3b727018a0736"
+    },
+    "currentBrowser": {
+      "status": "pass",
+      "scope": "original follow-up form, AR/EN, 1440/768/390 widths and no internal form overflow; actual source retry/invariants retained",
+      "log": {
+        "path": "work/evidence/case-preview-ui-final.log",
+        "sha256": "af66727b60653c2a69a601289fd6598e73758f8df849009a75ccd29eac662138"
+      },
+      "visualReview": [
+        "Arabic phone390 reviewed",
+        "English desktop1440 reviewed"
+      ],
+      "screenshots": [
+        {
+          "path": "work/operational-case-followup-ar-1440.png",
+          "sha256": "71f5b0c2453ff55e15c8a9f187b41361cd13237f5db9de5de63b392de580753a",
+          "syntheticOnly": true
+        },
+        {
+          "path": "work/operational-case-followup-ar-390.png",
+          "sha256": "0fed72faa1a1fd6d8c20fa47176bb177eb26df00bc40fdd5010a00289cc06af2",
+          "syntheticOnly": true
+        },
+        {
+          "path": "work/operational-case-followup-ar-768.png",
+          "sha256": "029ddecda9994213988ec4f36b025a00dbb18868decac8ce3e9dd1038bdc8220",
+          "syntheticOnly": true
+        },
+        {
+          "path": "work/operational-case-followup-en-1440.png",
+          "sha256": "cd20ece4da23cea5aac57ebb824f64d10127ca5a46d2086c8eab8d8fa82d1e42",
+          "syntheticOnly": true
+        },
+        {
+          "path": "work/operational-case-followup-en-390.png",
+          "sha256": "e78e4f518128025ad5af8337c96a5d0f2b7fdfefded6419f72d692f60a0d3c6b",
+          "syntheticOnly": true
+        },
+        {
+          "path": "work/operational-case-followup-en-768.png",
+          "sha256": "c4a4e3c432c7eba53485d5b89babf58ea9671ccca0683ffba4a200e8e43f20a4",
+          "syntheticOnly": true
+        }
+      ],
+      "failedHarnessAttempt": "initial invocation preceded fresh fixture readiness and refused connection; not acceptance; final rerun waited for actual readiness"
+    },
+    "overlappingRegressions": {
+      "tasks": 8,
+      "pass": 8,
+      "eligibility": 11,
+      "eligibilityPass": 11,
+      "notOneFullSuite": true
     }
   },
   "currentCI": {
