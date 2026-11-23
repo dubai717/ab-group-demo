@@ -100,11 +100,10 @@
     "mergeAuthorized": false
   },
   "CI": {
-    "run": 12,
-    "runId": 45141828553,
-    "head": "51bb401cef6f3ab10b483a2179f391db61ceba75",
-    "status": "in_progress",
-    "ui": "success",
+    "run": 13,
+    "runId": 45146692456,
+    "head": "72e2cf62c838ee4ef5e0a7614c30da4ba5412f8c",
+    "status": "pending",
     "notProofForCurrentUnpushedChanges": true
   },
   "leaveReturn": {
@@ -281,10 +280,8 @@
     ]
   },
   "latestRemoteBeforeThisBuild": {
-    "pr": 116,
-    "commit": "6d3891b687658bb4030b76c6ef0b80c0c21fed8a",
-    "ciRunId": 45130587080,
-    "state": "in_progress at last inspection; does not cover local topic workflow"
+    "head": "72e2cf62c838ee4ef5e0a7614c30da4ba5412f8c",
+    "tree": "2fb3677e26ccd4340abfddd6807a122acccc9b4e"
   },
   "communicationCases": {
     "state": "basic topic workflow in original conversation; unpublished",
@@ -335,5 +332,33 @@
       "failed": 0,
       "notAdditiveToEarlierEvidence": true
     }
+  },
+  "atomicStandardDashboard": {
+    "state": "implemented and locally tested; unpublished",
+    "draftBeforeFirstSave": true,
+    "writeBeforeParentConfirmation": false,
+    "beforeAfterPreview": true,
+    "roleAndWidgetTransaction": "one original transaction",
+    "staleSnapshotOverwritten": false,
+    "individualOverridesRetained": true,
+    "nativeFocused": {
+      "pass": 12,
+      "fail": 0
+    },
+    "actualMemberOverrideRegression": {
+      "pass": 1,
+      "overlapsFocusedEvidence": true
+    },
+    "uiJourneys": 17,
+    "widths": [
+      1440,
+      768,
+      390
+    ],
+    "locales": [
+      "ar",
+      "en"
+    ],
+    "releaseReady": false
   }
 }

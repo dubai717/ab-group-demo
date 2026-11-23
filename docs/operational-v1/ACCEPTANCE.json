@@ -901,6 +901,36 @@
       "bytes": 8094,
       "sha256": "48dc19eebae04675e4f7921a10f421d5ba3f8682aab1f94c07d14d41fd33759e",
       "scope": "68 HR, leave-return portal and original delegation history regressions passed; isolated synthetic providers only"
+    },
+    {
+      "path": "work/operational-evidence/standard-dashboard-full-native.log",
+      "bytes": 1719,
+      "sha256": "426730f365a66c6507ae5f380b854254f697bd0986dff710e0feb7c37e78b106",
+      "scope": "12 native role/standard/dashboard/exception regressions passed; synthetic only"
+    },
+    {
+      "path": "work/operational-evidence/standard-dashboard-member-native.log",
+      "bytes": 272,
+      "sha256": "99b1e02568ea94dde3597324a6e12624a31edb86078692cd3dd3784615a262c2",
+      "scope": "Actual assigned standard member retains direct grant and individual dashboard restriction; overlaps focused evidence"
+    },
+    {
+      "path": "work/operational-evidence/standard-dashboard-review-fixed-build.log",
+      "bytes": 147,
+      "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "scope": "Compiled runtime graph and build pass after actual before/after review"
+    },
+    {
+      "path": "work/operational-evidence/standard-dashboard-final-seventeen-ui.log",
+      "bytes": 4710,
+      "sha256": "807e9b1abab2ecc3fc9908f891064f3a6cb0ca79098599aa677bb3c760586b89",
+      "scope": "17 actual operational UI journeys including unsaved standard indicators and before/after review at AR/EN desktop/tablet/mobile; no false dirty warning or duplicate role revision"
+    },
+    {
+      "path": "work/operational-evidence/standard-dashboard-final-static.log",
+      "bytes": 17689,
+      "sha256": "d1e0446d6d61158d6b6c08e03f1698952106391530408e413bfaff275e48f66b",
+      "scope": "182 static/delivery checks passed"
     }
   ],
   "failedAttemptsNotAcceptance": [
@@ -948,6 +978,21 @@
       "path": "work/operational-evidence/case-delegation-state-native.log",
       "sha256": "28cec269db94b12022ae2f0c5bebba5794b0cf1d30c8c06110f0ec62a4906c5b",
       "reason": "Acceptance exposed actual followup worker incorrectly auto-completing conversation tasks; fixed source completion gating, retained submit/review predicate"
+    },
+    {
+      "path": "work/operational-evidence/standard-dashboard-build.log",
+      "sha256": "67d3fed388a6ef311baf7ec96c87c639958a081b8853de4aec457898d7765e8b",
+      "reason": "Refactored snapshot initially omitted its cipher argument; corrected all call sites before successful graph/build and tests"
+    },
+    {
+      "path": "work/operational-evidence/standard-dashboard-review-ui.log",
+      "sha256": "1e4279f4967114256d3be1ce2565200b2988d05d33984f04130975d6d375fab1",
+      "reason": "Before/after review helper was inadvertently async and rendered a Promise; real UI assertion caught it. Restored synchronous formatter and original async role editor, then repeated target and all17 journeys"
+    },
+    {
+      "path": "work/operational-evidence/standard-dashboard-fixed-native.log",
+      "sha256": "ca3ac62a9d77daa405bb5c72dc393bca03dc08ebe01f413c4ec9263722059855",
+      "reason": "Synthetic injected P0001 rejection follows the existing422 mapping; test expectation corrected from500 while retaining full rollback assertions"
     }
   ],
   "screenshots": "CI preserves work/operational-*.png and work/dual-permissions-*.png for seven days; local RAM copies are temporary.",
@@ -1372,5 +1417,91 @@
     "localPreviewManifest": "/tmp/ab-v1-case-preview-manifest.json",
     "temporaryJPEGCopiesRemovedAfterReview": true,
     "databaseBackup": false
-  }
+  },
+  "atomicStandardDashboardScreenshots": [
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-standard-dashboard-atomic-ar-1440.png",
+      "bytes": 113999,
+      "sha256": "de32d9e6fc8958f913d94f327eb55fe979d52f35cd3a9e9c67448401dfaac40b",
+      "data": "synthetic only",
+      "visualReview": "Automated responsive and before/after content assertions; not a manual pixel review"
+    },
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-standard-dashboard-atomic-ar-390.png",
+      "bytes": 64405,
+      "sha256": "2e988b8ac11563ef944cd3c384a1556096ccea570f1fd1c0dafd386067e36336",
+      "data": "synthetic only",
+      "visualReview": "Automated responsive and before/after content assertions; not a manual pixel review"
+    },
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-standard-dashboard-atomic-ar-768.png",
+      "bytes": 77331,
+      "sha256": "70b802fd44257c8ee08961a3e5a85ac02610c7628490963a2a70b6b5231e34f3",
+      "data": "synthetic only",
+      "visualReview": "Automated responsive and before/after content assertions; not a manual pixel review"
+    },
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-standard-dashboard-atomic-en-1440.png",
+      "bytes": 111782,
+      "sha256": "dc21859162adf15e9b8423828318486bbacdeb8c062aba92aa7344861bb00787",
+      "data": "synthetic only",
+      "visualReview": "Automated responsive and before/after content assertions; not a manual pixel review"
+    },
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-standard-dashboard-atomic-en-390.png",
+      "bytes": 64180,
+      "sha256": "5c1eca8e66a42861f670afd91e22a91c71fe6521e41716808edbd70ca7b877a7",
+      "data": "synthetic only",
+      "visualReview": "Automated responsive and before/after content assertions; not a manual pixel review"
+    },
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-standard-dashboard-atomic-en-768.png",
+      "bytes": 75940,
+      "sha256": "b12faa1c4ecf2486165f9ecf1a3c92fc109e8fa011bf7c3c03ebae9c32029df9",
+      "data": "synthetic only",
+      "visualReview": "Automated responsive and before/after content assertions; not a manual pixel review"
+    },
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-standard-dashboard-review-ar-1440.png",
+      "bytes": 93045,
+      "sha256": "2b7cc893165d7a6ae7e5894c54869bd2aae1094d25162cfa3a47413417a85210",
+      "data": "synthetic only",
+      "visualReview": "Automated responsive and before/after content assertions; not a manual pixel review"
+    },
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-standard-dashboard-review-ar-390.png",
+      "bytes": 102139,
+      "sha256": "d4489718bab064171240b02ce8359f2017e406f28ce19d1374a3c02bb9318a1d",
+      "data": "synthetic only",
+      "visualReview": "Automated responsive and before/after content assertions; not a manual pixel review"
+    },
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-standard-dashboard-review-ar-768.png",
+      "bytes": 103431,
+      "sha256": "2015aad2f0bab5f4e4ee55fb31394c132e4091d1915e2a5e6aa6b8dfa92b95ed",
+      "data": "synthetic only",
+      "visualReview": "Automated responsive and before/after content assertions; not a manual pixel review"
+    },
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-standard-dashboard-review-en-1440.png",
+      "bytes": 93587,
+      "sha256": "627909de45170309d4e926fbf8a84528cdee7804fc3ee481836fb63f9ce328d9",
+      "data": "synthetic only",
+      "visualReview": "Automated responsive and before/after content assertions; not a manual pixel review"
+    },
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-standard-dashboard-review-en-390.png",
+      "bytes": 110876,
+      "sha256": "62f1bb57abd3a10e455fb62304d58920e850bd7f312b682f8128da144bc46671",
+      "data": "synthetic only",
+      "visualReview": "Automated responsive and before/after content assertions; not a manual pixel review"
+    },
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-standard-dashboard-review-en-768.png",
+      "bytes": 115959,
+      "sha256": "0d0caea1d76e3531689c936d58789328929c035f8eb05069f43204be60fe6dc1",
+      "data": "synthetic only",
+      "visualReview": "Automated responsive and before/after content assertions; not a manual pixel review"
+    }
+  ]
 }

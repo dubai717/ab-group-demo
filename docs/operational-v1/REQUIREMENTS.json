@@ -49,7 +49,10 @@
       "evidence": [
         "permission-matrix-ui.js",
         "backend/src/security-roles.ts",
-        "backend/tests/job-standards.test.ts"
+        "backend/tests/job-standards.test.ts",
+        "backend/tests/standard-dashboard-atomic.test.ts",
+        "backend/tests/standard-dashboard-atomic.browser.cjs",
+        "docs/operational-v1/ATOMIC-STANDARD-DASHBOARD.md"
       ],
       "remaining": "مصفوفة مستقلة فوق الصلاحيات الحالية؛ نقل القسم لا يمنح الإجراءات."
     },
@@ -77,9 +80,12 @@
         "backend/src/standard-exceptions.ts",
         "backend/review/security-role-exceptions.sql",
         "backend/tests/standard-exceptions.test.ts",
-        "backend/tests/standard-exceptions.browser.cjs"
+        "backend/tests/standard-exceptions.browser.cjs",
+        "backend/tests/standard-dashboard-atomic.test.ts",
+        "backend/tests/standard-dashboard-atomic.browser.cjs",
+        "docs/operational-v1/ATOMIC-STANDARD-DASHBOARD.md"
       ],
-      "remaining": "معاينة الأثر والإزالة المحددة للإضافات والإصدار والتكرار والتراجع مختبرة؛ المنع الموروث وجميع معاينات المؤشرات وتوريثها الذري والقبول النهائي باقية. SQL غير مطبق على بيئة مستضافة."
+      "remaining": "أضيف حفظ ذري للصلاحيات ومؤشرات الستاندرد، بما فيه تصميم جديد قبل الحفظ، ومعاينة قبل/بعد ورفض نسخة مؤشرات قديمة واستعادة نتيجة الحفظ مرة واحدة. الاستثناءات الفردية باقية. تبقى صلاحيات المنع الفردي الموروث والنطاق الجغرافي وتوريث/إعادة تخصيص المؤشرات الفردية ومعاينات الرسوم والجداول والقبول الشامل جزئية."
     },
     {
       "id": "4.a",
