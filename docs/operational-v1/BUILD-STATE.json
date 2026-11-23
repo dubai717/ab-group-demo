@@ -10,7 +10,7 @@
   "decision": "last_two_actual_due_months",
   "policyActivated": false,
   "next": [
-    "Finish centre create/edit/review UI and robust uncertain-save/readback; read-only viewer is now tested. Then stable referenceable centre identity and actual geographic scope enforcement/rollback.",
+    "Finish stable referenceable centre identity and employee primary location, then actual geographic scope review/enforcement/rollback. Owner source viewer/editor tested; source edits grant no access.",
     "Verify current-head CI and remaining integration without merge or deployment",
     "Recorded operating-centre/company mapping and effective geographic scope; original geography source projection now tested, no automatic grants",
     "Remaining leave/source adapters, source eligibility and cross-branch collection after PR115 stabilizes",
@@ -1209,5 +1209,85 @@
       "31": "operational UI geometry failure; original-regressions success",
       "32": "in_progress at evidence capture"
     }
+  },
+  "operatingCentreEditorVerification": {
+    "syntheticOnly": true,
+    "published": false,
+    "sourceChecksums": {
+      "backend/src/operating-centres.ts": "9ac768b7e7a2aaadf72ecf2b37eebb48cb8313bca075ff86fe64b662f8a887b3",
+      "operating-centres-ui.js": "637fe3f9bd0099c88e6099d1592f00eb90c14f6082ef88af2f04e4d0ec526145",
+      "backend/tests/operating-centre-editor.browser.cjs": "88f1b9a55826c85bcb8b887cf490f651e40c6647f9909f285af437b33be8a017",
+      "backend/tests/operating-centre-write.test.ts": "a630f628769c2e2ae97c4c39a91b9ea5ca77daf38b0221dc5db7d472a69bf05a",
+      "backend/tests/operational-v1-suite.browser.cjs": "69876bce5063de9ebe79a8615831b050ed6ff760198a0d654db29a649fa40a6c"
+    },
+    "logs": [
+      {
+        "path": "work/evidence/centre-editor-browser.log",
+        "sha256": "f7e06bde5ae5042eeca4d4ead13f18679a2c141a3f2459b7066903053a87adb1"
+      },
+      {
+        "path": "work/evidence/centre-editor-native-full.log",
+        "sha256": "67b631682db08cc8f6d03a3a2863ab54e4c0ac04a6b0e769e9eb4daf04a40a3b"
+      },
+      {
+        "path": "work/evidence/centre-editor-static.log",
+        "sha256": "2507a15687e0834edda8f7f2de2dd4bf0b5c57b81b507b75930022bc7fdafb94"
+      },
+      {
+        "path": "work/evidence/centre-editor-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "work/evidence/centre-editor-build.log",
+        "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+      }
+    ],
+    "nativeTests": 6,
+    "rootStaticTests": 162,
+    "browser": "AR/EN desktop1440/tablet768/phone390; actual source options/validation/planning/save/readback; uncertain reply reuses exact receipt; known stale plan retains fields; obsolete held context suppressed; original employee draft and grants unchanged",
+    "screenshots": [
+      {
+        "path": "work/operational-centre-editor-ar-1440.png",
+        "sha256": "dc761b60705302c106eba3c8030248e8ae3e00b2fa08382bfd1f1b874db5669d",
+        "syntheticOnly": true
+      },
+      {
+        "path": "work/operational-centre-editor-ar-390.png",
+        "sha256": "60dddf44b08df627a8645f4f0009ddce9d6f334cb5f95db1f830a86107c2ebda",
+        "syntheticOnly": true
+      },
+      {
+        "path": "work/operational-centre-editor-ar-768.png",
+        "sha256": "67c9080ca2a4e75fcb7d330ef82196d0e6f66429d1152a1f1219fc26269879e3",
+        "syntheticOnly": true
+      },
+      {
+        "path": "work/operational-centre-editor-en-1440.png",
+        "sha256": "f84f8a4d4c1dafaf73c38aef2eab5d6b00eef803020f3ded92f07f57cc6a0c8f",
+        "syntheticOnly": true
+      },
+      {
+        "path": "work/operational-centre-editor-en-390.png",
+        "sha256": "432b61422ce5a3086877779d8660a40a0b7e9243f581fc4717fbaca9ad7933b2",
+        "syntheticOnly": true
+      },
+      {
+        "path": "work/operational-centre-editor-en-768.png",
+        "sha256": "d2284d35245d80fe7be196e14de80a58d194c4d799060c5936af40337a9a940a",
+        "syntheticOnly": true
+      }
+    ],
+    "visualReview": [
+      "Arabic phone390 inspected"
+    ],
+    "fullSuite": {
+      "journeys": 36,
+      "status": "in progress; prior35 passed separately"
+    },
+    "notComplete": [
+      "stable centre identity and employee primary work location",
+      "effective geographic permission/API/DB enforcement",
+      "full operational release acceptance"
+    ]
   }
 }

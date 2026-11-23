@@ -105,9 +105,13 @@
         "backend/src/operating-centre-write.ts",
         "backend/src/operating-centre-schema.ts",
         "backend/tests/operating-centre-write.test.ts",
-        "docs/operational-v1/OPERATING-CENTRES.md"
+        "docs/operational-v1/OPERATING-CENTRES.md",
+        "operating-centres-ui.js",
+        "backend/tests/operating-centre-editor.browser.cjs",
+        "backend/tests/operational-v1-suite.browser.cjs",
+        "backend/tests/operating-centre-restore.test.ts"
       ],
-      "remaining": "المصفوفة والاستثناءات وإعادة الضبط وتوريث المؤشرات منفذة وغير منشورة؛ مصدر جغرافي أصلي للقراءة موجود. أضيف مكوّن مراكز مستقل فعلياً عن المناطق ومراكز التكلفة، مع حارس بنية وRLS ومعاينة وحفظ وسجل مشفر واسترجاع الطلب نفسه؛ اختُبر على قواعد وهمية فقط. واجهة المراكز وتطبيق النطاق الفعلي ومركز العمل الأساسي والقبول الشامل باقية. لا تغيّر هذه الإضافات عضويات الشركات أو الأذونات، ولم تُطبق بنية المراكز على التشغيل.",
+      "remaining": "عرض المراكز وتاريخها ومحرر المالك المؤرخ ومعاينة قبل الحفظ واسترداد النتيجة غير المؤكدة اجتازت اختبارات معزولة؛ لا تمنح علاقات الدليل صلاحيات. يبقى الربط المرجعي الثابت وموقع عمل الموظف ونطاق المراكز الجغرافي الفعلي في API وRLS ومراجعة المتأثرين والتراجع. غير منشور.",
       "additionalVerifiedSource": [
         "docs/operational-v1/SELECTED-DENIALS.md",
         "docs/operational-v1/AUTHORITY-CACHE.md"
