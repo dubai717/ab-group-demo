@@ -476,7 +476,7 @@ function getSidebarItems(user) {
     return allItems.filter(item => item.id === 'bankAccounts' || ['dashboard', 'users', 'reports'].includes(item.id));
   }
 
-  return allItems.filter(item => ['bankAccounts', 'users'].includes(item.id) || isUserAllowed(user, item.permission));
+  return allItems.filter(item => (globalThis.ABCentral?.enabled && item.id === 'dashboard') || ['bankAccounts', 'users'].includes(item.id) || isUserAllowed(user, item.permission));
 }
 
 function render() {

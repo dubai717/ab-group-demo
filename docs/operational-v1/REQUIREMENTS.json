@@ -70,9 +70,12 @@
       "evidence": [
         "backend/src/security-roles.ts",
         "backend/tests/job-standards.test.ts",
-        "backend/tests/operational-permission-matrix.browser.cjs"
+        "backend/tests/operational-permission-matrix.browser.cjs",
+        "dashboard-ui.js",
+        "user-management.js",
+        "backend/tests/dashboard-indicator-preview.browser.cjs"
       ],
-      "remaining": "معاينة الفرق وأسماء الموظفين وأعداد الإضافات الفردية المحفوظة منفذة ومختبرة؛ المنع الموروث والإزالة الانتقائية ومعاينات مؤشرات +/× غير مكتملة."
+      "remaining": "معاينة الموظفين والفرق والإضافات وبطاقات الأرقام الفعلية +/× وربط الستاندرد المحفوظ مختبرة؛ الجداول والرسوم والمنع الموروث والإزالة الانتقائية والتأثير الذري غير مكتملة."
     },
     {
       "id": "4.a",

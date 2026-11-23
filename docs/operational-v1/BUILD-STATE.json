@@ -10,7 +10,7 @@
   "decision": "last_two_actual_due_months",
   "policyActivated": false,
   "next": [
-    "Upload tested working-clock and renderer-isolation fix to PR116; verify all original immutable CI jobs",
+    "Upload dashboard base/indicator acceptance and independent own-fund regression fixture to PR116; verify complete CI without merge/deploy",
     "Continue inherited deny, selective exception reset, dashboard widget standards and geographic scope",
     "Complete explicitly leave-linked delegations and substitute contribution summary",
     "Integrate source service eligibility and cross-branch collections after financial PR115 stabilizes",
@@ -30,7 +30,13 @@
     "/tmp/ab-v1-whatsapp-unit.log",
     "/tmp/ab-v1-leave-resume-proof-native.log",
     "/tmp/ab-v1-leave-resume-proof-types.log",
-    "/tmp/ab-v1-leave-proof-browser.log"
+    "/tmp/ab-v1-leave-proof-browser.log",
+    "/tmp/ab-v1-indicator-dirty-browser.log",
+    "/tmp/ab-v1-dashboard-regressions.log",
+    "/tmp/ab-v1-ten-final-browser.log",
+    "/tmp/ab-v1-dashboard-acceptance-native.log",
+    "/tmp/ab-v1-indicator-all-static-ram.log",
+    "/tmp/ab-v1-indicator-types.log"
   ],
   "financialBaselineCI": {
     "run": 355,
@@ -171,5 +177,36 @@
       "Integrate delegation/adoption and return",
       "Expand long-chain service-worker and reporting acceptance"
     ]
+  },
+  "dashboardBase": {
+    "state": "implemented and locally tested, unpublished",
+    "nativePassed": 7,
+    "browser": "actual custom role without dashboard datum permission, preserved content restriction, failed-read recovery, no hidden MyWork fetch, mobile menu after reload, AR/EN three widths",
+    "permissionsGranted": false,
+    "financialSourcesReadInBaseBranch": false
+  },
+  "dashboardIndicators": {
+    "state": "actual original numeric cards with +/× and saved-standard entry locally tested, unpublished",
+    "previewScope": "Owner reviewer authorized counts; never simulated employee data",
+    "automaticDataGrant": false,
+    "repeatedSourceReadsOnCardSelection": false,
+    "unsavedDraftProtection": true,
+    "remaining": [
+      "Table/chart previews",
+      "Atomic standard/widget impact and selective exceptions",
+      "Inherited deny and geography acceptance"
+    ],
+    "operationalJourneysPassed": 10,
+    "originalFocusedJourneysPassed": 5,
+    "nativeDashboardAndOrganizationPassed": 7,
+    "staticAndDeliveryPolicyPassed": 182
+  },
+  "independentLatestCI": {
+    "runId": 45106349520,
+    "commit": "0b2c60f1b8a15e9b6c33e97fd5d8caf45e43efb6",
+    "operationalUI": "success: eight original journeys",
+    "originalRegressions": "failed: shared handover/own-fund privacy fixture reached unchanged 300/min rate limiter; isolated reproduction confirmed HTTP429",
+    "laterSkippedStepsVerified": false,
+    "dashboardBaseAndIndicatorsCovered": false
   }
 }

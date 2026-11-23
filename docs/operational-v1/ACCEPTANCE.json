@@ -361,6 +361,113 @@
         "PASS real task center/contact chain and funding review UI: independent approve without reason, reject Other/details, mandatory return/correction, saved readback, missing-data block, once-only double click, no disbursement on approval, AR/EN desktop/tablet/phone.",
         "PASS V3 UI: top composer, zero/positive general fees, no false collection, residence amendment, dependent searchable catalogue, independent company, exact installment suggestion, dirty-edit navigation warning, documented assignment transfer, owner correction, approval and owner delivery task."
       ]
+    },
+    {
+      "log": "/tmp/ab-v1-dashboard-base-native.log",
+      "sha256": "e82a449de048c45834ab11b1ecb30d039f79ef25b0286694fc28e67e30ada8dc",
+      "tail": [
+        "✔ Reviewed security role SQL preserves the old catalog, blocks unapproved writes and uses existing tenant-isolated roles only (1858.621775ms)",
+        "✔ Custom role company scope also protects original document and communication boundaries (1.893772ms)",
+        "ℹ tests 7",
+        "ℹ suites 0",
+        "ℹ pass 7",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 17016.9015"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-dashboard-base-final-browser.log",
+      "sha256": "1ddf5f0d88b8c18b732053a13363ac4df2b3da089b5733ed8d208d7b6424ec97",
+      "tail": [
+        "PASS authenticated base dashboard: actual custom role without view_dashboard, preserved legacy content denial, visible landing/menu after reload, no financial/count/filter data, denied direct sources, zero hidden MyWork fetches, AR/EN three widths. Synthetic only."
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-indicator-dirty-browser.log",
+      "sha256": "2c8390a8026c12c5a6a2e57250b7fbe010ead0932ed63a7f3c42701f903ae892",
+      "tail": [
+        "PASS original widget previews and plus/remove controls: exact authorized cached counts without repeated dataset reads, employee/standard settings, no write until review/confirmation, no automatic drilldown/data grant or employee assignment, preserved cancel and dirty standard, AR/EN three widths. Synthetic only."
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-dashboard-regressions.log",
+      "sha256": "3b8fab9574cc20a4404a41149d815024a0de810371ee75b1845cc4bc2400a22a",
+      "tail": [
+        "PASS original fund form rejects customer AR with bilingual human reason and trace, retains input, re-enables submit, and creates no fund, journal, receipt or voucher",
+        "PASS actual original 500 fund handover UI: qualified named employee, no pending transfer, own task, retained 499 mismatch/reference, actual 500 once, native GL and fund/history refresh and prospective 500→700 ceiling without RV/PV/customer invoice or balance rewrite; AR/EN responsive",
+        "PASS native own-fund workbench/report UI: peers excluded, no unauthorized cash actions, actual named holder/company and 10 AED, AR/EN desktop/tablet/phone, no raw IDs",
+        "PASS actual organizational tree, unique multi-unit/multi-company staff, profile/unit opening, AR/EN/three viewports, filtered select/clear all, dashboard preview/cancel/confirmed save/readback, role creation and explicit assignment on isolated reviewed schema; domain scopes preserved.",
+        "PASS recorded movement 12/24 months, entry/exit counts and drilldown readonly vehicle floating/maximize, searchable actual user, real View As server write denial/stop, bilingual responsive.",
+        "PASS dashboard actual counts/drilldown, denied vs empty, failed fetch without zeros, coherent single request, delayed spinner, explicit owner layout and read-only preview, AR/EN three sizes."
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-ten-final-browser.log",
+      "sha256": "3431dfdc344b610a282f0696d2603e72ff300c630af411fd41b5270535b86d2b",
+      "tail": [
+        "PASS independent job standard and employee matrices: real actions, no section auto-grant, protected approval, no job-based account assignment, staged cancel/confirm, actual affected-user grant-count preview and preserved exceptions on standard update, AR/EN three widths and actual screenshots",
+        "PASS minimal prospect save: original file number, view mode, no optional documents, retained source/responsible, distinct real/prospect counters, clickable filter and AR/EN three widths",
+        "PASS annual plan actual API/UI: reversed-date error preserves inputs, tentative checkbox retains dates, save/view revision, no leave/balance/access effect, participation row, AR/EN saved reopening, historical read-only, desktop/tablet/mobile. Synthetic only.",
+        "PASS original conversation deep link: real authorized thread, query consumed once with context retained, login required, known-ID unauthorized request rejected without private content.",
+        "PASS user UX: name aliases/prefix/department picker, explicit readonly preview and unchanged owner session, demo IBAN/slow one-save/readback, confirmed permission plan, committed retry without repeat, delayed spinner, AR/EN responsive.",
+        "PASS restricted leave-return API/UI: failed work login, limited Auth without work cookie, retained validation/API/lost-response inputs, one canonical review, suppressed late old-company opening, duplicate prevention, return-for-info, actual manager completion count, successful original work login, unchanged rights, AR/EN desktop/tablet/mobile.",
+        "PASS actual dated work calendar: explicit X/half/off grid, missing hours retain inputs, lost successful response retries one version, read failure removes stale cells and recovers, original API source readback, AR/EN desktop/tablet/mobile. Synthetic only.",
+        "PASS actual task deadline and approved waiting UI: no invented hour, field retention on invalid interval and lost committed reply, one stored version, source task entry/readback, UTC storage/UAE display, AR/EN three widths, no financial or penalty effect. Synthetic only.",
+        "PASS authenticated base dashboard: actual custom role without view_dashboard, preserved legacy content denial, visible landing/menu after reload, no financial/count/filter data, denied direct sources, zero hidden MyWork fetches, AR/EN three widths. Synthetic only.",
+        "PASS original widget previews and plus/remove controls: exact authorized cached counts without repeated dataset reads, employee/standard settings, no write until review/confirmation, no automatic drilldown/data grant or employee assignment, preserved cancel and dirty standard, AR/EN three widths. Synthetic only."
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-dashboard-acceptance-native.log",
+      "sha256": "a422e13682dd4e142478e59b428b8de56e87ec8885de91e0367c4582d2c4648c",
+      "tail": [
+        "✔ Dashboard restrictions are explicit, intersect roles with users, enforce detail/chart/data scopes and never grant domain rights (2256.480443ms)",
+        "✔ Reviewed security role SQL preserves the old catalog, blocks unapproved writes and uses existing tenant-isolated roles only (2069.918659ms)",
+        "✔ Custom role company scope also protects original document and communication boundaries (2.187536ms)",
+        "ℹ tests 7",
+        "ℹ suites 0",
+        "ℹ pass 7",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 19450.964699"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-indicator-all-static-ram.log",
+      "sha256": "b1d59b9c69d50b60b77239454e737a607c36a71efb2e357bd732164b32403aaa",
+      "tail": [
+        "✔ installments use exact integer arithmetic and only first installment absorbs remainder (2.295074ms)",
+        "✔ grace period ends before first day of following month, including leap years and pending dates (0.312289ms)",
+        "✔ service months remain separate from finance installments and margins may be positive, zero or negative (0.217931ms)",
+        "ℹ tests 182",
+        "ℹ suites 0",
+        "ℹ pass 182",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 1639.359547"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-indicator-types.log",
+      "sha256": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+      "tail": [
+        "",
+        "> ab-group-demo@1.0.0 backend:check",
+        "> tsc -p backend/tsconfig.json",
+        "",
+        "npm notice",
+        "npm notice New major version of npm available! 11.9.0 -> 12.2.3",
+        "npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.3",
+        "npm notice To update run: npm install -g npm@12.2.3",
+        "npm notice"
+      ]
     }
   ],
   "limitations": [
