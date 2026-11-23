@@ -119,9 +119,13 @@
         "backend/tests/employee-work-location.browser.cjs",
         "backend/tests/serve-organization-security-fixture.ts",
         "index.html",
-        "docs/operational-v1/WORK-LOCATIONS.md"
+        "docs/operational-v1/WORK-LOCATIONS.md",
+        "backend/src/work-scope-preview.ts",
+        "backend/src/view-as.ts",
+        "backend/tests/work-scope-preview.test.ts",
+        "docs/operational-v1/WORK-SCOPE-PREVIEW.md"
       ],
-      "remaining": "دليل المراكز المؤرخ ومرجعه الثابت وموقع العمل الأساسي لحساب الموظف ومعاينة/حفظ آمن وسجل غير قابل للتعديل منفذة ومختبرة ببيانات وهمية؛ لا تغير عضويات الشركات أو المنح. يبقى اختيار نطاق الوصول الجغرافي وأثره الفعلي في API وRLS والتراجع وربط العرض الذاتي/شؤون الموظفين وفق صلاحياته. غير منشور.",
+      "remaining": "موقع العمل الأساسي ودليل المراكز منفصلان عن الصلاحيات. معاينة نطاق المالك تستعمل الحقائق ومحرك الصلاحيات الأصلي وتكشف المنح العامة الباقية خارج الاختيار؛ للقراءة فقط ولا تسمح بالتطبيق. يبقى تطبيق العضويات المعتمد وحدود API وقاعدة البيانات والفروع التابعة ومراجعة المتأثرين والتراجع. غير منشور.",
       "additionalVerifiedSource": [
         "docs/operational-v1/SELECTED-DENIALS.md",
         "docs/operational-v1/AUTHORITY-CACHE.md"

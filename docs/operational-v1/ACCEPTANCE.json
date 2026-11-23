@@ -3196,5 +3196,38 @@
     "fullRunSuccess": false,
     "runCanceled": false,
     "PR115HeadVerified": "3802e2595ee35ad2978334c22d8cfbde741bf9b4"
+  },
+  "workScopePreviewVerification": {
+    "published": false,
+    "authorityChanged": false,
+    "canApply": false,
+    "sourceChecksums": {
+      "backend/src/work-scope-preview.ts": "cf7ee01b838a171469b4599bcd65d69574270068a238115fdc394eff4a0208bb",
+      "backend/src/app.ts": "998db5d4860587ae3a2d03d893856c06304a5f1b098c781fe71ead991558d377",
+      "backend/src/view-as.ts": "832158c4a4e367b11fd3359e65a162eebe2be1fb024c9bc2a4602ff1411bb092",
+      "backend/tests/work-scope-preview.test.ts": "a3a23a63711f70973a8349767ac90ac762518ad7b1d5cde7b4fc691e57aa039d"
+    },
+    "native": {
+      "tests": 25,
+      "pass": 25,
+      "path": "work/evidence/scope-preview-recovered-native.log",
+      "sha256": "fb25de6de8da7e4c13e3d2265c47ad1aa3a9c69f10ede433a4a0d7c63108e116"
+    },
+    "types": {
+      "exitCode": 0,
+      "path": "work/evidence/scope-preview-recovered-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "build": {
+      "exitCode": 0,
+      "path": "work/evidence/scope-preview-recovered-build.log",
+      "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+    },
+    "evidenceLimit": "Original37 operational journeys passed on721a1a3 before the preview endpoint; no new full-suite claim. Previous RAM files were lost on managed environment reset; current preview/regressions were rerun after reconstruction.",
+    "remaining": [
+      "original membership apply and downstream rights",
+      "actual API and complete DB bounds",
+      "rollback and acceptance"
+    ]
   }
 }
