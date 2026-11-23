@@ -61,7 +61,7 @@
         "user-management.js",
         "backend/tests/operational-permission-matrix.browser.cjs"
       ],
-      "remaining": "الإضافات الحالية محفوظة؛ المنع الفردي الموروث وإعادة الاستثناءات المحددة غير مكتملين."
+      "remaining": "الإضافات محفوظة؛ الإزالة المحددة للإضافات متاحة في معاينة الستاندرد المختبرة. المنع الفردي الموروث وإعادة ضبطه والنطاق الجغرافي باقية."
     },
     {
       "id": "3.3",
@@ -73,9 +73,13 @@
         "backend/tests/operational-permission-matrix.browser.cjs",
         "dashboard-ui.js",
         "user-management.js",
-        "backend/tests/dashboard-indicator-preview.browser.cjs"
+        "backend/tests/dashboard-indicator-preview.browser.cjs",
+        "backend/src/standard-exceptions.ts",
+        "backend/review/security-role-exceptions.sql",
+        "backend/tests/standard-exceptions.test.ts",
+        "backend/tests/standard-exceptions.browser.cjs"
       ],
-      "remaining": "معاينة الموظفين والفرق والإضافات وبطاقات الأرقام الفعلية +/× وربط الستاندرد المحفوظ مختبرة؛ الجداول والرسوم والمنع الموروث والإزالة الانتقائية والتأثير الذري غير مكتملة."
+      "remaining": "معاينة الأثر والإزالة المحددة للإضافات والإصدار والتكرار والتراجع مختبرة؛ المنع الموروث وجميع معاينات المؤشرات وتوريثها الذري والقبول النهائي باقية. SQL غير مطبق على بيئة مستضافة."
     },
     {
       "id": "4.a",

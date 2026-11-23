@@ -218,6 +218,10 @@ export async function build(options: Options) {
       const s = await session(req);
       if(req.body)req.body=normalizeContactPayload(req.body);
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
+        // Serialize permission mutations before loading their authority snapshot.
+        // This also prevents a queued grant from using a pre-standard-change issuer.
+        if(!s.viewAs&&req.method!=='GET'&&(/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
+          await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':security-roles']);
         // Personnel export contains personal contact data; never cache the file in request_dedup.
         const key = s.viewAs || req.method === "GET" || isReadOnlyPost(req.url.split("?")[0]) ? undefined : req.headers["idempotency-key"];
         const fingerprint = cipher.digest(

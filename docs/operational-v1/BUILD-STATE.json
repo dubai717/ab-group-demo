@@ -10,15 +10,15 @@
   "decision": "last_two_actual_due_months",
   "policyActivated": false,
   "next": [
-    "Upload tested leave-linked delegation and verify CI on newest source",
-    "Implement selected direct-grant exception removal preserving unselected exceptions and DB Owner guard; inherited deny remains separate",
-    "Complete geography, widget inheritance, remaining leave coverage and source clock adapters",
-    "Integrate service eligibility and cross-branch collection after PR115 stabilizes",
-    "Official provider/use-case review, remaining documents/backups/imports and final acceptance"
+    "Verify CI on newest PR116 source; no merge/deployment",
+    "Complete inherited individual denials and geography, remaining widget inheritance",
+    "Remaining leave coverage and source clock adapters",
+    "Integrate eligibility and cross-branch collection after PR115 stabilizes",
+    "Official provider/use-case review, documents/backups/imports and final acceptance"
   ],
   "limitations": [
     "Financial package dependency unresolved",
-    "Individual inherited deny/selective reset incomplete",
+    "Inherited individual denials, geography and atomic widget inheritance incomplete",
     "WhatsApp official provider not connected",
     "Service policy original-source API integration incomplete"
   ],
@@ -100,38 +100,11 @@
     "mergeAuthorized": false
   },
   "CI": {
-    "run": 45093055481,
-    "commit": "76174281215606bf70364e1898fbccfc1be982fa",
-    "status": "both jobs completed success",
-    "deployment": false,
-    "scope": "uploaded foundations only; later local standard-impact and leave-return changes not covered",
-    "newerRun": 45101351627,
-    "newerCommit": "188c1c437e07ad734d269f4abc53e7c1994b134c",
-    "newerStatus": "failed in shared renderer fixture; local reproduction proved HTTP429. Original assertions now pass on independent renderer fixture; next immutable CI required.",
-    "history": [
-      {
-        "run": 45093055481,
-        "commit": "76174281215606bf70364e1898fbccfc1be982fa",
-        "status": "success",
-        "scope": "earlier foundations"
-      },
-      {
-        "run": 45101351627,
-        "commit": "188c1c437e07ad734d269f4abc53e7c1994b134c",
-        "status": "failure",
-        "nativePassed": 716,
-        "operationalUI": "success",
-        "reason": "shared vehicle/renderer fixture exceeded unchanged HTTP rate limit before renderer login appeared"
-      },
-      {
-        "run": 45103237345,
-        "commit": "985d2a4e0799c423ffa80f48917b8f90c4fe2bbf",
-        "status": "failure",
-        "nativePassed": 720,
-        "operationalUI": "success",
-        "reason": "same renderer fixture coupling; before the current isolation fix"
-      }
-    ]
+    "runId": 45123873099,
+    "commit": "d91ac3720e40fa0d3e4aa400043f3168973c13d9",
+    "operationalUI": "success",
+    "originalRegressions": "in_progress at last inspection",
+    "includesLocalSelectedExceptions": false
   },
   "leaveReturn": {
     "state": "local API and bilingual portal/review UI tested; source integration partially complete, unpublished",
@@ -234,9 +207,11 @@
     ]
   },
   "localLatestAcceptance": {
-    "nativePassed": 75,
+    "focusedNativePassed": 8,
+    "previousLeaveHRNativePassed": 75,
+    "countsNotAdditive": true,
     "staticPassed": 182,
-    "browserJourneysPassed": 13,
+    "browserJourneysPassed": 14,
     "typecheck": "passed",
     "releaseReady": false,
     "data": "synthetic PostgreSQL and fake providers only"
@@ -272,5 +247,14 @@
     "manifest": "/tmp/ab-v1-durable-code-diff.json",
     "scope": "code only; not a database backup",
     "baseRemoteCommit": "510a191bf9d68613fc060c6fcd000767e38266f5"
+  },
+  "selectedExceptions": {
+    "default": "retain_all",
+    "optional": "remove_selected direct additions only",
+    "databaseProcedure": "review candidate; never applied to hosted database",
+    "auditAndAtomicRollback": true,
+    "unselectedGrantsPreserved": true,
+    "downstreamCascadeAllowed": false,
+    "inheritedDenySupported": false
   }
 }

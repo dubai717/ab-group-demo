@@ -757,6 +757,30 @@
         "ℹ todo 0",
         "ℹ duration_ms 1728.330745"
       ]
+    },
+    {
+      "path": "work/operational-evidence/selected-exceptions-native-final.log",
+      "sha256": "65e2c154cfa7e5ea8179d53ba88ac1a9981097f42f7a2d1c330a78249a4127b9",
+      "bytes": 1177,
+      "scope": "isolated selected-exception source and original regressions; no hosted changes"
+    },
+    {
+      "path": "work/operational-evidence/selected-exceptions-types-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "scope": "isolated selected-exception source and original regressions; no hosted changes"
+    },
+    {
+      "path": "work/operational-evidence/selected-exceptions-static.log",
+      "sha256": "9e499af489cb5945d0f0e770eb94a71800c05fbb683abbf7c09270694df1fc69",
+      "bytes": 17681,
+      "scope": "isolated selected-exception source and original regressions; no hosted changes"
+    },
+    {
+      "path": "work/operational-evidence/selected-exceptions-fourteen-browser-recheck.log",
+      "sha256": "4cac00dd6a1420e67a6353597d69f615ea130ec6b3d454517cd573341d392f60",
+      "bytes": 3565,
+      "scope": "isolated selected-exception source and original regressions; no hosted changes"
     }
   ],
   "failedAttemptsNotAcceptance": [
@@ -764,7 +788,12 @@
     "Original employee advanced panel collapsed after save; UI now retains its open state",
     "Conversation-link fixture waited for dashboard instead of authenticated state; auth/access assertions retained",
     "Local screenshot output ENOSPC; only disposable synthetic PNGs and byte-verified Node/TSX caches cleaned, screenshots redirected to RAM for accepted run",
-    "Concurrent isolated fixture role setup collided; ten targeted tests rerun serially and passed. Do not run another native fixture on5442 during the complete retry."
+    "Concurrent isolated fixture role setup collided; ten targeted tests rerun serially and passed. Do not run another native fixture on5442 during the complete retry.",
+    {
+      "path": "work/operational-evidence/selected-exceptions-fourteen-browser.log",
+      "sha256": "a58a86956888fc297c5d180c5126ca06e1d48a833859ef8c7832f0be34af7c22",
+      "reason": "11 journeys passed, original leave task-option timed out; not full acceptance. Focused leave rerun and complete fourteen-journey rerun passed"
+    }
   ],
   "screenshots": "CI preserves work/operational-*.png and work/dual-permissions-*.png for seven days; local RAM copies are temporary.",
   "standardImpactEvidence": [

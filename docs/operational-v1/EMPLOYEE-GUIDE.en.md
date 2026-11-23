@@ -17,3 +17,5 @@ tasks. Optional approved leave fills dates; choose an active available substitut
 Current linkage supports manual and employee-document tasks. Open work returns at
 expiry or confirmed return; completed work stays with its actual performer.
 Reload saved result recovers a failed display refresh without creating again.
+
+On standard impact review, retain all additions by default or select explicit additions to remove. Preview the selection impact before confirming. Unselected grants and company scope remain unchanged; downstream grants require separate review.
