@@ -3010,7 +3010,11 @@
     },
     "fullSuite": {
       "journeys": 36,
-      "status": "running after stable-root/navigation changes; earlier editor36 passed separately"
+      "pass": 36,
+      "exitCode": 0,
+      "sourceCommit": "fd919be",
+      "path": "work/evidence/operational36-stable.log",
+      "sha256": "730a3fb7ccea01fd297337b0cc7a239376bedb571b409226d3ecc5160fa324cb"
     },
     "notes": [
       "Candidate only; no automatic or hosted migration",
