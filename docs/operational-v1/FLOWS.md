@@ -149,3 +149,21 @@ flowchart LR
   A --> G[Completed history and actual performer retained]
   D --> H[No financial settlement or case closure]
 ```
+
+### Dated operating-centre administration (unpublished)
+
+```mermaid
+flowchart LR
+  A[Owner in original employee permission page] --> B[Explicit recorded centre source read]
+  B --> C[Latest recorded and immutable dated history]
+  C --> D[Draft actual location and company links]
+  D --> E[Fresh original before/after and retained future snapshots]
+  E --> F[Explicit confirmation with original request receipt]
+  F --> G[One immutable snapshot and encrypted audit]
+  F --> H[Uncertain reply: same body and key]
+  H --> G
+  G --> I[GET-only verification and dated history]
+  I --> J[Separate future employee scope review]
+```
+
+A centre-directory change does not update employee memberships, grant rights or move financial balances. Primary work location is separate from authorized scope. Stable referential identity and effective geographic scope enforcement remain unfinished; no hosted candidate installation is authorized during this build.

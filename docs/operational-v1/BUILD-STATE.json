@@ -1282,7 +1282,11 @@
     ],
     "fullSuite": {
       "journeys": 36,
-      "status": "in progress; prior35 passed separately"
+      "pass": 36,
+      "exitCode": 0,
+      "path": "work/evidence/operational36.log",
+      "sha256": "7c1fc85faed96a58beee1b64945dfdc5b22250769ab919b358111809eccd94f8",
+      "sourceComponentCommit": "bd476c7"
     },
     "notComplete": [
       "stable centre identity and employee primary work location",
