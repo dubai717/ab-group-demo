@@ -187,12 +187,12 @@
     "staticAndDeliveryPolicyPassed": 182
   },
   "independentLatestCI": {
-    "runId": 45106349520,
-    "commit": "0b2c60f1b8a15e9b6c33e97fd5d8caf45e43efb6",
-    "operationalUI": "success: eight original journeys",
-    "originalRegressions": "failed: shared handover/own-fund privacy fixture reached unchanged 300/min rate limiter; isolated reproduction confirmed HTTP429",
-    "laterSkippedStepsVerified": false,
-    "dashboardBaseAndIndicatorsCovered": false
+    "runNumber": 19,
+    "id": 45189061261,
+    "head": "93daa8bb7fd773a8765253da3f16cb6065b5c2d9",
+    "status": "in_progress",
+    "conclusion": null,
+    "deployment": false
   },
   "delegationHistory": {
     "state": "original source read-only API and bilingual HR entry locally tested, unpublished",
@@ -281,8 +281,8 @@
     ]
   },
   "latestRemoteBeforeThisBuild": {
-    "head": "a40ecfdf96781e49c44e3c88c5d27c4553ebc9b0",
-    "tree": "c4887ddf09ddfee4542e4d90785ae6a151b0a46f"
+    "commit": "93daa8bb7fd773a8765253da3f16cb6065b5c2d9",
+    "tree": "8de563e5d510094c63fe61a143aaf5c59b43f9e4"
   },
   "communicationCases": {
     "state": "basic topic workflow in original conversation; unpublished",
@@ -494,5 +494,14 @@
       "complete widget inheritance/reset and chart/table previews",
       "wider integration acceptance"
     ]
+  },
+  "clientContextOrdering": {
+    "status": "implemented-tested-unpublished",
+    "source": "docs/operational-v1/CLIENT-CONTEXT-ORDER.md",
+    "hostedChanges": false,
+    "remaining": "Separate module caches on same-actor authority reduction remain to audit",
+    "fullBrowserJourneys": 22,
+    "rootTests": 189,
+    "providerFreeBuild": "passed"
   }
 }

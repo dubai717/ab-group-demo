@@ -13,6 +13,7 @@
     csrf: "",
   });
   if (!C.enabled) return;
+  let bootstrapRevision = 0;
   let activeBank = null,
     activeCompany = null,
     activeUser = null;
@@ -31,6 +32,7 @@
     );
   async function api(path, method = "GET", body, key, options = {}) {
     if((C.viewAs||C.previewUncertain)&&!["GET","HEAD"].includes(method)&&!["view-as/start","view-as/stop","logout","central-reports/preview","central-reports/export","personnel/export","communication-templates/preview","communications/from-template/preview"].includes(path.split("?")[0]))throw Error("viewAsReadOnly");
+    if(!['GET','HEAD'].includes(method)&&['login','logout','view-as/start','view-as/stop'].includes(path.split('?')[0]))bootstrapRevision++;
     const controller=options.timeoutMs?new AbortController():null, timeout=controller?setTimeout(()=>controller.abort(),options.timeoutMs):null;
     const finish=globalThis.OperationUI?.begin(path,method,{control:options.control});try{
     if (key) {
@@ -82,7 +84,9 @@
   C.companyClosed=()=>{activeCompany=null;};
   C.openCompany=async id=>{if(!await WorkspaceUI.leave())return;await api('companies/'+id);activeCompany=id;app.state.currentPage='companies';await readDocuments({companyId:id}).catch(()=>[]);CompanyDocuments.centralSelect(id);await load();};
   async function load(draw = true) {
+    const revision = ++bootstrapRevision;
     const b = await api("bootstrap");
+    if(revision!==bootstrapRevision)return false;
     if(C.actor?.id!==b.actor.id){C.hiddenUserId=null;globalThis.CenterForms?.clear();globalThis.RecordLinks?.reset?.();globalThis.AttachmentViewer?.close();globalThis.FinanceWorkbench?.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();globalThis.LedgerUI?.reset();globalThis.RegisterStore?.clear();globalThis.RegisterView?.clear();globalThis.FinancialTables?.clear();C.documents.clear();C.enrollment.clear();activeUser=activeCompany=activeBank=null;globalThis.CompanyDocuments?.centralSelect?.(null);globalThis.UserManagement?.centralSelect?.(null);}
     C.actor = b.actor;
     C.viewAs=b.viewAs||null;C.previewUncertain=false;

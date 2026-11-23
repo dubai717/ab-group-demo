@@ -304,6 +304,7 @@
     const companyOptions=s.companies.map(c=>({id:c.id,label:((getLocale()==='ar'?c.arabicName:c.englishName)||c.name||c.id)+' — '+(c.tradeLicenseNumber||c.id)}));
     const departmentOptions=s.departments.map(d=>({id:d.id,label:d.name}));
     const managerOptions=s.list(actor).filter(v=>v.id!==selected).map(v=>({id:v.id,label:name(v)}));
+    if(u.managerId&&!managerOptions.some(v=>v.id===u.managerId))managerOptions.push({id:u.managerId,label:getLocale()==='ar'?'مرجع الإشراف الحالي — خارج دليل الأسماء المتاح':'Current reporting reference — outside the available directory'});
     const attachmentAllowed=!isNew&&!u.employeeId&&has('attachments'), attachmentWritable=!globalThis.ABCentral?.enabled&&attachmentAllowed&&basic;
     const attachmentList=!isNew&&attachmentAllowed?s.files(actor,selected):[];
     return `<section class="content-panel um-editor" id="um-editor"><div class="section-head"><h2>${isNew?t('add'):esc(name(existing))}</h2><button class="ghost-btn" type="button" data-um="close">${t('cancel')}</button></div>

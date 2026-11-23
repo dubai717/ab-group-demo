@@ -1948,5 +1948,43 @@
         "sha256": "2ba696ec70c51a3fb4688da55cc727dc99cf9ba5f3dc3da5241fdbbc3fd170ee"
       }
     ]
+  },
+  "clientContextOrdering": {
+    "status": "implemented-tested-unpublished",
+    "browserJourneys": 22,
+    "rootTests": 189,
+    "providerFreeBuild": "passed",
+    "nativeCodeChanged": false,
+    "remaining": "Same-actor reduced-authority module cache audit; selected denial batch removal; full exception reset",
+    "evidence": [
+      {
+        "path": "work/operational-evidence/hidden-manager-before.log",
+        "sha256": "240093df9e2610485819a0aee8ac436b35684c8b3bf2d4b2b46907b5ed9b09d5"
+      },
+      {
+        "path": "work/operational-evidence/hidden-manager-final.log",
+        "sha256": "b9b37a580b4a1a63013340d550d0707b8917801d6746e73a826fd2939e9fd1df"
+      },
+      {
+        "path": "work/operational-evidence/bootstrap-order-before.log",
+        "sha256": "e20f4e057642788c85a29a905dfa64ae6c011578fab1d5ecdf7c8494cb183890"
+      },
+      {
+        "path": "work/operational-evidence/bootstrap-order-after.log",
+        "sha256": "ad70e0e4b23b83bc3e811b7b4bf55dc571591d9eee8431a28d5c45b2e8642010"
+      },
+      {
+        "path": "work/operational-evidence/bootstrap-order-final-static.log",
+        "sha256": "4b0fe7f767c2fcda5bf9638bd0325081d4629aff01a695d6343c7692f5ffc6ea"
+      },
+      {
+        "path": "work/operational-evidence/bootstrap-order-build.log",
+        "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+      },
+      {
+        "path": "work/operational-evidence/bootstrap-order-full-browser.log",
+        "sha256": "04a1a1acafbf5521523d49d65c5b84ebc7a03749c6ee7a7ec322ea10f7ac3ad0"
+      }
+    ]
   }
 }
