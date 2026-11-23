@@ -101,9 +101,13 @@
         "backend/src/operating-centres.ts",
         "backend/src/app.ts",
         "backend/tests/operating-centre-source.test.ts",
-        "backend/tests/operating-centres-review.test.ts"
+        "backend/tests/operating-centres-review.test.ts",
+        "backend/src/operating-centre-write.ts",
+        "backend/src/operating-centre-schema.ts",
+        "backend/tests/operating-centre-write.test.ts",
+        "docs/operational-v1/OPERATING-CENTRES.md"
       ],
-      "remaining": "توريث المؤشرات وإضافاتها ومنعها الفردي وإعادة الضبط ومعاينة أثر التحديث منفذة ومختبرة محلياً وغير منشورة. يبقى النطاق الجغرافي الحقيقي والقبول المتكامل واعتماد SQL والنشر النهائي. حارس إعدادات المؤشرات مرشح مختبر فقط، ولم يُطبق على قاعدة حقيقية؛ الصيغة الجديدة لا تُحفظ بدونه. مرشح المراكز وواجهة قراءتها للمالك اجتازا اختبارات معزولة على فرع الحفظ فقط؛ لا كاتب مفعل أو ربط تلقائي أو نطاق جغرافي نافذ، ولا ترقية لحالة البند.",
+      "remaining": "المصفوفة والاستثناءات وإعادة الضبط وتوريث المؤشرات منفذة وغير منشورة؛ مصدر جغرافي أصلي للقراءة موجود. أضيف مكوّن مراكز مستقل فعلياً عن المناطق ومراكز التكلفة، مع حارس بنية وRLS ومعاينة وحفظ وسجل مشفر واسترجاع الطلب نفسه؛ اختُبر على قواعد وهمية فقط. واجهة المراكز وتطبيق النطاق الفعلي ومركز العمل الأساسي والقبول الشامل باقية. لا تغيّر هذه الإضافات عضويات الشركات أو الأذونات، ولم تُطبق بنية المراكز على التشغيل.",
       "additionalVerifiedSource": [
         "docs/operational-v1/SELECTED-DENIALS.md",
         "docs/operational-v1/AUTHORITY-CACHE.md"

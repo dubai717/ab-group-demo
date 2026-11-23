@@ -2348,18 +2348,11 @@
     }
   },
   "latestCI": {
-    "run": 29,
-    "id": 45244369328,
-    "commit": "59cc6df091aeb74445c5ff27013523dbfd9c5c89",
-    "conclusion": "failure",
-    "operationalUI": "success",
-    "serverAndRestore": "success",
-    "failure": "tax-source-review.browser.cjs numeric-filter state wait timed out at line3:2044; exact unchanged scoped rerun passed; cause not established",
-    "previousFullSuccess": {
-      "run": 28,
-      "id": 45241304807,
-      "commit": "f78d6c263987dab57064d94214f7f558f5e52826"
-    }
+    "run": 31,
+    "id": 45258204123,
+    "commit": "4a13680e260e4edc65b9f67750dd62b0323f890c",
+    "status": "in_progress",
+    "conclusion": null
   },
   "csvImport": {
     "status": "implemented-tested-unpublished",
@@ -2598,7 +2591,7 @@
     }
   },
   "operatingCentreCandidate": {
-    "status": "work-in-progress checkpoint only; not PR116 head",
+    "status": "Backend source component implemented for PR116 review; UI and geographic enforcement partial, unmerged and unpublished",
     "runtimeEnabled": false,
     "hostedApplied": false,
     "automaticManifest": false,
@@ -2736,6 +2729,31 @@
         "log": "work/evidence/centre-history-types.log",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       }
-    }
+    },
+    "latestCheckpointChecks": [
+      {
+        "path": "work/evidence/centre-checkpoint-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "work/evidence/centre-checkpoint-build.log",
+        "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+      },
+      {
+        "path": "work/evidence/centre-checkpoint-static.log",
+        "sha256": "28031c8a8f18d00ebd055f6a1ac9971206a0ae8460115dea2dc0df6e6565239a"
+      }
+    ],
+    "sourceNativeScope": "Three latest source/history/write/SQL cases passed after future-only directory coverage; prior four-case group separately includes unchanged original work-scope summary regression"
+  },
+  "independentVerifiedCI": {
+    "run": 30,
+    "id": 45256610817,
+    "commit": "44ada49cd5e770e4353bd251192f6b25de17f0e3",
+    "status": "completed",
+    "conclusion": "success",
+    "operationalUI": "success",
+    "originalRegressions": "success",
+    "canonicalServerRLSAndIsolatedRestore": "success"
   }
 }
