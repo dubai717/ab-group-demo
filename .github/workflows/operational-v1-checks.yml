@@ -35,3 +35,13 @@ jobs:
           fi
       - name: Actual prospect and permissions flows with synthetic providers only
         run: node backend/tests/operational-v1-suite.browser.cjs
+      - name: Preserve synthetic UI evidence only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: operational-v1-synthetic-ui
+          path: |
+            work/operational-*.png
+            work/dual-permissions-*.png
+          if-no-files-found: ignore
+          retention-days: 7

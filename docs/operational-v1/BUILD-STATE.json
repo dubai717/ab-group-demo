@@ -10,11 +10,10 @@
   "decision": "last_two_actual_due_months",
   "policyActivated": false,
   "next": [
-    "Annual leave API/UI acceptance",
-    "Communications deep-link access tests",
-    "Original browser regressions",
-    "Complete static/types/native checks",
-    "Independent non-deploying CI and draft PR"
+    "Finish complete native regression and independent CI",
+    "Continue inherited-deny/dashboard-standard work without changing PR115",
+    "Integrate source-bound service guard after financial dependency stabilizes",
+    "Complete official-provider review and remaining operational acceptance"
   ],
   "limitations": [
     "Financial package dependency unresolved",
@@ -52,8 +51,15 @@
       "passed": 1,
       "failed": 0
     },
-    "operationalBrowser": "passed: original file, prospect, matrix AR/EN desktop/tablet/mobile",
+    "operationalBrowser": "passed: five actual independent fixture journeys, including original user UX and authorized/unauthorized conversation links",
     "completeReleaseAcceptance": false,
-    "annualBrowser": "passed: invalid date retention, checkbox draft retention, save/readback/participation and three widths"
-  }
+    "annualBrowser": "passed: invalid date retention, checkbox draft retention, save/readback/participation and three widths",
+    "originalOrganizationAndPersonnelBrowser": "passed after opening actual advanced role controls; original assertions retained"
+  },
+  "fullNativeRun": {
+    "testedLocalCommit": "90240e4d0907526d005a1441ed7d265d623d52cd",
+    "status": "running; temporary artifact volume previously exhausted, full output not yet accepted",
+    "backendSourceUnchangedSinceStart": true
+  },
+  "artifactHandling": "Local screenshot capture uses configurable RAM artifact root after ENOSPC; CI default work output is retained as synthetic PNG artifacts. No database or business backup cleanup."
 }

@@ -110,5 +110,49 @@
     "GitHub CI outcome pending new PR",
     "Policy is not an activated API guard",
     "Official WhatsApp is not connected"
-  ]
+  ],
+  "additionalEvidence": [
+    {
+      "log": "/tmp/ab-v1-original-browser-regressions-fixed.log",
+      "sha256": "697073e1518eaf18fe1361371b4c6a16742be1dbc55bb52cd109b3bd55f66a56",
+      "tail": [
+        "PASS actual organizational tree, unique multi-unit/multi-company staff, profile/unit opening, AR/EN/three viewports, filtered select/clear all, dashboard preview/cancel/confirmed save/readback, role creation and explicit assignment on isolated reviewed schema; domain scopes preserved.",
+        "DIRECTORY_API_FAULT {\"method\":\"POST\",\"route\":\"/api/personnel/employees/<id>/documents\",\"status\":503,\"code\":\"syntheticLostUploadResponse\"}",
+        "PASS personnel directory UI: inline unit creation preserves employee inputs, select/save/register/readback, local-phone normalization, explicit existing-login link, multiple permanent PDF/image bytes and PDF preview, AR/EN responsive."
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-independent-browser-accepted-final.log",
+      "sha256": "f5d07364facfd035c8502dfb97f57703924e4125769e2aff7df21eef75ef0e90",
+      "tail": [
+        "PASS independent job standard and employee matrices: real actions, no section auto-grant, protected approval, no job-based account assignment, staged cancel/confirm, AR/EN three widths and actual screenshots",
+        "PASS minimal prospect save: original file number, view mode, no optional documents, retained source/responsible, distinct real/prospect counters, clickable filter and AR/EN three widths",
+        "PASS annual plan actual API/UI: reversed-date error preserves inputs, tentative checkbox retains dates, save/view revision, no leave/balance/access effect, participation row, desktop/tablet/mobile. Synthetic only.",
+        "PASS original conversation deep link: real authorized thread, query consumed once with context retained, login required, known-ID unauthorized request rejected without private content.",
+        "PASS user UX: name aliases/prefix/department picker, explicit readonly preview and unchanged owner session, demo IBAN/slow one-save/readback, confirmed permission plan, committed retry without repeat, delayed spinner, AR/EN responsive."
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-static-final.log",
+      "sha256": "9f95b514b935a1e259f4cbe83aac80c2fada9dc291965bc33fed4e092734d580",
+      "tail": [
+        "✔ service months remain separate from finance installments and margins may be positive, zero or negative (0.36031ms)",
+        "ℹ tests 182",
+        "ℹ suites 0",
+        "ℹ pass 182",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 1728.330745"
+      ]
+    }
+  ],
+  "failedAttemptsNotAcceptance": [
+    "Advanced role selector hidden in closed details; test opens actual advanced view, assertions retained",
+    "Original employee advanced panel collapsed after save; UI now retains its open state",
+    "Conversation-link fixture waited for dashboard instead of authenticated state; auth/access assertions retained",
+    "Local screenshot output ENOSPC; only disposable synthetic PNGs and byte-verified Node/TSX caches cleaned, screenshots redirected to RAM for accepted run"
+  ],
+  "screenshots": "CI preserves work/operational-*.png and work/dual-permissions-*.png for seven days; local RAM copies are temporary."
 }
