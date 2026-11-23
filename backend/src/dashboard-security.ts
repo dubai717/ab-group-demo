@@ -1,3 +1,4 @@
+import{dashboardSettingsWriteReady}from'./dashboard-settings-source.js';
 import{effectiveDashboardRule,inheritedDashboardOverrides,validatedDashboardOverrides,dashboardOverrideCounts}from'./dashboard-overrides.js';
 import {z} from 'zod';
 import {requireOk} from './core.js';
@@ -22,7 +23,7 @@ export async function dashboardInheritance(c:any,m:any,cipher:any,userId:string)
  const u=m.state.users.find((u:any)=>u.id===userId);requireOk(u,404,'notFound');
  const current=await dashboardSecuritySnapshot(c,'dashboard-security-user:'+u.id,cipher),baseline=await dashboardSecuritySnapshot(c,'dashboard-security-role:'+u.roleId,cipher);
  const raw=(await c.query('select value from ab.settings where key=$1',['dashboard-security-user:'+u.id])).rows[0]?.value;
- return{roleId:u.roleId,baselineVersion:baseline.version,baseline:dashboardSecurityRule.parse(baseline.value),overrides:inheritedDashboardOverrides(dashboardSecurityRule,raw,u.id),effective:effectiveDashboardRule(dashboardSecurityRule,baseline.value,raw,u.id),legacy:!!raw&&raw.version!==2};
+ return{roleId:u.roleId,baselineVersion:baseline.version,baseline:dashboardSecurityRule.parse(baseline.value),overrides:inheritedDashboardOverrides(dashboardSecurityRule,raw,u.id),effective:effectiveDashboardRule(dashboardSecurityRule,baseline.value,raw,u.id),recordVersion:raw?.version===2?2:raw?1:0,legacy:!!raw&&raw.version!==2};
 }
 export const planDashboardSecurity=async(c:any,m:any,cipher:any,d:any,draftRoleId?:string)=>{
  const k=key(m,d,true,draftRoleId),current=await dashboardSecuritySnapshot(c,k,cipher);requireOk(d.version===current.version,409,'dashboardSecurityChanged');
@@ -30,6 +31,7 @@ export const planDashboardSecurity=async(c:any,m:any,cipher:any,d:any,draftRoleI
  if(d.userId){
   inheritance=await dashboardInheritance(c,m,cipher,d.userId);
   if(d.overrides!==undefined){
+   requireOk(await dashboardSettingsWriteReady(c),503,'dashboardInheritanceGuardReviewRequired');
    requireOk(d.baselineVersion===inheritance.baselineVersion&&d.roleId===undefined,409,'dashboardSecurityChanged');
    value=validatedDashboardOverrides(dashboardSecurityRule,d.overrides,d.userId);
    const effective=effectiveDashboardRule(dashboardSecurityRule,inheritance.baseline,value,d.userId);
@@ -49,7 +51,7 @@ export async function dashboardStandardImpact(c:any,m:any,cipher:any,roleId:stri
 export const dashboardSecurityDraft=z.object({value:dashboardSecurityRule,version:z.string().length(64)}).strict();
 export function dashboardSecurityTemplate(m:any,cipher:any){return{value:defaults(),version:cipher.digest(JSON.stringify(null)),panels,datasets:datasetNames.options,companies:m.state.companies.map((c:any)=>({id:c.id,nameAr:c.arabicName,nameEn:c.englishName})),departments:m.state.departments.map((d:any)=>({id:d.id,name:d.name})),restrictionOnly:true};}
 export function registerDashboardSecurity(app:any,call:any,cipher:any){
- app.get('/api/central-dashboard/security',call(async(c:any,m:any,_s:any,r:any)=>{const q=target.parse(r.query),k=key(m,q),current=await dashboardSecuritySnapshot(c,k,cipher);const inheritance=q.userId?await dashboardInheritance(c,m,cipher,q.userId):null;return {...current,...(inheritance?{value:inheritance.effective,inheritance}:{}),panels,datasets:datasetNames.options,companies:m.state.companies.map((c:any)=>({id:c.id,nameAr:c.arabicName,nameEn:c.englishName})),departments:m.state.departments.map((d:any)=>({id:d.id,name:d.name})),restrictionOnly:true};}));
+ app.get('/api/central-dashboard/security',call(async(c:any,m:any,_s:any,r:any)=>{const q=target.parse(r.query),k=key(m,q),current=await dashboardSecuritySnapshot(c,k,cipher);const inheritance=q.userId?await dashboardInheritance(c,m,cipher,q.userId):null;return {...current,...(inheritance?{value:inheritance.effective,inheritance,inheritanceWriteReady:await dashboardSettingsWriteReady(c)}:{}),panels,datasets:datasetNames.options,companies:m.state.companies.map((c:any)=>({id:c.id,nameAr:c.arabicName,nameEn:c.englishName})),departments:m.state.departments.map((d:any)=>({id:d.id,name:d.name})),restrictionOnly:true};}));
  const input=target.extend({value:dashboardSecurityRule,version:z.string().length(64),overrides:z.unknown().optional(),baselineVersion:z.string().length(64).optional()}).strict();
  app.post('/api/central-dashboard/security-plan',call(async(c:any,m:any,_s:any,r:any)=>{const d=input.parse(r.body),p=await planDashboardSecurity(c,m,cipher,d);return {before:p.inheritance?.effective||p.before,after:p.value.version===2?effectiveDashboardRule(dashboardSecurityRule,p.inheritance.baseline,p.value,d.userId!):p.value,overrides:p.value.version===2?p.value:undefined,planHash:p.planHash,saved:false,restrictionOnly:true};}));
  app.post('/api/central-dashboard/security-apply',call(async(c:any,m:any,s:any,r:any)=>{const d=input.extend({confirm:z.literal(true),planHash:z.string().length(64)}).strict().parse(r.body),k=key(m,d,true);requireOk(r.headers['idempotency-key'],422,'idempotencyRequired');await c.query('select pg_advisory_xact_lock(hashtext($1))',[s.tenant_id+':'+k]);const p=await planDashboardSecurity(c,m,cipher,d);requireOk(p.planHash===d.planHash,409,'dashboardSecurityChanged');await c.query('insert into ab.settings(tenant_id,key,value)values($1,$2,$3)on conflict(tenant_id,key)do update set value=excluded.value',[s.tenant_id,k,p.value]);await audit(c,s.tenant_id,s.user_id,'dashboard_security_changed','settings',null,[k,'before:'+JSON.stringify(p.before),'after:'+JSON.stringify(p.value),'restriction_only']);return {saved:true,restrictionOnly:true};}));

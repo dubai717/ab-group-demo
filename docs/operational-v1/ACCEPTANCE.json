@@ -2219,5 +2219,33 @@
       "task-clock-assignment-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
       "task-clock-assignment-static.log": "4e7b97ff3fa57616e2d7c5b4d76bff72b61317e85e9fabb38279f03b13853372"
     }
+  },
+  "dashboardSettingsGuard": {
+    "status": "review-candidate-tested-unpublished",
+    "native": 11,
+    "focusedUIAfterManifestHardening": 6,
+    "fullUIBeforeManifestHardening": 31,
+    "static": 189,
+    "types": "passed",
+    "build": "passed",
+    "hostedApplied": false,
+    "requiresProtectedOwnerApproval": true,
+    "automaticLegacyConversion": false,
+    "compiledPolicyManifest": true,
+    "evidence": {
+      "dashboard-guard-final-native.log": "a763c372762be70f202dced82a2b650c74b8d6c7eda26d25c22c91ce6f104985",
+      "dashboard-guard-browser.log": "be59f1fe5076b4788b6c4a2482b29af232c26f29be0094c4ca4bb62565188787",
+      "dashboard-guard-full-browser.log": "ed2858560822cedeef2af8722f4893919fd4956c2792dc6ef3bad4936b1c5b0c",
+      "dashboard-guard-types.log": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+      "dashboard-guard-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "dashboard-guard-static.log": "741307f3c1774c50f534a2d2f54b2dfb7a7df13fe6e947ceea3f52464a7aab5e"
+    },
+    "sourceSha256": {
+      "backend/review/dashboard-settings-guard.sql": "c51b0ada0a78d788cf89eed63fe762c66257089a727224be5fbbf8cec7d18090",
+      "backend/src/dashboard-settings-source.ts": "5c72134a995bd77d963f20052c82abde9e97136e7047ffd56bda8c269251757d",
+      "backend/src/dashboard-security.ts": "ef38f006d602b4d28531b54647f0be0c1e9e53afa3e2ece07d8bc478e7a5d7dc",
+      "backend/src/permission-standard-reset.ts": "cafbfef4904a6acb52b492121b72d6fd19d43c31c8ecf82d17a3e3c7165a2855",
+      "user-management.js": "5c921ba15cbf43dc7cc588cce027879d4243afe8848dffdcf3d902a4a784081a"
+    }
   }
 }

@@ -238,9 +238,9 @@
     ]
   },
   "independentVerifiedCI": {
-    "run": 21,
+    "run": 22,
     "status": "success",
-    "commit": "f4a6d0eb820e87e71f1ccacca1527ab798b55e0d"
+    "commit": "2ac1284aae433bf8aa8f4f820448bbb9d8e0b6ef"
   },
   "durableCodeCheckpoint": {
     "patch": "/tmp/ab-v1-durable-code-diff.patch.gz",
@@ -279,8 +279,8 @@
     ]
   },
   "latestRemoteBeforeThisBuild": {
-    "commit": "7acd15b6c8235e00f02ad9a51f80d5c297a6a2db",
-    "tree": "ef37d35afbb051960edca719c3cc1c51162c4e1d"
+    "commit": "483acdac874317b137df0a919228cd60625e4c6f",
+    "tree": "911260f129d5c043fada538379fdbc1d062832ad"
   },
   "communicationCases": {
     "state": "basic topic workflow in original conversation; unpublished",
@@ -565,9 +565,9 @@
     "financialEffect": false
   },
   "latestCI": {
-    "run": 22,
+    "run": 25,
     "status": "in_progress_at_last_check",
-    "commit": "2ac1284aae433bf8aa8f4f820448bbb9d8e0b6ef"
+    "commit": "483acdac874317b137df0a919228cd60625e4c6f"
   },
   "workScopeSources": {
     "status": "read-only-tested-unpublished",
@@ -583,5 +583,15 @@
     "automaticDeadlineExtension": false,
     "financialEffect": false,
     "documentation": "docs/operational-v1/TASK-CLOCK-ASSIGNMENT-REVIEW.md"
+  },
+  "dashboardSettingsGuard": {
+    "status": "review-candidate-tested-unpublished",
+    "sql": "backend/review/dashboard-settings-guard.sql",
+    "hostedApplied": false,
+    "native": 11,
+    "fullUIBeforeFinalPolicyHardening": 31,
+    "focusedUIAfter": 6,
+    "legacyPathPreserved": true,
+    "compatibleRollbackReaderRequired": true
   }
 }

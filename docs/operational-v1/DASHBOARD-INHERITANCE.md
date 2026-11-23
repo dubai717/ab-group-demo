@@ -13,3 +13,5 @@ Local evidence: fourteen focused native cases passed, covering original dashboar
 Not deployed. Remaining geographic scope, broader operational acceptance and protected SQL approval remain separate work. PR115 and all original data are unchanged.
 
 The first broad browser run passed26 journeys and then caught a real UI regression: removing/readding a widget restored inherited drill-down. The form was corrected to record the original explicit detail denial on removal. The original failing assertion remains unchanged; focused reruns are recorded separately, not represented as a successful final broad run.
+
+New inheritance writes now require the separate reviewed original-settings guard; see DASHBOARD-SETTINGS-GUARD.md. Unapproved/missing protection retains the legacy path or makes existing version2 records read-only. No host installation or automatic conversion occurred.

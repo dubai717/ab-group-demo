@@ -1,5 +1,6 @@
+import{readFile}from'node:fs/promises';
 import{test}from'node:test';import assert from'node:assert/strict';import{randomUUID}from'node:crypto';import{businessCentersFixture}from'./business-centers-fixture.js';import{dashboardSecurityRule}from'../src/dashboard-security.js';import{effectiveDashboardRule,changeDashboardOverride}from'../src/dashboard-overrides.js';
-test('original dashboard routes retain employee additions and denials across standard changes without granting original data authority',async()=>{const f=await businessCentersFixture();try{
+test('original dashboard routes retain employee additions and denials across standard changes without granting original data authority',async()=>{const f=await businessCentersFixture();try{await f.admin.query(await readFile('backend/review/dashboard-settings-guard.sql','utf8'));
  const u=await f.employee(),roleId=(await f.req('GET','/api/users/'+u.id+'/permission-summary')).user.roleId;
  const save=async(target:any,value:any,extra:any={})=>{const current=await f.req('GET','/api/central-dashboard/security?'+new URLSearchParams(target)),d={...target,value,version:current.version,...extra},p=await f.req('POST','/api/central-dashboard/security-plan',d);await f.req('POST','/api/central-dashboard/security-apply',{...d,confirm:true,planHash:p.planHash},200,randomUUID());};
  const initial=dashboardSecurityRule.parse({open:true,widgets:['companies'],details:['companies'],panels:['tasks'],companyIds:[f.co1],departmentIds:null});await save({roleId},initial);

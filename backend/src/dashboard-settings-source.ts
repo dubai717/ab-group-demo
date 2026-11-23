@@ -1,0 +1,2 @@
+// Availability check for the reviewed guard; never installs SQL or changes data.
+export async function dashboardSettingsWriteReady(c:any){if(!(await c.query("select to_regprocedure('ab.dashboard_settings_guard_ready()')is not null and to_regprocedure('ab.dashboard_settings_write_allowed(text)')is not null and to_regprocedure('ab.dashboard_settings_read_allowed(text)')is not null ok")).rows[0].ok)return false;return(await c.query('select ab.dashboard_settings_guard_ready() ok')).rows[0].ok===true;}
