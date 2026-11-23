@@ -2843,5 +2843,47 @@
     "operationalUI": "success",
     "originalRegressions": "success",
     "canonicalServerRLSAndIsolatedRestore": "success"
+  },
+  "centreViewerAndRestoreVerification": {
+    "syntheticOnly": true,
+    "published": false,
+    "operationalSuite": {
+      "path": "work/evidence/operational35-settled.log",
+      "sha256": "8dcc3bb6d899892bd3207f38d9a242f3828dc406c80577bf91129c537da9c807",
+      "journeys": 35,
+      "pass": 35,
+      "exitCode": 0
+    },
+    "followupLayout": {
+      "change": "Bounded layout-ready wait after viewport change; exact original geometry assertion retained; no production CSS change.",
+      "failedAttempts": [
+        "CI31 communication-followup.browser.cjs:3:162 geometry assertion",
+        "Local operational35-recovered immediate form geometry assertion"
+      ],
+      "preciseEarlierCause": "unproven; the rerun passed the same bounds, no tolerance removed"
+    },
+    "centreRestore": {
+      "pass": 1,
+      "path": "work/evidence/centre-restore-native.log",
+      "sha256": "ff0a4b1204813369193456c82e64a639eaab23c027c659bbbc7fbff9d397dab7",
+      "tool": "same test container PostgreSQL17.11 native loader, strictly pinned localhost5442 synthetic source/target names only",
+      "canonicalAttempt": "Docker OCI exec failed before dump because /tmp/runc scratch is full; not application restore failure",
+      "coverage": "all ab rows, encrypted original archive, fake files, original users/permissions, actual guarded application read and append only to isolated restored copy, original synthetic source unchanged",
+      "notProven": [
+        "hosted Auth/Storage restore",
+        "independent live backup",
+        "release readiness"
+      ]
+    },
+    "typeCheck": {
+      "path": "work/evidence/centre-restore-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exitCode": 0
+    },
+    "CI": {
+      "30": "success",
+      "31": "operational UI geometry failure; original-regressions success",
+      "32": "in_progress at evidence capture"
+    }
   }
 }
