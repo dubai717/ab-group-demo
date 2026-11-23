@@ -27,3 +27,5 @@ In the original conversation, create a follow-up topic for a payment claim, disp
 Owner: Review two-month reference in the existing customer profile shows an original-source simulation. Refresh manually after payment. Review required identifies unresolved source facts; it is not payment or debt release. Service blocking is not activated in this package.
 
 Owner: Individual denials in Employee permissions is a separate mode: checking an action there restricts it. Enter a reason and review before/after. If confirmation is uncertain, retry the same request from the same screen. A reporting reference outside the visible directory keeps its current value without exposing hidden account details.
+
+Owner: Reset to job standard previews saved individual exceptions and requires a reason and confirmation. Role/work scope stay unchanged. Verify uncertain outcomes from the same review; closing stays held until verification. Canceling preview retains the previous parent draft. Table/chart previews in indicator settings use the reviewer’s authorized data; chart refresh is manual.

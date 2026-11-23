@@ -70,3 +70,20 @@ flowchart LR
  H --> N[Owner notification: no personal task]
  W --> P[No-response action remains unavailable]
 ```
+
+## Explicit employee standard reset
+
+```mermaid
+flowchart LR
+ A["Owner selects existing account"] --> B["Read current assigned standard and exceptions"]
+ B --> C["Reason and before/after review"]
+ C --> D["Original locked idempotent transaction"]
+ D --> E["Revoke direct additions; clear denials and individual overrides"]
+ E --> F["Verify source readback and refresh"]
+ D --> G["Unknown response: same body and key"]
+ G --> D
+ E --> H["Acknowledged save, failed readback: GET only"]
+ H --> F
+```
+
+Assigned role, company/unit scope, standard definitions, other users and financial records stay unchanged. Unknown legacy overrides/downstream grants require review before any reset.

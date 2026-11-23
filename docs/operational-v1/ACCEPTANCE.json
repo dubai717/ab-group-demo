@@ -2078,5 +2078,81 @@
     "backend/tests/standard-denials.test.ts": "c0c47bb65c958d327716adfa79893c99e660901a02d7509501b59f9819800eae",
     "backend/tests/permission-context-cache.browser.cjs": "31e5a8a8bd34eef23d410820a0affc4bca94a50939e7020d6d5c7d723b79c4f9",
     "backend/tests/package-entitlement-sources.browser.cjs": "ff8cba583fe86a688de2a438704411e4ce8bc14f626e375bd609b10e7d82f6d3"
+  },
+  "permissionResetAndComponents": {
+    "status": "implemented-tested-unpublished",
+    "fullNativeTests": 761,
+    "fullNativeFailures": 0,
+    "fullBrowserJourneys": 26,
+    "rootTests": 189,
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "standaloneUnwiredOverlayModelCases": 4,
+    "countsOverlap": true,
+    "evidence": [
+      {
+        "path": "work/operational-evidence/permission-reset-native-final.log",
+        "sha256": "e756fe06b132baba03f4bd072921741cfd2781dcbe4a04342b35ba0d663e1b3f"
+      },
+      {
+        "path": "work/operational-evidence/permission-concurrency-before.log",
+        "sha256": "fcf299ba11bd20f812c3a677638c3f322a356af03ac8d660c9a32ee919b066fd"
+      },
+      {
+        "path": "work/operational-evidence/permission-reset-full-native.log",
+        "sha256": "7e87a49e0b57f193bbaf23fa0f32216571c9b039abb283458d8c37bde7538e79"
+      },
+      {
+        "path": "work/operational-evidence/permission-reset-browser-final.log",
+        "sha256": "6d74f7c45e137a717a9e2815f55e858f79cb8ca6b77745f5da8674e1c5e65669"
+      },
+      {
+        "path": "work/operational-evidence/dashboard-components-browser-final.log",
+        "sha256": "0adfd1ec47b3008ad5134f72add26bc4ae4c6db7602a5242dd61dd9a6453505b"
+      },
+      {
+        "path": "work/operational-evidence/permission-reset-components-full-browser.log",
+        "sha256": "8a21444582aa0251c3856ca912e1a8506645edf343af938f575f49f1c6ee92bb"
+      },
+      {
+        "path": "work/operational-evidence/permission-reset-components-final-static.log",
+        "sha256": "7aef43367656b246631b84f20d44e0a198467fcce1342117944419ec61ae82b2"
+      },
+      {
+        "path": "work/operational-evidence/permission-reset-components-final-build.log",
+        "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+      },
+      {
+        "path": "work/operational-evidence/permission-reset-components-final-types.log",
+        "sha256": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10"
+      },
+      {
+        "path": "work/operational-evidence/dashboard-overrides-model-final.log",
+        "sha256": "c7febb6fcd0c97f84789f2a46598d2722a13453a6fc1ec7683a44355f575ca08"
+      }
+    ],
+    "sourceChecksums": {
+      "backend/src/permission-standard-reset.ts": "55600d32d744e079cb87edc713383dd6c8289d419d705574aa01792e369a1152",
+      "backend/src/permission-admin.ts": "c064a305c5fe40e14a32bd9a1e80ff954c43d874fd35a608df081244c0cf07bd",
+      "backend/src/dashboard-overrides.ts": "a6b4fb034b5c0f6347854f9ba8b2a7cba35c647c42b1012be8d3081a613933d7",
+      "central-client.js": "c87139467dc0275049c204c8d5dda866fafe7a2f9dc78e2c87d69667c096c121",
+      "dashboard-ui.js": "9ba7f48e9fe64576cf41f5d3ee0fbb9d50e4882d17e93d02bcd25200952b0b50",
+      "user-management.js": "b0831ef9b9e0780e25f8dd9172be4dcb4dde5805f3d3bdfeba85d2f6468e405a",
+      "backend/tests/permission-standard-reset.test.ts": "63f59f71afcabe43e134acb0fbadd4e3eebb055fee0b31b48a991f17191291a3",
+      "backend/tests/dashboard-component-preview.browser.cjs": "9c29b8bc12c32594811f8ceaa58d57701e5256464a4816d610b0837085be8b99"
+    }
+  },
+  "permissionResetAuditFinal": {
+    "status": "local-passed-unpublished",
+    "focusedAuditCases": 15,
+    "encryptedReasonCases": 4,
+    "types": "passed",
+    "historicalRecordsChanged": false,
+    "finalCommitCI": "pending",
+    "evidence": {
+      "permission-reset-audit-final.log": "2015e3e192fa88d40bb068de47b60c68e3fa1a855ff979da78863fb71a201a01",
+      "permission-reset-reason-final.log": "156c1cf07c241b7db70a938ac82b49f8a52b9dce5d584b7ae6a1feaf283c7677",
+      "permission-reset-audit-types.log": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10"
+    }
   }
 }

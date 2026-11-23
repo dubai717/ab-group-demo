@@ -94,9 +94,9 @@
     const ownDenials=rows=>(rows||[]).find(d=>d.userId===old.id)?.actions||[];
     return old.roleId!==next.roleId||removed(old.permissions,next.permissions)||removed(old.companyIds,next.companyIds)||removed(old.departmentIds,next.departmentIds)||removed(ownGrants(C.grants),ownGrants(b.grants))||removed(ownDenials(b.individualDenials),ownDenials(C.individualDenials))||['edit','activate','deactivate'].some(action=>{const a=old.companyPermissions?.[action]||'inherit',n=next.companyPermissions?.[action]||'inherit';return a==='allow'&&n!=='allow'||a!=='deny'&&n==='deny';});
   }
-  async function load(draw = true) {
+  async function load(draw = true, requestOptions = {}) {
     const revision = ++bootstrapRevision;
-    const b = await api("bootstrap");
+    const b = await api("bootstrap","GET",undefined,undefined,requestOptions);
     if(revision!==bootstrapRevision)return false;
     if(C.actor?.id!==b.actor.id||authorityReduced(b)||JSON.stringify(C.viewAs||null)!==JSON.stringify(b.viewAs||null)){authorityRevision++;C.hiddenUserId=null;globalThis.CenterForms?.clear();globalThis.RecordLinks?.reset?.();globalThis.AttachmentViewer?.close();globalThis.FinanceWorkbench?.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();globalThis.LedgerUI?.reset();globalThis.RegisterStore?.clear();globalThis.RegisterView?.clear();globalThis.FinancialTables?.clear();C.documents.clear();C.documentOwnerKey=null;C.documentHistory=false;C.enrollment.clear();globalThis.TaxControlUI?.reset();globalThis.DashboardUI?.invalidate();activeUser=activeCompany=activeBank=null;globalThis.CompanyDocuments?.centralSelect?.(null);globalThis.UserManagement?.centralSelect?.(null);}
     C.actor = b.actor;

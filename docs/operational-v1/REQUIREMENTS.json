@@ -79,14 +79,20 @@
         "backend/tests/standard-denials.test.ts",
         "backend/tests/permission-context-cache.browser.cjs",
         "docs/operational-v1/SELECTED-DENIALS.md",
-        "docs/operational-v1/AUTHORITY-CACHE.md"
+        "docs/operational-v1/AUTHORITY-CACHE.md",
+        "backend/src/permission-standard-reset.ts",
+        "backend/tests/permission-standard-reset.test.ts",
+        "backend/tests/permission-standard-reset.browser.cjs",
+        "docs/operational-v1/PERMISSION-STANDARD-RESET.md",
+        "docs/operational-v1/DASHBOARD-COMPONENTS.md",
+        "backend/tests/dashboard-component-preview.browser.cjs"
       ],
-      "remaining": "المنع الفردي وإزالته الانتقائية ضمن دفعة الستاندرد منفذان ومختبران وغير منشورين؛ حارس SQL مرشح غير مطبق فعلياً. تبقى إعادة جميع الاستثناءات والنطاق الجغرافي وتوريث المؤشرات ومعاينات الجداول والرسوم والقبول المتكامل.",
+      "remaining": "إعادة الضبط الكاملة للستاندرد ومعاينات الجداول والرسم الأصلي منفذة ومختبرة وغير منشورة. يبقى ربط نموذج توريث المؤشرات وإضافاتها ومنعها الفردي، والنطاق الجغرافي الحقيقي والقبول المتكامل، مع بقاء اعتماد أي SQL ونشر نهائي غير منفذين.",
       "additionalVerifiedSource": [
         "docs/operational-v1/SELECTED-DENIALS.md",
         "docs/operational-v1/AUTHORITY-CACHE.md"
       ],
-      "remainingEngineering": "Full employee reset including company/bank/widget exceptions; widget inheritance and chart/table previews; real geographic scope. All current changes remain unpublished; original financial dependency remains unmerged."
+      "remainingEngineering": "Wire tested widget overlay model into existing settings/UI/resolver; real geographic scope and integrated acceptance. No hosted activation or financial completion is claimed."
     },
     {
       "id": "3.3",
@@ -115,14 +121,20 @@
         "backend/tests/standard-denials.test.ts",
         "backend/tests/permission-context-cache.browser.cjs",
         "docs/operational-v1/SELECTED-DENIALS.md",
-        "docs/operational-v1/AUTHORITY-CACHE.md"
+        "docs/operational-v1/AUTHORITY-CACHE.md",
+        "backend/src/permission-standard-reset.ts",
+        "backend/tests/permission-standard-reset.test.ts",
+        "backend/tests/permission-standard-reset.browser.cjs",
+        "docs/operational-v1/PERMISSION-STANDARD-RESET.md",
+        "docs/operational-v1/DASHBOARD-COMPONENTS.md",
+        "backend/tests/dashboard-component-preview.browser.cjs"
       ],
-      "remaining": "المنع الفردي وإزالته الانتقائية ضمن دفعة الستاندرد منفذان ومختبران وغير منشورين؛ حارس SQL مرشح غير مطبق فعلياً. تبقى إعادة جميع الاستثناءات والنطاق الجغرافي وتوريث المؤشرات ومعاينات الجداول والرسوم والقبول المتكامل.",
+      "remaining": "إعادة الضبط الكاملة للستاندرد ومعاينات الجداول والرسم الأصلي منفذة ومختبرة وغير منشورة. يبقى ربط نموذج توريث المؤشرات وإضافاتها ومنعها الفردي، والنطاق الجغرافي الحقيقي والقبول المتكامل، مع بقاء اعتماد أي SQL ونشر نهائي غير منفذين.",
       "additionalVerifiedSource": [
         "docs/operational-v1/SELECTED-DENIALS.md",
         "docs/operational-v1/AUTHORITY-CACHE.md"
       ],
-      "remainingEngineering": "Full employee reset including company/bank/widget exceptions; widget inheritance and chart/table previews; real geographic scope. All current changes remain unpublished; original financial dependency remains unmerged."
+      "remainingEngineering": "Wire tested widget overlay model into existing settings/UI/resolver; real geographic scope and integrated acceptance. No hosted activation or financial completion is claimed."
     },
     {
       "id": "4.a",

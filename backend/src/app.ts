@@ -1,3 +1,4 @@
+import{permissionResetAuditView}from'./permission-reset-audit.js';
 import {registerServiceEligibilityReview} from './service-eligibility-source.js';
 import {registerLeaveReturnPortal}from'./leave-return-portal.js';
 import {userEnrollment} from './user-enrollment.js';
@@ -406,7 +407,7 @@ export async function build(options: Options) {
           "select * from ab.audit_events where ($1::boolean or actor_id=$2) order by created_at desc limit 500",
           [m.actor.roleId === "owner", s.user_id],
         )
-      ).rows.map((raw) => {const r=companyAuditView(cipher,raw,canCompany&&(securityRoleCompany(m,raw.entity_id)));return ({
+      ).rows.map((raw) => {const r=permissionResetAuditView(cipher,companyAuditView(cipher,raw,canCompany&&(securityRoleCompany(m,raw.entity_id))),m.actor.roleId==="owner");return ({
         entityType:r.entity_type,companyChange:r.companyChange,
         id: r.id,
         at: r.created_at.toISOString(),
@@ -852,7 +853,7 @@ export async function build(options: Options) {
         await c.query(
           "select id,actor_id,actor_type,action,entity_type,entity_id,fields,created_at from ab.audit_events order by created_at desc limit 500",
         )
-      ).rows.map(r=>companyAuditView(cipher,r,true));
+      ).rows.map(r=>permissionResetAuditView(cipher,companyAuditView(cipher,r,true),true));
     }),
   );
   // Explicit ownership FKs; no generic ownerId that can point outside the tenant/account.
