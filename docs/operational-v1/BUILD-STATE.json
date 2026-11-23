@@ -565,18 +565,18 @@
     "financialEffect": false
   },
   "latestCI": {
-    "run": 27,
-    "id": 45231987856,
-    "head": "1e4d21d144981242a8aff65b7978e3c3b33cb6ce",
-    "status": "completed",
-    "conclusion": "success",
-    "latestSourceCI": {
+    "run": 29,
+    "id": 45244369328,
+    "commit": "59cc6df091aeb74445c5ff27013523dbfd9c5c89",
+    "conclusion": "failure",
+    "operationalUI": "success",
+    "serverAndRestore": "success",
+    "failure": "tax-source-review.browser.cjs locale detach wait timed out; scoped unchanged rerun passed",
+    "previousFullSuccess": {
       "run": 28,
       "id": 45241304807,
-      "head": "f78d6c263987dab57064d94214f7f558f5e52826",
-      "status": "in_progress_at_last_read"
-    },
-    "notEvidenceForUncommittedCSV": true
+      "commit": "f78d6c263987dab57064d94214f7f558f5e52826"
+    }
   },
   "workScopeSources": {
     "status": "read-only-tested-unpublished",
@@ -739,6 +739,45 @@
       "An initial test expected409 for original importPreviewErrors422; corrected to original API contract.",
       "The first browser locator depended on an upload form removed by successful preview; switched to the existing stable status node.",
       "A running old fixture had not loaded the normalized Company_ID guard; acceptance reran on a fresh source fixture without weakening the assertion."
+    ]
+  },
+  "conversationFollowup": {
+    "asOf": "2026-11-23",
+    "status": "unpublished",
+    "releaseReady": false,
+    "checks": [
+      {
+        "path": "work/evidence/case-native.log",
+        "sha256": "a3ba7c0055d1859c29afcd564483125120326cde04e3177ce986090c520677d7"
+      },
+      {
+        "path": "work/evidence/clock-ui.log",
+        "sha256": "f445211926a423d77705dc12c0b0b433f1a324cb6f75a262d4f4d85dcc96f499"
+      },
+      {
+        "path": "work/evidence/tax-ui.log",
+        "sha256": "9b9557dca2c3a49481f7c46284200fd251500c23911ce17b12442078de235408"
+      },
+      {
+        "path": "work/evidence/financial95.log",
+        "sha256": "22ba1e29583a8da2ec0942d6cd361e35091d7c0cc1a090614dc767487a043a04"
+      }
+    ],
+    "native": {
+      "tests": 13,
+      "pass": 13,
+      "fail": 0
+    },
+    "browser": [
+      "original communication clock AR/EN three widths",
+      "original recorded tax sources Owner/reader/exporter AR/EN three widths"
+    ],
+    "source": "docs/operational-v1/CONVERSATION-FOLLOWUPS.md",
+    "limitations": [
+      "Not full release acceptance",
+      "CI29 original regression timed out on locale render wait; scoped exact test rerun passed without assertion changes",
+      "Financial95 unchanged",
+      "No original data, merge, deployment or external send"
     ]
   }
 }
