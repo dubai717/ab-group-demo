@@ -2154,5 +2154,36 @@
       "permission-reset-reason-final.log": "156c1cf07c241b7db70a938ac82b49f8a52b9dce5d584b7ae6a1feaf283c7677",
       "permission-reset-audit-types.log": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10"
     }
+  },
+  "dashboardInheritance": {
+    "status": "implemented-locally-tested-unpublished",
+    "focusedNative": 14,
+    "focusedUIAfterFinalFix": 4,
+    "broadUIBeforeFinalFix": {
+      "passedJourneys": 26,
+      "failed": "dashboard-indicator-preview drill-down unexpectedly restored on widget readdition",
+      "corrected": "Original assertion retained; form now explicitly denies details on widget removal",
+      "finalBroadRun": "not repeated locally; final-head CI required"
+    },
+    "static": 189,
+    "types": "passed",
+    "build": "passed",
+    "automaticLegacyConversion": false,
+    "newDomainGrants": false,
+    "evidence": {
+      "dashboard-inheritance-final-native.log": "e42eae384d2a4b8839db736ee0a9f58894b42e523d0c00a27cbe15d7031e73ee",
+      "dashboard-inheritance-final-browser.log": "c4507a5f5291d3031ac14ce894e932fc8ae0cbdd8a22ea21fdda77543562e1fb",
+      "dashboard-inheritance-full-browser.log": "23152c504c9332bdf3ab3103d3aba405a4703f30962762668bb3f5ce7b399eb3",
+      "dashboard-inheritance-static.log": "c4919cc78d8a5a9c312e479e59f8e3d38eb11a9d7487ee35b93360729ee585f5",
+      "dashboard-inheritance-types.log": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+      "dashboard-inheritance-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+    },
+    "sourceSha256": {
+      "backend/src/dashboard-security.ts": "5f4d7ab02a113196b84b78f2bb8a8d7db504e7910a9029e772113540d2966577",
+      "backend/src/dashboard-overrides.ts": "f51add54ac59eb1fda29f71f3081e3e8f256e6862eebf7c169b474980fd0047a",
+      "backend/src/permission-standard-reset.ts": "5e98e57ec32a17fc3c2231e266ea57dbdf8e96559ed3f5973cb1bec7c628e76c",
+      "backend/src/security-roles.ts": "08607f472ef282d809f72ad1f0e10afa43fd82123e039574af8243d66be586be",
+      "user-management.js": "0c2476eabb51b21df9718eabcdac8a0414d00f55d8d68f1bcbab78d5de2cba8f"
+    }
   }
 }

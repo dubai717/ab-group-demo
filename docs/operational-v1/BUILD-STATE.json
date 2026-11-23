@@ -11,7 +11,7 @@
   "policyActivated": false,
   "next": [
     "Verify current-head CI and remaining integration without merge or deployment",
-    "Wire widget individual inheritance/addition/denial model, then actual geographic scope and broader remaining acceptance",
+    "Actual geographic scope and broader remaining acceptance; widget overlay now wired and tested locally",
     "Remaining leave/source adapters, source eligibility and cross-branch collection after PR115 stabilizes",
     "Verified case deadlines and final follow-up, official provider/use-case review",
     "Remaining documents/backups/imports and full acceptance"
@@ -238,11 +238,9 @@
     ]
   },
   "independentVerifiedCI": {
-    "runNumber": 20,
-    "id": 45191382840,
-    "head": "d8804afd6e7ce8cb518344cc4337c9354d70b114",
-    "conclusion": "success",
-    "deployment": false
+    "run": 21,
+    "status": "success",
+    "commit": "f4a6d0eb820e87e71f1ccacca1527ab798b55e0d"
   },
   "durableCodeCheckpoint": {
     "patch": "/tmp/ab-v1-durable-code-diff.patch.gz",
@@ -281,8 +279,8 @@
     ]
   },
   "latestRemoteBeforeThisBuild": {
-    "commit": "f4a6d0eb820e87e71f1ccacca1527ab798b55e0d",
-    "tree": "557e6a2ba75ccac8831c90bc6ef6d4a18ce3f896"
+    "commit": "2ac1284aae433bf8aa8f4f820448bbb9d8e0b6ef",
+    "tree": "d715a3294a458ba2aca3035caf7eb5d6cbd7b662"
   },
   "communicationCases": {
     "state": "basic topic workflow in original conversation; unpublished",
@@ -558,10 +556,17 @@
     "fullBrowserJourneys": 26
   },
   "dashboardOverlayModel": {
-    "status": "model-tested-not-wired",
-    "source": "backend/src/dashboard-overrides.ts",
-    "pureCasesPassed": 4,
-    "legacySettingsMigrated": false,
-    "remaining": "Wire original settings GET/plan/apply, original effective resolver and employee widget UI; verify domain gates and reset for overlay records"
+    "status": "wired-tested-unpublished",
+    "documentation": "docs/operational-v1/DASHBOARD-INHERITANCE.md",
+    "focusedNativeCases": 14,
+    "actualBrowser": "passed-ar-en-three-widths",
+    "automaticLegacyMigration": false,
+    "domainAuthorityChanged": false,
+    "financialEffect": false
+  },
+  "latestCI": {
+    "run": 22,
+    "status": "in_progress_at_last_check",
+    "commit": "2ac1284aae433bf8aa8f4f820448bbb9d8e0b6ef"
   }
 }

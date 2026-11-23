@@ -85,14 +85,17 @@
         "backend/tests/permission-standard-reset.browser.cjs",
         "docs/operational-v1/PERMISSION-STANDARD-RESET.md",
         "docs/operational-v1/DASHBOARD-COMPONENTS.md",
-        "backend/tests/dashboard-component-preview.browser.cjs"
+        "backend/tests/dashboard-component-preview.browser.cjs",
+        "docs/operational-v1/DASHBOARD-INHERITANCE.md",
+        "backend/tests/dashboard-inheritance.test.ts",
+        "backend/tests/dashboard-inheritance.browser.cjs"
       ],
-      "remaining": "إعادة الضبط الكاملة للستاندرد ومعاينات الجداول والرسم الأصلي منفذة ومختبرة وغير منشورة. يبقى ربط نموذج توريث المؤشرات وإضافاتها ومنعها الفردي، والنطاق الجغرافي الحقيقي والقبول المتكامل، مع بقاء اعتماد أي SQL ونشر نهائي غير منفذين.",
+      "remaining": "توريث المؤشرات وإضافاتها ومنعها الفردي وإعادة الضبط ومعاينة أثر التحديث منفذة ومختبرة محلياً وغير منشورة. يبقى النطاق الجغرافي الحقيقي والقبول المتكامل واعتماد SQL والنشر النهائي.",
       "additionalVerifiedSource": [
         "docs/operational-v1/SELECTED-DENIALS.md",
         "docs/operational-v1/AUTHORITY-CACHE.md"
       ],
-      "remainingEngineering": "Wire tested widget overlay model into existing settings/UI/resolver; real geographic scope and integrated acceptance. No hosted activation or financial completion is claimed."
+      "remainingEngineering": "Actual geographic scope and integrated acceptance. Current independent build is unpublished; no financial95 promotion."
     },
     {
       "id": "3.3",
@@ -127,14 +130,17 @@
         "backend/tests/permission-standard-reset.browser.cjs",
         "docs/operational-v1/PERMISSION-STANDARD-RESET.md",
         "docs/operational-v1/DASHBOARD-COMPONENTS.md",
-        "backend/tests/dashboard-component-preview.browser.cjs"
+        "backend/tests/dashboard-component-preview.browser.cjs",
+        "docs/operational-v1/DASHBOARD-INHERITANCE.md",
+        "backend/tests/dashboard-inheritance.test.ts",
+        "backend/tests/dashboard-inheritance.browser.cjs"
       ],
-      "remaining": "إعادة الضبط الكاملة للستاندرد ومعاينات الجداول والرسم الأصلي منفذة ومختبرة وغير منشورة. يبقى ربط نموذج توريث المؤشرات وإضافاتها ومنعها الفردي، والنطاق الجغرافي الحقيقي والقبول المتكامل، مع بقاء اعتماد أي SQL ونشر نهائي غير منفذين.",
+      "remaining": "توريث المؤشرات وإضافاتها ومنعها الفردي وإعادة الضبط ومعاينة أثر التحديث منفذة ومختبرة محلياً وغير منشورة. يبقى النطاق الجغرافي الحقيقي والقبول المتكامل واعتماد SQL والنشر النهائي.",
       "additionalVerifiedSource": [
         "docs/operational-v1/SELECTED-DENIALS.md",
         "docs/operational-v1/AUTHORITY-CACHE.md"
       ],
-      "remainingEngineering": "Wire tested widget overlay model into existing settings/UI/resolver; real geographic scope and integrated acceptance. No hosted activation or financial completion is claimed."
+      "remainingEngineering": "Actual geographic scope and integrated acceptance. Current independent build is unpublished; no financial95 promotion."
     },
     {
       "id": "4.a",

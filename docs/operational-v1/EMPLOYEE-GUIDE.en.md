@@ -29,3 +29,6 @@ Owner: Review two-month reference in the existing customer profile shows an orig
 Owner: Individual denials in Employee permissions is a separate mode: checking an action there restricts it. Enter a reason and review before/after. If confirmation is uncertain, retry the same request from the same screen. A reporting reference outside the visible directory keeps its current value without exposing hidden account details.
 
 Owner: Reset to job standard previews saved individual exceptions and requires a reason and confirmation. Role/work scope stay unchanged. Verify uncertain outcomes from the same review; closing stays held until verification. Canceling preview retains the previous parent draft. Table/chart previews in indicator settings use the reviewer’s authorized data; chart refresh is manual.
+
+### Employee indicator inheritance
+In employee permissions, Inherited follows the job standard. Individual addition and Individual denial remain when that standard changes. Inherit standard clears only the selected item's draft exception: review and confirm to save, or close to cancel. Selecting an indicator grants no additional data authority. Standard review shows each affected account's indicator counts and retained exceptions; refresh the preview if an intervening change makes it stale.
