@@ -1,0 +1,13 @@
+# Original import workbench — CSV extension (unpublished)
+
+CSV is added to the existing customer/vehicle data-import workbench, using the original strict `customer-policy.js` parser and the original adapter field catalogue, preparation, mapping, preview, identity/company checks, document scan, confirmation, row cursor, audit and save functions. No parallel importer, ledger or new import tables.
+
+CSV templates use exactly the original ordered field keys, UTF-8 BOM and no sample customer rows. Uploaded values retain Arabic, leading zeroes and phone text; formulas remain text, never executed. Duplicate/empty headers, excess cells, incomplete quotes, null bytes and invalid UTF-8 fail before a preview is saved. All original upload formats now require canonical bounded base64 rather than silent lossy decoding. Existing XLSX and Access import tests remain required.
+
+Explicit source `companyId` / `Company_ID` columns are checked independently of editable mapping. Removing the mapping cannot hide a different company. Company names are not guessed into identifiers, and no relationships or grants are fabricated. Customer/vehicle identity and company checks remain the original adapter's authority.
+
+The existing dialog adds CSV, retains chosen files/ZIP/company/format after errors, offers explicit file removal, shows localized errors and trace references, prevents duplicate in-flight actions, bounds each API wait to45 seconds and shows progress during original batches. A lost upload response can recover the same preview by the original source hash without creating another job or requiring the file again. Closing the dialog clears its local file draft. No automatic target import: the existing fresh preview/token and explicit confirmation remain mandatory.
+
+Tests use disposable synthetic databases and fake providers. CSV customer confirmation/document attachment/retry and vehicle preview are exercised; no financial records or grants change. UI tests deliberately lose a committed preview response, retry the retained file, compare the exact original preview ID, count duplicate-submit requests, check wrong-company rejection, AR/EN and three widths. Browser acceptance stops at preview, while native confirmation operates only in the isolated fake fixture. Existing Access mapping/confirmation and task/workbench journeys are retained.
+
+Not complete: company/operating-centre/employee/document/opening-balance template adapters, actual centre mapping, approved real import/backup procedures and final integrated acceptance. No historical financial import, real data access, merge, publication or external message was performed. This extension does not close requirement10 or any financial95 partial.

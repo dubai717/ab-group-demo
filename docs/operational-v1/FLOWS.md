@@ -119,3 +119,20 @@ flowchart LR
 ```
 
 The display cannot start capture, download archives, change a schedule or run restore. The protected original backup job may publish an optional signed technical companion only after its original checks. Its private signing key remains outside application runtime. Independent storage and real restore acceptance remain release prerequisites.
+
+## Existing customer/vehicle CSV workbench (unpublished)
+
+```mermaid
+flowchart LR
+ A[Original scoped field template] --> B[Choose company and UTF-8 CSV]
+ B --> C[Bounded decoding and original strict parser]
+ C --> D[Original mapping + independent source company check]
+ D --> E[Preview duplicates, documents and errors]
+ E --> F{Explicit original confirmation and current token}
+ F -- no --> G[No target customer or vehicle created]
+ F -- yes --> H[Original save, audit and cursor in isolated acceptance]
+ B --> I[Lost response: retain file and retry original source hash]
+ I --> E
+```
+
+No finance or historical balances are imported. Real operating-data import remains prohibited pending final approval and backup. This diagram does not claim missing entity adapters are implemented.

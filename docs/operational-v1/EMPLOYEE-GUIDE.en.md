@@ -36,3 +36,5 @@ In employee permissions, Inherited follows the job standard. Individual addition
 Individual indicator inheritance requires approved database protection. If the guard notice is shown, previous-format settings remain available without automatic conversion. A newer-format record with incomplete protection is read-only until protection is restored; do not bypass the notice.
 
 Owner: the dashboard Backup status section reads only after Check backup status. An unconfigured source does not establish absence of backups. Review capture/test dates and storage location; artifact presence does not prove full recoverability. This section has no restore or download action.
+
+Existing customer/vehicle import: choose CSV UTF-8, Excel or Access, then company and file. Failed attempts retain the file with a clear reference; explicit removal is available. Review mapping, duplicates and company before confirmation. Preview creates no customer or vehicle and imports no balances. Real operating-data import requires final approval and an approved backup.

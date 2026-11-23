@@ -2276,7 +2276,11 @@
     "static": 189,
     "browserFocused": 1,
     "fullCurrentNative": "running",
-    "fullCurrentUI": "running",
+    "fullCurrentUI": {
+      "status": "passed",
+      "journeys": 32,
+      "source": "f78d6c263987dab57064d94214f7f558f5e52826"
+    },
     "hostedSourceRead": false,
     "actualBackupCreated": false,
     "systemRestoreOnOriginal": false,
@@ -2319,15 +2323,94 @@
         "sha256": "c7f334949cdbee7bc55df7f6b08e839391141600032d9bc4046cb2fef73f39d7",
         "bytes": 217
       }
-    ]
+    ],
+    "uncertainPreviewHidden": {
+      "status": "tested-unpublished",
+      "browser": 1,
+      "alsoChecksHeldPriorContextReply": true
+    }
   },
   "latestCI": {
     "run": 27,
     "id": 45231987856,
     "head": "1e4d21d144981242a8aff65b7978e3c3b33cb6ce",
-    "status": "in_progress_at_last_read",
-    "latestVerifiedSuccess": 22,
-    "successfulHead": "2ac1284aae433bf8aa8f4f820448bbb9d8e0b6ef",
-    "notEvidenceForUncommittedStatusCode": true
+    "status": "completed",
+    "conclusion": "success",
+    "latestSourceCI": {
+      "run": 28,
+      "id": 45241304807,
+      "head": "f78d6c263987dab57064d94214f7f558f5e52826",
+      "status": "in_progress_at_last_read"
+    },
+    "notEvidenceForUncommittedCSV": true
+  },
+  "csvImport": {
+    "status": "implemented-tested-unpublished",
+    "nativeIncludingOriginalAccessAndXLSX": 11,
+    "browserCSV": 1,
+    "browserOriginalWorkbench": 1,
+    "static": 189,
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "realImport": false,
+    "newImporterTables": false,
+    "financialEffect": false,
+    "remainingOtherEntityTemplates": true,
+    "documentation": "docs/operational-v1/IMPORT-CSV.md",
+    "logs": [
+      {
+        "path": "work/operational-evidence/csv-import-native.log",
+        "sha256": "4bf5c4f49f11140a121349662268c259c50e05e8d0a9fcee46d5d9101bef8687",
+        "bytes": 1562
+      },
+      {
+        "path": "work/operational-evidence/csv-import-static-final.log",
+        "sha256": "fbf657056fd17949ea7f0bf5a987b35edda9fb51a3708f510718d77fc04a7c95",
+        "bytes": 18593
+      },
+      {
+        "path": "work/operational-evidence/csv-import-types-final.log",
+        "sha256": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+        "bytes": 277
+      },
+      {
+        "path": "work/operational-evidence/csv-import-build-final.log",
+        "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+        "bytes": 147
+      },
+      {
+        "path": "work/operational-evidence/csv-import-browser.log",
+        "sha256": "085bbcaaec9372535b10354790d32e67b127121a4799e235cfd3d1059fa0bcc8",
+        "bytes": 251
+      },
+      {
+        "path": "work/operational-evidence/csv-import-workbench-browser.log",
+        "sha256": "c6d2fcd7c52010db37b76dbc54cae62018c3de106b16bb10eef467cefdcce4f8",
+        "bytes": 148
+      },
+      {
+        "path": "work/operational-evidence/csv-backup-guard-browser.log",
+        "sha256": "c7f334949cdbee7bc55df7f6b08e839391141600032d9bc4046cb2fef73f39d7",
+        "bytes": 217
+      },
+      {
+        "path": "work/operational-evidence/csv-import-financial95-review.log",
+        "sha256": "22ba1e29583a8da2ec0942d6cd361e35091d7c0cc1a090614dc767487a043a04",
+        "bytes": 539
+      }
+    ],
+    "sourceSha256": {
+      "backend/src/import-delimited.ts": "5732e31a62a3f99c4eb902a8fc0f4ec86eafbcb0da95a343ff61bd424bfbf9ac",
+      "backend/src/data-imports.ts": "f4c46d14f038d7fa111bbbf5e30d496195543c25134c322e5846e784b4d2fa02",
+      "data-import-ui.js": "4c4a2a1f7c572eef67d2cd2eae2dbc236000a9a86b4e8c7b72eee7ddeb8b1e6a",
+      "backend/src/app.ts": "f8c292f2352d22f99b933024b961cc0bde285bdbe3ff5a87c7105e14665d3476",
+      "backend/tests/import-delimited-api.test.ts": "3013447c029f7b965a145e0d4b8fa59452f2d4593182da3dda1fcfe573450791",
+      "backend/tests/import-delimited.browser.cjs": "42f5ceba81a85dbf822331acc7ed3bd9caa15a008277f82df79736086a4be010"
+    },
+    "failedAttemptsNotAcceptance": [
+      "An initial test expected409 for original importPreviewErrors422; corrected to original API contract.",
+      "The first browser locator depended on an upload form removed by successful preview; switched to the existing stable status node.",
+      "A running old fixture had not loaded the normalized Company_ID guard; acceptance reran on a fresh source fixture without weakening the assertion."
+    ]
   }
 }

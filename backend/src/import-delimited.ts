@@ -1,0 +1,6 @@
+// Reuse the original strict CSV parser; never execute cell formulas or create another importer.
+import{createRequire}from'node:module';import{requireOk}from'./core.js';
+const {csv}=createRequire(import.meta.url)('../../customer-policy.js')as{csv:(text:string,required:string|null,strict:boolean)=>Record<string,string>[]};
+export function importBytes(base64:string){requireOk(typeof base64==='string'&&base64.length>0&&base64.length<=10666668&&base64.length%4===0&&/^[A-Za-z0-9+/]*={0,2}$/.test(base64),422,'invalidImportEncoding');const bytes=Buffer.from(base64,'base64');requireOk(bytes.length<=8e6&&bytes.toString('base64')===base64,422,'invalidImportEncoding');return bytes;}
+export function delimitedImportRows(bytes:Buffer){requireOk(bytes.length>0&&bytes.length<=5e6,422,'importTooLarge');let text:string;try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{requireOk(false,422,'invalidCsvEncoding');}requireOk(!text!.includes('\0'),422,'invalidCsv');try{return csv(text!,null,true);}catch{requireOk(false,422,'invalidCsv');}}
+export function delimitedImportTemplate(fields:{key:string}[]){requireOk(fields.length>0&&fields.every(f=>/^[A-Za-z][A-Za-z0-9_]*$/.test(f.key))&&new Set(fields.map(f=>f.key)).size===fields.length,500,'importSchemaUnsupported');return Buffer.from('\uFEFF'+fields.map(f=>f.key).join(',')+'\r\n');}
