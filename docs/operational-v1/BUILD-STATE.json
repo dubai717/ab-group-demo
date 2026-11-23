@@ -972,6 +972,19 @@
       "log": "work/evidence/centre-static.log",
       "sha256": "36e71ddd7fd1c71e97fe72498ddff4a3ac862002f2c9167664649cb031292d73"
     },
-    "finalTypeAndBuild": "running"
+    "finalTypeAndBuild": {
+      "types": "pass",
+      "providerFreeBuild": "pass",
+      "checks": [
+        {
+          "path": "work/evidence/centre-final-types.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "work/evidence/centre-final-build.log",
+          "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+        }
+      ]
+    }
   }
 }
