@@ -126,9 +126,13 @@
       "requirement": "المهام والتصعيد كل 30 دقيقة",
       "status": "موجود ناقص",
       "evidence": [
-        "backend/src/operational-work-clock.ts"
+        "backend/src/operational-work-clock.ts",
+        "backend/src/task-working-clock.ts",
+        "task-working-clock-ui.js",
+        "backend/tests/task-working-clock.test.ts",
+        "backend/tests/task-working-clock.browser.cjs"
       ],
-      "remaining": "حساب اختباري؛ دمج التسلسل الإداري والعامل الدوري غير منجز."
+      "remaining": "ربط الموعد الدقيق والانتظار والجدول والإجازة الفعلية بسلسلة المديرين في متابعة HR منفذ ومختبر؛ تبني المواعيد الدقيقة لجميع المصادر والتفويض وتقارير التأخير والقبول الشامل متبقٍ."
     },
     {
       "id": "7",

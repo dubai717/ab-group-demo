@@ -1,5 +1,6 @@
 import {registerLeaveReturnReview,employeeLeaveReturnStates}from'./leave-return-portal.js';
 import {registerAnnualLeavePlanning} from './annual-leave-planning.js';
+import {registerTaskWorkingClock}from'./task-working-clock.js';
 import {registerEmployeeWorkCalendar} from './employee-work-calendar.js';
 import {validateVehicleTaskReassignment} from './vehicle-task-stages.js';
 import {registerPersonnelOrganization} from './personnel-organization.js';
@@ -31,7 +32,7 @@ export function registerPersonnel(app: any, call: any, cipher: any, options: any
             throw new ApiError(422, e.message);
         throw e;
     } });
-    registerAnnualLeavePlanning(app,route,cipher);registerLeaveReturnReview(app,route,cipher);registerEmployeeWorkCalendar(app,route,cipher);
+    registerAnnualLeavePlanning(app,route,cipher);registerLeaveReturnReview(app,route,cipher);registerEmployeeWorkCalendar(app,route,cipher);registerTaskWorkingClock(app,route,cipher);
     registerPersonnelDirectory(app,route,cipher);registerPersonnelPositions(app,route);registerPersonnelOrganization(app,route,cipher);
     registerEOSHistory(app, route, cipher);
     registerPersonnelDocuments(app, route, cipher, options);

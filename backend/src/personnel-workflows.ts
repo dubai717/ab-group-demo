@@ -1,3 +1,4 @@
+import{taskWorkingEscalations}from'./task-working-clock.js';
 import {remindAnnualLeavePlans} from './annual-leave-planning.js';
 import {ownerChequeClearance} from './owner-card-settlements.js';
 import {employeeAdvanceClearance} from './employee-advances.js';
@@ -80,6 +81,7 @@ export async function personnelFollowup(c: any, cipher: any, m: any, s: any, co:
  const customers=(await c.query("select * from ab.customers where company_id=$1 and status not in('Ended','Archived')",[co])).rows;for(const customer of customers){const assignee=employees.find((e:any)=>e.user_id===customer.created_by);if(!assignee||!CustomerPolicy.completeness(cipher.open(customer.payload_cipher)).missing.length)continue;const task=await makeTask(c,cipher,s,{companyId:co,employeeId:assignee.id,sourceType:'customer_data',sourceId:customer.id,sourceKey:'customer-data:'+customer.id,title:'Complete existing customer profile',expectedResult:'Required customer identity/contact fields actually completed',dueOn:customer.created_at.toISOString().slice(0,10)});if(task.created)created++;}
  const followups=(await c.query("select distinct on(n.entity_id,n.user_id)n.* from ab.finance_notifications n where n.company_id=$1 and n.action='customer:followup'and n.due_at<=now()order by n.entity_id,n.user_id,n.created_at desc",[co])).rows;for(const n of followups){const assignee=employees.find((e:any)=>e.user_id===n.user_id),eventId=n.event_key.replace(/^customer:/,'');if(!assignee||!/^[-a-f0-9]{36}$/.test(eventId))continue;const task=await makeTask(c,cipher,s,{companyId:co,employeeId:assignee.id,sourceType:'customer_followup',sourceId:eventId,sourceKey:'customer-followup:'+eventId,title:'Complete scheduled customer follow-up',expectedResult:'A subsequent confirmed/rescheduled call recorded in customer module',dueOn:n.due_at.toISOString().slice(0,10)});if(task.created)created++;}
     const tasks = (await c.query("select t.*,e.manager_id from ab.tasks t join ab.hr_employees e on e.id=t.employee_id where t.company_id=$1 and t.state not in('Completed','Closed')", [co])).rows;
+    const pendingClockTasks=[];
     for (const t of tasks) {
         if (t.source_type !== 'manual' && await sourceComplete(c, cipher, t)) {
             await c.query("update ab.tasks set state='Completed',completed_at=now(),revision=revision+1 where id=$1", [t.id]);
@@ -87,6 +89,11 @@ export async function personnelFollowup(c: any, cipher: any, m: any, s: any, co:
             await auditHR(c, cipher, s, { id: t.employee_id, company_id: co }, 'task_source_verified', { state: t.state }, { taskId: t.id, sourceType: t.source_type, sourceId: t.source_id });
             continue;
         }
+        pendingClockTasks.push(t);
+    }
+    const workingClock=await taskWorkingEscalations(c,cipher,m,s,co,pendingClockTasks,employees);
+    for(const t of pendingClockTasks){
+        if(workingClock.configured.has(t.id))continue;
         const level = H.level(t.due_on.toISOString().slice(0, 10), now, cfg.orangeDays, cfg.redDays);
         if (level === 'yellow')
             continue;
@@ -113,7 +120,7 @@ export async function personnelFollowup(c: any, cipher: any, m: any, s: any, co:
             await taskEvent(c, cipher, s, t.id, 'delegated', { delegationId: d.id, from: d.original_id, to: d.substitute_id, financialAuthorityTransferred: false });
         }
     }
-    return { created, tasksReviewed: tasks.length, automaticReturn: false };
+    return { created, tasksReviewed: tasks.length, automaticReturn: false, workingClock:{sent:workingClock.sent,review:workingClock.review,automaticPenalty:false} };
 }
 export function registerPersonnelWorkflows(app: any, route: any, cipher: any) {
     const id = z.uuid(), day = z.iso.date(), text = z.string().trim().min(1).max(2000), money = z.string().regex(/^\d{1,15}(\.\d{1,3})?$/), month = day.refine(v => v.endsWith('-01'));

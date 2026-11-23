@@ -1231,6 +1231,7 @@ export async function build(options: Options) {
       "bank-accounts.js",
       "annual-leave-plans-ui.js",
       "employee-work-calendar-ui.js",
+      "task-working-clock-ui.js",
       "leave-return-ui.js",
       "permission-matrix-ui.js",
       "user-management.js",

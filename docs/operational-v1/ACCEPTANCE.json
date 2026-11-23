@@ -274,6 +274,93 @@
       "tail": [
         "PASS actual dated work calendar: explicit X/half/off grid, missing hours retain inputs, lost successful response retries one version, read failure removes stale cells and recovers, original API source readback, AR/EN desktop/tablet/mobile. Synthetic only."
       ]
+    },
+    {
+      "log": "/tmp/ab-v1-task-clock-acceptance-native.log",
+      "sha256": "25099f0967bed1cdda1d75c2681eb76a57d64b8be45d5a55eecdbc096fb37cd5",
+      "tail": [
+        "✔ actual original task escalation uses recorded hours, real managers, approved waiting and deduplicated notifications without financial effects (2350.420136ms)",
+        "✔ read-only Owner View As cannot approve a task deadline although the actual direct manager can (1673.415064ms)",
+        "ℹ tests 73",
+        "ℹ suites 0",
+        "ℹ pass 73",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 52263.75617"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-task-clock-acceptance-types.log",
+      "sha256": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+      "tail": [
+        "",
+        "> ab-group-demo@1.0.0 backend:check",
+        "> tsc -p backend/tsconfig.json",
+        "",
+        "npm notice",
+        "npm notice New major version of npm available! 11.9.0 -> 12.2.3",
+        "npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.3",
+        "npm notice To update run: npm install -g npm@12.2.3",
+        "npm notice"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-task-clock-central-native-retry.log",
+      "sha256": "9cc2d1af68d1903cb712e0c3b82791e684cb199a1b33393a4fd7f57cfdde40a8",
+      "tail": [
+        "✔ actual original task escalation uses recorded hours, real managers, approved waiting and deduplicated notifications without financial effects (2393.449375ms)",
+        "✔ read-only Owner View As cannot approve a task deadline although the actual direct manager can (1580.787734ms)",
+        "ℹ tests 2",
+        "ℹ suites 0",
+        "ℹ pass 2",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 5826.264614"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-task-clock-static.log",
+      "sha256": "e91e61bb891ab32b875d197cc4f5c56c8ba859e4dfcdec8056b9f1f9c8d6f99a",
+      "tail": [
+        "✔ grace period ends before first day of following month, including leap years and pending dates (0.301704ms)",
+        "✔ service months remain separate from finance installments and margins may be positive, zero or negative (0.213384ms)",
+        "ℹ tests 182",
+        "ℹ suites 0",
+        "ℹ pass 182",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 1659.781101"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-eight-final-browser.log",
+      "sha256": "0c24bf7e5b34106daa4f449c3c303b004c7268568531a7f5c4d41710a01e79f9",
+      "tail": [
+        "PASS independent job standard and employee matrices: real actions, no section auto-grant, protected approval, no job-based account assignment, staged cancel/confirm, actual affected-user grant-count preview and preserved exceptions on standard update, AR/EN three widths and actual screenshots",
+        "PASS minimal prospect save: original file number, view mode, no optional documents, retained source/responsible, distinct real/prospect counters, clickable filter and AR/EN three widths",
+        "PASS annual plan actual API/UI: reversed-date error preserves inputs, tentative checkbox retains dates, save/view revision, no leave/balance/access effect, participation row, AR/EN saved reopening, historical read-only, desktop/tablet/mobile. Synthetic only.",
+        "PASS original conversation deep link: real authorized thread, query consumed once with context retained, login required, known-ID unauthorized request rejected without private content.",
+        "PASS user UX: name aliases/prefix/department picker, explicit readonly preview and unchanged owner session, demo IBAN/slow one-save/readback, confirmed permission plan, committed retry without repeat, delayed spinner, AR/EN responsive.",
+        "PASS restricted leave-return API/UI: failed work login, limited Auth without work cookie, retained validation/API/lost-response inputs, one canonical review, suppressed late old-company opening, duplicate prevention, return-for-info, actual manager completion count, successful original work login, unchanged rights, AR/EN desktop/tablet/mobile.",
+        "PASS actual dated work calendar: explicit X/half/off grid, missing hours retain inputs, lost successful response retries one version, read failure removes stale cells and recovers, original API source readback, AR/EN desktop/tablet/mobile. Synthetic only.",
+        "PASS actual task deadline and approved waiting UI: no invented hour, field retention on invalid interval and lost committed reply, one stored version, source task entry/readback, UTC storage/UAE display, AR/EN three widths, no financial or penalty effect. Synthetic only."
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-vehicle-isolated-final.log",
+      "sha256": "f5f2cd5900b0edc5dcc53da507f5a6d682dc6d6ccc3f8571f7b4c205d335a074",
+      "tail": [
+        "PASS vehicle browser: dependent catalogue across request/registration/edit, saved make/model retained during delayed catalogue response, customer-bound request, no initial plate, review estimates before approval, funding approval/disbursement/receipt, registration, private document, exact schedule preview, issued invoices/reload, disabled GPS, Arabic/English desktop/tablet/phone light/dark; zero JavaScript errors/sensitive browser writes.",
+        "PASS isolated thumbnail lifecycle: closed slow decoders release both queue slots, late teardown cannot block the next record, and stale canvases never appear. Owned modal workers also cancel stalled page loads before the next record. Synthetic renderer only.",
+        "PASS real task center/contact chain and funding review UI: independent approve without reason, reject Other/details, mandatory return/correction, saved readback, missing-data block, once-only double click, no disbursement on approval, AR/EN desktop/tablet/phone.",
+        "PASS V3 UI: top composer, zero/positive general fees, no false collection, residence amendment, dependent searchable catalogue, independent company, exact installment suggestion, dirty-edit navigation warning, documented assignment transfer, owner correction, approval and owner delivery task."
+      ]
     }
   ],
   "limitations": [
@@ -410,6 +497,298 @@
       "name": "operational-work-calendar-ar-1440.png",
       "bytes": 57190,
       "sha256": "71a96ea2c1bc4adc066e905bbe5d7f9d0d15baedeef9f314c471f0259b3bb90c"
+    }
+  ],
+  "eightJourneyScreenshots": [
+    {
+      "name": "operational-task-clock-en-390.png",
+      "bytes": 56972,
+      "sha256": "085e0dbcdf9b7a0194760f846af19d3fa2c5058af6d0e6ebf8b8c61d8a751daa"
+    },
+    {
+      "name": "operational-task-clock-en-768.png",
+      "bytes": 93511,
+      "sha256": "57bf79b52d287428a6701241cbf6b88ac0df28e4d2ed54ea8d7ceee6dd17039a"
+    },
+    {
+      "name": "operational-task-clock-en-1440.png",
+      "bytes": 114892,
+      "sha256": "e6a1af875c475c2cdfb72dfcde1611c43366a2939b888d68ded658fec3b55b35"
+    },
+    {
+      "name": "operational-task-clock-ar-390.png",
+      "bytes": 55889,
+      "sha256": "8f02eae93531974250c82621da3fca19856b228d87a08c4a9eb397a38177fe18"
+    },
+    {
+      "name": "operational-task-clock-ar-768.png",
+      "bytes": 91577,
+      "sha256": "1ff8c673772ffc004ba5ef591181ea1fbd6cb43ce35e4fb96ee4820e990d601b"
+    },
+    {
+      "name": "operational-task-clock-ar-1440.png",
+      "bytes": 114190,
+      "sha256": "0797575e24e7ddeae8a93db9414e860a483a8e3a63a626c3819a93e6ae86f012"
+    },
+    {
+      "name": "operational-work-calendar-en-390.png",
+      "bytes": 48703,
+      "sha256": "f5750084205d38f0a8af49260edd9c2c4bc524cae0ba9892cc2b0cd6bb6f5da1"
+    },
+    {
+      "name": "operational-work-calendar-en-768.png",
+      "bytes": 56476,
+      "sha256": "8332e615bb32a68c35d3b614dd1c911627281a9a70f00990f3d37c5a1d4c199e"
+    },
+    {
+      "name": "operational-work-calendar-en-1440.png",
+      "bytes": 61498,
+      "sha256": "81ae38f83f231d43a29a854c3620f2de0ba90f675397d2d2d347cc4e938310eb"
+    },
+    {
+      "name": "operational-work-calendar-ar-390.png",
+      "bytes": 42838,
+      "sha256": "73ad206e3a54f79dbc22507b9b769478f015f110d2bb75353f6be15f77d74609"
+    },
+    {
+      "name": "operational-work-calendar-ar-768.png",
+      "bytes": 52564,
+      "sha256": "abdbe6ffc04b32dece051ac0d1ffb35e0af01b700a32e3e0d1b7799fb04d7b45"
+    },
+    {
+      "name": "operational-work-calendar-ar-1440.png",
+      "bytes": 56061,
+      "sha256": "101b22595a096bd7aef6e76bc0c86cca8a3c48119c4830b38e7297442ae721eb"
+    },
+    {
+      "name": "operational-leave-review-en-390.png",
+      "bytes": 40412,
+      "sha256": "b7e03d92631c2dfdc18841319ace7ee4594d4d319d80d7ac926d4cb2eefd24f2"
+    },
+    {
+      "name": "operational-leave-review-en-768.png",
+      "bytes": 67548,
+      "sha256": "3a7df886603ba90a47a760d22b0fa0a8fe846c36550b8b5987aba094462ea5de"
+    },
+    {
+      "name": "operational-leave-review-en-1440.png",
+      "bytes": 81007,
+      "sha256": "a5682ff2d308dd62b3bf6072222c36642519558d7df83070f95b1d00d8170bf4"
+    },
+    {
+      "name": "operational-leave-review-ar-390.png",
+      "bytes": 41547,
+      "sha256": "e0be5db5a2d983f34b73b4bd1b8012044715580ba5d55655e391690d90d4284f"
+    },
+    {
+      "name": "operational-leave-review-ar-768.png",
+      "bytes": 67321,
+      "sha256": "9572d9a355d4a5634f49695ca43cdd1af7823388817829a9f38ab4e3fec4a54f"
+    },
+    {
+      "name": "operational-leave-review-ar-1440.png",
+      "bytes": 82633,
+      "sha256": "8f5e1b388f44674b9547eb3f63f6b31957922133c1ed8a25530b75928fde64b6"
+    },
+    {
+      "name": "operational-leave-portal-en-390.png",
+      "bytes": 43779,
+      "sha256": "821992c83c5b55b86f30b4aed2ab108800e4a95d204271d8d550b14ded9249f1"
+    },
+    {
+      "name": "operational-leave-portal-en-768.png",
+      "bytes": 46977,
+      "sha256": "6e0292a9c825a8b8ff2b69f4992e160d0a952fcd38b6169218b6d1a9600bcf5c"
+    },
+    {
+      "name": "operational-leave-portal-en-1440.png",
+      "bytes": 50554,
+      "sha256": "cb7d69dce919617f12e08205673518a838375fe8662fff325bc707fda90acbee"
+    },
+    {
+      "name": "operational-leave-portal-ar-390.png",
+      "bytes": 44543,
+      "sha256": "aa6396217720332f9c833d312da94db9ed2578d24c14de1cb18fee020cf46fbc"
+    },
+    {
+      "name": "operational-leave-portal-ar-768.png",
+      "bytes": 48428,
+      "sha256": "daf99b48578c4695f91882126728ff205f2a1d9ded1fc61947dde24f0c6555c7"
+    },
+    {
+      "name": "operational-leave-portal-ar-1440.png",
+      "bytes": 49441,
+      "sha256": "b2594169eb13bab419b837d8ebf006585b39fc8af6c973e65ed1bb7dff98e625"
+    },
+    {
+      "name": "dual-permissions-en-390.png",
+      "bytes": 414405,
+      "sha256": "846971f42c591e7a9e085dd6875d5f2427773ac3bccbf6dcc802861551816ad6"
+    },
+    {
+      "name": "dual-permissions-en-768.png",
+      "bytes": 468959,
+      "sha256": "5d870329a47e8394462f4e38ab44ac15bab19865e4ba5b698d84391930176de3"
+    },
+    {
+      "name": "dual-permissions-en-1440.png",
+      "bytes": 514251,
+      "sha256": "65cae5a23452ba3ec3735b4799d360282a310189d7bf36fb9fe967d9690c2263"
+    },
+    {
+      "name": "dual-permissions-ar-390.png",
+      "bytes": 411099,
+      "sha256": "ba648370f4876c5c8030bd94e75f1fa00be2fe32d2dafe2db5bf85a41609f9f0"
+    },
+    {
+      "name": "dual-permissions-ar-768.png",
+      "bytes": 465504,
+      "sha256": "c46117627aa2755ed6ac4a3d29008470becf9048163d4b20199dbdfd341f6156"
+    },
+    {
+      "name": "dual-permissions-ar-1440.png",
+      "bytes": 524227,
+      "sha256": "e536f1f4bb128e90623b13067d4ac8cfde1a318d2bf8547a91934990b165a855"
+    },
+    {
+      "name": "operational-annual-saved-en-390.png",
+      "bytes": 57629,
+      "sha256": "6da2abc7ca41eab2deea9ae03a586b93610c0a1f92c121fe054c5ef6e6e5bc22"
+    },
+    {
+      "name": "operational-annual-saved-en-768.png",
+      "bytes": 75771,
+      "sha256": "e1b1a0aabc43626ceafe798724511a5b13d2b3e6b29ab3a5cc036272e9ae1619"
+    },
+    {
+      "name": "operational-annual-saved-en-1440.png",
+      "bytes": 101960,
+      "sha256": "85a22bba9f661e3755c3f8954467c30c1ca6f933894bf6f3ec6a5b3bf98c16f9"
+    },
+    {
+      "name": "operational-annual-saved-ar-390.png",
+      "bytes": 53046,
+      "sha256": "198bc1487ee0242b570fc01f3871b304b6d2afbc6fd0bfa7211a229bdfb3ced4"
+    },
+    {
+      "name": "operational-annual-saved-ar-768.png",
+      "bytes": 74583,
+      "sha256": "572e0565221a14f5dc959d276e1e7e3a2b65df2ca47dc275030ddfb4c872d281"
+    },
+    {
+      "name": "operational-annual-saved-ar-1440.png",
+      "bytes": 91393,
+      "sha256": "0ffb333142dd18d5f7b7e4cb63262a5ace2ac3e8a71bbae90499a673ba2503af"
+    },
+    {
+      "name": "operational-annual-plan-390.png",
+      "bytes": 75405,
+      "sha256": "0f5c512c6ded50fc906ac8859968fa7d1f8e4af42be5768157679d843caff4e1"
+    },
+    {
+      "name": "operational-annual-plan-768.png",
+      "bytes": 169634,
+      "sha256": "df70ea65af31049cc76d0e288ae122396af9e5a3d16e8d7f32f83aee3de78ad5"
+    },
+    {
+      "name": "operational-annual-plan-1440.png",
+      "bytes": 225796,
+      "sha256": "eae54214e6f2a51afca96ff5bbff0eaf57dd3cf1457ef0a2eb7197eabeb1ee20"
+    },
+    {
+      "name": "operational-prospect-en-390.png",
+      "bytes": 194615,
+      "sha256": "4f2128fec2b8c0e97d9d349c7d0555ed3ad38e5fb88f73b99c2e4e67a57e3f2b"
+    },
+    {
+      "name": "operational-prospect-en-768.png",
+      "bytes": 272289,
+      "sha256": "9af46c79285bb27f670662535791c55fe9acb90cedd654a81c87ca6f23628042"
+    },
+    {
+      "name": "operational-prospect-en-1440.png",
+      "bytes": 292669,
+      "sha256": "65abb54b82972c539f8eaa0b00c1eb23a8009daf7fbbe2310ea3ed6bb0cba1d9"
+    },
+    {
+      "name": "operational-prospect-ar-390.png",
+      "bytes": 195426,
+      "sha256": "7fed98bd21397f4f6346810af4577a12764b683a9c6a0683804caacda9da82ef"
+    },
+    {
+      "name": "operational-prospect-ar-768.png",
+      "bytes": 264945,
+      "sha256": "0ae520cb69af01e22fa4fe9ea8425916db3bf45e2252c4e628e7c54ef3159159"
+    },
+    {
+      "name": "operational-prospect-ar-1440.png",
+      "bytes": 290574,
+      "sha256": "5e5490124c4c3f788af74a46b14cdfe1a1417a9d45a5318548f5048222140cde"
+    },
+    {
+      "name": "operational-standard-impact.png",
+      "bytes": 73031,
+      "sha256": "4b0b5b26f735177419551136fede4cd12607a7c5c4908d44010fc0c8f70bca9f"
+    },
+    {
+      "name": "operational-employee-permissions-en-390.png",
+      "bytes": 310543,
+      "sha256": "0e3406fae12fe7da85b7b3c3f28288dfbc3208870371403adf9b3d8153d1afdc"
+    },
+    {
+      "name": "operational-employee-permissions-en-768.png",
+      "bytes": 300740,
+      "sha256": "b9a4d51ee0951277c2bd93f8233215ff2d3843388094e034b61eff39a71c4d8b"
+    },
+    {
+      "name": "operational-employee-permissions-en-1440.png",
+      "bytes": 339854,
+      "sha256": "ce142afe8279f7e3466e61f9c31615e74c557424123b97159c96f1c77ec734fa"
+    },
+    {
+      "name": "operational-employee-permissions-ar-390.png",
+      "bytes": 315656,
+      "sha256": "0b0d7c6cb6887af41cf1975ea48a3493105dba51516c537cd08979c27330e005"
+    },
+    {
+      "name": "operational-employee-permissions-ar-768.png",
+      "bytes": 301028,
+      "sha256": "9adf0970e9b8fa6162ec9c9714aeeeb8de6e9ee217b3b5b5bb233b866cf512e6"
+    },
+    {
+      "name": "operational-employee-permissions-ar-1440.png",
+      "bytes": 340772,
+      "sha256": "0d14ef7bee2fcb66e2c52e93640d666acfda376740a9adc856f8d0031f14888c"
+    },
+    {
+      "name": "operational-job-standard-en-390.png",
+      "bytes": 107769,
+      "sha256": "7f05a177a9eadd06e7e2a5610d605ff9e29e6b29dea6a2b97accb5fc88ea91a7"
+    },
+    {
+      "name": "operational-job-standard-en-768.png",
+      "bytes": 97980,
+      "sha256": "b0c3872bfb6033fd2524d138265947632a13cc1aaedc4012e2d022030726987f"
+    },
+    {
+      "name": "operational-job-standard-en-1440.png",
+      "bytes": 125423,
+      "sha256": "9a6da8d3774573fd5e5045668a021463a7ab11e813f96afe6ab9bfe981b38ee5"
+    },
+    {
+      "name": "operational-job-standard-ar-390.png",
+      "bytes": 96256,
+      "sha256": "dbc0dd440d1f4a313b6c20d3ddd632d7b714dd642109784079cb724b087b6814"
+    },
+    {
+      "name": "operational-job-standard-ar-768.png",
+      "bytes": 98677,
+      "sha256": "4ac721f41bc144dfb514df308f12483a71ba52e3b74161bedd7e65293776b7a1"
+    },
+    {
+      "name": "operational-job-standard-ar-1440.png",
+      "bytes": 125753,
+      "sha256": "95f96cb3796c0f859942df4103ec7732ef2b9e23008d329432776436eb9e0e55"
     }
   ]
 }

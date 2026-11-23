@@ -10,10 +10,11 @@
   "decision": "last_two_actual_due_months",
   "policyActivated": false,
   "next": [
-    "Finish complete native regression and independent CI",
-    "Continue inherited-deny/dashboard-standard work without changing PR115",
-    "Integrate source-bound service guard after financial dependency stabilizes",
-    "Complete official-provider review and remaining operational acceptance"
+    "Upload tested working-clock and renderer-isolation fix to PR116; verify all original immutable CI jobs",
+    "Continue inherited deny, selective exception reset, dashboard widget standards and geographic scope",
+    "Complete explicitly leave-linked delegations and substitute contribution summary",
+    "Integrate source service eligibility and cross-branch collections after financial PR115 stabilizes",
+    "Official provider setup/use-case review and remaining operational acceptance"
   ],
   "limitations": [
     "Financial package dependency unresolved",
@@ -54,7 +55,7 @@
       "passed": 1,
       "failed": 0
     },
-    "operationalBrowser": "six actual independent fixture journeys passed; newest application source, synthetic Auth and local PostgreSQL only",
+    "operationalBrowser": "eight actual independent fixture journeys passed; synthetic providers only",
     "completeReleaseAcceptance": false,
     "annualBrowser": "AR/EN saved-plan reopening and historical read-only passed in addition to retained inputs/participation/three widths",
     "originalOrganizationAndPersonnelBrowser": "passed after opening actual advanced role controls; original assertions retained",
@@ -93,7 +94,31 @@
     "scope": "uploaded foundations only; later local standard-impact and leave-return changes not covered",
     "newerRun": 45101351627,
     "newerCommit": "188c1c437e07ad734d269f4abc53e7c1994b134c",
-    "newerStatus": "operational UI completed success; original regressions in progress, not final calendar source"
+    "newerStatus": "failed in shared renderer fixture; local reproduction proved HTTP429. Original assertions now pass on independent renderer fixture; next immutable CI required.",
+    "history": [
+      {
+        "run": 45093055481,
+        "commit": "76174281215606bf70364e1898fbccfc1be982fa",
+        "status": "success",
+        "scope": "earlier foundations"
+      },
+      {
+        "run": 45101351627,
+        "commit": "188c1c437e07ad734d269f4abc53e7c1994b134c",
+        "status": "failure",
+        "nativePassed": 716,
+        "operationalUI": "success",
+        "reason": "shared vehicle/renderer fixture exceeded unchanged HTTP rate limit before renderer login appeared"
+      },
+      {
+        "run": 45103237345,
+        "commit": "985d2a4e0799c423ffa80f48917b8f90c4fe2bbf",
+        "status": "failure",
+        "nativePassed": 720,
+        "operationalUI": "success",
+        "reason": "same renderer fixture coupling; before the current isolation fix"
+      }
+    ]
   },
   "leaveReturn": {
     "state": "local API and bilingual portal/review UI tested; source integration partially complete, unpublished",
@@ -129,8 +154,22 @@
     "financialEffect": false,
     "tasksRescheduled": false,
     "remaining": [
-      "Integrate task and escalation workers with recorded schedules",
+      "Adopt every task source and delegation/return timing",
       "Broaden multi-area/multi-column acceptance"
+    ]
+  },
+  "taskWorkingClock": {
+    "state": "source-bound exact deadline/wait approval and real manager-chain notifications integrated with original HR followup; locally tested, unpublished",
+    "nativePassed": 73,
+    "nativeScope": "clock, calendar, original personnel, leave-return and MyWork combined; two clock cases subsequently rerun with canonical MyWork bucket assertion",
+    "browser": "eight independent journeys passed; clock AR/EN three widths, retained errors and one version after lost reply",
+    "sourceInvoiceChanged": false,
+    "automaticPenalty": false,
+    "realActivation": false,
+    "remaining": [
+      "Adopt exact deadlines from every existing task source",
+      "Integrate delegation/adoption and return",
+      "Expand long-chain service-worker and reporting acceptance"
     ]
   }
 }

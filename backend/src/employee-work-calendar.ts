@@ -15,6 +15,10 @@ async function source(c:any,cipher:any,tenant:string,employeeId:string){
 export async function employeeWorkCalendar(c:any,cipher:any,tenant:string,employeeId:string){
  const d=await source(c,cipher,tenant,employeeId);return{revision:d.revision,versions:d.versions.map((v:any,i:number)=>({...v,effectiveUntil:d.versions[i+1]?previousDay(d.versions[i+1].effectiveFrom):null}))};
 }
+export function decodedEmployeeWorkCalendar(cipher:any,employeeId:string,value:any){
+ const d=value?cipher.open(value.cipher):{employeeId,status:'Recorded',revision:0,versions:[]};requireOk(d.employeeId===employeeId&&d.status==='Recorded'&&Array.isArray(d.versions),409,'workCalendarSourceReviewRequired');
+ return{revision:d.revision,versions:d.versions.map((v:any,i:number)=>({...v,effectiveUntil:d.versions[i+1]?previousDay(d.versions[i+1].effectiveFrom):null}))};
+}
 function validateSchedule(s:any,employeeId:string){
  requireOk(s.employeeId===employeeId&&s.effectiveUntil===null,422,'invalidWorkCalendarSource');requireOk(Object.keys(s.weekly).length===7,422,'completeWeekRequired');
  requireOk(new Set(s.holidays).size===s.holidays.length&&new Set(s.overrides.map((r:any)=>r.date)).size===s.overrides.length,422,'duplicateCalendarDate');
