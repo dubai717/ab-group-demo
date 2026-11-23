@@ -100,9 +100,9 @@
     "mergeAuthorized": false
   },
   "CI": {
-    "run": 15,
-    "runId": 45158709019,
-    "head": "7811dc134eaa308fea590dceddc00a36251699c5",
+    "run": 16,
+    "runId": 45167896980,
+    "head": "3ca1c799f2ca70668789165afc625f2dedc69575",
     "status": "in_progress",
     "notProofForCurrentUnpushedChanges": true
   },
@@ -280,8 +280,8 @@
     ]
   },
   "latestRemoteBeforeThisBuild": {
-    "head": "7811dc134eaa308fea590dceddc00a36251699c5",
-    "tree": "df15d23cd38da76f2021e138bcdf5daa54c19eac"
+    "head": "3ca1c799f2ca70668789165afc625f2dedc69575",
+    "tree": "852ba8ba7e3f142d51739c6b7705a49f2407d029"
   },
   "communicationCases": {
     "state": "basic topic workflow in original conversation; unpublished",
@@ -413,6 +413,15 @@
       "geographic scope",
       "full dashboard inheritance/reset",
       "full release acceptance and reviewed database action enforcement"
-    ]
+    ],
+    "proposedReportingScope": {
+      "oldRecordCannotAuthorizeOutOfScopeNewManager": true,
+      "actualHTTPRejectAndPermittedDescendantReadback": true,
+      "nativeFocusedPass": 10,
+      "staticPass": 187,
+      "targetedUIJourneys": 2,
+      "full19JourneysArePriorPackageEvidence": true,
+      "hostedChanges": false
+    }
   }
 }

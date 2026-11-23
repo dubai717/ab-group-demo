@@ -793,6 +793,58 @@
         "PASS atomic new job-standard indicators and permissions: stage before first save without writes or employee assignment, original fresh review, lost committed response retries the same key/body, one role revision and stored restriction, AR/EN three widths. Synthetic only.",
         "PASS original widget previews and plus/remove controls: exact authorized cached counts without repeated dataset reads, employee/standard settings, no write until review/confirmation, no automatic drilldown/data grant or employee assignment, preserved cancel and staged dirty standard with atomic indicator/permission save, AR/EN three widths. Synthetic only."
       ]
+    },
+    {
+      "log": "work/operational-evidence/reporting-scope-static.log",
+      "sha256": "deab00a8f990d8774b21d489896b1f717437295a9d32399a854fb888d192eba0",
+      "tail": [
+        "✔ bank-only access never expands personal user-profile visibility (1.085556ms)",
+        "✔ installments use exact integer arithmetic and only first installment absorbs remainder (2.268144ms)",
+        "✔ grace period ends before first day of following month, including leap years and pending dates (0.280262ms)",
+        "✔ service months remain separate from finance installments and margins may be positive, zero or negative (0.259682ms)",
+        "ℹ tests 187",
+        "ℹ suites 0",
+        "ℹ pass 187",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 2417.902831"
+      ]
+    },
+    {
+      "log": "work/operational-evidence/reporting-scope-final-native.log",
+      "sha256": "fbedeb3d36d24c966d7789cab6ab3408ebd9e4d21ad5ab591a9b34efe0b9017c",
+      "tail": [
+        "✔ Reviewed security role SQL preserves the old catalog, blocks unapproved writes and uses existing tenant-isolated roles only (1661.695915ms)",
+        "✔ Custom role company scope also protects original document and communication boundaries (2.114418ms)",
+        "✔ selected exception preview never cascades to unselected or inherited sources (1.893193ms)",
+        "✔ reviewed selected removal is atomic, scoped, deduplicated and retains every unselected original grant (2199.720526ms)",
+        "ℹ tests 10",
+        "ℹ suites 0",
+        "ℹ pass 10",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 21813.607948"
+      ]
+    },
+    {
+      "log": "work/operational-evidence/reporting-scope-build.log",
+      "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "tail": [
+        "PASS: compiled runtime module graph loads without provider connections",
+        "PASS: staging JavaScript build complete; no migrations or cloud connections"
+      ]
+    },
+    {
+      "log": "work/operational-evidence/reporting-scope-target-browser.log",
+      "sha256": "e3b25ac034a441ee6116fb27a7b37133c562589945ac2248602568eaa3ce7b98",
+      "tail": [
+        "PASS original managed-user UI: company-scoped directory and count, Owner-controlled standard membership, explicit company and reporting exceptions with hidden root retained, human company alias, no fake reference accounts, AR/EN three widths. Synthetic only.",
+        "PASS selected standard additions: default retention, no employee names during design, explicit affected-user selection and fresh preview, retained failure draft, no mutation before confirmation, exact one-grant removal and unchanged other grants/scope, AR/EN three widths"
+      ]
     }
   ],
   "limitations": [
@@ -1702,5 +1754,16 @@
       }
     ],
     "liveAcceptance": false
+  },
+  "reportingScope": {
+    "beforeFixPureFailure": "work/operational-evidence/reporting-scope-before.log",
+    "firstNativeFailure": "work/operational-evidence/reporting-scope-complete-native.log",
+    "reason": "original PATCH response does not include managerId; use actual authorized bootstrap readback",
+    "nativePass": 10,
+    "staticPass": 187,
+    "targetUIJourneysPass": 2,
+    "originalFullUI19FromPriorPackage": true,
+    "sameFinalCommitCompleteAcceptance": false,
+    "financialEffect": false
   }
 }

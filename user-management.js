@@ -45,7 +45,9 @@
       if (scope.type === 'group') return true;
       if (scope.type === 'company') return associations(target, 'company').includes(scope.id);
       if (scope.type === 'department') return associations(target, 'department').includes(scope.id);
-      return descendants(scope.id, target.id) || target.managerId === scope.id;
+      // A proposed assignment must be evaluated through its proposed manager.
+      // Looking up target.id here would silently reuse its old reporting scope.
+      return target.managerId === scope.id || !!target.managerId && descendants(scope.id, target.managerId);
     }
     function scopeContains(parent, child) {
       if (!validScope(parent) || !validScope(child)) return false;
