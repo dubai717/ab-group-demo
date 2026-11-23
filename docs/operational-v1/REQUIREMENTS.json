@@ -121,9 +121,12 @@
         "backend/src/leave-linked-delegations.ts",
         "backend/tests/leave-linked-delegations.test.ts",
         "backend/tests/leave-linked-delegations.browser.cjs",
-        "backend/tests/communication-leave-delegation.test.ts"
+        "backend/tests/communication-leave-delegation.test.ts",
+        "backend/src/employee-document-task.ts",
+        "backend/tests/leave-document-source.test.ts",
+        "docs/operational-v1/EMPLOYEE-DOCUMENT-RENEWAL.md"
       ],
-      "remaining": "أضيف ربط مهام موضوعات المحادثة بتفويض الإجازة مع صلاحيات المصدر الحالية وإعادة المفتوح وحفظ إنجاز البديل؛ ما زالت المصادر الأخرى والشركات المتعددة وضوابط إجازة البديل وتبني الساعة والقبول الموسع جزئية. لا SQL مستضاف."
+      "remaining": "أضيف ربط مهام موضوعات المحادثة بتفويض الإجازة مع صلاحيات المصدر الحالية وإعادة المفتوح وحفظ إنجاز البديل؛ ما زالت المصادر الأخرى والشركات المتعددة وضوابط إجازة البديل وتبني الساعة والقبول الموسع جزئية. لا SQL مستضاف. أُصلح إنجاز تجديد مستند الموظف بدليل نسخة معتمدة أحدث، وأضيف فحص صلاحية مصدر المستند للبديل عند الإنشاء والتفعيل والعودة؛ تبقى بقية المصادر والقبول الشامل."
     },
     {
       "id": "4.c",
@@ -187,9 +190,12 @@
       "requirement": "المستندات والخدمات",
       "status": "موجود ناقص",
       "evidence": [
-        "customer-workspace-ui.js"
+        "customer-workspace-ui.js",
+        "backend/src/employee-document-task.ts",
+        "backend/tests/leave-document-source.test.ts",
+        "docs/operational-v1/EMPLOYEE-DOCUMENT-RENEWAL.md"
       ],
-      "remaining": "الموجود محفوظ؛ تحتاج قواعد التذكير والنسخ وتكامل الأهلية إلى قبول شامل."
+      "remaining": "الموجود محفوظ؛ تحتاج قواعد التذكير والنسخ وتكامل الأهلية إلى قبول شامل. أُصلح إنجاز تجديد مستند الموظف بدليل نسخة معتمدة أحدث، وأضيف فحص صلاحية مصدر المستند للبديل عند الإنشاء والتفعيل والعودة؛ تبقى بقية المصادر والقبول الشامل."
     },
     {
       "id": "9",

@@ -44,3 +44,5 @@ unlinked message/attachment contributions. Requirement4.b and the whole release
 remain partial. No hosted SQL or protected financial worktree was modified.
 
 Case coverage adds no participant or grant. Creation, activation and linked explicit return recheck current source rights. Pending original accounts require management review instead of automatic case-task return; verified return restores only previously held access through the original independent proof. See COMMUNICATION-CASES.md and communication-leave-delegation.test.ts.
+
+تحديث مصادر مستند الموظف: delegatedTaskSourceReview يفحص السجل الأصلي وصلاحية الوصول والتحديث الحالية عند الإنشاء والتفعيل والعودة؛ لا تمنح المهمة حق رفع أو الاطلاع على المستند. انظر EMPLOYEE-DOCUMENT-RENEWAL.md للأدلة وحدود الإنجاز.

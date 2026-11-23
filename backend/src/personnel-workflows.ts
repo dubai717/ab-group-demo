@@ -1,4 +1,4 @@
-import {communicationTaskReview,validateLeaveDelegation,reconcileLeaveDelegations,linkedDelegationActivationReview,notifyLeaveDelegationReviews}from'./leave-linked-delegations.js';
+import {delegatedTaskSourceReview,validateLeaveDelegation,reconcileLeaveDelegations,linkedDelegationActivationReview,notifyLeaveDelegationReviews}from'./leave-linked-delegations.js';
 import{taskWorkingEscalations}from'./task-working-clock.js';
 import {remindAnnualLeavePlans} from './annual-leave-planning.js';
 import {ownerChequeClearance} from './owner-card-settlements.js';
@@ -157,7 +157,7 @@ export function registerPersonnelWorkflows(app: any, route: any, cipher: any) {
     app.post('/api/personnel/delegations/:id/decision', route(async (c: any, m: any, s: any, r: any) => { requireOk(m.actor.roleId === 'owner'); const d = z.object({ action: z.enum(['return', 'extend', 'transfer']), endsOn: day.optional(), reason: text }).strict().parse(r.body), row = (await c.query('select * from ab.hr_delegations where id=$1', [id.parse(r.params.id)])).rows[0]; requireOk(row, 404, 'notFound'); requireOk(['Active', 'Extended'].includes(row.state), 409, 'invalidState'); const data = cipher.open(row.payload_cipher);if(data.leaveLinkedVersion===1){requireOk(d.action!=='transfer',409,'linkedDelegationReassignmentReviewRequired');if(d.action==='extend'){const leave=(await c.query("select * from ab.hr_leaves where id=$1 and state='Approved'",[data.leaveId])).rows[0];requireOk(leave&&d.endsOn&&d.endsOn<=leave.ends_on.toISOString().slice(0,10),409,'delegationOutsideApprovedLeave');}} if (d.action === 'extend')
         requireOk(d.endsOn && d.endsOn >= today() && d.endsOn > row.ends_on.toISOString().slice(0, 10), 422, 'invalidDate'); if (d.action === 'return') {
         const original=await employeeIn(c, row.original_id, row.company_id);
-        if(data.leaveLinkedVersion===1){const tasks=(await c.query("select * from ab.tasks where id=any($1::uuid[]) and company_id=$2 and employee_id=$3 and state not in('Completed','Closed') for update",[data.taskIds,row.company_id,row.substitute_id])).rows;const review=await communicationTaskReview(c,cipher,s.tenant_id,tasks,original);requireOk(!review,409,review||'communicationDelegateSourceReviewRequired');}
+        if(data.leaveLinkedVersion===1){const tasks=(await c.query("select * from ab.tasks where id=any($1::uuid[]) and company_id=$2 and employee_id=$3 and state not in('Completed','Closed') for update",[data.taskIds,row.company_id,row.substitute_id])).rows;const review=await delegatedTaskSourceReview(c,cipher,s.tenant_id,tasks,original);requireOk(!review,409,review||'communicationDelegateSourceReviewRequired');}
         for (const tid of data.taskIds) {
             const t = (await c.query("select * from ab.tasks where id=$1 and employee_id=$2 and state not in('Completed','Closed')", [tid, row.substitute_id])).rows[0];
             if (t) {

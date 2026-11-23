@@ -100,10 +100,10 @@
     "mergeAuthorized": false
   },
   "CI": {
-    "run": 16,
-    "runId": 45167896980,
-    "head": "3ca1c799f2ca70668789165afc625f2dedc69575",
-    "status": "in_progress",
+    "run": 17,
+    "runId": 45168919077,
+    "head": "8835fb60f5c2ef9feb993bdfd7e2922cc82c260b",
+    "status": "pending",
     "notProofForCurrentUnpushedChanges": true
   },
   "leaveReturn": {
@@ -247,7 +247,7 @@
     "patch": "/tmp/ab-v1-durable-code-diff.patch.gz",
     "manifest": "/tmp/ab-v1-durable-code-diff.json",
     "scope": "code only; not a database backup",
-    "baseRemoteCommit": "4cfc11722dac3e7ab7f917419c51fde8a38157f8",
+    "baseRemoteCommit": "8835fb60f5c2ef9feb993bdfd7e2922cc82c260b",
     "rotationEvidence": "/tmp/ab-v1-code-checkpoint-rotation.json"
   },
   "selectedExceptions": {
@@ -280,8 +280,8 @@
     ]
   },
   "latestRemoteBeforeThisBuild": {
-    "head": "3ca1c799f2ca70668789165afc625f2dedc69575",
-    "tree": "852ba8ba7e3f142d51739c6b7705a49f2407d029"
+    "head": "8835fb60f5c2ef9feb993bdfd7e2922cc82c260b",
+    "tree": "b31c175814bd8f22d4dd9208ed09b19781864ca7"
   },
   "communicationCases": {
     "state": "basic topic workflow in original conversation; unpublished",
@@ -423,5 +423,44 @@
       "full19JourneysArePriorPackageEvidence": true,
       "hostedChanges": false
     }
+  },
+  "employeeDocumentRenewal": {
+    "state": "implemented and locally tested; unpublished",
+    "oldUnexpiredSourceCompletesRenewal": false,
+    "pendingUploadCompletesRenewal": false,
+    "sameExpiryScanCompletesRenewal": false,
+    "exactOriginalSourceAndApprovedExtendedCurrentVersionRequired": true,
+    "archivedProofAccepted": false,
+    "fileBytesFetchedByCompletionCheck": false,
+    "metadataReadBounded": true,
+    "delegateSourceAuthorityRechecked": [
+      "creation",
+      "activation",
+      "return"
+    ],
+    "delegationGrantsNewPermissions": false,
+    "nativeCombined": {
+      "pass": 74,
+      "fail": 0
+    },
+    "laterArchiveNative": {
+      "pass": 1,
+      "fail": 0,
+      "separateRun": true
+    },
+    "static": {
+      "pass": 187,
+      "fail": 0
+    },
+    "operationalUIJourneys": 20,
+    "releaseReady": false,
+    "historicalCompletedTasksReopened": false,
+    "financialEffect": false,
+    "remaining": [
+      "all other source adapters",
+      "substitute coverage continuity",
+      "automatic reminders and official provider",
+      "full release acceptance"
+    ]
   }
 }
