@@ -935,22 +935,24 @@
     "source": "backend/review/operating-centres.sql",
     "test": "backend/tests/operating-centres-review.test.ts",
     "remaining": [
-      "original Owner directory plan/apply/editor with immutable original audit and uncertain-save recovery",
-      "original geographic scope planning and actual API/DB enforcement separate from primary location",
-      "bilingual UI, complete source rollback/restore acceptance and protected publication"
+      "latest-recorded/future directory and immutable source history",
+      "original Owner editor with retained input, uncertainty/readback and AR/EN browser checks",
+      "original geographic scope planning, fresh affected-user impact and actual API/DB enforcement separate from primary location",
+      "complete rollback/restore acceptance and protected publication"
     ],
     "doc": "docs/operational-v1/OPERATING-CENTRES.md",
     "runtimeReadEndpointRegistered": true,
-    "writerEnabled": false,
     "scopeAuthorityEnabled": false,
     "sourceChecksums": {
       "backend/review/operating-centres.sql": "d8166c6245da2b2c36c496670300648ae2bdf3afaf4eec977689820371b182c6",
       "backend/src/operating-centre-readiness.ts": "1fcfc9b64953f09728aaf60308eefaad562ab845682f195e69d90df67a65b1ed",
       "backend/src/operating-centre-schema.ts": "d53ef9df26bc5f9b946cac8b984a7111b3d209829e5996194ad35eab303c3311",
-      "backend/src/operating-centres.ts": "29ada7711d68f7f187d66083c53b4d2328d0069673c1840565dfdacf8418ea3d",
-      "backend/src/app.ts": "dbece3742b94c106b6fd22179ee7f28bb00fa019985fb4883ba0110af6098444",
-      "backend/tests/operating-centre-source.test.ts": "75385953fd09c7cc76b1b1fd80da515a0d12150476d38d8f6a8f238bda106d77",
-      "backend/tests/operating-centres-review.test.ts": "d5eecda810b902f1de808e2c70dbed2923663e4d22f37f002bb99769350a49d5"
+      "backend/src/operating-centres.ts": "172bc90b596864fe2a656a57a3b5e46e10388a4c518267d64376fe14106f4aa8",
+      "backend/src/operating-centre-write.ts": "26d0bb47d8f8e3bac49e5fea4eb4147801cb882f2ebe92f01c2f5dc3e399bde7",
+      "backend/src/app.ts": "c3cbd714df5876db03dc8ebd631f53776b500a3b3309cc254311074ad0079be7",
+      "backend/tests/operating-centre-source.test.ts": "da0b1113215948eff24485790ada031f8c1076ec11b2229dfa6048e24bd0050e",
+      "backend/tests/operating-centres-review.test.ts": "d5eecda810b902f1de808e2c70dbed2923663e4d22f37f002bb99769350a49d5",
+      "backend/tests/operating-centre-write.test.ts": "b1a605e96c38ae46baa67a963618e929426da44b1e8518b562fc40c83310702f"
     },
     "native": {
       "pass": 3,
@@ -1020,6 +1022,33 @@
       "sha256": "b3f1a4b6480529724598016e382bbd096bcc3a3f6e3ae1bfe95980faac573ad6",
       "scope": "recorded revision independent from business effective date; current correction retains separate scheduled future source",
       "volatileRecovery": "Source recovered from checkpoint after another managed-shell reset. Prior checksum references are observed earlier evidence; ephemeral files may no longer exist."
-    }
+    },
+    "writerRoutesRegistered": true,
+    "hostedWriterEnabled": false,
+    "UIEditorImplemented": false,
+    "latestNative": {
+      "pass": 4,
+      "fail": 0,
+      "log": "work/evidence/centre-complete-native.log",
+      "sha256": "b4d72d365df6cf6bd0067a398f9eceb7c53c69ed3fbc408cebc54ff813a0c4a5"
+    },
+    "latestChecks": [
+      {
+        "path": "work/evidence/centre-write-final-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "work/evidence/centre-write-build.log",
+        "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+      },
+      {
+        "path": "work/evidence/centre-writer-static.log",
+        "sha256": "d8846a07e9d163e5918dbc979461dba0cf50c7ae7b0fc86015a46a7c03fc6ace"
+      },
+      {
+        "path": "work/evidence/centre-financial95.log",
+        "sha256": "22ba1e29583a8da2ec0942d6cd361e35091d7c0cc1a090614dc767487a043a04"
+      }
+    ]
   }
 }

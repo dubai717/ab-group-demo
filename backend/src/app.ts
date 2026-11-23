@@ -15,6 +15,7 @@ import {investorProfileLock,investorRegistryDocumentRead} from './investor-regis
 import {registerPermissionAdmin} from './permission-admin.js';
 import {registerSecurityRoles} from './security-roles.js';
 import {registerOperatingCentres} from './operating-centres.js';
+import {registerOperatingCentreWriter} from './operating-centre-write.js';
 import {investorEvidenceRead,investorEvidenceUpload,recordInvestorEvidence,registerInvestorEvidence} from './investor-evidence.js';
 import {registerRecordLinks} from './record-links.js';
 import {registerInvestorRatingPolicy} from './investor-rating.js';
@@ -278,7 +279,7 @@ export async function build(options: Options) {
         return result;
       },{...(s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:{}),...(req.method==='GET'&&req.url.split('?')[0]==='/api/ledger/package/document-register'?{repeatableRead:true}:{}),...(req.method==='GET'&&/^\/api\/customers\/[0-9a-f-]+\/service-eligibility-review$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{})});
     };
-  registerPermissionAdmin(app,call,cipher);registerSecurityRoles(app,call,cipher);registerOperatingCentres(app,call,cipher);
+  registerPermissionAdmin(app,call,cipher);registerSecurityRoles(app,call,cipher);registerOperatingCentres(app,call,cipher);registerOperatingCentreWriter(app,call,cipher);
   registerFinance(app,call,cipher);
   (options as any).requestCreators={};
   registerCustomers(app,call,cipher,options);
