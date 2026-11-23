@@ -46,7 +46,7 @@ BEGIN
  PERFORM pg_advisory_xact_lock(hashtextextended(NEW.tenant_id::text||':operating-centre:'||NEW.centre_id::text,0));
  SELECT * INTO prior FROM ab.operating_centre_versions WHERE tenant_id=NEW.tenant_id AND centre_id=NEW.centre_id ORDER BY revision DESC LIMIT 1;
  IF FOUND THEN
-  IF NEW.previous_id IS DISTINCT FROM prior.id OR NEW.revision<>prior.revision+1 OR NEW.effective_on<prior.effective_on THEN
+  IF NEW.previous_id IS DISTINCT FROM prior.id OR NEW.revision<>prior.revision+1 THEN
    RAISE EXCEPTION 'operating centre source revision mismatch' USING ERRCODE='23514';
   END IF;
  ELSIF NEW.revision<>1 OR NEW.previous_id IS NOT NULL THEN

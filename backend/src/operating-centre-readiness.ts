@@ -1,6 +1,6 @@
 // Review-only source guard. This does not install SQL, grant rights or enable a writer.
 import {createHash} from 'node:crypto';
-const expectedFunctions=[{"name": "operating_centre_owner", "digest": "4137198aa6593f02049fc777e9e5548fea4f0eae9f2d969f7369a804d6cdad2c", "language": "sql", "volatility": "s", "returns": "boolean"}, {"name": "operating_centre_version_guard", "digest": "0aa248fbcd29991f16a85c03e85762afd41ebecb161672b9794e14d12180be5a", "language": "plpgsql", "volatility": "v", "returns": "trigger"}, {"name": "operating_centre_link_guard", "digest": "8d6604e705e5a2192e4e34e529eaf4f42cef23bf34558605edc6aee6647817a4", "language": "plpgsql", "volatility": "v", "returns": "trigger"}] as const;
+const expectedFunctions=[{"name": "operating_centre_owner", "digest": "4137198aa6593f02049fc777e9e5548fea4f0eae9f2d969f7369a804d6cdad2c", "language": "sql", "volatility": "s", "returns": "boolean"}, {"name": "operating_centre_version_guard", "digest": "f5542b4bab99dc5ad2d231f20203b5d5d13ae312e7c4d26d3f9abfc758df80b7", "language": "plpgsql", "volatility": "v", "returns": "trigger"}, {"name": "operating_centre_link_guard", "digest": "8d6604e705e5a2192e4e34e529eaf4f42cef23bf34558605edc6aee6647817a4", "language": "plpgsql", "volatility": "v", "returns": "trigger"}] as const;
 const tableNames=['operating_centre_versions','operating_centre_companies'];
 const policyNames=new Map([
  ['operating_centre_owner_read',{table:'operating_centre_versions',command:'r'}],

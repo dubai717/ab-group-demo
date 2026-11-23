@@ -2604,16 +2604,7 @@
     "automaticManifest": false,
     "changesAuthority": false,
     "source": "backend/review/operating-centres.sql",
-    "sourceSha256": "aa497283469cfa264bb82c0c81ef2e99f9ea49bb9d423986f52a815c2dcf2e3e",
     "test": "backend/tests/operating-centres-review.test.ts",
-    "testSha256": "969dcd51761e776e2cf5cb8eec6934ce822c29a7b2a819e9c60e80aaf7f821df",
-    "directSyntheticSQL": {
-      "pass": 1,
-      "fail": 0,
-      "usesOriginalTenantSerialization": false,
-      "log": "work/evidence/operating-centres-direct.log",
-      "sha256": "dc925473bbb93d06b3afc180560812e45f417809417ac5c6bb77daf1bc85f9ad"
-    },
     "remaining": [
       "original Owner directory plan/apply/editor with immutable original audit and uncertain-save recovery",
       "original geographic scope planning and actual API/DB enforcement separate from primary location",
@@ -2624,12 +2615,13 @@
     "writerEnabled": false,
     "scopeAuthorityEnabled": false,
     "sourceChecksums": {
-      "backend/review/operating-centres.sql": "02712678f828066f2609a01b14d00097981a118fee6d8353314cdad32d7883cb",
-      "backend/src/operating-centre-readiness.ts": "0520ae4165820f3ee493c03d0fb63ab43fed436ed60125a436c39287261c4387",
+      "backend/review/operating-centres.sql": "d8166c6245da2b2c36c496670300648ae2bdf3afaf4eec977689820371b182c6",
+      "backend/src/operating-centre-readiness.ts": "1fcfc9b64953f09728aaf60308eefaad562ab845682f195e69d90df67a65b1ed",
+      "backend/src/operating-centre-schema.ts": "d53ef9df26bc5f9b946cac8b984a7111b3d209829e5996194ad35eab303c3311",
       "backend/src/operating-centres.ts": "29ada7711d68f7f187d66083c53b4d2328d0069673c1840565dfdacf8418ea3d",
       "backend/src/app.ts": "dbece3742b94c106b6fd22179ee7f28bb00fa019985fb4883ba0110af6098444",
-      "backend/tests/operating-centre-source.test.ts": "9892680fc6f192a47367206a8347fe1d5da9b9aeaed0a02b4dce76520fcb4600",
-      "backend/tests/operating-centres-review.test.ts": "f9e4bfab8132cf1ab88da44e62a0db09c0f40efb61ff9fa469cb7fbdbbbcb60a"
+      "backend/tests/operating-centre-source.test.ts": "75385953fd09c7cc76b1b1fd80da515a0d12150476d38d8f6a8f238bda106d77",
+      "backend/tests/operating-centres-review.test.ts": "d5eecda810b902f1de808e2c70dbed2923663e4d22f37f002bb99769350a49d5"
     },
     "native": {
       "pass": 3,
@@ -2655,7 +2647,8 @@
           "path": "work/evidence/centre-final-build.log",
           "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
         }
-      ]
+      ],
+      "scope": "Passed before the later effective-date guard string refinement; latest modified source has the focused native evidence above"
     },
     "writerSourceGuard": {
       "implemented": true,
@@ -2682,6 +2675,22 @@
         "log": "work/evidence/centre-schema-types.log",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       }
+    },
+    "historicalDirectSQL": {
+      "pass": 1,
+      "fail": 0,
+      "usesOriginalTenantSerialization": false,
+      "log": "work/evidence/operating-centres-direct.log",
+      "sha256": "dc925473bbb93d06b3afc180560812e45f417809417ac5c6bb77daf1bc85f9ad",
+      "scope": "Earlier candidate before source/schema guards; not latest-source full acceptance"
+    },
+    "effectiveDateEvidence": {
+      "pass": 2,
+      "fail": 0,
+      "log": "work/evidence/centre-effective-date-final.log",
+      "sha256": "b3f1a4b6480529724598016e382bbd096bcc3a3f6e3ae1bfe95980faac573ad6",
+      "scope": "recorded revision independent from business effective date; current correction retains separate scheduled future source",
+      "volatileRecovery": "Source recovered from checkpoint after another managed-shell reset. Prior checksum references are observed earlier evidence; ephemeral files may no longer exist."
     }
   }
 }
