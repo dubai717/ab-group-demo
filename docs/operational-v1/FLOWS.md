@@ -167,3 +167,18 @@ flowchart LR
 ```
 
 A centre-directory change does not update employee memberships, grant rights or move financial balances. Primary work location is separate from authorized scope. Stable referential identity and effective geographic scope enforcement remain unfinished; no hosted candidate installation is authorized during this build.
+
+### Original work-account primary location (unpublished)
+
+```mermaid
+flowchart LR
+ A[Original employee permission page] --> B[Explicit account-location source]
+ B --> C[Actual dated physical-centre options]
+ C --> D[Fresh before/after and retained future transfers]
+ D --> E[Explicit Owner confirmation and original receipt]
+ E --> F[Immutable location and encrypted audit]
+ F --> G[Verified read-only result]
+ F --> H[Original company memberships and permissions unchanged]
+```
+
+Null location is explicitly unassigned. Geographic access is a separate unfinished review/enforcement path. No HR employee or work account is manufactured from this source.

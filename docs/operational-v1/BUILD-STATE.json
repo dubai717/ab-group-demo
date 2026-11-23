@@ -1357,10 +1357,14 @@
     "nativePass": 3,
     "rootStaticPass": 162,
     "browser": "AR/EN three widths; actual source/dated-options failures, retained fields and employee draft, same receipt on uncertain committed reply, GET-only acknowledged readback, unassignment/date continuity, held obsolete employee review suppression",
-    "focusedBrowserLimit": "The additional exact internal dialog/form width assertions were added before this journey started inside the ongoing37 suite; its entry has passed, full suite still running. Focused log predates that added layout assertion.",
+    "focusedBrowserLimit": "Focused log predates the extra internal width checks; the subsequent complete37 suite passed those unchanged global plus internal dialog/form bounds in both locales and three widths.",
     "fullSuite": {
       "journeys": 37,
-      "status": "running"
+      "pass": 37,
+      "exitCode": 0,
+      "sourceComponentCommit": "eac3872",
+      "path": "work/evidence/operational37.log",
+      "sha256": "c6039b05833a0269aad8c7463e5d60128788416e28cd50550b24869ee4c6641b"
     },
     "fingerprint": "4b27352af150afd90556f98e2c5a890ac44bf1157310876f85ac4c23a7ec38ba",
     "logs": [
@@ -1405,6 +1409,54 @@
       {
         "path": "work/operational-primary-location-ar-1440.png",
         "sha256": "01fef50682c265f1d7ac86a8b960f6eb836cef36ea3e12e041677f2495be2f19",
+        "syntheticOnly": true,
+        "source": "full37 rerun"
+      },
+      {
+        "path": "work/operational-primary-location-ar-390.png",
+        "sha256": "45f9610d3abe33e75537fbad0726539d6dae659a81d9caadcdef436313d9ec60",
+        "syntheticOnly": true,
+        "source": "full37 rerun"
+      },
+      {
+        "path": "work/operational-primary-location-ar-768.png",
+        "sha256": "9ebf710499a9ec9f08c91a7c94028fb9eb1097b28df663fe11ffcfe1a29cf169",
+        "syntheticOnly": true,
+        "source": "full37 rerun"
+      },
+      {
+        "path": "work/operational-primary-location-en-1440.png",
+        "sha256": "a525b9bbec018fcdbbb6d52339e0e281803d1a8f653df1192516b748de9da10c",
+        "syntheticOnly": true,
+        "source": "full37 rerun"
+      },
+      {
+        "path": "work/operational-primary-location-en-390.png",
+        "sha256": "6239ff2b9a002ccb3d175b12b8f78c85468de6612f7b1cbc0316276cc3d7066f",
+        "syntheticOnly": true,
+        "source": "full37 rerun"
+      },
+      {
+        "path": "work/operational-primary-location-en-768.png",
+        "sha256": "daeb07591859e87ece1b87ea9134ace08d2382285e6dd9db32d6a458f0f7c3d5",
+        "syntheticOnly": true,
+        "source": "full37 rerun"
+      }
+    ],
+    "visualReview": [
+      "Arabic phone390 inspected"
+    ],
+    "authorityChanged": false,
+    "hostedCandidateInstalled": false,
+    "remaining": [
+      "effective geographic access selection/impact and original API/DB enforcement",
+      "HR/self-service projection under original rights",
+      "full release acceptance"
+    ],
+    "priorScreenshotManifest": [
+      {
+        "path": "work/operational-primary-location-ar-1440.png",
+        "sha256": "01fef50682c265f1d7ac86a8b960f6eb836cef36ea3e12e041677f2495be2f19",
         "syntheticOnly": true
       },
       {
@@ -1432,16 +1484,41 @@
         "sha256": "daeb07591859e87ece1b87ea9134ace08d2382285e6dd9db32d6a458f0f7c3d5",
         "syntheticOnly": true
       }
-    ],
-    "visualReview": [
-      "Arabic phone390 inspected"
-    ],
-    "authorityChanged": false,
-    "hostedCandidateInstalled": false,
-    "remaining": [
-      "effective geographic access selection/impact and original API/DB enforcement",
-      "HR/self-service projection under original rights",
-      "full release acceptance"
     ]
+  },
+  "workScopeSelectionPreparation": {
+    "status": "pure resolver only; not a permission grant, controller guard, API preview or DB scope enforcement",
+    "tests": 5,
+    "pass": 5,
+    "path": "work/evidence/work-scope-selection.log",
+    "sha256": "e4f78dbe3473c0be0022f9892236b9681c422374128f0c8e41fcc8de3f94d52f",
+    "types": {
+      "path": "work/evidence/work-scope-selection-types.log",
+      "exitCode": 0
+    },
+    "build": {
+      "path": "work/evidence/work-scope-selection-build.log",
+      "exitCode": 0
+    },
+    "sourceChecksums": {
+      "backend/src/work-scope-selection.ts": "dfc3b55d4d300d1e75df057096cc0ab99c258fd1545aa706506dd2e4d6627c48",
+      "backend/tests/work-scope-selection.test.ts": "02fbf6aecf9e335dd5186a0e0b3e404b2dc930ece60aa62540bca62d6cf59b28"
+    },
+    "cases": [
+      "actual company/all-group facts",
+      "explicit dated centre links independent of legal emirate",
+      "unresolved geography requires review",
+      "empty/duplicate/unknown/latest/inactive sources cannot broaden to group",
+      "new company fact has no permission side effect"
+    ]
+  },
+  "latestCIRead": {
+    "run33": 45276668381,
+    "head": "22bc14b8a7eec77ad6c641964a8758fe0e86c8c9",
+    "operationalUI": "success",
+    "originalRegressions": "in_progress",
+    "fullRunSuccess": false,
+    "runCanceled": false,
+    "PR115HeadVerified": "3802e2595ee35ad2978334c22d8cfbde741bf9b4"
   }
 }
