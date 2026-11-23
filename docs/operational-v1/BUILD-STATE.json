@@ -935,7 +935,6 @@
     "source": "backend/review/operating-centres.sql",
     "test": "backend/tests/operating-centres-review.test.ts",
     "remaining": [
-      "latest-recorded/future directory and immutable source history",
       "original Owner editor with retained input, uncertainty/readback and AR/EN browser checks",
       "original geographic scope planning, fresh affected-user impact and actual API/DB enforcement separate from primary location",
       "complete rollback/restore acceptance and protected publication"
@@ -947,12 +946,12 @@
       "backend/review/operating-centres.sql": "d8166c6245da2b2c36c496670300648ae2bdf3afaf4eec977689820371b182c6",
       "backend/src/operating-centre-readiness.ts": "1fcfc9b64953f09728aaf60308eefaad562ab845682f195e69d90df67a65b1ed",
       "backend/src/operating-centre-schema.ts": "d53ef9df26bc5f9b946cac8b984a7111b3d209829e5996194ad35eab303c3311",
-      "backend/src/operating-centres.ts": "172bc90b596864fe2a656a57a3b5e46e10388a4c518267d64376fe14106f4aa8",
-      "backend/src/operating-centre-write.ts": "26d0bb47d8f8e3bac49e5fea4eb4147801cb882f2ebe92f01c2f5dc3e399bde7",
+      "backend/src/operating-centres.ts": "56a0c25d08cfce9e81147f159cf57ee290fbc550f071566c9d7a94ae3b601a44",
+      "backend/src/operating-centre-write.ts": "d57c859c9b45a192d9af3d31ab562ee44c4ef1e5a3a36463e906ff82802aa9bd",
       "backend/src/app.ts": "c3cbd714df5876db03dc8ebd631f53776b500a3b3309cc254311074ad0079be7",
-      "backend/tests/operating-centre-source.test.ts": "da0b1113215948eff24485790ada031f8c1076ec11b2229dfa6048e24bd0050e",
+      "backend/tests/operating-centre-source.test.ts": "2731e54e42d0868145b58b0281276dfffcf14ceea6cf912b1700118399361e01",
       "backend/tests/operating-centres-review.test.ts": "d5eecda810b902f1de808e2c70dbed2923663e4d22f37f002bb99769350a49d5",
-      "backend/tests/operating-centre-write.test.ts": "b1a605e96c38ae46baa67a963618e929426da44b1e8518b562fc40c83310702f"
+      "backend/tests/operating-centre-write.test.ts": "257274de5bd2c08fa85a02606238a64d0a97bc65109e97134eca59ce4d36b7d6"
     },
     "native": {
       "pass": 3,
@@ -1049,6 +1048,23 @@
         "path": "work/evidence/centre-financial95.log",
         "sha256": "22ba1e29583a8da2ec0942d6cd361e35091d7c0cc1a090614dc767487a043a04"
       }
-    ]
+    ],
+    "latestDirectoryAndHistory": {
+      "implemented": true,
+      "OwnerOnly": true,
+      "futureOnlyDiscoverable": true,
+      "scopeAuthorityChanged": false,
+      "native": {
+        "pass": 3,
+        "fail": 0,
+        "log": "work/evidence/centre-heads-final.log",
+        "sha256": "b3b835d1eb67ad58d1334edc007f2cde5f01b9a4b1991998ab0ed4768318f6e9"
+      },
+      "typesBeforeFinalGeographyFacts": {
+        "status": "pass",
+        "log": "work/evidence/centre-history-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
   }
 }
