@@ -100,9 +100,12 @@
         "backend/tests/leave-return-portal.browser.cjs",
         "backend/src/delegation-history.ts",
         "backend/tests/delegation-history.test.ts",
-        "backend/tests/delegation-history.browser.cjs"
+        "backend/tests/delegation-history.browser.cjs",
+        "backend/src/leave-linked-delegations.ts",
+        "backend/tests/leave-linked-delegations.test.ts",
+        "backend/tests/leave-linked-delegations.browser.cjs"
       ],
-      "remaining": "بوابة العودة ومراجعتها ومصدر مهامها وحمايتها مختبرة؛ أضيف عرض عمل البديل من أحداث المهام الأصلية دون نقل الإنجاز، لكن إرجاع التفويض المرتبط بالإجازة والمراسلات والمرفقات غير المرتبطة والقبول الموسع غير مكتملة؛ SQL العودة مرشح غير مطبق."
+      "remaining": "بوابة العودة وسجل البديل وربط الإجازة للمهام اليدوية ووثائق الموظف وإرجاع المفتوح عند الانتهاء/المباشرة مختبرة؛ تبقى بقية المصادر والشركات المتعددة وضوابط إجازة البديل وتبني الساعة والمراسلات والمرفقات والقبول الموسع. SQL العودة مرشح غير مطبق على قاعدة مستضافة."
     },
     {
       "id": "4.c",

@@ -10,11 +10,11 @@
   "decision": "last_two_actual_due_months",
   "policyActivated": false,
   "next": [
-    "Upload original delegation history and full twelve-journey evidence; verify newest CI; continue explicitly leave-linked delegation and permission exceptions",
-    "Continue inherited deny, selective exception reset, dashboard widget standards and geographic scope",
-    "Complete explicitly leave-linked delegations and substitute contribution summary",
-    "Integrate source service eligibility and cross-branch collections after financial PR115 stabilizes",
-    "Official provider setup/use-case review and remaining operational acceptance"
+    "Upload tested leave-linked delegation and verify CI on newest source",
+    "Implement selected direct-grant exception removal preserving unselected exceptions and DB Owner guard; inherited deny remains separate",
+    "Complete geography, widget inheritance, remaining leave coverage and source clock adapters",
+    "Integrate service eligibility and cross-branch collection after PR115 stabilizes",
+    "Official provider/use-case review, remaining documents/backups/imports and final acceptance"
   ],
   "limitations": [
     "Financial package dependency unresolved",
@@ -234,14 +234,43 @@
     ]
   },
   "localLatestAcceptance": {
-    "nativePassed": 60,
-    "nativeFailed": 0,
+    "nativePassed": 75,
     "staticPassed": 182,
-    "browserJourneysPassed": 12,
+    "browserJourneysPassed": 13,
     "typecheck": "passed",
     "releaseReady": false,
-    "source": "RAM checkout copied from independent committed baseline plus preserved source edits; no database copied or restored"
+    "data": "synthetic PostgreSQL and fake providers only"
   },
-  "workingDirectory": "/dev/shm/ab-operational-v1-build/repository",
-  "storageWorkaround": "Persistent isolated shell in a RAM checkout with shared read-only original Git object lookup and fresh local source objects; no original databases/backups deleted. All code must be checkpointed to GitHub before shell ends."
+  "workingDirectory": "/dev/shm/ab-operational-v1-recovery/repository",
+  "storageWorkaround": "Persistent isolated shell in a RAM checkout with shared read-only original Git object lookup and fresh local source objects; no original databases/backups deleted. All code must be checkpointed to GitHub before shell ends.",
+  "leaveLinkedDelegation": {
+    "state": "optional approved leave linked to original delegation; followup expiry and confirmed-return hook implemented and locally tested, unpublished",
+    "supportedSources": [
+      "manual",
+      "employee_document"
+    ],
+    "legacyBackfilled": false,
+    "permissionsTransferred": false,
+    "financialAuthorityTransferred": false,
+    "workAccessChangedByReconciliation": false,
+    "remaining": [
+      "Other original task source adapters and cross-company coverage",
+      "Substitute leave approval/actual-start continuity",
+      "Clock reassignment review and full contribution/self-service sources",
+      "Bulk distribution UI"
+    ]
+  },
+  "independentVerifiedCI": {
+    "runId": 45114761437,
+    "commit": "510a191bf9d68613fc060c6fcd000767e38266f5",
+    "conclusion": "success",
+    "operationalUIJourneys": 12,
+    "includesCurrentLocalLeaveLink": false
+  },
+  "durableCodeCheckpoint": {
+    "patch": "/tmp/ab-v1-durable-code-diff.patch.gz",
+    "manifest": "/tmp/ab-v1-durable-code-diff.json",
+    "scope": "code only; not a database backup",
+    "baseRemoteCommit": "510a191bf9d68613fc060c6fcd000767e38266f5"
+  }
 }

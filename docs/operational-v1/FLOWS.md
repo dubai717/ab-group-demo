@@ -33,3 +33,20 @@ flowchart RL
   E -->|نعم| G[30 ثم60 دقيقة عمل: إشعار للمستوى الحقيقي]
   G --> H[منع التكرار؛ لا مهمة جديدة أو عقوبة مالية]
 ```
+
+## Existing leave-linked delegation
+
+```mermaid
+flowchart TD
+ A[Approved HR leave] --> B[Existing optional linked delegation]
+ B --> C[Recheck source, scope, dates and active substitute]
+ C --> D[Assign same original task once]
+ D --> E{Source outcome}
+ E -->|Completed| F[Preserve actual substitute and completion]
+ E -->|Expiry or confirmed return| G[Verify latest open-task assignment]
+ G -->|Uncertain| H[Undo attempted source return; review notice]
+ G -->|Verified| I[Return open work to original]
+ I --> J{Actual return and account available?}
+ J -->|No| K[Preserve security hold; management followup]
+ J -->|Yes| L[Existing authorized task access]
+```

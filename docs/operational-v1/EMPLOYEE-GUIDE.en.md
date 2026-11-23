@@ -11,3 +11,9 @@ When approved leave suspends work access, use Leave return self-service on the l
 Authorized staff can open Work calendar from an employee profile. Select the area, company and effective date; click a cell to cycle X, / and blank. Hours & save records explicit hours, holidays and a reason as a dated version. Historical schedules remain preserved. Failed confirmation keeps inputs for a safe retry.
 
 Open Deadline & waiting from the original task. An authorized supervisor records UAE time, a reason and any approved external waiting. You cannot approve your own extension. Task timing does not change invoice or contract due dates; an escalation notice is neither another task nor a financial deduction.
+
+With delegation authority, open the employee profile and Delegate operational
+tasks. Optional approved leave fills dates; choose an active available substitute.
+Current linkage supports manual and employee-document tasks. Open work returns at
+expiry or confirmed return; completed work stays with its actual performer.
+Reload saved result recovers a failed display refresh without creating again.
