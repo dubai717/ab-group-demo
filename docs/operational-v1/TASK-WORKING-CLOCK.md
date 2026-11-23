@@ -15,3 +15,22 @@
 نجح اختبارا PostgreSQL شاملان للتوقيت الحقيقي،29/30/60 دقيقة، التشغيل المتزامن، الانتظار، الإجازة الفعلية، نقص الجدول، تغير الموظف، مصدر المطالبة، مركز المهام، والمنع في View As رغم صلاحية المسؤول الفعلية. نجح المتصفح من إجراء المهمة مع أخطاء المدخلات وفقد الاستجابة وإعادة القراءة، AR/EN على1440 و768 و390؛ الصور الاصطناعية راجعت بصرياً. شملت مجموعة الانحدار المحددة73 حالة مع HR والعودة والجدول وMyWork، مع نجاح182 حالة ثابتة وTypeScript.
 
 المتبقي: استدعاء المواعيد الدقيقة المعتمدة تلقائياً من جميع مصادر المهام القائمة، وربط تبني توقيت التكليف عند التفويض والعودة، والقبول الشامل لعامل الخدمة وسلسلة مديرين طويلة وتقارير معدل التأخير. إعداد موعد يدوياً ليس دليلاً على اكتمال كل مصادر المهام. لا نشر أو تفعيل على التشغيل.
+
+## Original manual creation adopts the same clock
+The existing task creation form accepts an optional explicit UAE deadline. The
+server validates its date against dueOn, then records task and initial clock in
+one transaction using the same independent-approval function as later changes.
+No initial time means no clock and no guessed midnight. A wrong date or an
+unapproved self deadline rolls the complete creation back. Original idempotency
+keys recover a lost response without a second task. Task validation returns field
+errors and a safe trace reference; the AR/EN form retains input.
+
+Four-level source acceptance additionally proves 30/60/90/120 working-minute
+notifications reach the real managers then Owner once. Missing/inactive chains
+require review; the original PostgreSQL reporting-cycle guard remains enabled.
+Actual start/submit/independent completion stops later notifications and MyWork
+retains one original completed task. Financial journals remain unchanged.
+
+Latest acceptance: 59 combined original HR/clock tests, plus original clock and
+manual-create browser journeys in independent synthetic fixtures. Other automated
+task sources, delegation/return and complete delay reporting remain incomplete.

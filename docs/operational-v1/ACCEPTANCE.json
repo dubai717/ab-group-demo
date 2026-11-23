@@ -468,6 +468,64 @@
         "npm notice To update run: npm install -g npm@12.2.3",
         "npm notice"
       ]
+    },
+    {
+      "log": "/tmp/ab-v1-task-hierarchy-native-final.log",
+      "sha256": "fbc53b0f65f0b92876d58b4ff89ab56ca8c76b57f289b34139f515c0dd9258e2",
+      "tail": [
+        "✔ actual original task escalation uses recorded hours, real managers, approved waiting and deduplicated notifications without financial effects (2351.885076ms)",
+        "✔ read-only Owner View As cannot approve a task deadline although the actual direct manager can (1474.442307ms)",
+        "✔ four actual reporting levels stop at Owner, source guards reject cycles, unavailable chains require review, and actual completion stops escalation (1531.967318ms)",
+        "ℹ tests 3",
+        "ℹ suites 0",
+        "ℹ pass 3",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 7140.584317"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-initial-task-native-final.log",
+      "sha256": "f7f3af9e4683fb03267da9d16cc9c861e494bbd9934b83d4be63898be7406082",
+      "tail": [
+        "✔ actual original task escalation uses recorded hours, real managers, approved waiting and deduplicated notifications without financial effects (2334.636587ms)",
+        "✔ read-only Owner View As cannot approve a task deadline although the actual direct manager can (1713.930724ms)",
+        "✔ four actual reporting levels stop at Owner, source guards reject cycles, unavailable chains require review, and actual completion stops escalation (1776.180366ms)",
+        "✔ manual creation records an explicit initial UAE deadline atomically through the original clock and rejects mismatch or self approval without a partial task (1436.855987ms)",
+        "ℹ tests 59",
+        "ℹ suites 0",
+        "ℹ pass 59",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 18670.525225"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-initial-task-browser-final.log",
+      "sha256": "76214e1c8bde2f70d94f7c480f1568060b4ba81b447001cece56325851fc139f",
+      "tail": [
+        "PASS actual task deadline and approved waiting UI: no invented hour, field retention on invalid interval and lost committed reply, one stored version, source task entry/readback, UTC storage/UAE display, AR/EN three widths, no financial or penalty effect. Synthetic only.",
+        "PASS original manual-task creation: optional explicit UAE time, retained mismatch fields and human trace, atomic same-task clock readback, AR/EN three widths; date-only tasks unchanged. Synthetic only."
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-initial-task-final-types.log",
+      "sha256": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+      "tail": [
+        "",
+        "> ab-group-demo@1.0.0 backend:check",
+        "> tsc -p backend/tsconfig.json",
+        "",
+        "npm notice",
+        "npm notice New major version of npm available! 11.9.0 -> 12.2.3",
+        "npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.3",
+        "npm notice To update run: npm install -g npm@12.2.3",
+        "npm notice"
+      ]
     }
   ],
   "limitations": [

@@ -212,7 +212,7 @@ const modal=CenterForms.form(t('الوحدة الإدارية','Administrative u
         if (a === 'document-review')
             form(a, 'مراجعة وثيقة مفحوصة', 'Review scanned document', [field('approve', 'اعتماد (إلغاء الاختيار للرفض)', 'Approve (uncheck to reject)', 'checkbox', true), reason()], d => save(ep + '/documents/' + key + '/review', d));
         if (a === 'new-task')
-            form(a, 'مهمة تشغيلية', 'Operational task', [companyField(), employeeField(), field('title', 'عنوان المهمة', 'Task title'), field('expectedResult', 'النتيجة الفعلية المطلوبة', 'Required actual outcome'), date('dueOn', 'تاريخ الاستحقاق', 'Due date')], d => save('tasks', d));
+            form(a, 'مهمة تشغيلية', 'Operational task', [companyField(), employeeField(), field('title', 'عنوان المهمة', 'Task title'), field('expectedResult', 'النتيجة الفعلية المطلوبة', 'Required actual outcome'), date('dueOn', 'تاريخ الاستحقاق', 'Due date'),field('dueAt','الموعد الدقيق بتوقيت الإمارات (اختياري، يعتمده مكلف مستقل)','Exact UAE deadline (optional; independent assigner)','datetime-local','',null,false)], d => {const{dueAt,...body}=d;return save('tasks',{...body,...(dueAt?{dueAt:dueAt+':00+04:00'}:{})});});
         if(a==='task-clock')return TaskWorkingClockUI.open(key,async()=>{success=t('تم حفظ موعد المهمة والانتظار المعتمد.','Task deadline and approved waiting saved.');await load();redraw();MyWorkUI.invalidate();});
         if (a.startsWith('task-')) {
             const task = tasks.find(r => r.id === key);
@@ -365,7 +365,7 @@ const modal=CenterForms.form(t('الوحدة الإدارية','Administrative u
         }
         catch (err) {
             restoreControls();if (err.message !== 'staleSession')
-                FormValidation.fromError(f,err);f.querySelector('#hr-form-error').textContent = (dialog?.committedEmployee?t('حُفظ الموظف؛ أعد المحاولة لاستكمال المرفقات دون إنشاء ملف آخر. ','Employee saved; retry to complete attachments without creating another employee. '):t('تعذر الحفظ؛ لم تُفقد المدخلات. ', 'Save failed; input retained. ')) + err.message;
+                FormValidation.fromError(f,err);f.querySelector('#hr-form-error').textContent = (dialog?.committedEmployee?t('حُفظ الموظف؛ أعد المحاولة لاستكمال المرفقات دون إنشاء ملف آخر. ','Employee saved; retry to complete attachments without creating another employee. '):t('تعذر الحفظ؛ لم تُفقد المدخلات. ', 'Save failed; input retained. ')) + (dialog?.name==='new-task'?({taskDeadlineDateMismatch:t('الموعد الدقيق يجب أن يوافق تاريخ استحقاق المهمة بتوقيت الإمارات.','The exact deadline must match the task due date in UAE time.'),taskClockApprovalDenied:t('إضافة الموعد الدقيق تحتاج مسؤولاً مخولاً؛ يمكنك تركه للمراجعة.','An authorized supervisor must record the exact deadline; you may leave it for review.'),independentReviewRequired:t('لا يمكنك اعتماد موعد مهمتك بنفسك؛ اترك الموعد الدقيق للمسؤول.','You cannot approve your own task deadline; leave the exact time to a supervisor.')})[err.message]||t('تعذر تأكيد الحفظ؛ راجع الحقول وحاول مجدداً.','Saving could not be confirmed; check the fields and retry.'):err.message)+(err.reference?' · '+err.reference:'');
         }
         finally {
             restoreControls();delete f.dataset.busy;
