@@ -103,8 +103,9 @@
     "runId": 45123873099,
     "commit": "d91ac3720e40fa0d3e4aa400043f3168973c13d9",
     "operationalUI": "success",
-    "originalRegressions": "in_progress at last inspection",
-    "includesLocalSelectedExceptions": false
+    "originalRegressions": "success",
+    "includesLocalSelectedExceptions": false,
+    "includesLocalCommunicationClock": false
   },
   "leaveReturn": {
     "state": "local API and bilingual portal/review UI tested; source integration partially complete, unpublished",
@@ -207,12 +208,14 @@
     ]
   },
   "localLatestAcceptance": {
-    "focusedNativePassed": 8,
+    "focusedNativePassed": 17,
+    "previousSelectedExceptionNativePassed": 8,
     "previousLeaveHRNativePassed": 75,
     "countsNotAdditive": true,
     "staticPassed": 182,
-    "browserJourneysPassed": 14,
+    "browserJourneysPassed": 15,
     "typecheck": "passed",
+    "compiledRuntime": "passed without provider connections",
     "releaseReady": false,
     "data": "synthetic PostgreSQL and fake providers only"
   },
@@ -236,11 +239,11 @@
     ]
   },
   "independentVerifiedCI": {
-    "runId": 45114761437,
-    "commit": "510a191bf9d68613fc060c6fcd000767e38266f5",
+    "runId": 45123873099,
+    "commit": "d91ac3720e40fa0d3e4aa400043f3168973c13d9",
     "conclusion": "success",
-    "operationalUIJourneys": 12,
-    "includesCurrentLocalLeaveLink": false
+    "operationalUIJourneys": 13,
+    "coversLatestUnpublishedBuild": false
   },
   "durableCodeCheckpoint": {
     "patch": "/tmp/ab-v1-durable-code-diff.patch.gz",
@@ -256,5 +259,31 @@
     "unselectedGrantsPreserved": true,
     "downstreamCascadeAllowed": false,
     "inheritedDenySupported": false
+  },
+  "communicationTaskClock": {
+    "state": "original conversation task supports optional atomic exact UAE deadline",
+    "tablesReused": [
+      "ab.tasks",
+      "ab.settings",
+      "ab.hr_task_events"
+    ],
+    "financialEffect": false,
+    "externalSend": false,
+    "saveTimeoutMs": 45000,
+    "concurrentReceiptRecovery": true,
+    "differentExistingDeadline": "requires original authorized clock modification",
+    "lateOpenReceiptDoesNotBlockControls": true,
+    "publicPersonnelReadAwaitsSource": true,
+    "postSaveReadGuardRetained": true,
+    "remaining": [
+      "Other automatic sources and full source reassignment coverage",
+      "Complete cases and official-provider messaging/reminders"
+    ]
+  },
+  "latestRemoteBeforeThisBuild": {
+    "pr": 116,
+    "commit": "4fbca7dbfd70413582d0143df6f1e34ebfa63e6f",
+    "ciRunId": 45127011595,
+    "state": "pending at last inspection; does not include local communication-clock source"
   }
 }

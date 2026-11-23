@@ -143,9 +143,13 @@
         "backend/src/task-working-clock.ts",
         "task-working-clock-ui.js",
         "backend/tests/task-working-clock.test.ts",
-        "backend/tests/task-working-clock.browser.cjs"
+        "backend/tests/task-working-clock.browser.cjs",
+        "backend/src/communications.ts",
+        "backend/tests/communication-task-clock.test.ts",
+        "backend/tests/communication-task-clock.browser.cjs",
+        "docs/operational-v1/COMMUNICATION-TASK-CLOCK.md"
       ],
-      "remaining": "ربط الموعد الدقيق والانتظار والجدول والإجازة الفعلية بسلسلة المديرين في متابعة HR منفذ ومختبر؛ تبني المواعيد الدقيقة لجميع المصادر والتفويض وتقارير التأخير والقبول الشامل متبقٍ."
+      "remaining": "الساعة الأصلية للمهام اليدوية ومهام المحادثة وتوقيت الإمارات والتكرار والتصعيد مختبرة؛ بقية المصادر والتكليفات وتقارير التأخير والقبول النهائي ما زالت جزئية."
     },
     {
       "id": "7",
@@ -153,7 +157,8 @@
       "status": "موجود ناقص",
       "evidence": [
         "backend/src/communications.ts",
-        "backend/src/whatsapp-cloud-contract.ts"
+        "backend/src/whatsapp-cloud-contract.ts",
+        "backend/tests/communication-task-clock.browser.cjs"
       ],
       "remaining": "المراسلات القائمة محفوظة؛ عقد اختباري فقط؛ لا مزود أو إرسال فعلي."
     },

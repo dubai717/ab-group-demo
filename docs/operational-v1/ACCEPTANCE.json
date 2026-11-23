@@ -799,6 +799,36 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "bytes": 0,
       "scope": "Original company arabicName/englishName aliases; focused native and actual UI rerun after caption correction"
+    },
+    {
+      "path": "work/operational-evidence/communication-clock-native-final.log",
+      "bytes": 3123,
+      "sha256": "bf7e48ab7ab6937d2c6994f0d61a5c77f8b63f7c901c0beb8459c053d6eb6248",
+      "scope": "original communication source, task clock and public personnel loading; synthetic only"
+    },
+    {
+      "path": "work/operational-evidence/communication-clock-fifteen-browser-source-fixed.log",
+      "bytes": 3993,
+      "sha256": "c335a44d6c3b217903fa77ec271330b04c2ed9d6cf58e11f84f680564d8bc8b6",
+      "scope": "original communication source, task clock and public personnel loading; synthetic only"
+    },
+    {
+      "path": "work/operational-evidence/communication-clock-live-controls-browser.log",
+      "bytes": 372,
+      "sha256": "f445211926a423d77705dc12c0b0b433f1a324cb6f75a262d4f4d85dcc96f499",
+      "scope": "original communication source, task clock and public personnel loading; synthetic only"
+    },
+    {
+      "path": "work/operational-evidence/communication-clock-build.log",
+      "bytes": 147,
+      "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "scope": "original communication source, task clock and public personnel loading; synthetic only"
+    },
+    {
+      "path": "work/operational-evidence/communication-clock-static-final.log",
+      "bytes": 17689,
+      "sha256": "9b133d47009c67d7cb647c358ec1961f5a1c5ffe84c91fdf06a45fc3966e9cb9",
+      "scope": "original communication source, task clock and public personnel loading; synthetic only"
     }
   ],
   "failedAttemptsNotAcceptance": [
@@ -811,6 +841,21 @@
       "path": "work/operational-evidence/selected-exceptions-fourteen-browser.log",
       "sha256": "a58a86956888fc297c5d180c5126ca06e1d48a833859ef8c7832f0be34af7c22",
       "reason": "11 journeys passed, original leave task-option timed out; not full acceptance. Focused leave rerun and complete fourteen-journey rerun passed"
+    },
+    {
+      "path": "work/operational-evidence/communication-clock-fifteen-browser.log",
+      "sha256": "c75cae52a3ec5784653fe07f885818f04389aa253d267a5a5f0c2df3434903be",
+      "reason": "New selector matched both validation summary and server error; corrected without weakening assertions"
+    },
+    {
+      "path": "work/operational-evidence/communication-clock-timeout-browser.log",
+      "sha256": "62b9814281340638bcdecf05594c0bca112f7301baeb4427568c0d0f5271594e",
+      "reason": "Early click could precede binding while open-receipt request was awaited; controls now bind first, exact delay tested"
+    },
+    {
+      "path": "work/operational-evidence/communication-clock-fifteen-browser-final.log",
+      "sha256": "fe50338291051e3cf226390b5a33743758d431dfc8358ce6d22083947e262e92",
+      "reason": "Original task options captured incomplete public personnel load; API contained source rows. Public source loading/actor initialization corrected and delayed concurrent-entry acceptance passed"
     }
   ],
   "screenshots": "CI preserves work/operational-*.png and work/dual-permissions-*.png for seven days; local RAM copies are temporary.",
