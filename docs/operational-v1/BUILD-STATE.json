@@ -926,7 +926,7 @@
     }
   },
   "operatingCentreCandidate": {
-    "status": "work-in-progress checkpoint only, not PR116 head",
+    "status": "work-in-progress checkpoint only; not PR116 head",
     "runtimeEnabled": false,
     "hostedApplied": false,
     "automaticManifest": false,
@@ -943,11 +943,35 @@
       "sha256": "dc925473bbb93d06b3afc180560812e45f417809417ac5c6bb77daf1bc85f9ad"
     },
     "remaining": [
-      "strict source readiness and tamper checks",
-      "original permission UI/API directory editor and reasoned fresh impact review",
-      "actual geographic scope enforcement with original role authority",
-      "dated mappings and full bilingual acceptance"
+      "writer readiness including source constraints/defaults",
+      "original Owner directory editor/API and reasoned fresh impact review",
+      "original geographic scope planning and actual enforcement",
+      "bilingual UI, final acceptance, compatible rollback and protected publication"
     ],
-    "doc": "docs/operational-v1/OPERATING-CENTRES.md"
+    "doc": "docs/operational-v1/OPERATING-CENTRES.md",
+    "runtimeReadEndpointRegistered": true,
+    "writerEnabled": false,
+    "scopeAuthorityEnabled": false,
+    "sourceChecksums": {
+      "backend/review/operating-centres.sql": "02712678f828066f2609a01b14d00097981a118fee6d8353314cdad32d7883cb",
+      "backend/src/operating-centre-readiness.ts": "0520ae4165820f3ee493c03d0fb63ab43fed436ed60125a436c39287261c4387",
+      "backend/src/operating-centres.ts": "29ada7711d68f7f187d66083c53b4d2328d0069673c1840565dfdacf8418ea3d",
+      "backend/src/app.ts": "dbece3742b94c106b6fd22179ee7f28bb00fa019985fb4883ba0110af6098444",
+      "backend/tests/operating-centre-source.test.ts": "9892680fc6f192a47367206a8347fe1d5da9b9aeaed0a02b4dce76520fcb4600",
+      "backend/tests/operating-centres-review.test.ts": "f9e4bfab8132cf1ab88da44e62a0db09c0f40efb61ff9fa469cb7fbdbbbcb60a"
+    },
+    "native": {
+      "pass": 3,
+      "fail": 0,
+      "log": "work/evidence/centre-api-final2.log",
+      "sha256": "9387477f1608f328909e4411be52f5f389588fcf040ae06bb1881677d4f07890"
+    },
+    "static": {
+      "pass": 189,
+      "fail": 0,
+      "log": "work/evidence/centre-static.log",
+      "sha256": "36e71ddd7fd1c71e97fe72498ddff4a3ac862002f2c9167664649cb031292d73"
+    },
+    "finalTypeAndBuild": "running"
   }
 }
