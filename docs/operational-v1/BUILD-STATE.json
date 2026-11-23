@@ -1639,6 +1639,25 @@
       "special and FK relationship policies",
       "privileged function review",
       "compatible rollback and full API/export acceptance"
-    ]
+    ],
+    "providerFreeBuild": "passed",
+    "staticChecks": {
+      "passed": 189,
+      "failed": 0
+    },
+    "ownerDueMonthDecisionRecheck": {
+      "passed": 12,
+      "failed": 0,
+      "reference": "last_two_actual_due_months",
+      "liveGuardActivated": false
+    },
+    "validationLogs": {
+      "company-scope-guard-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "company-scope-guard-static.log": "3f7d9a87c4d612dd0b0016a352a8ef6532025db3b93ddb5f7742a3e8bb0c33d8",
+      "last-two-due-months-recheck.log": "6e344b9a33d15e187c19c8a0e435dc01d6720d371fb942c0c2c78485897d1f3a"
+    },
+    "checkpointCommit": "0f91f0c",
+    "prCurrentHead": "92ff24228c2ef3b6134e91b1cb02ab6f8a212fea",
+    "prPushDeferred": "Preserve running CI34 and pending CI35; checkpoint pushed without replacing pending run."
   }
 }
