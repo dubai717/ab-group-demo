@@ -943,10 +943,9 @@
       "sha256": "dc925473bbb93d06b3afc180560812e45f417809417ac5c6bb77daf1bc85f9ad"
     },
     "remaining": [
-      "writer readiness including source constraints/defaults",
-      "original Owner directory editor/API and reasoned fresh impact review",
-      "original geographic scope planning and actual enforcement",
-      "bilingual UI, final acceptance, compatible rollback and protected publication"
+      "original Owner directory plan/apply/editor with immutable original audit and uncertain-save recovery",
+      "original geographic scope planning and actual API/DB enforcement separate from primary location",
+      "bilingual UI, complete source rollback/restore acceptance and protected publication"
     ],
     "doc": "docs/operational-v1/OPERATING-CENTRES.md",
     "runtimeReadEndpointRegistered": true,
@@ -985,6 +984,32 @@
           "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
         }
       ]
+    },
+    "writerSourceGuard": {
+      "implemented": true,
+      "actualWriterEnabled": false,
+      "pinSource": "disposable synthetic compilation of candidate, never hosted learned",
+      "files": [
+        {
+          "path": "backend/src/operating-centre-schema.ts",
+          "sha256": "d53ef9df26bc5f9b946cac8b984a7111b3d209829e5996194ad35eab303c3311"
+        },
+        {
+          "path": "backend/tests/operating-centres-review.test.ts",
+          "sha256": "cf34a40568a49ac51cb2128592e86368466ca70054636620d539b79e7af0d47c"
+        }
+      ],
+      "native": {
+        "pass": 2,
+        "fail": 0,
+        "log": "work/evidence/centre-schema-final.log",
+        "sha256": "eeb77ac78011143e90a973181e8fcdfff7748ddb6e2354de5b78b2c6a3a2c983"
+      },
+      "types": {
+        "status": "pass",
+        "log": "work/evidence/centre-schema-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
     }
   }
 }
