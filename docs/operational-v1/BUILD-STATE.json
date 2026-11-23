@@ -10,7 +10,7 @@
   "decision": "last_two_actual_due_months",
   "policyActivated": false,
   "next": [
-    "Finish original permission-screen centre editor with retained input, bounded reads, explicit review, uncertain-save/readback and AR/EN browser checks; then original scope enforcement and compatible rollback",
+    "Finish centre create/edit/review UI and robust uncertain-save/readback; read-only viewer is now tested. Then stable referenceable centre identity and actual geographic scope enforcement/rollback.",
     "Verify current-head CI and remaining integration without merge or deployment",
     "Recorded operating-centre/company mapping and effective geographic scope; original geography source projection now tested, no automatic grants",
     "Remaining leave/source adapters, source eligibility and cross-branch collection after PR115 stabilizes",
@@ -933,7 +933,7 @@
     "source": "backend/review/operating-centres.sql",
     "test": "backend/tests/operating-centres-review.test.ts",
     "remaining": [
-      "original Owner editor with retained input, uncertainty/readback and AR/EN browser checks",
+      "Owner create/edit/review UI with retained input and uncertain-save/readback; viewer is implemented",
       "original geographic scope planning, fresh affected-user impact and actual API/DB enforcement separate from primary location",
       "complete rollback/restore acceptance and protected publication"
     ],
@@ -1078,6 +1078,94 @@
         "sha256": "28031c8a8f18d00ebd055f6a1ac9971206a0ae8460115dea2dc0df6e6565239a"
       }
     ],
-    "sourceNativeScope": "Three latest source/history/write/SQL cases passed after future-only directory coverage; prior four-case group separately includes unchanged original work-scope summary regression"
+    "sourceNativeScope": "Three latest source/history/write/SQL cases passed after future-only directory coverage; prior four-case group separately includes unchanged original work-scope summary regression",
+    "viewerImplemented": true,
+    "latestViewer": {
+      "status": "pass",
+      "scope": "AR/EN 1440/768/390; original permission UI; no polling/writes, retained draft, traced source failure/retry, old-context suppression",
+      "logs": [
+        {
+          "path": "work/evidence/centre-view-final-browser.log",
+          "sha256": "e35c6fb168c7594cb674ac3256f2858dd8aba1ce377d66981568c03ef0092c8f"
+        },
+        {
+          "path": "work/evidence/centre-old-scope-browser.log",
+          "sha256": "dabd5fcf4c7d0e40eb157bd26398f7d278104b94fabb88d96fdc77c1d927af1f"
+        },
+        {
+          "path": "work/evidence/centre-view-final-native.log",
+          "sha256": "b4e970a681a6d9fc6c9087c176c671c879404021c397cf03666722ebff541122"
+        },
+        {
+          "path": "work/evidence/centre-view-final-types.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "work/evidence/centre-view-final-build.log",
+          "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+        },
+        {
+          "path": "work/evidence/centre-view-static.log",
+          "sha256": "877fa0b6df0b73d73bf3f8ecadac23b88db125e4549738940560df916d2a7f62"
+        }
+      ],
+      "nativePass": 4,
+      "staticPass": 189,
+      "visualReview": [
+        "Arabic phone390 reviewed"
+      ],
+      "screenshots": [
+        {
+          "path": "work/operational-centres-ar-1440.png",
+          "sha256": "dd0035019b5e0657c3273b7352dee475ccfa938cc43cfd1cf5e5d71d3421d68e",
+          "syntheticOnly": true
+        },
+        {
+          "path": "work/operational-centres-ar-390.png",
+          "sha256": "555e354b4c013fba622ed2cabaf3f52c2f9ec73d68015009d5249a3397963324",
+          "syntheticOnly": true
+        },
+        {
+          "path": "work/operational-centres-ar-768.png",
+          "sha256": "ff4c536114e3aa0ff7efa479168191769f99d28f9d863d1f93a684befeff3d19",
+          "syntheticOnly": true
+        },
+        {
+          "path": "work/operational-centres-en-1440.png",
+          "sha256": "7753e974bb26e46f03205825bd662edd64abb9f29c844bbb6830f867286dbdd2",
+          "syntheticOnly": true
+        },
+        {
+          "path": "work/operational-centres-en-390.png",
+          "sha256": "fe602c9fe829202a2f60c60dc02b2b531480f704ecf74d682859af612645562d",
+          "syntheticOnly": true
+        },
+        {
+          "path": "work/operational-centres-en-768.png",
+          "sha256": "2e5c9452039ae6e589eddcabdd2cf4f472dc0967b8ddd60aa4c7768b03ca7631",
+          "syntheticOnly": true
+        }
+      ],
+      "sourceChecksums": {
+        "operating-centres-ui.js": "1bd4ea744266ee6319273e63618aa920578d537a740794e7c5b052d4758d2923",
+        "user-management.js": "a9704cd59a08e94118653721ca386015ea16a65c9bfcbdd71da91f5f0dfcb2e9",
+        "index.html": "0678ed5d8ba56274b0f132323e6942c29ac651a8f875e9aad014ecfc670d54c1",
+        "backend/src/app.ts": "3426731e26dc5b29f5b1e25fea22405ed40909e156718d293996fa597775f4f6",
+        "backend/src/operating-centres.ts": "d7528e3baf9d21de64891493b72a099a879b4963fadbcb65fac508f9a552defc",
+        "backend/src/operating-centre-write.ts": "aa8f8ec71e267839eabba41919e02711a4507f850d92fda6e6d89698e975f885",
+        "backend/tests/operating-centres.browser.cjs": "59e24635d11e7c3fdde1d80ee4c5b7f9287c72467d77a9a39bb176f849aa9e33",
+        "backend/tests/serve-organization-security-fixture.ts": "b48fefe478557408802e659db42005fca5c3575769e676e64736347dac2782a4",
+        "backend/tests/operational-v1-suite.browser.cjs": "394d57d356e7b8ad41d9c85f4f8bb34736227d30c33e4155ffddeb460eaf829a"
+      },
+      "updatedFullSuite": {
+        "journeys": 35,
+        "status": "not-yet-run"
+      },
+      "harnessFailuresNotAcceptance": [
+        "Absent reason control selected",
+        "Denial mode correctly disabled without its synthetic reviewed guard",
+        "Selector matched both a mode button and its matrix container"
+      ]
+    }
   }
 }

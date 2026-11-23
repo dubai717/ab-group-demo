@@ -13,7 +13,7 @@ export async function planOperatingCentre(c:any,m:any,s:any,cipher:any,input:unk
  if(d.companyIds.some(id=>!companies.has(id)||companies.get(id).status!=='Active'&&!before?.companyIds.includes(id)))throw Object.assign(new ApiError(422,'invalid'),{fieldErrors:{companyIds:'invalid'}});
  // Existing future snapshots remain scheduled unless explicitly superseded at their own effective date.
  const scheduled=(await c.query('select id,revision,effective_on::text effective_on from ab.operating_centre_versions where tenant_id=$1 and centre_id=$2 and effective_on>$3::date order by effective_on,revision limit 501',[s.tenant_id,d.centreId,d.effectiveOn])).rows;requireOk(scheduled.length<=500,422,'operatingCentreDirectoryReviewRequired');
- const after={...d,revision:d.revision+1},companyFacts=d.companyIds.map(id=>{const r=companies.get(id);return{id,nameAr:r.arabicName,nameEn:r.englishName,state:r.status,revision:r.revision};});
+ const after={...d,revision:d.revision+1},companyFacts=d.companyIds.map(id=>{const r=companies.get(id);return{id,nameAr:r.arabicName,nameEn:r.englishName,licenseNumber:r.tradeLicenseNumber||null,state:r.status,revision:r.revision};});
  return{before,after,companyFacts,geographyFacts:{emirate:geo,area},scheduledSnapshotsRetained:scheduled,authorityChanged:false,financialEffect:false,requiresSeparateScopeReview:true,planHash:cipher.digest(JSON.stringify({before,after,companyFacts,geo,area,scheduled,source:rows[0]?.payload_cipher||null,actor:s.user_id,tenantId:s.tenant_id}))};
 }
 export async function applyOperatingCentre(c:any,m:any,s:any,cipher:any,request:any){

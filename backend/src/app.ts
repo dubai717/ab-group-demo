@@ -1270,6 +1270,7 @@ export async function build(options: Options) {
       "leave-return-ui.js",
       "permission-matrix-ui.js",
       "user-management.js",
+      "operating-centres-ui.js",
       "demo-credentials.js",
       "auth-flows.js",
       "central-client.js",
