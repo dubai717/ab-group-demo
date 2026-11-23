@@ -891,6 +891,16 @@
       "eligibility": 11,
       "eligibilityPass": 11,
       "notOneFullSuite": true
+    },
+    "fullOperationalUI": {
+      "journeys": 34,
+      "status": "pass",
+      "scope": "AR/EN desktop/tablet/phone; original server with synthetic providers and dedicated disposable databases",
+      "log": {
+        "path": "work/evidence/operational34.log",
+        "sha256": "5e3d8dfb8cbe25b3998dbe2765f3b8d9196ba5bba814547120f5ba7a6b3fd7f1"
+      },
+      "note": "follow-up form screenshot/overflow test strengthened after the first journey started; exact strengthened journey separately passed on a fresh fixture"
     }
   },
   "currentCI": {
@@ -899,5 +909,20 @@
     "commit": "44ada49cd5e770e4353bd251192f6b25de17f0e3",
     "status": "in_progress",
     "conclusion": null
+  },
+  "serviceEligibilityLatest": {
+    "policy": "Owner approved sum of actual last two due months",
+    "status": "simulation-only",
+    "tests": 12,
+    "pass": 12,
+    "scope": "unequal/cross-company/partial/disputed sources, year transition, leap-day and due-today boundary; no active controller guards",
+    "log": {
+      "path": "work/evidence/eligibility-calendar-final.log",
+      "sha256": "6aed95667af18c5408f14fbac231c7b49a15030aab2e195aa72640e97817b401"
+    },
+    "source": {
+      "path": "backend/tests/service-eligibility-policy.test.ts",
+      "sha256": "1c2ab3f97cf4ec9618c32431ac6af542205f7c4f9a8dee5de1c997594486b842"
+    }
   }
 }
