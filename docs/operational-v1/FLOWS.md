@@ -87,3 +87,18 @@ flowchart LR
 ```
 
 Assigned role, company/unit scope, standard definitions, other users and financial records stay unchanged. Unknown legacy overrides/downstream grants require review before any reset.
+
+### Reassigned task with a recorded clock
+
+```mermaid
+flowchart LR
+  A[Original task reassigned] --> B{Clock employee matches?}
+  B -->|No| C[Retain old deadline and clock history]
+  C --> D[One current-supervisor review notice]
+  D --> E[Explicit review with actual employee schedule]
+  E --> F[Original versioned clock approval]
+  F --> G[Existing working-hours escalation]
+  B -->|Yes| G
+```
+
+This review does not automatically extend a deadline or assign historic delay to a substitute. Terminal tasks do not generate review notices.

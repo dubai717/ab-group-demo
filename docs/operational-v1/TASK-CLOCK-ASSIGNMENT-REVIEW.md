@@ -1,0 +1,11 @@
+# Reassigned task clock review — unpublished
+
+The original worker already refused to use an approved clock when its recorded employee differed from the current task assignee. The original clock screen did not explain this hold, and no deduplicated manager review notice was generated. This could leave a reassigned timed task without an actionable clock review.
+
+The existing clock GET/UI now marks the mismatch for nonterminal tasks and explains that the old deadline is retained, not automatically extended. The original worker creates one review notification for the current recorded supervisor (or an available Owner when no valid independent supervisor is recorded), using the original notification and immutable task-event sources. Unknown current employees do not generate a guessed notification. Repeated ticks do not duplicate it; it is counted separately from overdue escalations and creates no personal task, financial movement or penalty. Both original notification entry points open the existing task.
+
+An authorized independent supervisor must review the current employee's actual schedule and approve the deadline using the original versioned clock form. Original deadline/clock history stays intact. Only then does the existing working-hours escalation resume. This does not invent a new deadline or a policy for attributing old elapsed work minutes across substitutes. Automatic, fully scheduled substitute continuity remains separate unfinished work.
+
+Five native cases passed, including actual original task reassignment, one manager notification across repeated ticks, actual manager notification/task visibility, explicit manager clock approval, preserved deadline and two clock versions, original escalation after review, unchanged permission grants and zero financial journals. Two actual AR/EN UI journeys passed at1440/768/390, including retained traced save failure/retry and the existing waiting/deadline regression. TypeScript, provider-free build and189 static checks passed. An added test initially requested a nonexistent single-task GET; it was corrected to the actual task-list source used by the existing UI, with no production route change.
+
+No hosted changes, new roles, financial authority, migration, merge or deployment.

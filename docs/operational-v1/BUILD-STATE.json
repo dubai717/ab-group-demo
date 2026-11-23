@@ -279,8 +279,8 @@
     ]
   },
   "latestRemoteBeforeThisBuild": {
-    "commit": "8b788d83a06b66bead608d6602d4db0cdc095edd",
-    "tree": "7a8f0d6a5219667b7f358dd7d8c25810f161d33c"
+    "commit": "7acd15b6c8235e00f02ad9a51f80d5c297a6a2db",
+    "tree": "ef37d35afbb051960edca719c3cc1c51162c4e1d"
   },
   "communicationCases": {
     "state": "basic topic workflow in original conversation; unpublished",
@@ -575,5 +575,13 @@
     "centreMappingsAvailable": false,
     "authorityChanged": false,
     "documentation": "docs/operational-v1/WORK-SCOPE-SOURCES.md"
+  },
+  "taskClockAssignmentReview": {
+    "status": "implemented-tested-unpublished",
+    "native": 5,
+    "browser": 2,
+    "automaticDeadlineExtension": false,
+    "financialEffect": false,
+    "documentation": "docs/operational-v1/TASK-CLOCK-ASSIGNMENT-REVIEW.md"
   }
 }

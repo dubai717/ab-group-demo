@@ -175,9 +175,12 @@
         "backend/tests/communication-leave-delegation.test.ts",
         "backend/src/employee-document-task.ts",
         "backend/tests/leave-document-source.test.ts",
-        "docs/operational-v1/EMPLOYEE-DOCUMENT-RENEWAL.md"
+        "docs/operational-v1/EMPLOYEE-DOCUMENT-RENEWAL.md",
+        "docs/operational-v1/TASK-CLOCK-ASSIGNMENT-REVIEW.md",
+        "backend/tests/task-clock-assignment-review.test.ts",
+        "backend/tests/task-clock-assignment-review.browser.cjs"
       ],
-      "remaining": "أضيف ربط مهام موضوعات المحادثة بتفويض الإجازة مع صلاحيات المصدر الحالية وإعادة المفتوح وحفظ إنجاز البديل؛ ما زالت المصادر الأخرى والشركات المتعددة وضوابط إجازة البديل وتبني الساعة والقبول الموسع جزئية. لا SQL مستضاف. أُصلح إنجاز تجديد مستند الموظف بدليل نسخة معتمدة أحدث، وأضيف فحص صلاحية مصدر المستند للبديل عند الإنشاء والتفعيل والعودة؛ تبقى بقية المصادر والقبول الشامل."
+      "remaining": "أضيف ربط مهام موضوعات المحادثة بتفويض الإجازة مع صلاحيات المصدر الحالية وإعادة المفتوح وحفظ إنجاز البديل؛ ما زالت المصادر الأخرى والشركات المتعددة وضوابط إجازة البديل وتبني الساعة والقبول الموسع جزئية. لا SQL مستضاف. أُصلح إنجاز تجديد مستند الموظف بدليل نسخة معتمدة أحدث، وأضيف فحص صلاحية مصدر المستند للبديل عند الإنشاء والتفعيل والعودة؛ تبقى بقية المصادر والقبول الشامل. مراجعة الساعة بعد إعادة الإسناد وإشعار المسؤول دون تكرار منفذان ومختبران محلياً، دون تمديد آلي أو افتراض احتساب تأخير البديل."
     },
     {
       "id": "4.c",
@@ -217,9 +220,12 @@
         "backend/tests/communication-task-clock.browser.cjs",
         "docs/operational-v1/COMMUNICATION-TASK-CLOCK.md",
         "backend/tests/communication-cases.test.ts",
-        "backend/tests/communication-leave-delegation.test.ts"
+        "backend/tests/communication-leave-delegation.test.ts",
+        "docs/operational-v1/TASK-CLOCK-ASSIGNMENT-REVIEW.md",
+        "backend/tests/task-clock-assignment-review.test.ts",
+        "backend/tests/task-clock-assignment-review.browser.cjs"
       ],
-      "remaining": "الساعة الأصلية للمهام اليدوية ومهام المحادثة وتوقيت الإمارات والتكرار والتصعيد مختبرة؛ بقية المصادر والتكليفات وتقارير التأخير والقبول النهائي ما زالت جزئية. أُصلح الإغلاق الآلي الخاطئ لمهام المحادثات؛ الإنجاز الفعلي يتبع تقديم النتيجة والمراجعة."
+      "remaining": "الساعة الأصلية للمهام اليدوية ومهام المحادثة وتوقيت الإمارات والتكرار والتصعيد مختبرة؛ بقية المصادر والتكليفات وتقارير التأخير والقبول النهائي ما زالت جزئية. أُصلح الإغلاق الآلي الخاطئ لمهام المحادثات؛ الإنجاز الفعلي يتبع تقديم النتيجة والمراجعة. مراجعة الساعة بعد إعادة الإسناد وإشعار المسؤول دون تكرار منفذان ومختبران محلياً، دون تمديد آلي أو افتراض احتساب تأخير البديل."
     },
     {
       "id": "7",

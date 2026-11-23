@@ -2202,5 +2202,22 @@
       "work-scope-sources-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
       "work-scope-sources-static.log": "3f5cc38399b49aceb4c451ba48590976fa618889d4b232fc84958d9062f304a6"
     }
+  },
+  "taskClockAssignmentReview": {
+    "status": "implemented-tested-unpublished",
+    "native": 5,
+    "browser": 2,
+    "static": 189,
+    "types": "passed",
+    "build": "passed",
+    "automaticPenalty": false,
+    "financialEffect": false,
+    "evidence": {
+      "task-clock-assignment-native.log": "c1e24f8e55b2c8efc54d92c642e59ba225d60e83f22cda4ad6bf86273d84cd77",
+      "task-clock-assignment-browser.log": "a0214845a34bdf5cf5274159424da638ecbbd00bb52672c916c75023a84895c7",
+      "task-clock-assignment-types.log": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+      "task-clock-assignment-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "task-clock-assignment-static.log": "4e7b97ff3fa57616e2d7c5b4d76bff72b61317e85e9fabb38279f03b13853372"
+    }
   }
 }
