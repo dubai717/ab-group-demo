@@ -2596,5 +2596,30 @@
       "path": "backend/tests/service-eligibility-policy.test.ts",
       "sha256": "1c2ab3f97cf4ec9618c32431ac6af542205f7c4f9a8dee5de1c997594486b842"
     }
+  },
+  "operatingCentreCandidate": {
+    "status": "work-in-progress checkpoint only, not PR116 head",
+    "runtimeEnabled": false,
+    "hostedApplied": false,
+    "automaticManifest": false,
+    "changesAuthority": false,
+    "source": "backend/review/operating-centres.sql",
+    "sourceSha256": "aa497283469cfa264bb82c0c81ef2e99f9ea49bb9d423986f52a815c2dcf2e3e",
+    "test": "backend/tests/operating-centres-review.test.ts",
+    "testSha256": "969dcd51761e776e2cf5cb8eec6934ce822c29a7b2a819e9c60e80aaf7f821df",
+    "directSyntheticSQL": {
+      "pass": 1,
+      "fail": 0,
+      "usesOriginalTenantSerialization": false,
+      "log": "work/evidence/operating-centres-direct.log",
+      "sha256": "dc925473bbb93d06b3afc180560812e45f417809417ac5c6bb77daf1bc85f9ad"
+    },
+    "remaining": [
+      "strict source readiness and tamper checks",
+      "original permission UI/API directory editor and reasoned fresh impact review",
+      "actual geographic scope enforcement with original role authority",
+      "dated mappings and full bilingual acceptance"
+    ],
+    "doc": "docs/operational-v1/OPERATING-CENTRES.md"
   }
 }

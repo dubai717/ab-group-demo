@@ -38,9 +38,11 @@ CREATE FUNCTION ab.operating_centre_version_guard()RETURNS trigger
 LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog,ab AS $$
 DECLARE prior ab.operating_centre_versions;
 BEGIN
+ IF NOT ab.operating_centre_owner()THEN RAISE EXCEPTION 'operating centre Owner required' USING ERRCODE='42501';END IF;
  IF NEW.created_xid<>pg_current_xact_id() OR NEW.created_by IS DISTINCT FROM nullif(current_setting('ab.actor',true),'')::uuid THEN
   RAISE EXCEPTION 'operating centre source actor mismatch' USING ERRCODE='23514';
  END IF;
+ NEW.created_at:=transaction_timestamp();
  PERFORM pg_advisory_xact_lock(hashtextextended(NEW.tenant_id::text||':operating-centre:'||NEW.centre_id::text,0));
  SELECT * INTO prior FROM ab.operating_centre_versions WHERE tenant_id=NEW.tenant_id AND centre_id=NEW.centre_id ORDER BY revision DESC LIMIT 1;
  IF FOUND THEN
@@ -56,6 +58,7 @@ CREATE TRIGGER operating_centre_version_guard BEFORE INSERT ON ab.operating_cent
 CREATE FUNCTION ab.operating_centre_link_guard()RETURNS trigger
 LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog,ab AS $$
 BEGIN
+ IF NOT ab.operating_centre_owner()THEN RAISE EXCEPTION 'operating centre Owner required' USING ERRCODE='42501';END IF;
  IF NOT EXISTS(SELECT 1 FROM ab.operating_centre_versions WHERE tenant_id=NEW.tenant_id AND id=NEW.version_id AND created_xid=pg_current_xact_id())THEN
   RAISE EXCEPTION 'operating centre snapshot is immutable' USING ERRCODE='23514';
  END IF;
