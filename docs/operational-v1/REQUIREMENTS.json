@@ -97,9 +97,12 @@
         "backend/src/leave-return-portal.ts",
         "leave-return-ui.js",
         "backend/tests/leave-return-portal.test.ts",
-        "backend/tests/leave-return-portal.browser.cjs"
+        "backend/tests/leave-return-portal.browser.cjs",
+        "backend/src/delegation-history.ts",
+        "backend/tests/delegation-history.test.ts",
+        "backend/tests/delegation-history.browser.cjs"
       ],
-      "remaining": "بوابة عودة محدودة ومراجعة المسؤول ومهامه والحماية من إعادة تفعيل تعليق مستقل مختبرة. SQL مرشح غير مطبق؛ استرجاع التفويض المرتبط بالإجازة وملخص البدلاء والتفويض التشغيلي الكامل غير مكتمل."
+      "remaining": "بوابة العودة ومراجعتها ومصدر مهامها وحمايتها مختبرة؛ أضيف عرض عمل البديل من أحداث المهام الأصلية دون نقل الإنجاز، لكن إرجاع التفويض المرتبط بالإجازة والمراسلات والمرفقات غير المرتبطة والقبول الموسع غير مكتملة؛ SQL العودة مرشح غير مطبق."
     },
     {
       "id": "4.c",

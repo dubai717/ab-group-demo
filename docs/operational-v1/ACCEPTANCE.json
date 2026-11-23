@@ -526,6 +526,119 @@
         "npm notice To update run: npm install -g npm@12.2.3",
         "npm notice"
       ]
+    },
+    {
+      "log": "/tmp/ab-v1-delegation-history-combined-native.log",
+      "sha256": "35db6e72d114a0dde1a02eb41163e91d22ce23d3cc6722f324d956e1cba70067",
+      "tail": [
+        "  ✔ encrypted backup restores HR profiles, private documents, payroll, audit and RLS independently (1400.232008ms)",
+        "  ✔ filtered personnel export preserves the displayed order and excludes unselected staff (55.05472ms)",
+        "  ✔ runtime cross-tenant reads are blocked with RLS (1.508567ms)",
+        "✔ Personnel: isolated PostgreSQL, profiles, tasks, leave, evaluation and shared payroll (7279.299691ms)",
+        "ℹ tests 56",
+        "ℹ suites 0",
+        "ℹ pass 56",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 12806.32683"
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-delegation-history-guard-browser.log",
+      "sha256": "d9ca01724a385d40271f3bf0bb119df8516bdeb1f1817c562af00d1b67b30a7a",
+      "tail": [
+        "PASS original delegation history UI: actual source task/actor/time/note, no substitute credit for Owner action, preserved returned source and task link rights, no raw IDs, readable failed-read reference and suppressed late context, AR/EN three widths. Synthetic only."
+      ]
+    },
+    {
+      "log": "/tmp/ab-v1-delegation-history-verified-types.log",
+      "sha256": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+      "tail": [
+        "",
+        "> ab-group-demo@1.0.0 backend:check",
+        "> tsc -p backend/tsconfig.json",
+        "",
+        "npm notice",
+        "npm notice New major version of npm available! 11.9.0 -> 12.2.3",
+        "npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.3",
+        "npm notice To update run: npm install -g npm@12.2.3",
+        "npm notice"
+      ]
+    },
+    {
+      "log": "/dev/shm/ab-operational-v1-build/repository/work/operational-evidence/types.log",
+      "sha256": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+      "tail": [
+        "",
+        "> ab-group-demo@1.0.0 backend:check",
+        "> tsc -p backend/tsconfig.json",
+        "",
+        "npm notice",
+        "npm notice New major version of npm available! 11.9.0 -> 12.2.3",
+        "npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.3",
+        "npm notice To update run: npm install -g npm@12.2.3",
+        "npm notice"
+      ]
+    },
+    {
+      "log": "/dev/shm/ab-operational-v1-build/repository/work/operational-evidence/static.log",
+      "sha256": "8b1efec71998c7d6fef27ee0946e38979512a87bd24fd6a8fd9c7d6aa0f23540",
+      "tail": [
+        "✔ bank grants are independent, company-scoped, revocable and require explicit re-delegation (0.481317ms)",
+        "✔ existing explicit company bank rights survive without adding inherited role rights (0.31278ms)",
+        "✔ bank-only access never expands personal user-profile visibility (0.317246ms)",
+        "✔ installments use exact integer arithmetic and only first installment absorbs remainder (2.338647ms)",
+        "✔ grace period ends before first day of following month, including leap years and pending dates (0.339529ms)",
+        "✔ service months remain separate from finance installments and margins may be positive, zero or negative (0.355422ms)",
+        "ℹ tests 182",
+        "ℹ suites 0",
+        "ℹ pass 182",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 1297.201437"
+      ]
+    },
+    {
+      "log": "/dev/shm/ab-operational-v1-build/repository/work/operational-evidence/native.log",
+      "sha256": "6dfe14d275a6e7217af7efaee6b605be2e2eeb49aa0c87a174b94614d5b90abc",
+      "tail": [
+        "  ✔ runtime cross-tenant reads are blocked with RLS (2.212452ms)",
+        "✔ Personnel: isolated PostgreSQL, profiles, tasks, leave, evaluation and shared payroll (9272.229359ms)",
+        "✔ actual original task escalation uses recorded hours, real managers, approved waiting and deduplicated notifications without financial effects (3086.276042ms)",
+        "✔ read-only Owner View As cannot approve a task deadline although the actual direct manager can (1985.15958ms)",
+        "✔ four actual reporting levels stop at Owner, source guards reject cycles, unavailable chains require review, and actual completion stops escalation (2278.464038ms)",
+        "✔ manual creation records an explicit initial UAE deadline atomically through the original clock and rejects mismatch or self approval without a partial task (1784.439331ms)",
+        "ℹ tests 60",
+        "ℹ suites 0",
+        "ℹ pass 60",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 26982.713682"
+      ]
+    },
+    {
+      "log": "/dev/shm/ab-operational-v1-build/repository/work/operational-evidence/browser.log",
+      "sha256": "1c9aa7baed9eb649b569251a95629494e26c8493e5ba365a9cdc704e6b2f86e6",
+      "tail": [
+        "PASS independent job standard and employee matrices: real actions, no section auto-grant, protected approval, no job-based account assignment, staged cancel/confirm, actual affected-user grant-count preview and preserved exceptions on standard update, AR/EN three widths and actual screenshots",
+        "PASS minimal prospect save: original file number, view mode, no optional documents, retained source/responsible, distinct real/prospect counters, clickable filter and AR/EN three widths",
+        "PASS annual plan actual API/UI: reversed-date error preserves inputs, tentative checkbox retains dates, save/view revision, no leave/balance/access effect, participation row, AR/EN saved reopening, historical read-only, desktop/tablet/mobile. Synthetic only.",
+        "PASS original conversation deep link: real authorized thread, query consumed once with context retained, login required, known-ID unauthorized request rejected without private content.",
+        "PASS user UX: name aliases/prefix/department picker, explicit readonly preview and unchanged owner session, demo IBAN/slow one-save/readback, confirmed permission plan, committed retry without repeat, delayed spinner, AR/EN responsive.",
+        "PASS restricted leave-return API/UI: failed work login, limited Auth without work cookie, retained validation/API/lost-response inputs, one canonical review, suppressed late old-company opening, duplicate prevention, return-for-info, actual manager completion count, successful original work login, unchanged rights, AR/EN desktop/tablet/mobile.",
+        "PASS actual dated work calendar: explicit X/half/off grid, missing hours retain inputs, lost successful response retries one version, read failure removes stale cells and recovers, original API source readback, AR/EN desktop/tablet/mobile. Synthetic only.",
+        "PASS actual task deadline and approved waiting UI: no invented hour, field retention on invalid interval and lost committed reply, one stored version, source task entry/readback, UTC storage/UAE display, AR/EN three widths, no financial or penalty effect. Synthetic only.",
+        "PASS original manual-task creation: optional explicit UAE time, retained mismatch fields and human trace, atomic same-task clock readback, AR/EN three widths; date-only tasks unchanged. Synthetic only.",
+        "PASS original delegation history UI: actual source task/actor/time/note, no substitute credit for Owner action, preserved returned source and task link rights, no raw IDs, readable failed-read reference and suppressed late context, AR/EN three widths. Synthetic only.",
+        "PASS authenticated base dashboard: actual custom role without view_dashboard, preserved legacy content denial, visible landing/menu after reload, no financial/count/filter data, denied direct sources, zero hidden MyWork fetches, AR/EN three widths. Synthetic only.",
+        "PASS original widget previews and plus/remove controls: exact authorized cached counts without repeated dataset reads, employee/standard settings, no write until review/confirmation, no automatic drilldown/data grant or employee assignment, preserved cancel and dirty standard, AR/EN three widths. Synthetic only."
+      ]
     }
   ],
   "limitations": [

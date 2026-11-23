@@ -10,7 +10,7 @@
   "decision": "last_two_actual_due_months",
   "policyActivated": false,
   "next": [
-    "Upload initial manual task deadline adoption and four-level hierarchy acceptance; complete CI on newest source",
+    "Upload original delegation history and full twelve-journey evidence; verify newest CI; continue explicitly leave-linked delegation and permission exceptions",
     "Continue inherited deny, selective exception reset, dashboard widget standards and geographic scope",
     "Complete explicitly leave-linked delegations and substitute contribution summary",
     "Integrate source service eligibility and cross-branch collections after financial PR115 stabilizes",
@@ -40,7 +40,10 @@
     "/tmp/ab-v1-task-hierarchy-native-final.log",
     "/tmp/ab-v1-initial-task-native-final.log",
     "/tmp/ab-v1-initial-task-browser-final.log",
-    "/tmp/ab-v1-initial-task-final-types.log"
+    "/tmp/ab-v1-initial-task-final-types.log",
+    "/tmp/ab-v1-delegation-history-combined-native.log",
+    "/tmp/ab-v1-delegation-history-guard-browser.log",
+    "/tmp/ab-v1-delegation-history-verified-types.log"
   ],
   "financialBaselineCI": {
     "run": 355,
@@ -216,5 +219,29 @@
     "originalRegressions": "failed: shared handover/own-fund privacy fixture reached unchanged 300/min rate limiter; isolated reproduction confirmed HTTP429",
     "laterSkippedStepsVerified": false,
     "dashboardBaseAndIndicatorsCovered": false
-  }
+  },
+  "delegationHistory": {
+    "state": "original source read-only API and bilingual HR entry locally tested, unpublished",
+    "nativeCombinedPassed": 56,
+    "browser": "AR/EN three widths, actual actor/note/time, no false substitute credit, failed read reference and stale-language suppression",
+    "permissionScope": "original/substitute participants or current company task manager/delegator; other-company authority rejected",
+    "readChangesTaskOwnership": false,
+    "readChangesFinancials": false,
+    "remaining": [
+      "Explicit leave-linked automatic return and reassignment",
+      "Unlinked message/document contribution sources",
+      "Complete participant self-service entry and broader acceptance"
+    ]
+  },
+  "localLatestAcceptance": {
+    "nativePassed": 60,
+    "nativeFailed": 0,
+    "staticPassed": 182,
+    "browserJourneysPassed": 12,
+    "typecheck": "passed",
+    "releaseReady": false,
+    "source": "RAM checkout copied from independent committed baseline plus preserved source edits; no database copied or restored"
+  },
+  "workingDirectory": "/dev/shm/ab-operational-v1-build/repository",
+  "storageWorkaround": "Persistent isolated shell in a RAM checkout with shared read-only original Git object lookup and fresh local source objects; no original databases/backups deleted. All code must be checkpointed to GitHub before shell ends."
 }
