@@ -100,10 +100,10 @@
     "mergeAuthorized": false
   },
   "CI": {
-    "run": 13,
-    "runId": 45146692456,
-    "head": "72e2cf62c838ee4ef5e0a7614c30da4ba5412f8c",
-    "status": "pending",
+    "run": 14,
+    "runId": 45150735038,
+    "head": "4cfc11722dac3e7ab7f917419c51fde8a38157f8",
+    "status": "in_progress",
     "notProofForCurrentUnpushedChanges": true
   },
   "leaveReturn": {
@@ -237,9 +237,9 @@
     ]
   },
   "independentVerifiedCI": {
-    "run": 11,
-    "runId": 45130587080,
-    "head": "6d3891b687658bb4030b76c6ef0b80c0c21fed8a",
+    "run": 12,
+    "runId": 45141828553,
+    "head": "51bb401cef6f3ab10b483a2179f391db61ceba75",
     "conclusion": "success",
     "notProofForCurrentUnpushedChanges": true
   },
@@ -247,7 +247,7 @@
     "patch": "/tmp/ab-v1-durable-code-diff.patch.gz",
     "manifest": "/tmp/ab-v1-durable-code-diff.json",
     "scope": "code only; not a database backup",
-    "baseRemoteCommit": "6d3891b687658bb4030b76c6ef0b80c0c21fed8a",
+    "baseRemoteCommit": "4cfc11722dac3e7ab7f917419c51fde8a38157f8",
     "rotationEvidence": "/tmp/ab-v1-code-checkpoint-rotation.json"
   },
   "selectedExceptions": {
@@ -280,8 +280,8 @@
     ]
   },
   "latestRemoteBeforeThisBuild": {
-    "head": "72e2cf62c838ee4ef5e0a7614c30da4ba5412f8c",
-    "tree": "2fb3677e26ccd4340abfddd6807a122acccc9b4e"
+    "head": "4cfc11722dac3e7ab7f917419c51fde8a38157f8",
+    "tree": "74898c3bcc651b781232c6ced5bab637055d9c7b"
   },
   "communicationCases": {
     "state": "basic topic workflow in original conversation; unpublished",
@@ -360,5 +360,30 @@
       "en"
     ],
     "releaseReady": false
+  },
+  "serviceEligibilitySource": {
+    "state": "Owner read-only source review implemented and tested; unpublished",
+    "source": "original receivables and exact confirmed customer vehicle contracts",
+    "reference": "last_two_actual_due_months",
+    "snapshot": {
+      "isolation": "repeatable read",
+      "readOnly": true
+    },
+    "nativeFocused": {
+      "pass": 15,
+      "fail": 0
+    },
+    "uiJourneys": 18,
+    "simulatedOnly": true,
+    "hostedRuleActivated": false,
+    "controllerGuardInstalled": false,
+    "effectiveOn": null,
+    "financialEffect": false,
+    "remaining": [
+      "server create/approve/execute guards",
+      "approved configurable scope and limited employee output",
+      "timed explicit exceptions",
+      "full integration and release acceptance"
+    ]
   }
 }

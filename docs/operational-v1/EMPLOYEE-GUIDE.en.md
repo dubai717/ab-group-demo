@@ -23,3 +23,5 @@ On standard impact review, retain all additions by default or select explicit ad
 From the original conversation, link a task and select its employee and date. An optional exact UAE time must match the date. If the response fails, retry in the same form. An existing task is not duplicated or silently rescheduled; use its authorized clock action for changes.
 
 In the original conversation, create a follow-up topic for a payment claim, dispute or complaint. Another authorized participant can continue handling it. Open its row for original history or link an existing-workflow follow-up task. Administrative resolution never settles debt or completes the task. No-response closure awaits verified deadline/follow-up support. Retry uncertain saves in the same form with the original values.
+
+Owner: Review two-month reference in the existing customer profile shows an original-source simulation. Refresh manually after payment. Review required identifies unresolved source facts; it is not payment or debt release. Service blocking is not activated in this package.

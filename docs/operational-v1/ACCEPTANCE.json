@@ -931,6 +931,30 @@
       "bytes": 17689,
       "sha256": "d1e0446d6d61158d6b6c08e03f1698952106391530408e413bfaff275e48f66b",
       "scope": "182 static/delivery checks passed"
+    },
+    {
+      "path": "work/operational-evidence/eligibility-source-complete-native.log",
+      "bytes": 4032,
+      "sha256": "376ae75d02d6273fb15180289e16da1fc1172da20126f1a887fd4f9d89161c2a",
+      "scope": "15 original policy/source/case native cases: unequal actual due months, both vehicle companies, paid unknown commitments, manual loan review, nonperiodic claim isolation and actual approved receipt freshness; source reads physically READ ONLY/REPEATABLE READ with unchanged financial/settings/event counts"
+    },
+    {
+      "path": "work/operational-evidence/eligibility-source-complete-build.log",
+      "bytes": 147,
+      "sha256": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "scope": "Compiled runtime graph and build after final classification refinements; no hosted providers"
+    },
+    {
+      "path": "work/operational-evidence/eligibility-source-complete-static.log",
+      "bytes": 17691,
+      "sha256": "147af3f77f1beab7807ccf4490a5545a18c639d94aa7ca7faf7dd97b61636a81",
+      "scope": "182 static/delivery checks passed"
+    },
+    {
+      "path": "work/operational-evidence/eligibility-source-eighteen-ui.log",
+      "bytes": 5062,
+      "sha256": "fee66fc5784783cfe138b53d0a3deb0a7e44779d561a1e422954f5a6039a1dec",
+      "scope": "18 operational UI journeys including original customer source review, retained read failure/trace/retry, no polling, old profile response suppression and Owner-only control in AR/EN 1440/768/390; final backend-only refinements separately verified by native tests/build"
     }
   ],
   "failedAttemptsNotAcceptance": [
@@ -993,6 +1017,16 @@
       "path": "work/operational-evidence/standard-dashboard-fixed-native.log",
       "sha256": "ca3ac62a9d77daa405bb5c72dc393bca03dc08ebe01f413c4ec9263722059855",
       "reason": "Synthetic injected P0001 rejection follows the existing422 mapping; test expectation corrected from500 while retaining full rollback assertions"
+    },
+    {
+      "path": "work/operational-evidence/eligibility-source-ui.log",
+      "sha256": "324e214fe63ea11c6def8a6eddc1bbf00b6a3420d49c57db743ed3ceb0624ad8",
+      "reason": "Denied-reader fixture initially lacked original customer_view authority; added that explicit grant only through original API in the disposable synthetic fixture. It still cannot read the Owner-only eligibility source"
+    },
+    {
+      "path": "work/operational-evidence/eligibility-source-periodic-native.log",
+      "sha256": "3e599718479161f57ec3709a3c1c2be33974af234e22b9bf16b060015137365a",
+      "reason": "Synthetic receipt setup attempted to adopt an already linked nonperiodic invoice; original duplicate guard correctly refused it. Scoped receipt preparation to periodic invoices; kept the unpaid nonperiodic bill and all guards intact"
     }
   ],
   "screenshots": "CI preserves work/operational-*.png and work/dual-permissions-*.png for seven days; local RAM copies are temporary.",
@@ -1502,6 +1536,50 @@
       "sha256": "0d0caea1d76e3531689c936d58789328929c035f8eb05069f43204be60fe6dc1",
       "data": "synthetic only",
       "visualReview": "Automated responsive and before/after content assertions; not a manual pixel review"
+    }
+  ],
+  "eligibilitySourceScreenshots": [
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-eligibility-source-ar-1440.png",
+      "bytes": 65723,
+      "sha256": "778eb4a1c649cdb7a700d1197cab501879954f766d24be5e289b5ab349f366a2",
+      "data": "synthetic only",
+      "visualReview": "Automated source-content and responsive assertions; not a manual pixel review"
+    },
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-eligibility-source-ar-390.png",
+      "bytes": 52730,
+      "sha256": "5ccf91a33b1d62bdd5c418cda59a865c3562a0a67d3c5ed894184d87205b1f4d",
+      "data": "synthetic only",
+      "visualReview": "Automated source-content and responsive assertions; not a manual pixel review"
+    },
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-eligibility-source-ar-768.png",
+      "bytes": 69061,
+      "sha256": "e6035497a35d6c7e9b5dbb4e8c65b18b528f169778f3d8da5f4ab42fb545b14b",
+      "data": "synthetic only",
+      "visualReview": "Automated source-content and responsive assertions; not a manual pixel review"
+    },
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-eligibility-source-en-1440.png",
+      "bytes": 59031,
+      "sha256": "e317b2cf2df84f4653c620145d0f6606e32bc806756dcc4caf4ef2aa9d47289f",
+      "data": "synthetic only",
+      "visualReview": "Automated source-content and responsive assertions; not a manual pixel review"
+    },
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-eligibility-source-en-390.png",
+      "bytes": 49085,
+      "sha256": "26457eca9eae673aac9f35b5c7fc466d2a1ee40928c73293721d047b6b417ba0",
+      "data": "synthetic only",
+      "visualReview": "Automated source-content and responsive assertions; not a manual pixel review"
+    },
+    {
+      "path": "/dev/shm/ab-operational-v1-recovery/browser/artifacts/operational-eligibility-source-en-768.png",
+      "bytes": 64069,
+      "sha256": "b207d04e3df5abd29c4865fab688c9a9e76b0a787ccdbc0286e315f4a6b799af",
+      "data": "synthetic only",
+      "visualReview": "Automated source-content and responsive assertions; not a manual pixel review"
     }
   ]
 }
