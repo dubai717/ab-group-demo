@@ -2720,7 +2720,8 @@
       "originalScopeReceivables": "17 passed",
       "fullOperationalBrowser": "47 passed, run started on55180fc before opening-source UI addition; not latest48 acceptance",
       "hardenedActualActor": "passed including original unapplied confirmed receipt and private-only function ACL",
-      "contextCompleteness": "passed duplicate contract and late foreign-tenant confirmation rejection, minimal reason retained"
+      "contextCompleteness": "passed duplicate contract and late foreign-tenant confirmation rejection, minimal reason retained",
+      "preAggregationBudget": "passed append-only synthetic oversized confirmation; sub-1KiB review header, no financial payload"
     },
     "evidence": {
       "eligibility-linked.log": "b1d2023bcd5f2c86cdb3b7ab4ef4f50a05a25fd689427a6ff8992e5cb745e411",
@@ -2732,8 +2733,12 @@
       "eligibility-actor-hardened.log": "b811b8da95507d7300c4c63bb028c8af10b1563ff8f92ec2d85846fd9f4ca1e4",
       "actor-hardened-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "eligibility-context-final.log": "cc5c3d9d5615db62beab59b571dfdd4c38b0acc45edf9cb5f118b684a0745d23",
-      "eligibility-context-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    }
+      "eligibility-context-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "eligibility-source-budget-fixed.log": "779ed6db184e81d9ffb52b3fbc088df52608e19b4888e6f163a0631fd48dd39d",
+      "eligibility-source-budget-fixed-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "newUninstalledBodyPin": "9d1a4b97405c6e577481611923d17500bfecdeec6c32164eb9d885c7c20a2e88",
+    "existingScopePinsChanged": false
   },
   "resumedIsolatedBackupTooling": {
     "status": "complete_unpublished_test_infrastructure_only",

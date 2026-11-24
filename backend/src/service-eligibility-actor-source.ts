@@ -20,7 +20,7 @@ export function projectActualActorEligibilityPacket(raw:unknown,cipher:any,conte
 }
 
 // Explicit reviewed body pin. Changing a proposal requires review and a new test, never runtime repair.
-export const eligibilitySourceBodyHash='1e320184c176138d6fe192870154367b6ea0d8aa8addcff7b850a2bbd9e552d2';
+export const eligibilitySourceBodyHash='9d1a4b97405c6e577481611923d17500bfecdeec6c32164eb9d885c7c20a2e88';
 export async function actualActorEligibilitySourceReady(c:any){
  const r=(await c.query(`select p.prosecdef,p.provolatile,p.proretset,p.prokind,p.proleakproof,p.proconfig,p.prorettype='jsonb'::pg_catalog.regtype returns_json,
  pg_catalog.pg_get_userbyid(p.proowner)owner,pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(p.prosrc,'UTF8')),'hex')body_hash,
