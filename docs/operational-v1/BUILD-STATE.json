@@ -2718,7 +2718,7 @@
       "providerFreeBuild": "passed",
       "rootTests": "162 passed; separate baseline from previous 189",
       "originalScopeReceivables": "17 passed",
-      "fullOperationalBrowser": "47 passed, run started on55180fc before opening-source UI addition; not latest48 acceptance",
+      "fullOperationalBrowser": "48 passed on run begun88690f0; later opening-group refinements passed focused browser separately",
       "hardenedActualActor": "passed including original unapplied confirmed receipt and private-only function ACL",
       "contextCompleteness": "passed duplicate contract and late foreign-tenant confirmation rejection, minimal reason retained",
       "preAggregationBudget": "passed append-only synthetic oversized confirmation; sub-1KiB review header, no financial payload"
@@ -2772,13 +2772,23 @@
     "realImport": false,
     "historicalComparisonComplete": false,
     "partyMappingComplete": false,
-    "acceptance": "11 linked native; AR/EN browser at1440/768/390; TypeScript/provider-free build passed",
+    "acceptance": "11 linked native on initial interface; later6 linked cases including actual numeric Excel cells and original company/employee readers; final AR/EN1440/768/390 browser passed",
     "sourceDataChanged": false,
     "evidence": {
       "opening-linked-final.log": "98d17eeaaea3a613744bd8904a894215ce587f31aed0528353a80b962cf27b0d",
       "opening-final-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "opening-final-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
-      "opening-browser-final.log": "8b80b497cc6e661c944c1ae63abb09e35364ec2f20ff6d15f53b97f51be3b29b"
-    }
+      "opening-browser-final.log": "8b80b497cc6e661c944c1ae63abb09e35364ec2f20ff6d15f53b97f51be3b29b",
+      "opening-full48.log": "921817e93db6d813020acf2af88768e37c52436b6593189295cf0760dc35707a",
+      "opening-excel-fixed.log": "15920b0e9f740f746e9d900c789f56e549ee55f9b291dc4570e8c7d43e5d5365",
+      "opening-excel-fixed-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "opening-group-browser.log": "8b80b497cc6e661c944c1ae63abb09e35364ec2f20ff6d15f53b97f51be3b29b"
+    },
+    "fullOperationalBrowser": "48 passed; run begun88690f0 before later opening-group presentation refinement",
+    "fullOperationalBrowserExit": 0
+  },
+  "financial95ReviewPreserved": {
+    "result": "{\n  \"valid\": true,\n  \"requirements\": 95,\n  \"counts\": {\n    \"منفذ جزئياً\": 19,\n    \"مكتمل ومنشور\": 27,\n    \"مكتمل وغير منشور\": 49\n  },\n  \"partialRequirements\": [\n    \"1.1\",\n    \"2.6\",\n    \"3.1\",\n    \"3.2\",\n    \"3.3\",\n    \"3.5\",\n    \"3.6\",\n    \"3.7\",\n    \"3.8\",\n    \"4.4\",\n    \"4.5\",\n    \"5.1\",\n    \"5.2\",\n    \"5.3\",\n    \"5.6\",\n    \"7.3\",\n    \"9.5\",\n    \"9.8\",\n    \"9.10\"\n  ],\n  \"evidenceAnchors\": 92,\n  \"all95Complete\": false,\n  \"financialApproval\": false,\n  \"deploymentApproval\": false,\n  \"errors\": []\n}\n",
+    "financialPREdited": false
   }
 }
