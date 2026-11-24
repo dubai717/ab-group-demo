@@ -1917,5 +1917,47 @@
     "historicalRowsTransferred": false,
     "scopeProposalsInstalledOnHost": false,
     "allV1Complete": false
+  },
+  "companyImportPreview": {
+    "asOf": "2026-11-24",
+    "status": "tested_unpublished_preview_only",
+    "nativeOriginalLinkedPassed": 19,
+    "browser": "Owner original company register preview AR/EN1440/768/390; original customer/vehicle CSV browser separately passed",
+    "rootStaticPassed": 162,
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "sourceChecksums": {
+      "backend/src/company-import-preview.ts": "b909b70538bca0174fe02cc469e8b5b7429e067d17bb7a7277f6c43138e2b6a3",
+      "backend/src/data.ts": "b83da560f0c61d1b1ab01d0d5bde19f5e864b8e456e5a3c7b505b3b0841dd85d",
+      "backend/src/app.ts": "354fe90852603dba2c0460093e857172d6eea1fa1469079a9176d953030f4558",
+      "app.js": "9f3c9ab8a52bf2f642c911b50f540f59d23bccb3601906e181c6b30193a654bb",
+      "data-import-ui.js": "11dee5144c18b476706d18301c8f26863a7b431a510e93e489288eeab27a871a",
+      "customer-policy.js": "8fb20083a1dc423b38ff6f54ccd21a90dc50d970ecc28ec92031a049fb015abb",
+      "backend/tests/company-import-preview.test.ts": "2fa4aa0f16deff5518b057454f821357d9a1348ff041cc58621586d6d5212814",
+      "backend/tests/company-import-preview.browser.cjs": "c384e5816fd18d6690fd1feccdd1c1a08d7fe91249416aea9d3f172f84ccb42b",
+      "backend/tests/import-delimited.test.ts": "31714ee83f8b8346381e6cabf491f2934e92253fa708f367caf36738f1bc1640",
+      "backend/tests/import-delimited-api.test.ts": "fb2b02c1174e8568a0f2dc37818714807ba20e4a69fa23b6834e1aaed608f247"
+    },
+    "logs": {
+      "company-import-native.log": "4862121650bc5dca9fe33644bc2693ac9ac7ebf8e8c3a65ebc2ef261f0d080de",
+      "company-import-original-native.log": "93cb35d2f3d233f5241c24b8764153cd554c4e427ed73de5a119d6a0c6ea939e",
+      "company-import-browser.log": "eed296272be8ff2aa607386552c9855afbc819026fe5c28e57527deb53ab1f81",
+      "company-import-existing-browser.log": "085bbcaaec9372535b10354790d32e67b127121a4799e235cfd3d1059fa0bcc8",
+      "company-import-static.log": "64fe0ca14c1e9ef648b8e5fc4b0dd046693fc966732b6d4da437c3ec3f21fa1c",
+      "company-import-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "company-import-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "import-strict-native.log": "91b9e044bc821ee8ea323870a087384490a05ea9b43aa2bd9f227eef1d8eaf31",
+      "operational-company-full-39.log": "58d5fa71e0af584c70ce281bc94fd310bbdd507a4fdaafc70c489e96bf685328",
+      "operational-company-linked-native.log": "03592b03d3abbb29f35ebf4c0939b4002795287b8c8bc6d23799b06e75631a7e"
+    },
+    "canApply": false,
+    "actualImportPerformed": false,
+    "allV1Complete": false
+  },
+  "companyLinkedAcceptance": {
+    "sourceBaseline": "40a99e4",
+    "uiJourneysPassed": 39,
+    "linkedNativePassed": 10,
+    "laterCompanyPreviewNotIncluded": true
   }
 }

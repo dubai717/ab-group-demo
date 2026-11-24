@@ -339,9 +339,13 @@
         "backend/src/data-imports.ts",
         "backend/tests/import-delimited-api.test.ts",
         "backend/tests/import-delimited.browser.cjs",
-        "docs/operational-v1/IMPORT-CSV.md"
+        "docs/operational-v1/IMPORT-CSV.md",
+        "backend/src/company-import-preview.ts",
+        "backend/tests/company-import-preview.test.ts",
+        "backend/tests/company-import-preview.browser.cjs",
+        "docs/operational-v1/COMPANY-IMPORT-PREVIEW.md"
       ],
-      "remaining": "أضيف CSV وقالب فارغ من الحقول الأصلية إلى معاينة العملاء والمركبات القائمة مع الاحتفاظ بالملف وفحص الشركة والتكرار. لا مستورد موازٍ ولا استيراد حقيقي. ما زالت قوالب الشركات والمراكز والموظفين والمستندات والأرصدة الافتتاحية والقبول الشامل وإذن الاستيراد الحقيقي غير مكتملة؛ بعض الأرصدة تتبع اعتماد المالية، وبقية نواقص البرمجة لا تُحسب قرارات مالك."
+      "remaining": "معاينة العملاء والمركبات القائمة تدعم CSV/XLSX/Access والتحقق والتكرار؛ أضيفت معاينة شركات وقالب CSV/XLSX للمالك بقواعد الإنشاء الأصلية وكشف الحقول والتطابق المحتمل دون كتابة. رُفضت اقتباسات CSV المشوهة دون تغيير النص بصمت. حفظ الشركات الجماعي المتين وقوالب/محولات المراكز والموظفين والمستندات والأرصدة والقبول الشامل ما زالت أعمالاً برمجية غير مكتملة. لا استيراد حقيقي؛ الأرصدة التاريخية تحتاج المطابقة والاعتماد."
     },
     {
       "id": "11",

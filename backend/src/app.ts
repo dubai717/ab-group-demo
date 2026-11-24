@@ -76,6 +76,7 @@ import {registerPersonnel} from './personnel.js';
 import {registerVehicles} from './vehicles.js';
 import {registerRequestDrafts} from './request-drafts.js';
 import {registerCustomers} from './customers.js';
+import {registerCompanyImportPreview} from './company-import-preview.js';
 import {registerFinance,bankNotice} from "./finance.js";
 export interface Options {
   backupStatusRead?:BackupStatusRead;
@@ -285,6 +286,7 @@ export async function build(options: Options) {
   registerFinance(app,call,cipher);
   (options as any).requestCreators={};
   registerCustomers(app,call,cipher,options);
+  registerCompanyImportPreview(app,call);
   registerServiceEligibilityReview(app,call,cipher);
   registerBackupStatus(app,call,options.backupStatusRead);
   registerCollectionFollowup(app,call,cipher);

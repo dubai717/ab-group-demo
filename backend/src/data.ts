@@ -213,6 +213,24 @@ export function bounded(data: unknown, max = 64000) {
   requireOk(Buffer.byteLength(JSON.stringify(data)) <= max, 422, "tooLarge");
   return data as any;
 }
+// Shared by the original writer and read-only file previews. No persistence here.
+export function validateCompanyInput(input:any, isUpdate=false) {
+  const data=bounded(input,1024*1024);
+  const fieldErrors:Record<string,string>={};for(const key of ['arabicName','englishName','tradeLicenseNumber'])if((!isUpdate||Object.hasOwn(data,key))&&(typeof data[key]!=='string'||!data[key].trim()))fieldErrors[key]='required';
+  if(data.email&&!/^[^\s@]+@[^\s@]+$/.test(data.email))fieldErrors.email='invalidEmail';
+  for(const key of ['issueDate','expiryDate','establishmentDate'])if(data[key]&&!CompanyPolicy.validDate(data[key]))fieldErrors[key]='invalidDates';
+  if(Object.keys(fieldErrors).length)throw Object.assign(new ApiError(422,'invalidFields'),{fieldErrors});
+  return data;
+}
+export function prepareNewCompany(m:any,data:any) {
+  requireOk(m.company.canCreate());
+  validateCompanyInput(data);
+  m.company.prepare(data, []);
+  const state=structuredClone(m.state), id=randomUUID();
+  state.companies.push({id,status:'Active',documents:[]});
+  CompanyPolicy.createService({state:()=>state,actor:()=>({...m.actor,companyPermissions:undefined,permissions:['edit_company']}),persist:()=>true,validateLocation:(d:any)=>location(state,d)}).update(id,data);
+  return state.companies.find((co:any)=>co.id===id);
+}
 export async function persistCompany(
   c: PoolClient,
   m: any,
@@ -225,10 +243,7 @@ export async function persistCompany(
   const statusOnly=id&&Object.keys(data).every(k=>['revision','status'].includes(k))&&Object.hasOwn(data,'status');
   requireOk(!id||m.company.canRead());
   requireOk(id?(statusOnly?(data.status==='Active'?m.company.canActivate():m.company.canDeactivate()):m.company.canEdit()):m.company.canCreate());
-  const fieldErrors:Record<string,string>={};for(const key of ['arabicName','englishName','tradeLicenseNumber'])if((!id||Object.hasOwn(data,key))&&(typeof data[key]!=='string'||!data[key].trim()))fieldErrors[key]='required';
-  if(data.email&&!/^[^\s@]+@[^\s@]+$/.test(data.email))fieldErrors.email='invalidEmail';
-  for(const key of ['issueDate','expiryDate','establishmentDate'])if(data[key]&&!CompanyPolicy.validDate(data[key]))fieldErrors[key]='invalidDates';
-  if(Object.keys(fieldErrors).length)throw Object.assign(new ApiError(422,'invalidFields'),{fieldErrors});
+  validateCompanyInput(data, !!id);
 
   const prior = id
     ? structuredClone(m.state.companies.find((co: any) => co.id === id))
@@ -240,26 +255,10 @@ export async function persistCompany(
     m.state.areas = await loadAreas(c);
     m.company.update(id, data);
   } else {
-    requireOk(m.company.canCreate());
-    requireOk(
-      data.arabicName?.trim() &&
-        data.englishName?.trim() &&
-        data.tradeLicenseNumber?.trim(),
-      422,
-      "required",
-    );
-    m.company.prepare(data, []);
-    const temporary = { id: randomUUID(), status: "Active", documents: [] };
-    m.state.companies.push(temporary);
-    id = temporary.id;
     m.state.areas = await loadAreas(c);
-    // Creation is already authorized above. Preserve its existing initial-field policy independently of edit/status overrides.
-    CompanyPolicy.createService({
-      state: () => m.state,
-      actor: () => ({ ...m.actor, companyPermissions:undefined, permissions: ["edit_company"] }),
-      persist: () => true,
-      validateLocation: (d: any) => location(m.state, d),
-    }).update(id, data);
+    const temporary=prepareNewCompany(m,data);
+    m.state.companies.push(temporary);
+    id=temporary.id;
   }
   const row = m.state.companies.find((co: any) => co.id === id);
   const {
