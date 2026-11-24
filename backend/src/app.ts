@@ -1,3 +1,4 @@
+import {assertEmployeeImportOperator} from './employee-import-preview.js';
 import{registerWorkScopePreview}from'./work-scope-preview.js';
 import{registerWorkLocations}from'./employee-work-location.js';
 import{databaseServiceFailure}from'./database-errors.js';
@@ -80,6 +81,7 @@ import {registerCompanyImportPreview,assertCompanyImportOperator} from './compan
 import {registerFinance,bankNotice} from "./finance.js";
 export interface Options {
   companyImportEnabled?:boolean;
+  employeeImportEnabled?:boolean;
   backupStatusRead?:BackupStatusRead;
   pool: Pool;
   key: string;
@@ -234,14 +236,17 @@ export async function build(options: Options) {
       if(req.body)req.body=normalizeContactPayload(req.body);
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
         const companyImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/companies/run';
+        const employeeImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/employees/run';
         let importModel:any;
         // Serialize permission mutations before loading their authority snapshot.
         // This also prevents a queued grant from using a pre-standard-change issuer.
-        if(!s.viewAs&&req.method!=='GET'&&(companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
+        if(!s.viewAs&&req.method!=='GET'&&(employeeImportRun||companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':security-roles']);
         // Serialize original company mutations before reading the directory used by import preview receipts.
-        if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(companyImportRun||/^\/api\/companies(?:\/|$)/.test(req.url.split('?')[0])))
+        if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(employeeImportRun||companyImportRun||/^\/api\/companies(?:\/|$)/.test(req.url.split('?')[0])))
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':company-directory']);
+        if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(employeeImportRun||/^\/api\/personnel(?:\/|$)/.test(req.url.split('?')[0])))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':personnel-import-directory']);
+        if(employeeImportRun){importModel=await model(c,s.user_id,cipher);assertEmployeeImportOperator(importModel);requireOk(options.employeeImportEnabled===true,503,'employeeImportApplyNotEnabled');if((await c.query("select to_regprocedure('ab.hr_actor_allowed()')ok")).rows[0].ok)requireOk((await c.query('select ab.hr_actor_allowed()ok')).rows[0].ok,403,'denied');requireOk(typeof req.headers['idempotency-key']==='string',422,'employeeImportKeyRequired');}
         if(companyImportRun){
           importModel=await model(c,s.user_id,cipher);assertCompanyImportOperator(importModel);requireOk(options.companyImportEnabled===true,503,'companyImportApplyNotEnabled');
           if((await c.query("select to_regprocedure('ab.hr_actor_allowed()')ok")).rows[0].ok)requireOk((await c.query('select ab.hr_actor_allowed()ok')).rows[0].ok,403,'denied');

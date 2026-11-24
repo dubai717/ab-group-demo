@@ -1281,7 +1281,7 @@ function bindGlobalEvents() {
 
   document.querySelector('[data-company-back]')?.addEventListener('click',async()=>{if(!await WorkspaceUI.leave())return;app.state.companyFormOpen=false;render();});
   const companyGridHost=document.querySelector('.company-panel');if(companyGridHost&&!app.state.companyFormOpen)RegisterStore.get('companies').bind(companyGridHost);
-  document.querySelector('[data-company-import-preview]')?.addEventListener('click',()=>DataImportUI.open('companies',[]));
+  document.querySelector('button[data-company-import-preview]')?.addEventListener('click',()=>DataImportUI.open('companies',[]));
   const openCompanyBtn = document.querySelector('[data-action="open-company-form"]');
   if (openCompanyBtn) {
     openCompanyBtn.addEventListener('click', () => {

@@ -3905,5 +3905,47 @@
     "pendingRunNotReplaced": true,
     "laterCodeSavedToCheckpoint": true,
     "nextPush": "Normal PR fast-forward after queued CI42 starts; do not cancel or replace a pending run."
+  },
+  "originalEmployeeImportApply": {
+    "status": "tested_unpublished_disabled_by_default",
+    "linkedNativePassed": 67,
+    "focusedCurrentNativePassed": 11,
+    "browser": "passed_ar_en_1440_768_390",
+    "full44Journey": "running_not_claimed_success",
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "rootChecksPassed": 162,
+    "sourceHashes": {
+      "backend/src/employee-import-preview.ts": "b91241d8de02d93d576c343dfd86654ce201b5a5998523e0f5f6770cc3ec0448",
+      "backend/src/personnel.ts": "1cec14504b5453c057a27b4f1667ff470fe26795e10de312047172f5cb96ec77",
+      "backend/src/app.ts": "88d45c6e2a8072f524068eb7d68a56b4e8ebe356e8cd9c4f7c2b550d91a3b380",
+      "data-import-ui.js": "b15251b7b7edac4c0271aeabb0d08ccbfb277e0ec396fa7a5709234f7acad327",
+      "personnel-ui.js": "d3d49daaa6573b148e5cf32f07cd4e1ba9bb7b7d74bb74523c15b9cfcfc67371",
+      "app.js": "7894223eef69f79dacf79393c6f208fe8515f57d2e073f02faa519b41ba7c9b1",
+      "backend/tests/employee-import-apply.test.ts": "c939594cdb04d19d393f112a27984604b52f55f7a6862a2913eeed94f62403be",
+      "backend/tests/employee-import-apply.browser.cjs": "3be14d5026fc62c3c417b5f159ddb9dc81369f4acfdc8a7124ee4acf104b1751",
+      "backend/tests/serve-workbench-fixture.ts": "3515fabe83959c9884ef7360518000fb8dd8a39062bf91341ec676df71828059",
+      "backend/tests/operational-v1-suite.browser.cjs": "7b48eaf47458234f6ec9efa1e29572a3489ea23ada5c14a6e32bb9b36fcfe5d0"
+    },
+    "evidenceHashes": {
+      "work/evidence/employee-apply-linked-native.log": "bc5455b7ea083eaeb52aa88637bcd51c2cea4028bbc5d19f08d358f007865920",
+      "work/evidence/employee-apply-atomic-latest-native.log": "e13787879f0956e39f0052267fe525d384b51a857e972dc36413ccacda00fa9c",
+      "work/evidence/employee-apply-ui-final.log": "d078444dacf9ad71ffe73dc4c2b923ad816cf4d6b8e3d81613727a7800e021aa",
+      "work/evidence/employee-apply-current-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "work/evidence/employee-apply-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "work/evidence/employee-apply-root.log": "9e25cfd045f22fb4eebc853ede5bf9a30b200b2b7913a021fdb23eb9e36d5968"
+    },
+    "originalCreatorShared": true,
+    "authAccountsCreated": false,
+    "permissionsChanged": false,
+    "realImportPerformed": false,
+    "hostedConfigurationChanged": false,
+    "allV1Complete": false,
+    "remaining": [
+      "Employee documents and organizational mappings",
+      "Authorized ambiguous-identity decisions",
+      "Remaining entity adapters",
+      "Full scope and release integration"
+    ]
   }
 }
