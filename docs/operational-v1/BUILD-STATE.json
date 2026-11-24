@@ -1764,5 +1764,35 @@
       "partial": 19,
       "promoted": false
     }
+  },
+  "datedReminderSettingsVerification": {
+    "asOf": "2026-11-24",
+    "state": "tested_unpublished_preview_settings",
+    "nativePassed": 12,
+    "browser": "AR/EN1440/768/390 original dialog passed with invalid repair, uncertain save, changed-input hold, GET-only acknowledged retry and future-rule preservation",
+    "typecheck": "passed",
+    "sourceChecksums": {
+      "backend/src/document-reminder-settings.ts": "9e5b322ac40020ae3a7d528f16600df7201b655e8564b4cd42d0779140b0365c",
+      "backend/src/document-reminder-plan.ts": "a9e01091a5fde6826378cff04f9a8f9774abfe62ad6d35cdcf33443ffb76f3a8",
+      "backend/src/document-center.ts": "b9eeb4944433b77f0e21b10e69b03a73f05ac26033868d38b9567f7940832c18",
+      "communications-ui.js": "fe6282aeec1c6caa7c1086de27d15fe0a99079dd810ddb1f5ecdba5d91f5c587",
+      "backend/tests/document-reminder-settings.test.ts": "ec6bd10968738af43945cf04ac983f6f29911c1d646b88b1f55dd567f1f50671",
+      "backend/tests/document-reminder.browser.cjs": "eac840860d7a1c20e5c30bdc0a3faa9b1fd2478c94235dcab175a9832bdaae8c"
+    },
+    "logs": {
+      "document-reminder-settings-native.log": "6ff5545c40b6c5f6454626f70f86a107656251f0cbae930419d105a6210686f3",
+      "document-reminder-settings-browser.log": "353d4f49e032189495f7bc050e42600b01b82e430a7278974ba2213b607e6c01",
+      "document-reminder-settings-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "document-reminder-settings-static.log": "8b3f96d231f8ce444a1c0d7f35fea61ac1a23c5f82f514ad9e2a65b6384d598d"
+    },
+    "liveEnabled": false,
+    "financialEffect": false,
+    "externalSent": false,
+    "remaining": [
+      "source revalidation and durable dispatch queue",
+      "real provider/templates/consent and approved activation",
+      "scheduler and operational acceptance"
+    ],
+    "full38BaselineBeforeTheseSettings": "c4d4b77"
   }
 }
