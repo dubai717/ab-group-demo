@@ -2762,7 +2762,8 @@
         "investor-native-restores.log": "4cbe881f6f5f71cdca935fb1d6e2d2abcb7d30ca6f7f70b03413f22f247ee55b",
         "investor-restore-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       }
-    }
+    },
+    "initialFailureAttribution": "legacy direct Docker paths bypassed selected native tools; no Docker container for new RAM cluster; exact failure retained in full log"
   },
   "openingSourceWorkbench": {
     "asOf": "2026-11-24",
@@ -2782,13 +2783,23 @@
       "opening-full48.log": "921817e93db6d813020acf2af88768e37c52436b6593189295cf0760dc35707a",
       "opening-excel-fixed.log": "15920b0e9f740f746e9d900c789f56e549ee55f9b291dc4570e8c7d43e5d5365",
       "opening-excel-fixed-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "opening-group-browser.log": "8b80b497cc6e661c944c1ae63abb09e35364ec2f20ff6d15f53b97f51be3b29b"
+      "opening-group-browser.log": "8b80b497cc6e661c944c1ae63abb09e35364ec2f20ff6d15f53b97f51be3b29b",
+      "opening-final-root189.log": "f9d3602c88cc05a66b0c9fa778f662c1b7592f8f4ff31169c6f29503f7120c10"
     },
     "fullOperationalBrowser": "48 passed; run begun88690f0 before later opening-group presentation refinement",
-    "fullOperationalBrowserExit": 0
+    "fullOperationalBrowserExit": 0,
+    "rootChecks": "189 passed after numeric Excel/group refinement"
   },
   "financial95ReviewPreserved": {
     "result": "{\n  \"valid\": true,\n  \"requirements\": 95,\n  \"counts\": {\n    \"منفذ جزئياً\": 19,\n    \"مكتمل ومنشور\": 27,\n    \"مكتمل وغير منشور\": 49\n  },\n  \"partialRequirements\": [\n    \"1.1\",\n    \"2.6\",\n    \"3.1\",\n    \"3.2\",\n    \"3.3\",\n    \"3.5\",\n    \"3.6\",\n    \"3.7\",\n    \"3.8\",\n    \"4.4\",\n    \"4.5\",\n    \"5.1\",\n    \"5.2\",\n    \"5.3\",\n    \"5.6\",\n    \"7.3\",\n    \"9.5\",\n    \"9.8\",\n    \"9.10\"\n  ],\n  \"evidenceAnchors\": 92,\n  \"all95Complete\": false,\n  \"financialApproval\": false,\n  \"deploymentApproval\": false,\n  \"errors\": []\n}\n",
     "financialPREdited": false
+  },
+  "currentCiObserved": {
+    "run": 48,
+    "id": 45464800982,
+    "source": "55180fc4278e868bd8f7114a06b3096a5eda82ee",
+    "operationalUi": "success",
+    "originalRegressions": "in_progress_at_last_observation",
+    "deployment": false
   }
 }
