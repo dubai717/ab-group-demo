@@ -2223,10 +2223,10 @@
     }
   },
   "githubCheckpointPolicy": {
-    "prHead": "fde204663a5876877536b4f042b5f2e1e95c31a3",
-    "pendingRun": 45428257927,
-    "runNumber": 45,
-    "observedStatus": "in_progress",
+    "prHead": "e83e4feb122f52e61fa07e7822f1215c53392308",
+    "pendingRun": 45445434651,
+    "runNumber": 46,
+    "observedStatus": "pending",
     "precedingRun": 45418574807,
     "precedingRunNumber": 44,
     "precedingOperationalUi": "success",
@@ -2234,7 +2234,7 @@
     "pendingRunNotReplaced": true,
     "laterCodeSavedToCheckpoint": true,
     "checkpointAtThisReview": "a04d506",
-    "nextPush": "CI45 has started. A normal PR fast-forward may queue a later run; no cancellation, rerun, merge or deployment."
+    "nextPush": "Keep independent checkpoint pushes; wait until CI46 starts or completes before PR fast-forward. Do not cancel or replace pending run."
   },
   "originalEmployeeImportApply": {
     "status": "tested_unpublished_disabled_by_default",
@@ -2515,16 +2515,39 @@
     "originalWriterReused": true,
     "newEmployeesOrAuthCreated": false,
     "automaticDocumentApproval": false,
-    "renewalImportSupported": false,
+    "renewalImportSupported": true,
     "runtimeServerEnablesApply": false,
     "historicalObjectsDeleted": false,
     "sourceHistoryRead": "requested_employee_kind_hash_groups_only",
     "audit": "original_per_employee_document_added_with_encrypted_source_provenance",
-    "full47CurrentRun": "not_yet_claimed",
+    "full47CurrentRun": "passed_on_e83e4fe_exit_0",
     "typecheck": "passed",
     "providerFreeBuild": "passed",
     "rootChecksPassed": 189,
     "sourceVerification": "actual_document_owner_and_linked_original_grouped_metadata",
-    "runtimeApplyDisabledBeforeCachedReceipt": true
+    "runtimeApplyDisabledBeforeCachedReceipt": true,
+    "explicitVersionExtension": {
+      "status": "tested_unpublished_disabled_by_default",
+      "linkedNativePassed": 66,
+      "focusedBrowser": "passed_ar_en_1440_768_390",
+      "existingVersionsModified": false,
+      "approvalAutomatic": false,
+      "competingChainRows": "review_required",
+      "changedChain": "preview_invalidated",
+      "missingWorkGuard": "refused_before_cached_receipt",
+      "expandedFull47": "running_not_claimed",
+      "sourceFiles": {
+        "backend/src/personnel-document-import.ts": "37a47b27c206cbcf95800542c32b97123865e622773bfbdfc7ee722ce91f608a",
+        "backend/src/personnel-documents.ts": "ae4ce75ce3d0f6cca4114f04d92cacba93c81f97345db9493de74155887ed4ac",
+        "backend/tests/personnel-document-version-import.test.ts": "513e70a4493974e445629d1251467921a48ddf01ec25ccc0fc9f23c2c4c948a1",
+        "backend/tests/personnel-document-import.browser.cjs": "2347ab6c8d1645661e2be2abeb385d26d3c799bab63b0d12d2b547ff3f88f0fb",
+        "data-import-ui.js": "1a0376324d51ff6611392eb02fa299b75fb3ca262dc6ee14a833a976c418b726"
+      },
+      "evidence": {
+        "personnel-document-versions-linked-native.log": "aae33b86bc833f2121bc3684beede0edc78577818ff9b9ca4931667f69dac6f6",
+        "personnel-document-versions-browser.log": "34e47d9fb7ab06cc34475b2669f5a8f9ac45138d7c0f6c2b1d83c0aa08b44dfd",
+        "personnel-document-version-first-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
   }
 }

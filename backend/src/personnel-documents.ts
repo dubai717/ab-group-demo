@@ -20,12 +20,7 @@ export function registerPersonnelDocuments(app: any, route: any, cipher: any, op
         requireOk(d.mime === 'application/pdf' ? bytes.subarray(0, 5).toString() === '%PDF-' : d.mime === 'image/png' ? bytes.subarray(0, 8).toString('hex') === '89504e470d0a1a0a' : bytes[0] === 255 && bytes[1] === 216, 422, 'invalidFile');
         return{d,bytes};
     }
-    async function put(c: any, m: any, s: any, req: any, importSource?:{sourceHash:string;attachmentHash:string;row:number;batchKey:string}) {
-        const own=await owner(c,m,req,true),{d,bytes}=validate(req.body);
-        if(!d.parentVersionId){await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':staff-file:'+String(own.employeeId||own.libraryId)+':'+d.kind+':'+sha(bytes)]);requireOk(!(await c.query("select 1 from ab.document_versions v join ab.documents d on d.id=v.document_id left join ab.hr_document_records r on r.version_id=v.id where d.employee_id is not distinct from $1::uuid and d.personnel_library_id is not distinct from $2::uuid and v.sha256=$3 and (r.kind=$4 or d.personnel_library_id is not null)",[own.employeeId,own.libraryId,sha(bytes),d.kind])).rowCount,409,'duplicateDocument');}
-        if (d.responsibleId)
-            requireOk((await c.query('select 1 from ab.hr_employees where id=$1 and company_id=$2', [d.responsibleId, own.companyId])).rowCount, 422, 'invalidResponsible');
-        requireOk(!d.companyResponsible || d.responsibleId, 422, 'responsibleRequired');
+    async function resolveParent(c:any,own:any,d:any){
         if(own.libraryId&&!d.parentVersionId){const latest=(await c.query('select version_id from ab.hr_library_versions where library_id=$1 order by version desc limit 1',[own.libraryId])).rows[0];if(latest)d.parentVersionId=latest.version_id;}let parent: any;
         if (d.parentVersionId) {
             parent = (await c.query('select v.*,d.employee_id,d.personnel_library_id from ab.document_versions v join ab.documents d on d.id=v.document_id where v.id=$1', [d.parentVersionId])).rows[0];
@@ -33,6 +28,15 @@ export function registerPersonnelDocuments(app: any, route: any, cipher: any, op
             if (own.employeeId)
                 requireOk((await c.query('select 1 from ab.hr_document_records where version_id=$1 and kind=$2', [parent.id, d.kind])).rowCount, 422, 'invalidParentKind');
         }
+        return parent;
+    }
+    async function put(c: any, m: any, s: any, req: any, importSource?:{sourceHash:string;attachmentHash:string;row:number;batchKey:string}) {
+        const own=await owner(c,m,req,true),{d,bytes}=validate(req.body);
+        if(!d.parentVersionId){await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':staff-file:'+String(own.employeeId||own.libraryId)+':'+d.kind+':'+sha(bytes)]);requireOk(!(await c.query("select 1 from ab.document_versions v join ab.documents d on d.id=v.document_id left join ab.hr_document_records r on r.version_id=v.id where d.employee_id is not distinct from $1::uuid and d.personnel_library_id is not distinct from $2::uuid and v.sha256=$3 and (r.kind=$4 or d.personnel_library_id is not null)",[own.employeeId,own.libraryId,sha(bytes),d.kind])).rowCount,409,'duplicateDocument');}
+        if (d.responsibleId)
+            requireOk((await c.query('select 1 from ab.hr_employees where id=$1 and company_id=$2', [d.responsibleId, own.companyId])).rowCount, 422, 'invalidResponsible');
+        requireOk(!d.companyResponsible || d.responsibleId, 422, 'responsibleRequired');
+        const parent=await resolveParent(c,own,d);
         const recovery=options.objects.getIfPresent?personnelUploadIdentity({tenant:s.tenant_id,actor:s.user_id,owner:String(own.employeeId||own.libraryId),kind:d.kind,parent:parent?.id||null,sha256:sha(bytes),requestKey:String(req.headers['idempotency-key'])}):null;
         const documentId = parent?.document_id || recovery?.documentId || randomUUID(), vid = recovery?.versionId || randomUUID(), version = parent ? Number((await c.query('select max(version)+1 n from ab.document_versions where document_id=$1', [documentId])).rows[0].n) : 1, storage = s.tenant_id + '/' + documentId + '/' + vid, scan = options.scan ? await options.scan(bytes, d.mime) : 'pending';
         requireOk(['clean', 'pending'].includes(scan), 422, 'fileRejected');
@@ -70,5 +74,5 @@ export function registerPersonnelDocuments(app: any, route: any, cipher: any, op
     } return { rows: out, acknowledgementsRequired: false }; }));
     app.post('/api/personnel/library/:libraryId/documents', route(put));
     app.get('/api/personnel/library/:libraryId/documents/:versionId', route(get));
-    return{upload,validate,owner,put,recoverable:typeof options.objects.getIfPresent==='function'};
+    return{upload,validate,owner,resolveParent,put,recoverable:typeof options.objects.getIfPresent==='function'};
 }
