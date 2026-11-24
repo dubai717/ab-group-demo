@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-24",
+  "asOf": "2026-11-24T22:19:50.744567+00:00",
   "branch": "feature/operational-v1-independent",
   "financialPR": 115,
   "financialPREdited": false,
@@ -3165,7 +3165,6 @@
     "sourcePacketRereadPerFile": false,
     "realImportPerformed": false,
     "remaining": [
-      "cached import receipt current-authority checks",
       "broader document-only import adapters",
       "historical cross-company relationship review",
       "accepted/reused attachment reporting",
@@ -3177,6 +3176,23 @@
       "import-file-origin-linked.log": "1f9de5ed7ea23ad90f12e5c9ec0ef47fca60100e6de554e77ee3eb898a0384b6",
       "import-file-origin-types3.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "import-file-origin-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+    }
+  },
+  "originalImportReceiptAuthorization": {
+    "status": "implemented_unpublished",
+    "linkedCasesPassed": 17,
+    "rootCasesPassed": 189,
+    "actualEmployeeOriginalCustomerAndVehiclePaths": true,
+    "uploadPreviewRunCacheRechecked": true,
+    "revokedImportEditDocumentsAndCompanyScopeTested": true,
+    "completedBusinessAuditNotRepeated": true,
+    "beforeFixExpected403Actual200": true,
+    "realDataChanged": false,
+    "evidenceSha256": {
+      "import-cache-linked.log": "6db04922f0afbcee38205861b43b699bd6bcb7ebc7d8bca22b25e4604e592338",
+      "import-cache-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "import-cache-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "import-cache-root.log": "0a2b77891b2806b110738ce97cb97f3d9b915137c5bc2ae708649efa802afed5"
     }
   }
 }
