@@ -2475,5 +2475,19 @@
     "actualSupabaseChanged": false,
     "typecheck": "passed",
     "providerFreeBuild": "passed"
+  },
+  "ownerWorkScopeReviewUI": {
+    "status": "tested_unpublished_simulation_only",
+    "source": "user-management.js",
+    "nativeLinkedPassed": 4,
+    "browser": "passed_ar_en_1440_768_390",
+    "unsavedPermissionDraftRetained": true,
+    "failedReadRetry": "passed",
+    "lateEmployeeResponseDiscarded": true,
+    "originalUserAndGrantsChanged": false,
+    "canApply": false,
+    "rootChecksPassed": 189,
+    "providerFreeBuild": "passed",
+    "full46CurrentRun": "not_yet_claimed"
   }
 }
