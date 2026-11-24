@@ -3378,7 +3378,7 @@
     "staticPassed": 189,
     "typecheck": "passed",
     "providerFreeBuild": "passed",
-    "browser": "No new expiry-dialog browser acceptance claimed; existing case suite predates this small preview addition",
+    "browser": "Original expiry dialog AR/EN1440/768/390 passed, including held prior-page reply; now included in full38-journey run",
     "sourceChecksums": {
       "backend/src/document-reminder-plan.ts": "b9296d145a46e76ef0810d546ff91f01b2d46c299aeaf2696bc8727fd63d0b86",
       "backend/src/document-center.ts": "fa5af0786a35c8def9d280b5f24246ebde04288f1b2a5036a0c7fb364b41bad1",
@@ -3400,5 +3400,45 @@
       "official provider/templates/consent",
       "scheduler and full browser/permission acceptance"
     ]
+  },
+  "integratedOperationalReview20261124": {
+    "asOf": "2026-11-24",
+    "published": false,
+    "fullOperationalBrowserJourneys": 38,
+    "browserExit": 0,
+    "linkedNativePassed": 25,
+    "staticPassed": 189,
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "allV1Complete": false,
+    "sourceChecksums": {
+      "communications-ui.js": "299e433283d699342dfe5e835a42df2cf7091d291dedea6570bf0075721f858c",
+      "backend/tests/document-reminder.browser.cjs": "dc9d0b1a9703e4e15ec0d7c1eb7f2e8a41dc0707121a5af58e44bdd60b9a701b",
+      "backend/tests/operational-v1-suite.browser.cjs": "f5cb63c4ffea91ed8b93b0e16c5e874f48f8486b4501b1319abb0c28f96ab357",
+      "backend/deploy/operational-checklist-review.mjs": "cd686616849daa1df76170b4caf8256f8778090f21f9eec8f3b95cedf045cdcd"
+    },
+    "logs": {
+      "operational-full-38.log": "04b894a1b8123b259277822f02eaf874c3ac6237c2497d2aa0da18afd7ea554b",
+      "operational-linked-native.log": "be4d157b743099f9a79f0b208dc58e54ba0b9dea0496cce6715a82d59461239b",
+      "operational-current-static.log": "3ddc2fbd142a65435379b8a3171665c4d32b5b47d020b74afd5885f58a609a13",
+      "operational-current-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "operational-checklist-review.log": "4cdecfdb99460f97c3ae32ede61d7151f3cb609bcc114bc075d4345af9541729",
+      "financial95-readonly-review.log": "22ba1e29583a8da2ec0942d6cd361e35091d7c0cc1a090614dc767487a043a04"
+    },
+    "screenshots": {
+      "operational-document-reminders-en-390.png": "99860e7c18fdaa8701b3eee820258d5b4c08ed33ebd9ee072797e38c66867042",
+      "operational-document-reminders-en-768.png": "b70f00b5d9d6bc56bdc5eb6057c03b18bead91fd95770e762ad7f41625bb3995",
+      "operational-document-reminders-en-1440.png": "7fae8a01187d77c8baf94aaf3874f2e81a4bc6f88c61638c715e6f9cf94f4ce0",
+      "operational-document-reminders-ar-390.png": "b8acc671ebf7f2979b9e15a9347649603edf5f4716a372fe7ba3d24cf9ae3ade",
+      "operational-document-reminders-ar-768.png": "7c462b627c0184530ac26fa56a0cfb4014b8efecf11955a6ddba6fdf57e9faed",
+      "operational-document-reminders-ar-1440.png": "b63878b8fa3e1d69392d8d7d7398f1968c4e2ff9eb5c21668960d64b18e7f04b"
+    },
+    "visualReview": "Arabic390px expiry preview inspected; existing brown design retained",
+    "financial95": {
+      "documentedPublished": 27,
+      "completeUnpublished": 49,
+      "partial": 19,
+      "promoted": false
+    }
   }
 }

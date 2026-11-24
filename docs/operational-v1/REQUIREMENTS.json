@@ -340,11 +340,13 @@
     {
       "id": "11",
       "requirement": "التسليم ودليل الموظف والإصدار",
-      "status": "لم ينفذ",
+      "status": "موجود ناقص",
       "evidence": [
-        "docs/operational-v1"
+        "docs/operational-v1/EMPLOYEE-GUIDE.ar.md",
+        "docs/operational-v1/EMPLOYEE-GUIDE.en.md",
+        "docs/operational-v1/ACCEPTANCE.json"
       ],
-      "remaining": "لا موافقة نشر مطلوبة الآن لأن الحزمة غير جاهزة للإطلاق."
+      "remaining": "الدليل العربي والإنجليزي موجودان ومحدثان للوظائف المختبرة فقط؛ القبول الشامل وإكمال الوحدات ومراجعة المالك والإصدار لم تكتمل. لا توجد موافقة نشر."
     }
   ]
 }
