@@ -2223,10 +2223,10 @@
     }
   },
   "githubCheckpointPolicy": {
-    "prHead": "e83e4feb122f52e61fa07e7822f1215c53392308",
-    "pendingRun": 45445434651,
-    "runNumber": 46,
-    "observedStatus": "in_progress",
+    "prHead": "98e889a6bd12438e175e4b45c03443e5987d6486",
+    "pendingRun": 45449570961,
+    "runNumber": 47,
+    "observedStatus": "pending",
     "precedingRun": 45428257927,
     "precedingRunNumber": 45,
     "precedingOperationalUi": "success",
@@ -2234,7 +2234,7 @@
     "pendingRunNotReplaced": true,
     "laterCodeSavedToCheckpoint": true,
     "checkpointAtThisReview": "a04d506",
-    "nextPush": "CI46 started; normal fast-forward can queue the next revision without replacing a pending run. No cancellation/rerun/deployment."
+    "nextPush": "Checkpoint continues independently. Wait until CI47 starts or completes before the next PR fast-forward; no pending replacement or cancellation."
   },
   "originalEmployeeImportApply": {
     "status": "tested_unpublished_disabled_by_default",
@@ -2564,6 +2564,8 @@
     "schedulerInstalled": false,
     "sourceFile": "backend/tests/independent-backup-restore.test.ts",
     "sourceSha256": "80784c2d59c01a323d44d617c8c3fcee2d73630a9aff2624ce24a2e5db22b293",
-    "evidenceSha256": "42038f214902cf8fc73b14e200337b7d0e5c994ccb10ceb3f52cbafd6744f67f"
+    "evidenceSha256": "42038f214902cf8fc73b14e200337b7d0e5c994ccb10ceb3f52cbafd6744f67f",
+    "typecheck": "passed_after_explicit_query_row_annotation",
+    "typecheckCorrection": "Initial new-test TS7022 corrected with explicit query-row annotation; runtime drill already passed. No runtime-source change."
   }
 }
