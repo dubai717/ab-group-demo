@@ -2226,15 +2226,15 @@
     "prHead": "e83e4feb122f52e61fa07e7822f1215c53392308",
     "pendingRun": 45445434651,
     "runNumber": 46,
-    "observedStatus": "pending",
-    "precedingRun": 45418574807,
-    "precedingRunNumber": 44,
+    "observedStatus": "in_progress",
+    "precedingRun": 45428257927,
+    "precedingRunNumber": 45,
     "precedingOperationalUi": "success",
     "precedingOriginalRegressions": "success",
     "pendingRunNotReplaced": true,
     "laterCodeSavedToCheckpoint": true,
     "checkpointAtThisReview": "a04d506",
-    "nextPush": "Keep independent checkpoint pushes; wait until CI46 starts or completes before PR fast-forward. Do not cancel or replace pending run."
+    "nextPush": "CI46 started; normal fast-forward can queue the next revision without replacing a pending run. No cancellation/rerun/deployment."
   },
   "originalEmployeeImportApply": {
     "status": "tested_unpublished_disabled_by_default",
@@ -2547,7 +2547,23 @@
         "personnel-document-versions-linked-native.log": "aae33b86bc833f2121bc3684beede0edc78577818ff9b9ca4931667f69dac6f6",
         "personnel-document-versions-browser.log": "34e47d9fb7ab06cc34475b2669f5a8f9ac45138d7c0f6c2b1d83c0aa08b44dfd",
         "personnel-document-version-first-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-      }
+      },
+      "providerFreeBuild": "passed",
+      "rootCjsRegressionsPassed": 162,
+      "typecheck": "passed_before_new_drill_test"
     }
+  },
+  "independentSyntheticRoundTrip": {
+    "status": "passed_local_only",
+    "testsPassed": 12,
+    "sourceDataUnchanged": true,
+    "allAbTableCountsAndContentHashesCompared": true,
+    "runtimeGrantsAndRlsCompared": true,
+    "originalFileVersionsCompared": true,
+    "hostedAuthStorageProved": false,
+    "schedulerInstalled": false,
+    "sourceFile": "backend/tests/independent-backup-restore.test.ts",
+    "sourceSha256": "80784c2d59c01a323d44d617c8c3fcee2d73630a9aff2624ce24a2e5db22b293",
+    "evidenceSha256": "42038f214902cf8fc73b14e200337b7d0e5c994ccb10ceb3f52cbafd6744f67f"
   }
 }
