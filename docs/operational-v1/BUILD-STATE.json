@@ -2801,5 +2801,24 @@
     "operationalUi": "success",
     "originalRegressions": "in_progress_at_last_observation",
     "deployment": false
+  },
+  "newServiceCreationPrototype": {
+    "status": "partial_isolated_only_unpublished",
+    "liveServerCallbackConfigured": false,
+    "operatingDatabaseAllowed": false,
+    "originalCreatorsHookedForTrustedPrototype": true,
+    "approvalGuardInstalled": false,
+    "executionGuardInstalled": false,
+    "timedExceptionImplemented": false,
+    "sourceDataChanged": false,
+    "tests": "15 linked source/policy/prototype passed; final native actual worker/receipt/replay passed; AR/EN1440/768/390 actual draft-submit denial passed; types/build passed",
+    "evidence": {
+      "new-service-hook-linked.log": "94154790eab25433de1cda268713e157ea8567a2cbe325c20a8a486c4f5c9fbb",
+      "new-service-hook-final-native.log": "97c78fa71613688291ebd4b9d6c0d79139806b4c25f91369aa96de5d40c52e0f",
+      "new-service-hook-final-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "new-service-hook-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "new-service-guard-browser.log": "d2486ee580e333900439062147a43dd46ad0a0bda41703c507d734ce602cdb3c",
+      "new-service-guard-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
   }
 }

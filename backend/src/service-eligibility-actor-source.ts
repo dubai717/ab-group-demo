@@ -31,11 +31,11 @@ export async function actualActorEligibilitySourceReady(c:any){
  from pg_catalog.pg_proc p where p.oid=pg_catalog.to_regprocedure('ab.service_eligibility_source_snapshot(uuid,date)')`)).rows[0];
  return !!r&&r.prosecdef&&r.provolatile==='s'&&!r.proretset&&r.prokind==='f'&&!r.proleakproof&&r.returns_json&&r.owner==='postgres'&&r.body_hash===eligibilitySourceBodyHash&&JSON.stringify(r.proconfig)===JSON.stringify(['search_path=pg_catalog, ab, pg_temp'])&&r.can_execute&&!r.public_execute&&r.private_runtime&&!r.bypass_member;
 }
-export async function actualActorServiceEligibilityReview(c:any,m:any,s:any,cipher:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general'}){
+async function actualActorEligibilityRead(c:any,m:any,s:any,cipher:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general'},readOnlyReview:boolean){
  const d=z.object({customerId:uuid,companyId:uuid,type:z.enum(['vehicle','residence','general'])}).strict().parse(input);
  requireOk(!s.viewAs&&m.actor.id===s.user_id&&m.actor.status==='Active'&&m.actor.roleId!=='investor',403,'denied');
  const context=(await c.query("select ab.tenant()tenant_id,current_setting('ab.actor')actor_id,current_setting('transaction_isolation')isolation,current_setting('transaction_read_only')read_only")).rows[0];
- requireOk(context.tenant_id===s.tenant_id&&context.actor_id===s.user_id,403,'denied');requireOk(context.isolation==='repeatable read'&&context.read_only==='on',409,'eligibilitySnapshotReviewRequired');
+ requireOk(context.tenant_id===s.tenant_id&&context.actor_id===s.user_id,403,'denied');requireOk(readOnlyReview?context.isolation==='repeatable read'&&context.read_only==='on':['read committed','repeatable read','serializable'].includes(context.isolation)&&context.read_only==='off',409,'eligibilitySnapshotReviewRequired');
  const company=m.state.companies.find((r:any)=>r.id===d.companyId);requireOk(company?.status==='Active',403,'denied');
  const customer=(await c.query('select id,company_id from ab.customers where id=$1',[d.customerId])).rows[0];requireOk(customer,404,'notFound');
  requireOk(customerCan(m,d.type==='vehicle'?'view':'edit',customer.company_id),403,'denied');
@@ -44,3 +44,7 @@ export async function actualActorServiceEligibilityReview(c:any,m:any,s:any,ciph
  const raw=(await c.query('select ab.service_eligibility_source_snapshot($1,$2)packet',[d.customerId,today()])).rows[0]?.packet;
  return projectActualActorEligibilityPacket(raw,cipher,{actorId:s.user_id,tenantId:s.tenant_id,customerId:d.customerId,asOf:today()});
 }
+
+export const actualActorServiceEligibilityReview=(c:any,m:any,s:any,cipher:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general'})=>actualActorEligibilityRead(c,m,s,cipher,input,true);
+// Used only by the explicit isolated new-request prototype; never selected by a client input.
+export const actualActorServiceEligibilityCreationCheck=(c:any,m:any,s:any,cipher:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general'})=>actualActorEligibilityRead(c,m,s,cipher,input,false);

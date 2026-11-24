@@ -46,9 +46,13 @@
         "backend/review/service-eligibility-source.sql",
         "backend/src/service-eligibility-actor-source.ts",
         "backend/tests/service-eligibility-actor-source.test.ts",
-        "docs/operational-v1/SERVICE-ELIGIBILITY-ACTOR-SOURCE.md"
+        "docs/operational-v1/SERVICE-ELIGIBILITY-ACTOR-SOURCE.md",
+        "backend/src/new-service-eligibility-prototype.ts",
+        "backend/tests/new-service-eligibility-hook.test.ts",
+        "backend/tests/new-service-eligibility-guard.browser.cjs",
+        "docs/operational-v1/NEW-SERVICE-CREATION-PROTOTYPE.md"
       ],
-      "remaining": "الحساب ومراجعة المصدر الأصلي للمالك داخل ملف العميل مختبران، مع لقطة متسقة للقراءة فقط وإعادة الحساب بعد قبض معتمد في بيئة وهمية. القاعدة غير مفعلة ولا يوجد حارس إنشاء/اعتماد/تنفيذ بعد؛ تبقى إعدادات النطاق والمخرجات المحدودة للموظف والاستثناء المؤقت والتكامل والقبول النهائي أعمالاً برمجية."
+      "remaining": "اختبر ربط منشئات الطلبات الأصلية في قاعدة وهمية فقط، مع منع المتأخرات واستمرار السداد والاسترجاع دون تكرار. الحارس غير مهيأ في server.ts ومرفوض خارج قاعدة الاختبار؛ تبقى حراسة الاعتماد والتنفيذ والتفعيل الموثق والاستثناء المؤقت والمخرجات المحدودة والقبول الشامل."
     },
     {
       "id": "3.1",
