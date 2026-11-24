@@ -3244,7 +3244,7 @@
     }
   },
   "originalWhatsAppMediaAttachment": {
-    "status": "implemented_unpublished_inactive_browser_pending",
+    "status": "implemented_unpublished_inactive",
     "linkedNativeCasesPassed": 11,
     "actualOriginalMessageAndEncryptedAttachmentWriter": true,
     "actualSourceAuthorizationBeforeDownload": true,
@@ -3258,7 +3258,20 @@
       "whatsapp-original-media-types4.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "whatsapp-original-media-linked.log": "e408c11d440c8b686e440e7811be20f946f391cb70f4a526b96d8f5fb5f362ab",
       "whatsapp-original-media-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
-      "whatsapp-original-media-root.log": "dd2a48f5f0abb50d84d211522b355d0d790294739630ebb7f2d680f6fd3c7492"
+      "whatsapp-original-media-root.log": "dd2a48f5f0abb50d84d211522b355d0d790294739630ebb7f2d680f6fd3c7492",
+      "whatsapp-original-media-browser2.log": "853beda1417233c329b6cfdcbaa52ab28f46c307a84c19e1da66d24a6a2b17e6"
+    },
+    "browser": "PASS original conversation viewer and exact protected bytes AR/EN desktop/tablet/phone, no provider calls"
+  },
+  "frozenE030Acceptance": {
+    "source": "e03013bc6cda372963ca8dccb2b7f55f48cee66f",
+    "uiJourneysPassed": 49,
+    "uiSourceUnchanged": true,
+    "backendStatus": "running",
+    "laterMediaAndMasterDocumentChangesCovered": false,
+    "evidenceSha256": {
+      "ui.log": "9cb0dabc1dc5b3c9d73d4649d15f4b506968d98e75759a0a4192ed919997d043",
+      "ui-status.json": "84e80111875c9564b5fe9af5b4cb092fd54363b69f79a7eb7013d69ca0222de2"
     }
   }
 }
