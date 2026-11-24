@@ -1,3 +1,4 @@
+import{registerPersonnelDocumentImport}from'./personnel-document-import.js';
 import {registerEmployeeImportPreview} from './employee-import-preview.js';
 import {registerDelegationHistory}from'./delegation-history.js';
 import {registerLeaveReturnReview,employeeLeaveReturnStates}from'./leave-return-portal.js';
@@ -38,7 +39,8 @@ export function registerPersonnel(app: any, call: any, cipher: any, options: any
     registerAnnualLeavePlanning(app,route,cipher);registerLeaveReturnReview(app,route,cipher);registerEmployeeWorkCalendar(app,route,cipher);registerTaskWorkingClock(app,route,cipher);registerDelegationHistory(app,route,cipher);
     registerPersonnelDirectory(app,route,cipher);registerPersonnelPositions(app,route);registerPersonnelOrganization(app,route,cipher);
     registerEOSHistory(app, route, cipher);
-    registerPersonnelDocuments(app, route, cipher, options);
+    const documentWriter=registerPersonnelDocuments(app,route,cipher,options);
+    registerPersonnelDocumentImport(app,route,cipher,documentWriter,options.employeeDocumentImportEnabled===true);
     registerPersonnelWorkflows(app, route, cipher);
     registerPersonnelExport(app, route, cipher);
     registerPersonnelEvaluations(app,route,cipher);

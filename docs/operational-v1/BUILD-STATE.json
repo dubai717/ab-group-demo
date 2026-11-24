@@ -2226,15 +2226,15 @@
     "prHead": "fde204663a5876877536b4f042b5f2e1e95c31a3",
     "pendingRun": 45428257927,
     "runNumber": 45,
-    "observedStatus": "pending",
+    "observedStatus": "in_progress",
     "precedingRun": 45418574807,
     "precedingRunNumber": 44,
     "precedingOperationalUi": "success",
-    "precedingOriginalRegressions": "in_progress",
+    "precedingOriginalRegressions": "success",
     "pendingRunNotReplaced": true,
     "laterCodeSavedToCheckpoint": true,
     "checkpointAtThisReview": "a04d506",
-    "nextPush": "Fast-forward the PR only when pending CI45 starts or completes; never cancel or replace a pending run."
+    "nextPush": "CI45 has started. A normal PR fast-forward may queue a later run; no cancellation, rerun, merge or deployment."
   },
   "originalEmployeeImportApply": {
     "status": "tested_unpublished_disabled_by_default",
@@ -2504,5 +2504,27 @@
     "maximumBucketMetadataReplyBytes": 16384,
     "destinationOrScheduleActivated": false,
     "currentHostedBackupProved": false
+  },
+  "personnelDocumentImport": {
+    "status": "tested_unpublished_disabled_by_default",
+    "linkedNativePassed": 13,
+    "originalWriterSeamLinkedPassed": 69,
+    "browser": "passed_ar_en_1440_768_390",
+    "previewRowsMaximum": 25,
+    "applyRowsMaximum": 5,
+    "originalWriterReused": true,
+    "newEmployeesOrAuthCreated": false,
+    "automaticDocumentApproval": false,
+    "renewalImportSupported": false,
+    "runtimeServerEnablesApply": false,
+    "historicalObjectsDeleted": false,
+    "sourceHistoryRead": "requested_employee_kind_hash_groups_only",
+    "audit": "original_per_employee_document_added_with_encrypted_source_provenance",
+    "full47CurrentRun": "not_yet_claimed",
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "rootChecksPassed": 189,
+    "sourceVerification": "actual_document_owner_and_linked_original_grouped_metadata",
+    "runtimeApplyDisabledBeforeCachedReceipt": true
   }
 }

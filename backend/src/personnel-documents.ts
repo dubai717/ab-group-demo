@@ -13,12 +13,15 @@ export function registerPersonnelDocuments(app: any, route: any, cipher: any, op
         requireOk(hrRight(m, write ? 'document_update' : 'documents', e.company_id) || e.user_id === m.actor.id, 403, 'denied');
         return { e, companyId: e.company_id, employeeId: e.id, libraryId: null };
     } const l = (await c.query('select * from ab.hr_library where id=$1', [id.parse(lid)])).rows[0]; requireOk(l, 404, 'notFound'); need(m, write ? 'library_manage' : 'library_download', l.company_id); const d = cipher.open(l.payload_cipher); requireOk(write || m.actor.roleId === 'owner' || !d.readerIds?.length || d.readerIds.includes(m.actor.id), 403, 'denied'); return { e: { id: l.id, company_id: l.company_id }, companyId: l.company_id, employeeId: null, libraryId: l.id }; }
-    async function put(c: any, m: any, s: any, req: any) {
-        const own = await owner(c, m, req, true), d = upload.parse(req.body), bytes = Buffer.from(d.base64, 'base64');
+    function validate(body:any){const d=upload.parse(body),bytes=Buffer.from(d.base64,'base64');
         requireOk(!d.issuedOn||!d.expiresOn||d.expiresOn>=d.issuedOn,422,'invalidDocumentDates');
         requireOk(d.kind!=='photo'||['image/png','image/jpeg'].includes(d.mime),422,'photoRequiresImage');
         requireOk(bytes.length > 0 && bytes.length <= 10485760, 422, 'invalidFile');
         requireOk(d.mime === 'application/pdf' ? bytes.subarray(0, 5).toString() === '%PDF-' : d.mime === 'image/png' ? bytes.subarray(0, 8).toString('hex') === '89504e470d0a1a0a' : bytes[0] === 255 && bytes[1] === 216, 422, 'invalidFile');
+        return{d,bytes};
+    }
+    async function put(c: any, m: any, s: any, req: any, importSource?:{sourceHash:string;attachmentHash:string;row:number;batchKey:string}) {
+        const own=await owner(c,m,req,true),{d,bytes}=validate(req.body);
         if(!d.parentVersionId){await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':staff-file:'+String(own.employeeId||own.libraryId)+':'+d.kind+':'+sha(bytes)]);requireOk(!(await c.query("select 1 from ab.document_versions v join ab.documents d on d.id=v.document_id left join ab.hr_document_records r on r.version_id=v.id where d.employee_id is not distinct from $1::uuid and d.personnel_library_id is not distinct from $2::uuid and v.sha256=$3 and (r.kind=$4 or d.personnel_library_id is not null)",[own.employeeId,own.libraryId,sha(bytes),d.kind])).rowCount,409,'duplicateDocument');}
         if (d.responsibleId)
             requireOk((await c.query('select 1 from ab.hr_employees where id=$1 and company_id=$2', [d.responsibleId, own.companyId])).rowCount, 422, 'invalidResponsible');
@@ -42,7 +45,7 @@ export function registerPersonnelDocuments(app: any, route: any, cipher: any, op
             await c.query('insert into ab.hr_document_records(id,tenant_id,employee_id,version_id,kind,expires_on,responsible_id,company_responsible,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [randomUUID(), s.tenant_id, own.employeeId, vid, d.kind, d.expiresOn || null, d.responsibleId || null, d.companyResponsible, cipher.seal(meta), s.user_id]);
         else
             await c.query('insert into ab.hr_library_versions(id,tenant_id,library_id,version_id,version,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7)', [randomUUID(), s.tenant_id, own.libraryId, vid, version, cipher.seal(meta), s.user_id]);
-        await auditHR(c, cipher, s, own.e, 'document_added', null, { versionId: vid, version, kind: d.kind, scanStatus: scan });
+        await auditHR(c, cipher, s, own.e, 'document_added', null, { versionId: vid, version, kind: d.kind, scanStatus: scan,...(importSource?{importSource}:{}) });
         await indexDocumentText(c,cipher,s,'version_id',vid,bytes,d.mime,scan);
         return { id: vid, versionId: vid, documentId, version, scanStatus: scan, saved: true };
     }
@@ -67,4 +70,5 @@ export function registerPersonnelDocuments(app: any, route: any, cipher: any, op
     } return { rows: out, acknowledgementsRequired: false }; }));
     app.post('/api/personnel/library/:libraryId/documents', route(put));
     app.get('/api/personnel/library/:libraryId/documents/:versionId', route(get));
+    return{upload,validate,owner,put,recoverable:typeof options.objects.getIfPresent==='function'};
 }
