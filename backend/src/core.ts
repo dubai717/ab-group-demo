@@ -1,3 +1,4 @@
+import{storageWriteConflict}from'./storage-write-conflict.js';
 import {
   createCipheriv,
   createDecipheriv,
@@ -236,8 +237,7 @@ export function supabase(
         adminKey,true,
       );
       if(!r.ok){
-        let duplicate=r.status===409;
-        if(r.status===400&&r.body){const reader=r.body.getReader(),chunks:Buffer[]=[];let size=0;try{for(;;){const part=await reader.read();if(part.done)break;size+=part.value.byteLength;if(size>4096)throw Error('limit');chunks.push(Buffer.from(part.value));}const body=JSON.parse(Buffer.concat(chunks).toString());duplicate=['ResourceAlreadyExists','KeyAlreadyExists','already_exists','Duplicate'].includes(body.code)||['ResourceAlreadyExists','KeyAlreadyExists','already_exists','Duplicate'].includes(body.error);}catch{/* No unbounded/provider error text is retained. */}finally{await reader.cancel().catch(()=>{});reader.releaseLock();}}else await r.body?.cancel().catch(()=>{});
+        const duplicate=await storageWriteConflict(r);
         throw Object.assign(new ApiError(duplicate?409:r.status===400||r.status===401?401:502,duplicate?'storageObjectAlreadyExists':'providerUnavailable'),{providerStatus:r.status,providerConflict:duplicate});
       }
     },

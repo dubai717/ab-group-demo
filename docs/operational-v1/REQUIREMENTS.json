@@ -365,7 +365,10 @@
         "backend/tests/independent-backup-store.test.ts",
         "backend/tests/backup-cadence-plan.test.ts",
         ".github/workflows/staging-backup.yml.example",
-        "docs/operational-v1/INDEPENDENT-BACKUP-PREPARATION.md"
+        "docs/operational-v1/INDEPENDENT-BACKUP-PREPARATION.md",
+        "backend/src/storage-write-conflict.ts",
+        "backend/tests/storage-write-conflict.test.ts",
+        "backend/tests/backup-storage-coverage.test.ts"
       ],
       "remaining": "أضيف عرض مالك للقراءة المحدودة بطلب يدوي وتوقيع تقني بمفتاح عام، مع اختبارات اصطناعية وعدم تنزيل الأرشيف. المصدر معطل افتراضياً؛ لا جرد حقيقي أو نسخة تشغيلية حديثة مثبتة أو جدولة واحتفاظ وتخزين مستقل أو اختبار Auth/Storage كامل. البند جزئي وغير منشور، ولا يغني السجل السابق عن نسخة متاحة وقابلة للاستعادة الآن. تجهيز وجهة مستقلة ومعاينة يومية/شهرية اختبرا دون اتصالات حقيقية أو جدولة أو حذف. الوجهة ومدد الاحتفاظ مطلوبة من المالك؛ المنفذ الدائم والجرد والاستعادة الفعلية المعزولة المتوافقة وAuth/Storage باقية."
     },

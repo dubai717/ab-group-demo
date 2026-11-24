@@ -1,3 +1,4 @@
+import{storageWriteConflict}from'../src/storage-write-conflict.js';
 // Restricted to the existing private test bucket. No bucket configuration or delete/update APIs.
 import {randomUUID} from 'node:crypto';
 import {sha} from '../src/core.js';
@@ -18,23 +19,23 @@ export function checkBackupBucket(value:any,size:number){
  need(types==null||(Array.isArray(types)&&types.every(t=>typeof t==='string')&&types.some(t=>t===mime||t==='application/*'||t==='*/*')),'BACKUP_BUCKET_MIME_LIMIT');
 }
 export function privateBackupStore(endpoint:string,secret:string,fetcher:typeof fetch=fetch){
- const base=new URL(endpoint);need(base.protocol==='https:'&&/^[a-z0-9]{20}\.supabase\.co$/.test(base.hostname)&&base.pathname==='/'&&!base.search&&!base.hash&&!base.username&&!base.password,'BACKUP_ENDPOINT');
+ const base=new URL(endpoint);need(base.protocol==='https:'&&/^[a-z0-9]{20}\.supabase\.co$/.test(base.hostname)&&base.pathname==='/'&&!base.port&&!base.search&&!base.hash&&!base.username&&!base.password,'BACKUP_ENDPOINT');
  const path=(name:string)=>{need(pattern.test(name),'BACKUP_OBJECT_PATH');return bucket+'/'+name.split('/').map(encodeURIComponent).join('/');};
  const request=(url:string,init:RequestInit={})=>fetcher(base.origin+url,{...init,redirect:'error',signal:init.signal?AbortSignal.any([init.signal,AbortSignal.timeout(30000)]):AbortSignal.timeout(30000)});
- async function verifyBucket(size:number){const r=await request('/storage/v1/bucket/'+bucket,{headers:{apikey:secret}});need(r.ok,'BACKUP_BUCKET_READ');checkBackupBucket(await r.json(),size);}
+ async function verifyBucket(size:number){const r=await request('/storage/v1/bucket/'+bucket,{headers:{apikey:secret}});need(r.ok,'BACKUP_BUCKET_READ');checkBackupBucket(JSON.parse((await statusBytes(r,16384,AbortSignal.timeout(30000))).toString()),size);}
  return {
   verifyBucket,
   async readStatusBucket(signal:AbortSignal){const r=await request('/storage/v1/bucket/'+bucket,{signal,headers:{apikey:secret}});need(r.ok,'BACKUP_STATUS_BUCKET_READ');const v=JSON.parse((await statusBytes(r,16384,signal)).toString());need(v?.id===bucket&&v.name===bucket&&v.public===false,'BACKUP_STATUS_BUCKET_NOT_PRIVATE');return true;},
   async listStatusFolders(signal:AbortSignal){const r=await request('/storage/v1/object/list/'+bucket,{method:'POST',signal,headers:{apikey:secret,'content-type':'application/json'},body:JSON.stringify({prefix:backupPrefix,limit:4,offset:0,sortBy:{column:'name',order:'desc'}})});need(r.ok,'BACKUP_STATUS_LIST_ACCESS');const v=JSON.parse((await statusBytes(r,32768,signal)).toString());need(Array.isArray(v)&&v.length<=4,'BACKUP_STATUS_LIST_LIMIT');return v.map((x:any)=>({name:typeof x?.name==='string'?x.name:'',folder:x?.id===null}));},
-  async readStatusProof(name:string,signal:AbortSignal){need(name.endsWith('/status.absig'),'BACKUP_STATUS_PATH');const r=await request('/storage/v1/object/'+path(name),{signal,headers:{apikey:secret}});if([400,404].includes(r.status)){await r.body?.cancel();return null;}need(r.ok,'BACKUP_STATUS_PROOF_ACCESS');return statusBytes(r,16384,signal);},
-  async inspectRetainedObject(name:string,signal:AbortSignal){const r=await request('/storage/v1/object/'+path(name),{method:'HEAD',signal,headers:{apikey:secret}});if([400,404].includes(r.status))return{present:false,bytes:null};need(r.ok,'BACKUP_STATUS_OBJECT_ACCESS');const value=r.headers.get('content-length'),size=value&&/^\d+$/.test(value)?Number(value):null;return{present:true,bytes:size!==null&&Number.isSafeInteger(size)?size:null};},
+  async readStatusProof(name:string,signal:AbortSignal){need(name.endsWith('/status.absig'),'BACKUP_STATUS_PATH');const r=await request('/storage/v1/object/'+path(name),{signal,headers:{apikey:secret}});if(r.status===404){await r.body?.cancel().catch(()=>{});return null;}if(!r.ok){await r.body?.cancel().catch(()=>{});throw Error('BACKUP_STATUS_PROOF_ACCESS');}return statusBytes(r,16384,signal);},
+  async inspectRetainedObject(name:string,signal:AbortSignal){const r=await request('/storage/v1/object/'+path(name),{method:'HEAD',signal,headers:{apikey:secret}});if(r.status===404){await r.body?.cancel().catch(()=>{});return{present:false,bytes:null};}if(!r.ok){await r.body?.cancel().catch(()=>{});throw Error('BACKUP_STATUS_OBJECT_ACCESS');}const value=r.headers.get('content-length'),size=value&&/^\d+$/.test(value)?Number(value):null;return{present:true,bytes:size!==null&&Number.isSafeInteger(size)?size:null};},
 
   async upload(name:string,bytes:Buffer){
    const object=path(name),header=name.endsWith('/status.absig')?'AB-BACKUP-STATUS-1\n':name.endsWith('.abbackup')?'AB-BACKUP-1\n':'AB-BACKUP-META-1\n';
    need(bytes.subarray(0,header.length).toString()===header&&bytes.length>header.length,'BACKUP_ENCRYPTED_FORMAT');
    await verifyBucket(bytes.length);
    const r=await request('/storage/v1/object/'+object,{method:'POST',headers:{apikey:secret,'content-type':mime,'x-upsert':'false'},body:new Uint8Array(bytes)});
-   need(r.status===200||r.status===201,r.status===409?'BACKUP_PATH_CONFLICT':'BACKUP_UPLOAD_DENIED');
+   if(r.status!==200&&r.status!==201)throw Error(await storageWriteConflict(r)?'BACKUP_PATH_CONFLICT':'BACKUP_UPLOAD_DENIED');
   },
   async downloadVerified(name:string,expected:Buffer){
    const r=await request('/storage/v1/object/'+path(name),{headers:{apikey:secret}});need(r.ok&&r.body,'BACKUP_DOWNLOAD');

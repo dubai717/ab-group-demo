@@ -9,3 +9,5 @@ The dialog preserves staged original permission edits, keeps selection on a fail
 Evidence: `backend/tests/work-scope-review.browser.cjs` passed actual Arabic/English1440/768/390 flows for companies/group/dated centres, request failure/retry, retained unsaved customer-create permission checkbox and a late response after changing employee. Before/after original user, grants and denials are unchanged; every observed POST is the original read-only preview. Four original native readiness/preview/inventory cases passed,189 root regressions and provider-free build passed. The operational browser suite now includes46 journeys; its full current-source run is tracked separately and is not implied by the focused result.
 
 Synthetic screenshots are under ignored `work/evidence/work-scope-review-{ar,en}-{1440,768,390}.png`; no actual customer or employee data was captured.
+
+The full46-journey operational browser suite completed on source commit6a71ad4 with exit0. Later backup transport/coverage changes have separate linked evidence and are not presented as part of that earlier full UI baseline.

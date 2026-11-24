@@ -2488,6 +2488,21 @@
     "canApply": false,
     "rootChecksPassed": 189,
     "providerFreeBuild": "passed",
-    "full46CurrentRun": "not_yet_claimed"
+    "full46CurrentRun": "passed_on_6a71ad4_exit_0"
+  },
+  "backupStorageCoverageAndCompatibility": {
+    "status": "tested_unpublished_inactive",
+    "linkedTestsPassed": 42,
+    "rootChecksPassed": 189,
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "singleStorageBucketFormat": true,
+    "unknownOccupiedBucket": "refused_before_pg_dump",
+    "additionalEmptyBuckets": "metadata_only_zero_objects",
+    "readFailureIsMissing": false,
+    "sharedConflictParser": "backend/src/storage-write-conflict.ts",
+    "maximumBucketMetadataReplyBytes": 16384,
+    "destinationOrScheduleActivated": false,
+    "currentHostedBackupProved": false
   }
 }

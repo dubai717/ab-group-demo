@@ -43,6 +43,18 @@ export async function captureBackupStorageObjects(names:Array<{name:string}>,rem
  for(const row of names){if(isRetainedBackupPath(row.name)){excludedRetainedBackupObjects++;continue;}const bytes=await read(row.name,remainingBudget-bytesRead);if(!Buffer.isBuffer(bytes)||bytes.length>remainingBudget-bytesRead)throw Error('backupObjectBudgetExceeded');bytesRead+=bytes.length;objects.set('storage/'+row.name,bytes);}
  return{objects,bytesRead,copiedObjectCount:objects.size,excludedRetainedBackupObjects,totalSourceObjectCount:names.length};
 }
+// This format restores original application files into one known private bucket.
+// Refuse additional nonempty buckets instead of silently omitting their bytes.
+export function validateBackupStorageCoverage(rows:Array<{id:string;public:boolean;object_count:string|number}>){
+ if(!Array.isArray(rows)||rows.length>100)throw Error('backupStorageBucketCoverageReviewRequired');const seen=new Set<string>();let applicationObjectCount:number|null=null,emptyOtherBucketCount=0;
+ for(const row of rows){const count=Number(row.object_count);if(typeof row.id!=='string'||!row.id||row.id.length>256||seen.has(row.id)||typeof row.public!=='boolean'||!/^\d+$/.test(String(row.object_count))||!Number.isSafeInteger(count)||count<0||count>100000)throw Error('backupStorageBucketCoverageReviewRequired');seen.add(row.id);
+  if(row.id==='ab-private-test'){if(row.public!==false)throw Error('backupStorageApplicationBucketNotPrivate');applicationObjectCount=count;}
+  else{if(count>0)throw Error('backupStorageAdditionalBucketReviewRequired');emptyOtherBucketCount++;}
+ }
+ if(applicationObjectCount===null)throw Error('backupStorageApplicationBucketMissing');
+ return{applicationBucket:'ab-private-test',applicationObjectCount,registeredBuckets:rows.length,emptyOtherBucketCount,additionalNonemptyBuckets:0,applicationBucketCoverageVerified:true,multiBucketRestoreSupported:false};
+}
+export async function readBackupStorageCoverage(c:any){const rows=(await c.query("select b.id,b.public,count(o.id)::text object_count from storage.buckets b left join storage.objects o on o.bucket_id=b.id group by b.id,b.public order by b.id limit 101")).rows;return validateBackupStorageCoverage(rows);}
 async function run(){
  let pool:Pool|undefined;
  try{
@@ -58,12 +70,14 @@ async function run(){
    const release=personnelRelease?await personnelReleasePlan():financialRelease?await financialReleasePlan():vehicleRelease?await releasePlan():null;if(approved.migrations.some((m:any)=>!ledger.some(r=>r.name===m.name&&r.sha256===m.sha256))||(!release&&ledger.length!==8)||ledger.some(r=>![...approved.migrations,...(release?.migrations||[])].some(m=>m.name===r.name&&m.sha256===r.sha256)))throw Error('approved schema mismatch');
    const snapshot=(await c.query('select pg_export_snapshot() id')).rows[0].id;
    if(!/^[A-Fa-f0-9-]+$/.test(snapshot))throw Error('snapshot invalid');
+   const storageCoverage=await readBackupStorageCoverage(c);
    const database=await dump(cfg.pg,snapshot);
    const names=(await c.query("select name from storage.objects where bucket_id='ab-private-test' order by name")).rows;
+   if(names.length!==storageCoverage.applicationObjectCount)throw Error('backupStorageSnapshotCoverageChanged');
    const captured=await captureBackupStorageObjects(names,backupLimit-database.length,(name,remaining)=>objectBytes(cfg.endpoint,keys.secret,name,remaining)),objects=captured.objects;
    const roles=(await c.query("select rolname,rolcanlogin,rolsuper,rolcreatedb,rolcreaterole,rolreplication,rolbypassrls from pg_roles where rolname in('ab_runtime','ab_scanner') order by rolname")).rows;
    const policies=(await c.query("select * from pg_policies where schemaname='ab' order by tablename,policyname")).rows;
-   objects.set('metadata/restore-context.json',Buffer.from(JSON.stringify({format:'AB-STAGING-CONTEXT-1',createdAt:new Date().toISOString(),ledger,roles,policies,objectCount:captured.copiedObjectCount,totalSourceObjectCount:captured.totalSourceObjectCount,excludedRetainedBackupObjects:captured.excludedRetainedBackupObjects,excludedBackupArchiveBytes:true,authIncluded:true,schemas:['ab','public','auth','storage'],notes:'Isolated compatible Supabase restore only after approval; no role passwords, API keys or DATA_ENCRYPTION_KEY included. Expire restored sessions. Storage bytes are included and require the compatible Storage restoration procedure. Retained backup archive bytes are intentionally excluded. Provider configuration and separately secured encryption keys are not included.'})));
+   objects.set('metadata/restore-context.json',Buffer.from(JSON.stringify({format:'AB-STAGING-CONTEXT-1',createdAt:new Date().toISOString(),ledger,roles,policies,storageCoverage,objectCount:captured.copiedObjectCount,totalSourceObjectCount:captured.totalSourceObjectCount,excludedRetainedBackupObjects:captured.excludedRetainedBackupObjects,excludedBackupArchiveBytes:true,authIncluded:true,schemas:['ab','public','auth','storage'],notes:'Isolated compatible Supabase restore only after approval; no role passwords, API keys or DATA_ENCRYPTION_KEY included. Expire restored sessions. Storage bytes are included and require the compatible Storage restoration procedure. Retained backup archive bytes are intentionally excluded. Provider configuration and separately secured encryption keys are not included.'})));
    const sealed=archive(database,objects,cfg.key),verified=restoreArchive(sealed,cfg.key);
    if(verified.objects.size!==objects.size||!verified.database.equals(database))throw Error('archive verification failed');
    await mkdir('work/backups',{recursive:true,mode:0o700});
