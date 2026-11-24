@@ -2223,12 +2223,13 @@
     }
   },
   "githubCheckpointPolicy": {
-    "prHead": "c489b72801ff758109f0318f009421f73b966ed4",
-    "pendingRun": 45411181659,
-    "runNumber": 43,
+    "prHead": "c789e61ad1590f4cd93ef484393ed91b40b61fde",
+    "observedRun": 45418574807,
+    "runNumber": 44,
+    "observedStatus": "in_progress",
     "pendingRunNotReplaced": true,
     "laterCodeSavedToCheckpoint": true,
-    "nextPush": "Normal PR fast-forward after queued CI43 starts; do not cancel or replace pending runs."
+    "nextPush": "Normal PR fast-forward permitted after CI44 has started; no cancellation, rerun or dispatch."
   },
   "originalEmployeeImportApply": {
     "status": "tested_unpublished_disabled_by_default",
@@ -2404,5 +2405,19 @@
     "allV1Complete": false,
     "full45ExitCode": 0,
     "rootChecksPassed": 162
+  },
+  "originalPersonnelUploadRecovery": {
+    "status": "tested_unpublished",
+    "linkedNativePassed": 60,
+    "providerRecoveryNativePassed": 10,
+    "originalDirectoryBrowser": "passed_ar_en_1440_768_390",
+    "historicalObjectsChanged": false,
+    "distributedTransactionClaimed": false,
+    "sourceFiles": [
+      "backend/src/personnel-upload-recovery.ts",
+      "backend/src/personnel-documents.ts",
+      "backend/src/core.ts"
+    ],
+    "remaining": "Bulk document import and historical orphan inventory are not complete; no historical cleanup performed."
   }
 }

@@ -83,6 +83,7 @@ export interface AuthProvider {
 export interface ObjectStore {
   put(key: string, bytes: Buffer): Promise<void>;
   get(key: string): Promise<Buffer>;
+  getIfPresent?(key: string): Promise<Buffer | null>;
 }
 // Modern keys identify the application via apikey; they are not user JWTs.
 // Keep legacy variable names as aliases without accepting conflicting values.
@@ -143,10 +144,10 @@ export function supabase(
       },
     });
     if (!r.ok && !allowError)
-      throw new ApiError(
+      throw Object.assign(new ApiError(
         r.status === 400 || r.status === 401 ? 401 : 502,
         "providerUnavailable",
-      );
+      ),{providerStatus:r.status});
     return r;
   };
   const auth: AuthProvider = {
@@ -239,6 +240,13 @@ export function supabase(
       requireOk(adminKey, 503, "storageNotConfigured");
       const r = await call(objectPath(name), adminKey, {}, adminKey);
       return Buffer.from(await r.arrayBuffer());
+    },
+    async getIfPresent(name) {
+      requireOk(adminKey,503,'storageNotConfigured');const r=await call(objectPath(name),adminKey,{},adminKey,true);
+      if(r.status===404){await r.body?.cancel().catch(()=>{});return null;}
+      if(!r.ok){await r.body?.cancel().catch(()=>{});throw new ApiError(502,'providerUnavailable');}
+      const limit=20*1024*1024,size=r.headers.get('content-length');if(size&&(!/^\d+$/.test(size)||Number(size)>limit)){await r.body?.cancel().catch(()=>{});throw new ApiError(502,'providerUnavailable');}
+      requireOk(r.body,502,'providerUnavailable');const chunks:Buffer[]=[];let total=0;for await(const part of r.body as any){total+=part.length;requireOk(total<=limit,502,'providerUnavailable');chunks.push(Buffer.from(part));}return Buffer.concat(chunks);
     },
   };
   return { auth, objects };

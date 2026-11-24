@@ -1,3 +1,4 @@
+import {personnelUploadIdentity,retainPersonnelUpload} from './personnel-upload-recovery.js';
 import {withdrawnAttachments} from './attachment-history.js';
 import { indexDocumentText } from './document-text.js';
 import { randomUUID } from 'node:crypto';
@@ -29,11 +30,12 @@ export function registerPersonnelDocuments(app: any, route: any, cipher: any, op
             if (own.employeeId)
                 requireOk((await c.query('select 1 from ab.hr_document_records where version_id=$1 and kind=$2', [parent.id, d.kind])).rowCount, 422, 'invalidParentKind');
         }
-        const documentId = parent?.document_id || randomUUID(), vid = randomUUID(), version = parent ? Number((await c.query('select max(version)+1 n from ab.document_versions where document_id=$1', [documentId])).rows[0].n) : 1, storage = s.tenant_id + '/' + documentId + '/' + vid, scan = options.scan ? await options.scan(bytes, d.mime) : 'pending';
+        const recovery=options.objects.getIfPresent?personnelUploadIdentity({tenant:s.tenant_id,actor:s.user_id,owner:String(own.employeeId||own.libraryId),kind:d.kind,parent:parent?.id||null,sha256:sha(bytes),requestKey:String(req.headers['idempotency-key'])}):null;
+        const documentId = parent?.document_id || recovery?.documentId || randomUUID(), vid = recovery?.versionId || randomUUID(), version = parent ? Number((await c.query('select max(version)+1 n from ab.document_versions where document_id=$1', [documentId])).rows[0].n) : 1, storage = s.tenant_id + '/' + documentId + '/' + vid, scan = options.scan ? await options.scan(bytes, d.mime) : 'pending';
         requireOk(['clean', 'pending'].includes(scan), 422, 'fileRejected');
         if (!parent)
             await c.query('insert into ab.documents(id,tenant_id,employee_id,personnel_library_id,category,title,description,document_date,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9)', [documentId, s.tenant_id, own.employeeId, own.libraryId, 'other', 'Restricted personnel document', '', today(), s.user_id]);
-        await options.objects.put(storage, Buffer.from(cipher.seal({ bytes: bytes.toString('base64') })));
+        await retainPersonnelUpload(options.objects,cipher,storage,bytes);
         await c.query('insert into ab.document_versions(id,tenant_id,document_id,version,storage_key,original_name,mime,size,sha256,scan_status,created_by,title,description,document_date,category,parent_version_id)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)', [vid, s.tenant_id, documentId, version, storage, 'restricted-document', d.mime, bytes.length, sha(bytes), scan, s.user_id, 'Restricted personnel document', '', today(), 'other', parent?.id || null]);
         const { base64, ...meta } = d;
         if (own.employeeId)
