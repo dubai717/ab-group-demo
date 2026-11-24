@@ -3008,5 +3008,17 @@
       "unsupported audio/video",
       "provider acceptance"
     ]
+  },
+  "originalCommunicationAttachmentRecovery": {
+    "status": "implemented_unpublished",
+    "linkedPersonnelAndMasterCasesPassed": 12,
+    "newNativeOriginalMessageCasesPassed": 1,
+    "financialDataChanged": false,
+    "normalUploadRecoveryReads": 0,
+    "evidenceSha256": {
+      "communication-retained-files-linked.log": "ddf15a4988e2d757ebcfd1e88f7927b58fc473713dc6fe0f0a1f93fc539c7dd3",
+      "communication-attachment-recovery.log": "34fb0f04ff09243a80bc9d1d5bc2749737e07ae5ef8f7970ba16e05b36020557",
+      "communication-attachment-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
   }
 }
