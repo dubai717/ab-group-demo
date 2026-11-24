@@ -3139,5 +3139,23 @@
       "original-file-recovery-linked.log": "91f81253238f510e6b785f91cd1488386d991c11b9e93298b69b4cd342987b27",
       "original-file-recovery-final-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     }
+  },
+  "originalStorageReadBounds": {
+    "status": "implemented_unpublished",
+    "linkedProviderAndRecoveryTestsPassed": 17,
+    "linkedNativeTestsPassed": 4,
+    "rootTestsPassed": 189,
+    "normalEncryptedReadCeilingBytes": 20971520,
+    "knownSizeBounds": true,
+    "redirectsRefused": true,
+    "historicalEgressAttributed": false,
+    "realProviderCalled": false,
+    "evidenceSha256": {
+      "object-budget-final-unit.log": "d94b0a5c2c73343ebc8ee2106af7373c1dab5aca816012ba60de2c9087ecdf63",
+      "object-budget-final-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "object-budget-native.log": "62b5fad064e8561af684efaece328086d95c40eb152ebe36473bff6ca91a906f",
+      "object-budget-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "object-budget-root.log": "684d554e64acd251eb6bcd15485eadfac512f6f3aed535b67ff996e0c6b16c27"
+    }
   }
 }

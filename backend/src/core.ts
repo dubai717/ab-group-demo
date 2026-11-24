@@ -83,8 +83,8 @@ export interface AuthProvider {
 }
 export interface ObjectStore {
   put(key: string, bytes: Buffer): Promise<void>;
-  get(key: string): Promise<Buffer>;
-  getIfPresent?(key: string): Promise<Buffer | null>;
+  get(key: string, maximumBytes?:number): Promise<Buffer>;
+  getIfPresent?(key: string, maximumBytes?:number): Promise<Buffer | null>;
 }
 // Modern keys identify the application via apikey; they are not user JWTs.
 // Keep legacy variable names as aliases without accepting conflicting values.
@@ -220,6 +220,13 @@ export function supabase(
     encodeURIComponent(bucket) +
     "/" +
     name.split("/").map(encodeURIComponent).join("/");
+  const objectLimit=(value:number|undefined)=>{const limit=value??20*1024*1024;requireOk(Number.isSafeInteger(limit)&&limit>0&&limit<=20*1024*1024,422,'invalidStorageReadLimit');return limit;};
+  async function objectBytes(r:Response,limit:number){
+    const size=r.headers.get('content-length');if(size!==null&&(!/^\d+$/.test(size)||Number(size)>limit)){await r.body?.cancel().catch(()=>{});throw new ApiError(502,'providerUnavailable');}
+    requireOk(r.body,502,'providerUnavailable');const reader=r.body.getReader(),chunks:Uint8Array[]=[];let total=0;
+    try{for(;;){const part=await reader.read();if(part.done)break;total+=part.value.byteLength;requireOk(total<=limit,502,'providerUnavailable');chunks.push(part.value);}return Buffer.concat(chunks);}
+    catch{await reader.cancel().catch(()=>{});throw new ApiError(502,'providerUnavailable');}finally{reader.releaseLock();}
+  }
   const objects: ObjectStore = {
     async put(name, bytes) {
       requireOk(adminKey, 503, "storageNotConfigured");
@@ -228,6 +235,7 @@ export function supabase(
         adminKey,
         {
           method: "POST",
+          redirect: "error",
           headers: {
             "content-type": "application/octet-stream",
             "x-upsert": "false",
@@ -241,17 +249,15 @@ export function supabase(
         throw Object.assign(new ApiError(duplicate?409:r.status===400||r.status===401?401:502,duplicate?'storageObjectAlreadyExists':'providerUnavailable'),{providerStatus:r.status,providerConflict:duplicate});
       }
     },
-    async get(name) {
-      requireOk(adminKey, 503, "storageNotConfigured");
-      const r = await call(objectPath(name), adminKey, {}, adminKey);
-      return Buffer.from(await r.arrayBuffer());
+    async get(name,maximumBytes) {
+      requireOk(adminKey,503,'storageNotConfigured');const limit=objectLimit(maximumBytes),r=await call(objectPath(name),adminKey,{redirect:'error'},adminKey);
+      return objectBytes(r,limit);
     },
-    async getIfPresent(name) {
-      requireOk(adminKey,503,'storageNotConfigured');const r=await call(objectPath(name),adminKey,{},adminKey,true);
+    async getIfPresent(name,maximumBytes) {
+      requireOk(adminKey,503,'storageNotConfigured');const limit=objectLimit(maximumBytes),r=await call(objectPath(name),adminKey,{redirect:'error'},adminKey,true);
       if(r.status===404){await r.body?.cancel().catch(()=>{});return null;}
       if(!r.ok){await r.body?.cancel().catch(()=>{});throw new ApiError(502,'providerUnavailable');}
-      const limit=20*1024*1024,size=r.headers.get('content-length');if(size&&(!/^\d+$/.test(size)||Number(size)>limit)){await r.body?.cancel().catch(()=>{});throw new ApiError(502,'providerUnavailable');}
-      requireOk(r.body,502,'providerUnavailable');const chunks:Buffer[]=[];let total=0;for await(const part of r.body as any){total+=part.length;requireOk(total<=limit,502,'providerUnavailable');chunks.push(Buffer.from(part));}return Buffer.concat(chunks);
+      return objectBytes(r,limit);
     },
   };
   return { auth, objects };
