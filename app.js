@@ -739,7 +739,7 @@ function renderCompanies(user) {
       </div>
 
       <div class="company-desc">${localeText('legalEntitiesDesc')}</div>
-      ${!app.state.companyFormOpen&&globalThis.ABCentral?.actor?.roleId==='owner'?`<div class="register-actions"><button type="button" class="ghost-btn" data-company-import-preview>${getLocale()==='ar'?'معاينة ملف شركات':'Preview company file'}</button></div>`:''}
+      ${!app.state.companyFormOpen&&globalThis.ABCentral?.actor?.roleId==='owner'?`<div class="register-actions"><button type="button" class="ghost-btn" data-company-import-preview>${getLocale()==='ar'?'معاينة ملف شركات':'Preview company file'}</button><button type="button" class="ghost-btn" data-company-document-import>${getLocale()==='ar'?'استيراد مستندات شركات':'Import company documents'}</button></div>`:''}
       ${CompanyDocuments.renderSaveNotice()}
 
       ${canManage && app.state.companyFormOpen ? `
@@ -1282,6 +1282,7 @@ function bindGlobalEvents() {
   document.querySelector('[data-company-back]')?.addEventListener('click',async()=>{if(!await WorkspaceUI.leave())return;app.state.companyFormOpen=false;render();});
   const companyGridHost=document.querySelector('.company-panel');if(companyGridHost&&!app.state.companyFormOpen)RegisterStore.get('companies').bind(companyGridHost);
   document.querySelector('button[data-company-import-preview]')?.addEventListener('click',()=>DataImportUI.open('companies',[]));
+  document.querySelector('button[data-company-document-import]')?.addEventListener('click',()=>DataImportUI.open('company-documents',app.state.companies));
   const openCompanyBtn = document.querySelector('[data-action="open-company-form"]');
   if (openCompanyBtn) {
     openCompanyBtn.addEventListener('click', () => {

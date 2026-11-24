@@ -1,3 +1,4 @@
+import{registerCompanyDocumentImport}from'./company-document-import.js';
 import{encryptedUploadReadLimit,retainEncryptedUpload,verifiedEncryptedUpload,retainedUploadIdentity}from'./retained-encrypted-upload.js';
 import{registerOpeningBalancePreview}from'./opening-balance-import-preview.js';
 import{requireImportWorkAccess}from'./import-work-access.js';
@@ -92,6 +93,7 @@ export interface Options {
   companyImportEnabled?:boolean;
   employeeImportEnabled?:boolean;
   employeeDocumentImportEnabled?:boolean;
+  companyDocumentImportEnabled?:boolean;
   centreImportEnabled?:boolean;
   backupStatusRead?:BackupStatusRead;
   pool: Pool;
@@ -249,22 +251,23 @@ export async function build(options: Options) {
       if(req.body)req.body=normalizeContactPayload(req.body);
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
         const companyImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/companies/run';
-        const employeeDocumentImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/personnel-documents/run';
+        const employeeDocumentImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/personnel-documents/run';const companyDocumentImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/company-documents/run';
         const employeeImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/employees/run';
         const centreImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/centres/run';
         const originalImportRun=req.method==='POST'?/^\/api\/data-imports\/(customers|vehicles)\/(?:upload|[0-9a-f-]{36}\/(?:run|preview))$/i.exec(req.url.split('?')[0]):null;
         let importModel:any,originalImportReceiptGuard:((outcome:any)=>Promise<void>)|undefined;
         // Serialize permission mutations before loading their authority snapshot.
         // This also prevents a queued grant from using a pre-standard-change issuer.
-        if(!s.viewAs&&req.method!=='GET'&&(originalImportRun||centreImportRun||employeeDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
+        if(!s.viewAs&&req.method!=='GET'&&(originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':security-roles']);
         // Serialize original company mutations before reading the directory used by import preview receipts.
-        if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(originalImportRun||centreImportRun||employeeDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/companies(?:\/|$)/.test(req.url.split('?')[0])))
+        if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/companies(?:\/|$)/.test(req.url.split('?')[0])))
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':company-directory']);
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(employeeDocumentImportRun||employeeImportRun||/^\/api\/personnel(?:\/|$)/.test(req.url.split('?')[0])))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':personnel-import-directory']);
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(centreImportRun||req.url.split('?')[0]==='/api/operating-centres/apply'))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':operating-centre-directory']);
         if(originalImportRun){importModel=await model(c,s.user_id,cipher);const guard=originalImportRunGuards.get(originalImportRun[1].toLowerCase());requireOk(guard,503,'importGuardUnavailable');originalImportReceiptGuard=await guard(c,importModel,s,req);}
         if(centreImportRun){importModel=await model(c,s.user_id,cipher);assertCentreImportOperator(importModel);requireOk(options.centreImportEnabled===true,503,'centreImportApplyNotEnabled');await requireImportWorkAccess(c);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
+        if(companyDocumentImportRun){importModel=await model(c,s.user_id,cipher);assertEmployeeImportOperator(importModel);requireOk(options.companyDocumentImportEnabled===true&&typeof options.objects?.getIfPresent==='function',503,'companyDocumentImportApplyNotEnabled');await requireImportWorkAccess(c);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
         if(employeeDocumentImportRun){importModel=await model(c,s.user_id,cipher);assertEmployeeImportOperator(importModel);requireOk(options.employeeDocumentImportEnabled===true,503,'personnelDocumentImportApplyNotEnabled');requireOk(typeof options.objects?.getIfPresent==='function',503,'personnelDocumentRecoveryRequired');await requireImportWorkAccess(c);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
         if(employeeImportRun){importModel=await model(c,s.user_id,cipher);assertEmployeeImportOperator(importModel);requireOk(options.employeeImportEnabled===true,503,'employeeImportApplyNotEnabled');await requireImportWorkAccess(c);requireOk(typeof req.headers['idempotency-key']==='string',422,'employeeImportKeyRequired');}
         if(companyImportRun){
@@ -317,7 +320,7 @@ export async function build(options: Options) {
             JSON.stringify(result),
           ]);
         return result;
-      },{...(s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:{}),...(req.method==='GET'&&req.url.split('?')[0]==='/api/ledger/package/document-register'?{repeatableRead:true}:{}),...(req.method==='GET'&&/^\/api\/customers\/[0-9a-f-]+\/service-eligibility-review$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&['/api/data-imports/opening-balances/preview','/api/data-imports/personnel-documents/preview','/api/data-imports/centres/preview','/api/data-imports/companies/preview','/api/data-imports/employees/preview'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&/^\/api\/users\/[0-9a-f-]+\/work-scope\/preview$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{})});
+      },{...(s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:{}),...(req.method==='GET'&&req.url.split('?')[0]==='/api/ledger/package/document-register'?{repeatableRead:true}:{}),...(req.method==='GET'&&/^\/api\/customers\/[0-9a-f-]+\/service-eligibility-review$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&['/api/data-imports/company-documents/preview','/api/data-imports/opening-balances/preview','/api/data-imports/personnel-documents/preview','/api/data-imports/centres/preview','/api/data-imports/companies/preview','/api/data-imports/employees/preview'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&/^\/api\/users\/[0-9a-f-]+\/work-scope\/preview$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{})});
     };
   registerPermissionAdmin(app,call,cipher);registerSecurityRoles(app,call,cipher);registerOperatingCentres(app,call,cipher);registerOperatingCentreWriter(app,call,cipher);registerWorkLocations(app,call,cipher);registerWorkScopePreview(app,call,cipher);
   registerFinance(app,call,cipher);
@@ -951,10 +954,7 @@ export async function build(options: Options) {
       })).filter(r=>q.history==='true'||!r.withdrawn);
     }),
   );
-  app.post(
-    "/api/documents",
-    call(async (c, m, s, req) => {
-      const d = z
+  const masterDocumentInput = z
         .object({
           companyId: z.uuid().optional(),
           bankAccountId: z.uuid().optional(),
@@ -990,18 +990,11 @@ export async function build(options: Options) {
           base64: z.string().min(4).max(13981016),
         })
         .strict()
-        .parse(req.body);
-      const owner:any = {
-        company_id: d.companyId || null,
-        bank_account_id: d.bankAccountId || null,
-        user_id: d.userId || null,
-      };
-      requireOk(
-        Object.values(owner).filter(Boolean).length === 1,
-        422,
-        "invalid",
-      );
-      let investorEvidence:any=null;requireOk(d.category==='investorEvidence'?!!d.investorAgreementId&&!d.companyId&&!d.bankAccountId&&!!d.userId:!d.investorAgreementId,422,'investorEvidenceContextRequired');if(d.category==='investorEvidence'){investorEvidence=await investorEvidenceUpload(c,m,d.investorAgreementId!,d.userId!,d.parentId);owner.investor_evidence=true;owner.category=d.category;}
+        ;
+  const masterDocumentOwner=(d:any)=>{const owner={company_id:d.companyId||null,bank_account_id:d.bankAccountId||null,user_id:d.userId||null};requireOk(Object.values(owner).filter(Boolean).length===1,422,'invalid');requireOk(d.category==='investorEvidence'?!!d.investorAgreementId&&!d.companyId&&!d.bankAccountId&&!!d.userId:!d.investorAgreementId,422,'investorEvidenceContextRequired');return owner;};
+  const putMasterDocument=async(c:any,m:any,s:any,req:any,importOrigin?:{sourceHash:string;attachmentHash:string;row:number})=>{
+      const d=masterDocumentInput.parse(req.body);
+      const owner:any=masterDocumentOwner(d);let investorEvidence:any=null;if(d.category==='investorEvidence'){investorEvidence=await investorEvidenceUpload(c,m,d.investorAgreementId!,d.userId!,d.parentId);owner.investor_evidence=true;owner.category=d.category;}
       let linkedEmployeeForDocuments:any=null;if(owner.user_id&&d.category!=='investorEvidence'&&(await c.query("select to_regclass('ab.hr_employees') ok")).rows[0].ok){const linked=(await c.query('select * from ab.hr_employees where user_id=$1',[owner.user_id])).rows[0];linkedEmployeeForDocuments=linked;if(linked){requireOk(hrRight(m,'document_update',linked.company_id)||linked.user_id===m.actor.id,403,'employeeDocumentsRequired');requireOk(d.relation==='version'&&d.parentId&&d.parentVersionId,409,'employeeProfileRequired');}}
       let initialEnrollment = false;
       if (
@@ -1224,14 +1217,15 @@ export async function build(options: Options) {
         "uploaded",
         "document",
         documentId,
-        ["version", String(version), d.category],
+        ["version", String(version), d.category,...(importOrigin?["sourceHash:"+importOrigin.sourceHash,"attachmentHash:"+importOrigin.attachmentHash,"sourceRow:"+importOrigin.row]:[])],
       );
       if(d.investorProfileId)await audit(c,s.tenant_id,s.user_id,'investor_profile_uploaded','document',documentId,['profile:'+d.investorProfileId,'sha256:'+sha(file)]);
       if(investorEvidence)await recordInvestorEvidence(c,m,s,cipher,investorEvidence,documentId,versionId);
       await indexDocumentText(c,cipher,s,'version_id',versionId,file,d.mime,scan);
       return { id: documentId, versionId, version, scanStatus: scan };
-    }),
-  );
+  };
+  app.post('/api/documents',call(putMasterDocument));
+  registerCompanyDocumentImport(app,call,cipher,{prepare:(raw:any)=>{const d=masterDocumentInput.parse(raw);masterDocumentOwner(d);return d;},authorize:(m:any,companyId:string)=>documentRight(m,{company_id:companyId,bank_account_id:null,user_id:null},true),validDate:BankPolicy.validDate,recoverable:typeof objects.getIfPresent==='function',put:putMasterDocument},options.companyDocumentImportEnabled===true);
   app.post('/api/documents/:versionId/withdraw',call(async(c,m,s,req)=>{const body=z.object({reason:z.string().trim().min(1).max(2000)}).strict().parse(req.body);const row=(await c.query('select d.* from ab.documents d join ab.document_versions v on v.document_id=d.id where v.id=$1',[uuid(req.params.versionId)])).rows[0];requireOk(row,404,'notFound');row.investor_registry=await investorRegistryDocumentRead(c,m,row.id);if(row.category==='investorEvidence')row.investor_evidence=await investorEvidenceRead(c,m,row.id);documentRight(m,row,true);return withdrawAttachment(c,s.tenant_id,s.user_id,'document',row.id,body.reason);}));
   app.get("/api/documents/:versionId/file", async (req, reply) => {
     const s = await session(req);

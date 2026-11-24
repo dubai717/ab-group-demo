@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-24T22:19:50.744567+00:00",
+  "asOf": "2026-11-24T23:39:36.076218+00:00",
   "branch": "feature/operational-v1-independent",
   "financialPR": 115,
   "financialPREdited": false,
@@ -3305,6 +3305,31 @@
     "newFullAcceptanceClaimed": false,
     "evidenceSha256": {
       "company-document-import-native4.log": "6e080471eb48342423f5567c593bb74799e0148da264351ca1ead79c53ccdf32"
+    }
+  },
+  "companyDocumentImport": {
+    "status": "implemented_unpublished_default_disabled",
+    "originalMasterWriterAndOwnerContextReused": true,
+    "existingCompanyPickerWithoutRequiredUUID": true,
+    "previewReadOnlyAndUncached": true,
+    "maximumBatchFiles": 5,
+    "exactRetainedObjectRecovery": true,
+    "boundedMetadataReadbackWithoutFileDownload": true,
+    "currentWorkGuardBeforeCache": true,
+    "linkedOriginalWriterCasesPassed": 11,
+    "browserJourneys": "default-off preview and explicit synthetic apply, lost-reply/readback recovery, original company button, AR/EN three widths",
+    "integrated52JourneyAcceptance": false,
+    "realImportPerformed": false,
+    "automaticDocumentApproval": false,
+    "financialEffect": false,
+    "evidenceSha256": {
+      "company-document-import-original-writer.log": "15d298125a09ad2808705d7281cbf31fdea6e08ab449140afdb4df330a845dea",
+      "company-document-import-work-guard.log": "a1327051235ab7fdde70f92a61e325bc668881bd88ccd91d16cb6232da87a241",
+      "company-document-import-types8.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "company-document-import-browser-preview.log": "2fcdda8d040449c5c845008107573b7fdad4d17bf1ecb08d097b02dac687d4ce",
+      "company-document-import-browser-apply2.log": "5e503913078237e265082bfadcb2a51b6437d3d91e824b65e0a99390f92e2a76",
+      "company-document-import-build4.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "company-document-import-root4.log": "3584815aa8e6399dd86d073afd297936cc910fbd183ded81327f545e4cdbf38c"
     }
   }
 }
