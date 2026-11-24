@@ -50,3 +50,5 @@ In a conversation topic, “Response deadline” opens the responsible employee/
 “Document expiry” shows a preview30 days before expiry and on expiry for the current version. It does not send a message or charge a fee. A replacement changes the current-version dates. A preview proves neither delivery nor document authenticity. Expiry does not prevent accepting payment.
 
 Owner only: choose “Reminder schedule” on a document card, select company/current type/customer-type where available, offsets, effective date and reason. This configures preview dates and does not enable sending. Retry an uncertain save with the same values; after acknowledged save, retry reads the result only. A future rule does not replace today's schedule early.
+
+For residence/general requests, select the authorized active “Company responsible for service”. It may differ from the personal file company and does not transfer that file. Drafts retain the choice and Owner approval remains mandatory. An unavailable saved choice shows a review label rather than a technical ID. Correction tasks use the creator's actual dated work assignment without changing their legal employer or granting rights.

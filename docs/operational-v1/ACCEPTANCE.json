@@ -3558,5 +3558,40 @@
       "combined compiled/signature/rollback review",
       "actual original membership apply"
     ]
+  },
+  "serviceCompanyIndependenceVerification": {
+    "asOf": "2026-11-24",
+    "status": "tested_unpublished_api_ui",
+    "nativePassed": 4,
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "staticPassed": 189,
+    "browser": "Original three-type flow with independent general company, failed setup/read retry, mandatory approval, prior residence financial flow, original vehicle form, AR/EN record and1440/768/390 create form",
+    "sourceChecksums": {
+      "backend/src/customer-service-requests.ts": "b83f5409d8a521ed76e1f8abde4ae205cc4bdac6ae74073566e2d47418ff0012",
+      "backend/src/request-drafts.ts": "bb1b92ddae20790b8932071581970707ac5bd645d03841589515ed4087415c7c",
+      "customer-requests-ui.js": "b9cf9614c1cc2368e789bd41e7740519a9cc3e9b486e1cb97968003e077dffe6",
+      "backend/tests/service-company-independence.test.ts": "8a73a2f21e064d8f3c2885c5fcd690f0ad67ae6595ad594024afc78bf9d6ddbf",
+      "backend/tests/customer-service-requests.test.ts": "8903c2d0fdf7052c89bbca1bc62a3035c7be75083f225483c373647aad228fb5",
+      "backend/tests/customer-service-requests.browser.cjs": "c09172d05286524f81cd4114fcdcb69e483d945d2782579fbad3505ee342c635"
+    },
+    "logs": {
+      "service-company-native.log": "43c3d80caa012239195fa9537e0a61e289b4b80baa2179272a0e2a68a55fa150",
+      "service-company-browser.log": "d84130a9038ba29d019f943b70b8c09ce956d384ce8e10c1327bff8c660690c9",
+      "service-company-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "service-company-static.log": "6a677fefcac25674657c6d53645184a64caf940f4ec34ffd20a8b0a947f725f3"
+    },
+    "screenshots": {
+      "operational-service-company-general-390.png": "995900be907d15e1c64b1bec821ec166ef502fc8305a3503d131e1629511c4bc",
+      "operational-service-company-general-768.png": "c32e14211d5d063dd5f9fab8a1d46dc3dea2c40459567c405da9ae8a55dc1b67",
+      "operational-service-company-general-1440.png": "d687cb80455ab1a8028d9f2058201f21ff44accf71da225da27ee0f4d4843493",
+      "operational-service-company-residence-390.png": "d4241f97840924782e2b975c493acc529cedc308790b0876b6c7d210e09c6c1b",
+      "operational-service-company-residence-768.png": "7d376ff07cde525a1b568f6eef1356752491461ce1b14d78c918b6e09f20ffed",
+      "operational-service-company-residence-1440.png": "3061f0665d96b2e9ec40b0b78e4411a4a2387264e209451ededc3608ea64fa6b"
+    },
+    "financialOrHostedActivation": false,
+    "historicalRowsTransferred": false,
+    "scopeProposalsInstalledOnHost": false,
+    "allV1Complete": false
   }
 }
