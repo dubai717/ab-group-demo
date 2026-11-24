@@ -14,6 +14,7 @@
   });
   if (!C.enabled) return;
   let bootstrapRevision = 0, authorityRevision = 0;
+  Object.defineProperty(C,"authorityVersion",{get:()=>authorityRevision});
   let activeBank = null,
     activeCompany = null,
     activeUser = null;

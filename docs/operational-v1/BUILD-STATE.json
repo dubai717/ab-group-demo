@@ -2001,10 +2001,10 @@
   },
   "ciLatestReadOnlyCheck": {
     "asOf": "2026-11-24",
-    "CI38": "success on71a97f1c13d5e4f87a515352e5c199feffe21eb6",
-    "CI39": "in_progress on444f2ba949b2e6402bbcce84492535a77dfe5795",
+    "CI38": "success",
+    "CI39": "success on444f2ba949b2e6402bbcce84492535a77dfe5795",
+    "CI40": "in_progress on2475cc6b68f23d21014e5cc31f6b31a0d42b3759",
     "pendingRunsReplaced": false,
-    "latestUnpushedCodeCI": "not_yet_triggered",
     "merge": false,
     "deployment": false
   },
@@ -2077,6 +2077,40 @@
     "appRegistered": false,
     "externalSent": false,
     "originalDatabaseChanged": false,
+    "allV1Complete": false
+  },
+  "importContextAndCentreRouting": {
+    "asOf": "2026-11-24",
+    "status": "tested_unpublished",
+    "fullUiJourneysPassed": 41,
+    "fullUiExit": 0,
+    "heldImportContexts": "customers, vehicles and company preview; page, CSRF, locale and original authority revision; no target import or authority write",
+    "whatsAppOriginalLinkedNativePassed": 26,
+    "whatsAppRouting": "shared centre binding does not select incoming legal company; outbound requires original selected authorized company within configured routing set",
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "rootStaticPassed": 162,
+    "sourceChecksums": {
+      "central-client.js": "8f6fa6e9a32b846f873a4b23e2ac6b7d1d22dd02c2f2da20529ae3577539e9a1",
+      "data-import-ui.js": "250d90c45eeac9a0901a57eeadc008a303bcac09fde1a2b534756f3f973ec2fc",
+      "backend/tests/import-context.browser.cjs": "e79e1b710106de3c7c88a91e3755b877fba7aae42a2efd7cf2baabaf37fc1290",
+      "backend/tests/operational-v1-suite.browser.cjs": "1fa4d63133a5239380705cfd0a649ece92530ea7bb0b4538e241f0270acfb3ad",
+      "backend/src/whatsapp-cloud-contract.ts": "c44ea3fb0c648ab079ed6e20fb848c75d921efc58f5a841acde8747423722a7d",
+      "backend/tests/whatsapp-cloud-contract.test.ts": "7e65a26d44317f599537053845da4d2f5864ce1ab554deb36b16e3e8a0c9de49",
+      "backend/tests/whatsapp-webhook-boundary.test.ts": "e333002a9b2e53f7fab81e2cb8f8a28fcbf1e0e209338e55a3c1480d3d4546c8"
+    },
+    "logs": {
+      "operational-context-full-41.log": "7e71dbc6133da69578f7ac01dd6454409a8eaaff9348f7b19a1d3c3a58c9d9c5",
+      "import-context-browser.log": "f30293fb074bc1c1fe097739e3f923a92b00046c732daccfd51f18a6eeb97ab8",
+      "import-context-original-browser.log": "085bbcaaec9372535b10354790d32e67b127121a4799e235cfd3d1059fa0bcc8",
+      "import-context-company-browser.log": "eed296272be8ff2aa607386552c9855afbc819026fe5c28e57527deb53ab1f81",
+      "whatsapp-centre-routing-final.log": "a65965c2db4f614ab03ab2a21a760a25b5513918c6cdb1c10aa8b6908d1a7756",
+      "whatsapp-centre-routing-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "centre-import-context-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "centre-import-context-static.log": "d1a80be398bbaf8aa6f504b784082e59a061d05ad663af3f4bb1159f41c4641a"
+    },
+    "realDataChanged": false,
+    "externalMessagingEnabled": false,
     "allV1Complete": false
   }
 }
