@@ -2989,5 +2989,24 @@
     },
     "laterChangesCovered": false,
     "deployPerformed": false
+  },
+  "officialMediaBoundary": {
+    "status": "partial_unpublished_unregistered",
+    "testsPassed": 7,
+    "testsFailed": 0,
+    "providerCallsPerformed": false,
+    "attachmentStored": false,
+    "documentApproved": false,
+    "evidenceSha256": {
+      "whatsapp-media-unit.log": "a1bb4260572a8f1690c0a784524c30b86c3339e2d52d48fce92b03f39d45c584",
+      "whatsapp-media-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "remaining": [
+      "official account configuration",
+      "original scanner/encrypted attachment store and download authorization",
+      "original event/message linkage",
+      "unsupported audio/video",
+      "provider acceptance"
+    ]
   }
 }
