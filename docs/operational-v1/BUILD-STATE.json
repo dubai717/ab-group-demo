@@ -2950,5 +2950,44 @@
       "runtimeBypassRls": false
     },
     "realDatabaseTouched": false
+  },
+  "nonvehicleFirstExecution": {
+    "status": "partial_unpublished_isolated_only",
+    "serverEnabled": false,
+    "sourceBase": "e92fe2a31dc9f88fcbbddfd1ec5d2cdb30f206e4",
+    "nativePassed": 1,
+    "nativeFailed": 0,
+    "preserves": [
+      "original Owner approval",
+      "already-started pause/resume",
+      "incoming original receipts",
+      "original financial records"
+    ],
+    "remaining": [
+      "live activation",
+      "precise prospective boundary",
+      "timed Owner exceptions",
+      "remaining lifecycle and scope compilation",
+      "final integrated acceptance"
+    ],
+    "evidenceSha256": {
+      "nonvehicle-start-native.log": "7d10219ad6e82ce9a40f86791752bc9855bef60e3d21dca29351d0ea4061cce9",
+      "nonvehicle-start-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "nonvehicle-linked-native.log": "98b2698ac2604ddab3496114785496c2cf1ce2779ddeb7b513bf2f61b9fbf355",
+      "nonvehicle-start-final-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "linkedApprovalAndStartPassed": 2
+  },
+  "verifiedCI49": {
+    "source": "0bf4158f2048eaadac23ea06c428712663fcbaff",
+    "run": 49,
+    "id": 45469950249,
+    "url": "https://github.com/dubai717/ab-group-demo/actions/runs/45469950249",
+    "jobs": {
+      "operational-ui": "success",
+      "original-regressions / staging-checks": "success"
+    },
+    "laterChangesCovered": false,
+    "deployPerformed": false
   }
 }
