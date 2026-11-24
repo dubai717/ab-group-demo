@@ -3899,19 +3899,19 @@
     }
   },
   "githubCheckpointPolicy": {
-    "prHead": "29095d514f9d8dab065fb0b64f443d88c7b3ca71",
-    "pendingRun": 45398591987,
-    "runNumber": 42,
+    "prHead": "c489b72801ff758109f0318f009421f73b966ed4",
+    "pendingRun": 45411181659,
+    "runNumber": 43,
     "pendingRunNotReplaced": true,
     "laterCodeSavedToCheckpoint": true,
-    "nextPush": "Normal PR fast-forward after queued CI42 starts; do not cancel or replace a pending run."
+    "nextPush": "Normal PR fast-forward after queued CI43 starts; do not cancel or replace pending runs."
   },
   "originalEmployeeImportApply": {
     "status": "tested_unpublished_disabled_by_default",
     "linkedNativePassed": 67,
     "focusedCurrentNativePassed": 11,
     "browser": "passed_ar_en_1440_768_390",
-    "full44Journey": "running_not_claimed_success",
+    "full44Journey": "passed_on_ad5a740",
     "typecheck": "passed",
     "providerFreeBuild": "passed",
     "rootChecksPassed": 162,
@@ -3933,7 +3933,9 @@
       "work/evidence/employee-apply-ui-final.log": "d078444dacf9ad71ffe73dc4c2b923ad816cf4d6b8e3d81613727a7800e021aa",
       "work/evidence/employee-apply-current-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "work/evidence/employee-apply-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
-      "work/evidence/employee-apply-root.log": "9e25cfd045f22fb4eebc853ede5bf9a30b200b2b7913a021fdb23eb9e36d5968"
+      "work/evidence/employee-apply-root.log": "9e25cfd045f22fb4eebc853ede5bf9a30b200b2b7913a021fdb23eb9e36d5968",
+      "work/evidence/operational-employee-apply-full-44.log": "9a791f70d09c82f283e9c44aba50a0a7cd5f7f6f874b60f257cb655ddc624b63",
+      "work/evidence/operational-employee-apply-full-44.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
     },
     "originalCreatorShared": true,
     "authAccountsCreated": false,
@@ -3946,6 +3948,54 @@
       "Authorized ambiguous-identity decisions",
       "Remaining entity adapters",
       "Full scope and release integration"
-    ]
+    ],
+    "full44ExitCode": 0
+  },
+  "communicationChildCompanyScope": {
+    "status": "tested_uninstalled_review_only",
+    "combinedNativePassed": 14,
+    "typecheck": "passed",
+    "sourceHashes": {
+      "backend/review/company-scope-communication-children.sql": "e3fa3fd34abf872cb4701a16d06d1192870fbc584e18dafa9ea564849774cd35",
+      "backend/review/company-scope-notification-receipts.sql": "e83b9f83bc948d0a9037de9eae516763e410fffe314429ceff6c91fe61272d65",
+      "backend/tests/company-scope-communication-children.test.ts": "6f304f661818f829802ad2adfff02cc89351f5511ba2dac6e5d18db01cae6f1c",
+      "backend/tests/company-scope-notification-receipts.test.ts": "07762e563168be0b2fa825b8b78c50c2fd44c3fabd3b13731beb3fbd4dabe81e"
+    },
+    "canApply": false,
+    "hostedInstalled": false,
+    "newGrants": false,
+    "externalSending": false,
+    "fullScopeComplete": false,
+    "evidenceHashes": {
+      "work/evidence/notification-receipt-combined-scope-native.log": "c96f2e065be7ef28e9a5eb9ad9fbc61fff8025e6195395a405821769bddafce7",
+      "work/evidence/communication-notification-scope-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "hostedOwnerReadOnlyReview": {
+    "asOf": "2026-11-24",
+    "projectRef": "gwcujfbckejzacdoobua",
+    "projectStatus": "ACTIVE_HEALTHY",
+    "inspectionRole": "postgres",
+    "technicalOwnerBypassAlreadyPresent": true,
+    "runtimeBypass": false,
+    "runtimePrivilegedMemberships": 0,
+    "runtimeOwnedAbTables": 0,
+    "existingDefinersOwnedByPostgres": 27,
+    "abTables": 162,
+    "rlsEnabledTables": 158,
+    "nonRlsReferenceCatalogs": [
+      "emirates",
+      "permissions",
+      "role_permissions",
+      "roles"
+    ],
+    "publicReferenceReadGranted": false,
+    "proposedScopeInstalled": false,
+    "queries": "3 small SELECTs on pg_catalog only",
+    "businessRowsSelected": false,
+    "dataChanged": false,
+    "permissionsChanged": false,
+    "fullCompatibilityProved": false,
+    "evidence": "docs/operational-v1/HOSTED-OWNER-READONLY-REVIEW.md"
   }
 }

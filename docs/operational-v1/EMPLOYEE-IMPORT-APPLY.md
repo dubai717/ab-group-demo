@@ -22,3 +22,5 @@ An actual integration test exposed the company import launcher matching a dialog
 ## Remaining
 
 Document/organization mappings, authorized duplicate-resolution decisions, centres/document/opening-balance adapters, final company-scope integration and complete release acceptance remain incomplete. No actual import, deployment, financial activation or historical migration was performed. Financial PR115 is untouched.
+
+The complete44-journey UI suite passed with exit0 onad5a740, including the new employee apply and existing company/customer/vehicle/HR/permissions/communication journeys. A current11-case atomic import/View As run also passed, including counter and audit rollback assertions.
