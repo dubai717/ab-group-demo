@@ -3331,5 +3331,18 @@
       "company-document-import-build4.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
       "company-document-import-root4.log": "3584815aa8e6399dd86d073afd297936cc910fbd183ded81327f545e4cdbf38c"
     }
+  },
+  "frozen706Acceptance": {
+    "source": "706c32ea274ac5b3cb0e88ccce7e5f63973a94f7",
+    "uiStatus": "failed_test_mode_environment",
+    "uiSourceUnchanged": true,
+    "uiCompletedJourneys": 1,
+    "reason": "The enabled fixture received its opt-in mode, but its browser process inherited the default expected mode. Pass the explicit spec mode to the browser; retain both independent default-off and enabled assertions.",
+    "backendStatus": "running",
+    "fullAcceptanceClaimed": false,
+    "evidenceSha256": {
+      "ui.log": "53a41fc1de7d13372ad9a148e50983960cda306c319b3ef5b3c2182a40c7470c",
+      "ui-status.json": "68ae526b7fae755e00a6b66c55ef73f212c76ca99c78ed75da07c571d6cbc7ae"
+    }
   }
 }
