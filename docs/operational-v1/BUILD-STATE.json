@@ -2670,7 +2670,7 @@
     "financialOrTaskEffect": false,
     "historicalEgressAttribution": "not_claimed",
     "typecheck": "passed",
-    "fullLatestUi": "not_yet_claimed",
+    "fullLatestUi": "passed_on_8659435_exit_0",
     "evidence": {
       "original-communications-model-budget-native.log": "619765370db09951a12c4801219920091ee8b105c89afd3ae56be21d8901b90c",
       "original-communications-model-budget-types.log": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10"
@@ -2691,5 +2691,16 @@
         "communication-template-budget-current-types.log": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10"
       }
     }
+  },
+  "canonicalReceivableAmountSeam": {
+    "status": "tested_unpublished_behavior_preserving_extraction",
+    "linkedNativePassed": 21,
+    "originalReceivableProjectionUsesSameHelper": true,
+    "discountSettlementWriteoffCancellationSeparation": "preserved",
+    "unappliedCreditMath": "preserved",
+    "newLedgerOrPosting": false,
+    "serviceControllerGuardsInstalled": false,
+    "typecheck": "passed",
+    "evidenceSha256": "885b09b49d5d82744f228912ec27bef1694ddda57362c8863c4b08fd673c4689"
   }
 }

@@ -52,3 +52,7 @@ journeys passed, including source failure/retry, existing profile/document/servi
 entry, no polling, late profile response and denied-reader UI at AR/EN1440/768/390.
 The browser run precedes final backend classification-only refinements; focused native
 acceptance and build cover those refinements. CI must independently pass this head.
+
+## Canonical amount seam
+
+The original receivable adjustment and unapplied-credit arithmetic is now extracted into receivable-amount-facts.ts and reused by the original receivables projection. Discount, settlement, cancellation and book writeoff remain distinct; no writeoff is reclassified as paid.21 linked receivable-cycle, amount, original eligibility and presentation cases passed, plus TypeScript. This is preparation for a purpose-limited actual-actor eligibility reader; no worker RPC, controller guard, scope activation or historical migration is installed by this extraction.
