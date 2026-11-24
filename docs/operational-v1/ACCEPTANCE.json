@@ -3628,12 +3628,60 @@
     },
     "canApply": false,
     "actualImportPerformed": false,
-    "allV1Complete": false
+    "allV1Complete": false,
+    "sourceBaseline": "06c353d"
   },
   "companyLinkedAcceptance": {
     "sourceBaseline": "40a99e4",
     "uiJourneysPassed": 39,
     "linkedNativePassed": 10,
     "laterCompanyPreviewNotIncluded": true
+  },
+  "attachmentAndImportAcceptance": {
+    "asOf": "2026-11-24",
+    "status": "tested_unpublished_candidates_and_strict_import_fix",
+    "ui": {
+      "journeysPassed": 40,
+      "baseline": "06c353d",
+      "laterSQLAndLiteralCRFixNotIncluded": true
+    },
+    "linkedNative": {
+      "passed": 30,
+      "baseline": "customer attachment/text/link/archive candidates plus original company/service/security/import sources; before final quoted CR preservation change"
+    },
+    "finalFocusedNativePassed": 12,
+    "finalFocusedNativeCoverage": "current attachment/child candidates, company preview, original import API and strict CSV including literal trailing CR preservation",
+    "rootStaticPassed": 162,
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "sourceChecksums": {
+      "backend/review/company-scope-customer-files.sql": "1c22eaeb7ae602f9936f62f129ed828e8b06deb9902b2190bd6b272e3b529548",
+      "backend/review/company-scope-document-children.sql": "4beec6b4148a2b9f7351c9a8dcc8d24c26e720ca8d7e997ae3d978204513b6a0",
+      "backend/tests/company-scope-customer-files.test.ts": "637b32fc790a1f422997d143cee91522fb74fbd1ecdd7dd9b63550a0e2a613e6",
+      "customer-policy.js": "71ee6702a97176ab7f93d6c425ad8e15139ae7defcd230d454d93e460d09a0fb",
+      "backend/tests/import-delimited.test.ts": "4dc2e9a51a384fbc7c9ea3593d50428428b0e74943823cf9afcab14eb436a9e4",
+      "backend/tests/import-delimited-api.test.ts": "5bc0e9c7d4840269c75c3a84a647470d40d825f87f441ff63a0305df4c5d85ab"
+    },
+    "logs": {
+      "operational-company-full-40.log": "e3e8bf4a33eb047c5af9bb384a45212bdead3ebedfe8692dd64db7d1d17fe6d7",
+      "operational-document-import-scope-native.log": "0066420a66196c61df2e5ebd66df25a410b35d0a2b88b0a24d446785731fc6a9",
+      "operational-import-attachment-final.log": "801e2593fbf0d97063f3596e222a4135e150d306fe7ea43857f43d98d7fe0613",
+      "operational-import-attachment-final-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "operational-import-attachment-final-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "operational-import-attachment-final-static.log": "7dc2be6dffab2a252c14e29851560d6507714c9baadf5011e1005af44ed59f6f"
+    },
+    "hostedInstallation": false,
+    "actualImport": false,
+    "canApply": false,
+    "allV1Complete": false
+  },
+  "ciLatestReadOnlyCheck": {
+    "asOf": "2026-11-24",
+    "CI38": "success on71a97f1c13d5e4f87a515352e5c199feffe21eb6",
+    "CI39": "in_progress on444f2ba949b2e6402bbcce84492535a77dfe5795",
+    "pendingRunsReplaced": false,
+    "latestUnpushedCodeCI": "not_yet_triggered",
+    "merge": false,
+    "deployment": false
   }
 }

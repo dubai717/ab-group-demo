@@ -18,3 +18,5 @@ There is deliberately no apply endpoint, confirmation button or fake successful-
 ## Still engineering, not an Owner decision
 
 Durable company import receipts/atomic batches, explicit duplicate decisions, mapping/application UI, centre/employee/document/opening-balance adapters and complete import acceptance remain unfinished. Opening financial history additionally depends on PR115 and explicit historical-balance approval. This preview is not classified as a completed import requirement.
+
+The strict parser also preserves a literal trailing CR inside a quoted value, while stripping only the outside record terminator. Seven pure parser cases and the original API verify this distinction. The final focused12-case run includes company preview, original import API and attachment child guards. The coherent30-case linked run and complete40-journey UI run are retained as earlier baselines, not inflated into a combined pass count.
