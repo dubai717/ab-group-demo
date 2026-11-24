@@ -2223,13 +2223,18 @@
     }
   },
   "githubCheckpointPolicy": {
-    "prHead": "c789e61ad1590f4cd93ef484393ed91b40b61fde",
-    "observedRun": 45418574807,
-    "runNumber": 44,
-    "observedStatus": "in_progress",
+    "prHead": "fde204663a5876877536b4f042b5f2e1e95c31a3",
+    "pendingRun": 45428257927,
+    "runNumber": 45,
+    "observedStatus": "pending",
+    "precedingRun": 45418574807,
+    "precedingRunNumber": 44,
+    "precedingOperationalUi": "success",
+    "precedingOriginalRegressions": "in_progress",
     "pendingRunNotReplaced": true,
     "laterCodeSavedToCheckpoint": true,
-    "nextPush": "Normal PR fast-forward permitted after CI44 has started; no cancellation, rerun or dispatch."
+    "checkpointAtThisReview": "a04d506",
+    "nextPush": "Fast-forward the PR only when pending CI45 starts or completes; never cancel or replace a pending run."
   },
   "originalEmployeeImportApply": {
     "status": "tested_unpublished_disabled_by_default",
