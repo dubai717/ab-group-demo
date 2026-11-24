@@ -76,9 +76,10 @@ import {registerPersonnel} from './personnel.js';
 import {registerVehicles} from './vehicles.js';
 import {registerRequestDrafts} from './request-drafts.js';
 import {registerCustomers} from './customers.js';
-import {registerCompanyImportPreview} from './company-import-preview.js';
+import {registerCompanyImportPreview,assertCompanyImportOperator} from './company-import-preview.js';
 import {registerFinance,bankNotice} from "./finance.js";
 export interface Options {
+  companyImportEnabled?:boolean;
   backupStatusRead?:BackupStatusRead;
   pool: Pool;
   key: string;
@@ -232,10 +233,20 @@ export async function build(options: Options) {
       const s = await session(req);
       if(req.body)req.body=normalizeContactPayload(req.body);
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
+        const companyImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/companies/run';
+        let importModel:any;
         // Serialize permission mutations before loading their authority snapshot.
         // This also prevents a queued grant from using a pre-standard-change issuer.
-        if(!s.viewAs&&req.method!=='GET'&&(/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
+        if(!s.viewAs&&req.method!=='GET'&&(companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':security-roles']);
+        // Serialize original company mutations before reading the directory used by import preview receipts.
+        if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(companyImportRun||/^\/api\/companies(?:\/|$)/.test(req.url.split('?')[0])))
+          await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':company-directory']);
+        if(companyImportRun){
+          importModel=await model(c,s.user_id,cipher);assertCompanyImportOperator(importModel);requireOk(options.companyImportEnabled===true,503,'companyImportApplyNotEnabled');
+          if((await c.query("select to_regprocedure('ab.hr_actor_allowed()')ok")).rows[0].ok)requireOk((await c.query('select ab.hr_actor_allowed()ok')).rows[0].ok,403,'denied');
+          requireOk(typeof req.headers['idempotency-key']==='string',422,'companyImportKeyRequired');
+        }
         // Personnel export contains personal contact data; never cache the file in request_dedup.
         const key = s.viewAs || req.method === "GET" || isReadOnlyPost(req.url.split("?")[0]) ? undefined : req.headers["idempotency-key"];
         const fingerprint = cipher.digest(
@@ -267,7 +278,7 @@ export async function build(options: Options) {
         }
         const result = await handler(
           c,
-          await model(c, s.user_id, cipher),
+          importModel||await model(c, s.user_id, cipher),
           s,
           req,
         );
@@ -286,7 +297,7 @@ export async function build(options: Options) {
   registerFinance(app,call,cipher);
   (options as any).requestCreators={};
   registerCustomers(app,call,cipher,options);
-  registerCompanyImportPreview(app,call);
+  registerCompanyImportPreview(app,call,cipher,options.companyImportEnabled===true);
   registerServiceEligibilityReview(app,call,cipher);
   registerBackupStatus(app,call,options.backupStatusRead);
   registerCollectionFollowup(app,call,cipher);

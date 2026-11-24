@@ -15,7 +15,7 @@ test('Company file preview shares original create validation and preserves every
   // Actual create remains the original API. A matching name/licence is reviewable, never auto-merged.
   const id=(await f.req('POST','/api/companies',{arabicName:'شركة اصطناعية',englishName:'Synthetic independent import',tradeLicenseNumber:'ONLY-FAKE-41'})).id;
   const afterCreate=await snapshot();const matched=await f.req('POST',base+'/preview',body);assert.equal(matched.counts.review,1);assert.equal(matched.plan[0].matches[0].id,id);assert.deepEqual(await snapshot(),afterCreate);
-  await f.req('POST',base+'/run',{confirmed:true},404);
+  await f.req('POST',base+'/run',{confirmed:true},503);
   for(const text of ['arabicName,unknownGrant\nName,owner','arabicName\nName"changed"'])await f.req('POST',base+'/preview',{format:'csv',base64:Buffer.from(text).toString('base64')},422);
   const worker=await f.employee();await f.login(worker.username,worker.password);await f.req('GET',base+'/template',undefined,403);await f.req('POST',base+'/preview',body,403);
  }finally{await f.close();}

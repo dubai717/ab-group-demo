@@ -3788,5 +3788,44 @@
     "realDataChanged": false,
     "externalMessagingEnabled": false,
     "allV1Complete": false
+  },
+  "originalCompanyImportApply": {
+    "asOf": "2026-11-24",
+    "status": "tested_unpublished_disabled_by_default",
+    "fullUiJourneysPassed": 42,
+    "fullUiExit": 0,
+    "linkedOriginalNativePassed": 18,
+    "atomicNativeIncludes": "same/different key races; default-disabled cache refusal; late native fault/full rollback/same-key recovery; stale source, skips, bounds and denied employee",
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "rootStaticPassed": 162,
+    "browser": "actual isolated enabled original company writer; uncertain commit exact key/body recovery, post-acknowledgement GET-only verification, retained register filters, CSV report and AR/EN1440/768/390; default-disabled preview covered separately in full42",
+    "sourceChecksums": {
+      "backend/src/app.ts": "1b2241ab87f52af94f48afb6a83b9101defb660d722c4e77f6fa3e4009889e32",
+      "backend/src/company-import-preview.ts": "c8afe82e11ec80b7e687ce28c9378de0612a43f0b9f9889b2294fd6701afff6b",
+      "backend/tests/company-import-apply.test.ts": "f76bc4cd619957f86f6262b529c9ebde17d8244297e5c6ffdfac7a43713417b7",
+      "backend/tests/company-import-apply.browser.cjs": "900943e1703907f0a97fcf42bd46c3278ff4bed74424c3e16857800932879278",
+      "backend/tests/company-import-preview.test.ts": "dd29dddc51e8cab753e97619a9033e70295f8b37d0c07c37de188f9bdb33e1a0",
+      "backend/tests/company-import-preview.browser.cjs": "68d11aabee79ea82a545a33d77426604ee25fc8124a5f833d22fc625d83ae832",
+      "backend/tests/serve-workbench-fixture.ts": "ad4616e98792deca9fd7a1b5f4d6d6fb6ec87589961fa0ed3517150a1f46f4f7",
+      "backend/tests/operational-v1-suite.browser.cjs": "52d3d3b7541747df5523eeb66c8fe3fa0c74defefe8f2cb3664bb1233ee0926f",
+      "data-import-ui.js": "99e481ee1f9f4917c6d1dd9795b7df98dd6e63b647fb3448d83f56473ac66315",
+      "register-tools.js": "1a886c41d1e539acab44f64a758f7cf5b34ec612234ce0179c0806977704d704"
+    },
+    "logs": {
+      "company-import-apply-atomic-native.log": "44883d30658e3149e0486404bb9f093526ea546110fdba607b843910f6cb87e5",
+      "company-import-final-linked-native.log": "36cab091883da381d2621137ae78e0182bb45ce51459c1e46abf02b574a305fb",
+      "company-import-apply-browser.log": "79a8e3cf9be6d8f0445eac16bf34cca929ccfd603673e3b99120a14a2d2baee2",
+      "company-import-apply-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "company-import-final-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "company-import-apply-static.log": "f9b8af07a53a059f79f9cf360ecb8a2c2bd96d1ff16ce7d153fc9573bb384064",
+      "operational-company-apply-full-42.log": "a0319358a2c71dee7bda513d6f2802120392303ef0077c9d775fef772328b057"
+    },
+    "serverConfiguredForApply": false,
+    "hostedConfigurationChanged": false,
+    "realImportPerformed": false,
+    "financialEffect": false,
+    "permissionsChanged": false,
+    "allV1Complete": false
   }
 }

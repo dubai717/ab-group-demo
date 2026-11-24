@@ -354,9 +354,13 @@
         "backend/src/company-import-preview.ts",
         "backend/tests/company-import-preview.test.ts",
         "backend/tests/company-import-preview.browser.cjs",
-        "docs/operational-v1/COMPANY-IMPORT-PREVIEW.md"
+        "docs/operational-v1/COMPANY-IMPORT-PREVIEW.md",
+        "backend/tests/company-import-apply.test.ts",
+        "backend/tests/company-import-apply.browser.cjs",
+        "docs/operational-v1/COMPANY-IMPORT-APPLY.md",
+        "docs/operational-v1/IMPORT-CONTEXT.md"
       ],
-      "remaining": "معاينة العملاء والمركبات القائمة تدعم CSV/XLSX/Access والتحقق والتكرار؛ أضيفت معاينة شركات وقالب CSV/XLSX للمالك بقواعد الإنشاء الأصلية وكشف الحقول والتطابق المحتمل دون كتابة. رُفضت اقتباسات CSV المشوهة دون تغيير النص بصمت. حفظ الشركات الجماعي المتين وقوالب/محولات المراكز والموظفين والمستندات والأرصدة والقبول الشامل ما زالت أعمالاً برمجية غير مكتملة. لا استيراد حقيقي؛ الأرصدة التاريخية تحتاج المطابقة والاعتماد."
+      "remaining": "العملاء والمركبات يستعملان الاستيراد الأصلي CSV/XLSX/Access. معاينة الشركات قراءة فقط؛ أضيف حفظ الجديد الصحيح بالكاتب الأصلي وسجل إعادة المحاولة والاعتماد الصريح، مع25 شركة لكل معاملة، كشف التشابه/التكرار والتراجع الذري واسترجاع الرد وتأكيد GET فقط وحفظ الفلاتر وتقرير CSV. التنفيذ معطل افتراضياً واختبر بقاعدة وهمية فقط. تبقى محولات المراكز والموظفين والمستندات والأرصدة وقبولها، وسياسات المراجعة/التحديث الأوسع والاستيراد الحقيقي بعد الاعتماد. الأرصدة التاريخية لا ترحل تلقائياً. البند جزئي."
     },
     {
       "id": "11",
