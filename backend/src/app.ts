@@ -86,6 +86,7 @@ export interface Options {
   // Trusted server seam; unset in server.ts. No public flag or live policy activation.
   beforeNewService?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general'})=>Promise<void>;
   beforeServiceApproval?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general'})=>Promise<void>;
+  beforeServiceExecution?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'vehicle';requestId:string;phase:'disburse'|'register'})=>Promise<void>;
   companyImportEnabled?:boolean;
   employeeImportEnabled?:boolean;
   employeeDocumentImportEnabled?:boolean;

@@ -33,7 +33,7 @@ export async function actualActorEligibilitySourceReady(c:any){
 }
 async function actualActorEligibilityRead(c:any,m:any,s:any,cipher:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general'},readOnlyReview:boolean,approvalPhase=false){
  const d=z.object({customerId:uuid,companyId:uuid,type:z.enum(['vehicle','residence','general'])}).strict().parse(input);
- requireOk(!s.viewAs&&m.actor.id===s.user_id&&m.actor.status==='Active'&&m.actor.roleId!=='investor',403,'denied');
+ requireOk(!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user')&&m.actor.id===s.user_id&&m.actor.status==='Active'&&m.actor.roleId!=='investor',403,'denied');
  const context=(await c.query("select ab.tenant()tenant_id,current_setting('ab.actor')actor_id,current_setting('transaction_isolation')isolation,current_setting('transaction_read_only')read_only")).rows[0];
  requireOk(context.tenant_id===s.tenant_id&&context.actor_id===s.user_id,403,'denied');requireOk(readOnlyReview?context.isolation==='repeatable read'&&context.read_only==='on':['read committed','repeatable read','serializable'].includes(context.isolation)&&context.read_only==='off',409,'eligibilitySnapshotReviewRequired');
  const company=m.state.companies.find((r:any)=>r.id===d.companyId);requireOk(company&&(approvalPhase||company.status==='Active'),403,'denied');
@@ -50,3 +50,16 @@ export const actualActorServiceEligibilityReview=(c:any,m:any,s:any,cipher:any,i
 export const actualActorServiceEligibilityCreationCheck=(c:any,m:any,s:any,cipher:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general'})=>actualActorEligibilityRead(c,m,s,cipher,input,false);
 
 export const actualActorServiceEligibilityApprovalCheck=(c:any,m:any,s:any,cipher:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general'})=>actualActorEligibilityRead(c,m,s,cipher,input,false,true);
+
+export type VehicleExecutionInput={customerId:string;companyId:string;type:'vehicle';requestId:string;phase:'disburse'|'register'};
+// Minimal execution authorization. Registration permission does not manufacture customer-profile/ledger-view rights.
+export async function assertActualVehicleExecutionContext(c:any,m:any,s:any,input:VehicleExecutionInput){
+ const d=z.object({customerId:uuid,companyId:uuid,type:z.literal('vehicle'),requestId:uuid,phase:z.enum(['disburse','register'])}).strict().parse(input);
+ requireOk(!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user')&&m.actor.id===s.user_id&&m.actor.status==='Active'&&m.actor.roleId!=='investor',403,'denied');const context=(await c.query("select ab.tenant()tenant_id,current_setting('ab.actor')actor_id,current_setting('transaction_read_only')read_only")).rows[0];requireOk(context.tenant_id===s.tenant_id&&context.actor_id===s.user_id&&context.read_only==='off',403,'denied');
+ requireOk(m.state.companies.some((r:any)=>r.id===d.companyId)&&vehicleRight(m,d.phase==='register'?'create':'disburse',d.companyId),403,'denied');
+ const original=(await c.query('select id,tenant_id,company_id,customer_id from ab.vehicle_requests where id=$1 for update',[d.requestId])).rows[0];requireOk(original&&original.tenant_id===s.tenant_id&&original.company_id===d.companyId&&original.customer_id===d.customerId,404,'notFound');
+ requireOk(!!(await c.query("select to_regprocedure('ab.hr_actor_allowed()')ok")).rows[0]?.ok,503,'eligibilityWorkAccessUnavailable');requireOk((await c.query('select ab.hr_actor_allowed()ok')).rows[0]?.ok===true,403,'denied');return d;
+}
+export async function actualActorVehicleExecutionEligibility(c:any,m:any,s:any,cipher:any,input:VehicleExecutionInput){
+ const d=await assertActualVehicleExecutionContext(c,m,s,input);requireOk(await actualActorEligibilitySourceReady(c),503,'eligibilitySourceReviewRequired');const raw=(await c.query('select ab.service_eligibility_source_snapshot($1,$2)packet',[d.customerId,today()])).rows[0]?.packet;return projectActualActorEligibilityPacket(raw,cipher,{actorId:s.user_id,tenantId:s.tenant_id,customerId:d.customerId,asOf:today()});
+}

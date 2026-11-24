@@ -2876,5 +2876,79 @@
       "execution-chronology-linked-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "cashAcceptance": "9 linked original chronological/policy cases passed; no task-creation-only exemption or financial/vehicle creation"
+  },
+  "isolatedVehicleExecutionIntegration": {
+    "status": "partial_unpublished_isolated_only",
+    "serverCallbackConfigured": false,
+    "sourceDataChanged": false,
+    "realPolicyActivated": false,
+    "trustedOriginalHooks": [
+      "disburse fund assignment",
+      "registration before new asset/vehicle"
+    ],
+    "remaining": [
+      "bank-direct evidence",
+      "nonvehicle start/continuation",
+      "actual activation timestamp evidence",
+      "timed Owner exceptions",
+      "full source/action/FK/dependency compilation",
+      "upstream actual payment authorization",
+      "final acceptance"
+    ],
+    "tests": "4 linked original source/create/approve/execute cases on prior point; recovered locked-dependency execution/actual-actor2 passed; types/build passed",
+    "evidence": {
+      "service-three-phase-native.log": "18d69253cc482dba448353fb9f721cfe6107b23825b9888fe346e192c53828cb",
+      "service-three-phase-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "service-three-phase-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "service-execution-cash-native.log": "749a92ce239b56903e437e201790a0b952f30d60a4cc14a4eef8f8fb96f2dd65",
+      "service-execution-cash-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "recovered-execution-native.log": "a2e0574f50e99eb814454d662b8061c9c896e7020010c2688d514ba1716adbd2",
+      "recovered-execution-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "recovered-execution-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+    }
+  },
+  "snapshotPinnedAcceptance": {
+    "source": "c0e29156532c1a5b8aa1633af1a3dd52317ba05b",
+    "backend": {
+      "source": "c0e29156532c1a5b8aa1633af1a3dd52317ba05b",
+      "exit": 0,
+      "completedAt": "2026-11-24T20:26:49.387Z"
+    },
+    "ui": {
+      "source": "c0e29156532c1a5b8aa1633af1a3dd52317ba05b",
+      "exit": 0,
+      "completedAt": "2026-11-24T20:07:39.564Z"
+    },
+    "backendTests": 908,
+    "backendPassed": 908,
+    "backendFailed": 0,
+    "uiJourneys": 49,
+    "separateSyntheticClusters": [
+      5542,
+      5543
+    ],
+    "laterExecutionChangesNotClaimedCovered": true,
+    "sourcePinned": true,
+    "dependencyInstallationAtThatPoint": "previous temporary install; current recovery additionally uses npm ci locked dependencies",
+    "evidence": {
+      "backend-status.json": "1eb4fe4bba4eb49acc44afa5a57da0ed1be578a1b3a3b0d760930025a7285725",
+      "ui-status.json": "4c4c80f90eaaf0fea6ab9f35bab60e5f6be76e4d34176e3ee43f90a6222806fb",
+      "pinned-backend.log": "995b718f58d00a4f72c2bd3b330769a45a3afb678c9e320cdce581cad19c5a8e",
+      "pinned-ui49.log": "3d873e64622f549d7094cf3d23098a0d7f24a7708bd30a58bb03a1b70041bab7"
+    }
+  },
+  "environmentContinuationRecovery": {
+    "source": "c0e2915",
+    "unknownFilesDeleted": false,
+    "dataResetOrSystemRestore": false,
+    "reason": "sandbox launcher could not create /tmp/.codex mount target on full filesystem",
+    "recovery": "owned RAM workspace; recovered exactly7 known source files/evidence through the still-running owned test PostgreSQL mount namespace; original908/49 pinned statuses retained",
+    "ownedTestRuntimeVerified": {
+      "port": 5542,
+      "database": "ab_test",
+      "runtimeSuperuser": false,
+      "runtimeBypassRls": false
+    },
+    "realDatabaseTouched": false
   }
 }
