@@ -2618,13 +2618,44 @@
     "typecheck": "passed",
     "providerFreeBuild": "passed",
     "rootChecksPassed": 189,
-    "full47": "running_not_claimed",
+    "full47": "passed_application_source_70260dc_exit_0",
     "evidence": {
       "attachment-boundary-complete-native.log": "8f8d3b4638a632fd10edb3bc991276172cfe6f75bce7c10ea6c16205b9d32f6a",
       "archive-withdraw-races-and-opening-preview.log": "ae48a836adcc1e9fadd027692d5faaa9cbf227ac0d26bf536e0b24b7af44e99e",
       "attachment-boundary-final-types.log": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
       "attachment-boundary-final-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
       "attachment-boundary-final-root.log": "09a0eb122218328f0b50152c0671719144b4eda7f96d898bc44a97f37b1dc290"
+    }
+  },
+  "openingBalanceSourcePreparation": {
+    "status": "tested_unregistered_preview_only",
+    "nativeCasesPassed": 2,
+    "originalChartPeriodMoneyChecksReused": true,
+    "historicalBalanceReconciled": false,
+    "uiRegistered": false,
+    "canApply": false,
+    "canPost": false,
+    "recordsCreated": false
+  },
+  "whatsappOriginalTextLink": {
+    "status": "tested_unregistered_sandbox_only",
+    "protocolHttpDurableOriginalLinkPassed": 17,
+    "laterOriginalModelRegressionsPassed": 30,
+    "originalMessageTableReused": true,
+    "staffSenderAssigned": false,
+    "recipientModelSourcePackets": 1,
+    "actualDatabaseActorChanged": false,
+    "crossRequestCache": false,
+    "customerCompanyMatchedAutomatically": false,
+    "mediaDownloaded": false,
+    "runtimeRegistration": false,
+    "externalSent": false,
+    "realProviderConfigured": false,
+    "schemaProposalAutoInstalled": false,
+    "evidence": {
+      "whatsapp-original-message-link-linked.log": "915628e88383a119305eebdf0021582c3079a8cd4484425273ecca9b1a379e96",
+      "recipient-model-original-regressions.log": "c238a6383c10a8259bd4140d74870f527d16af2a344fb53177d4fdb7c0a464c4",
+      "recipient-model-original-types.log": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10"
     }
   }
 }

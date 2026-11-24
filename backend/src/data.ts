@@ -26,7 +26,7 @@ export async function audit(
     [randomUUID(), tenant, actor, action, kind, id, fields, randomUUID()],
   );
 }
-export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
+async function readModelPacket(c: PoolClient) {
   // One simple-protocol packet, on this caller's existing transaction and RLS context.
   // The optional narrowing overrides share this packet; no actor input is interpolated,
   // no parallel clients or cross-request/user cache are introduced.
@@ -41,6 +41,21 @@ export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
     "select key,value,tenant_id from ab.settings where key like 'user-denials-v1:%' and length(key)=52",
   ].join(';\n')) as unknown as { rows: any[] }[];
   requireOk(Array.isArray(reads) && reads.length === 8 && reads.every(r => Array.isArray(r.rows)), 502, 'modelReadIncomplete');
+  return reads;
+}
+export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
+  return modelFromPacket(await readModelPacket(c),actorId,cipher);
+}
+// Bounded, transaction-local fan-out. Same original policy construction for each ACTUAL recipient.
+// No cross-request cache, role/context changes, retained model array or permission writes.
+export async function forEachActorModel(c:PoolClient,cipher:Cipher,actorIds:string[],consume:(target:ReturnType<typeof modelFromPacket>,actorId:string)=>Promise<void>|void){
+  requireOk(Array.isArray(actorIds)&&actorIds.length<=100&&actorIds.every(id=>typeof id==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(id)),422,'actorModelRangeRequired');
+  const ids=[...new Set(actorIds.map(id=>id.toLowerCase()))];if(!ids.length)return{requested:0,active:0,unavailable:0,sourcePackets:0};
+  const reads=await readModelPacket(c);let active=0;
+  for(const id of ids){if(!reads[2].rows.some(r=>r.id===id&&r.status==='Active'))continue;const isolated=reads.map(r=>({rows:structuredClone(r.rows)}));await consume(modelFromPacket(isolated,id,cipher),id);active++;}
+  return{requested:ids.length,active,unavailable:ids.length-active,sourcePackets:1};
+}
+function modelFromPacket(reads:{rows:any[]}[],actorId:string,cipher:Cipher){
   const roles = reads[0].rows.map(
     (r) => r.data,
   );
