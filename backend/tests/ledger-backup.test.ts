@@ -3,7 +3,7 @@ import {localTestPort,localTestContainer} from './setup.js';
 import {assertEncryptedBackupEnvelope} from './backup-envelope-assertions.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import{isolatedPgTools}from'./isolated-pg-tools.js';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { ledgerFixture } from './ledger-fixture.js';
@@ -13,17 +13,13 @@ test('financial backup restores journals, invoices, allocations, custody, privat
     const bill = await f.bill('1000');
     await f.collection('600');
     const proofId = await f.proof();
-    const env = { ...process.env };
-    for (const k of ['DOCKER_HOST', 'DOCKER_CONTEXT', 'DOCKER_TLS', 'DOCKER_TLS_VERIFY', 'DOCKER_CERT_PATH'])
-        delete env[k];
-    const docker = (args: string[], input?: Buffer) => execFileSync('docker', ['--host=unix:///var/run/docker.sock', ...args], { env, stdio: ['pipe', 'pipe', 'pipe'], input });
-    const dump = docker(['exec', localTestContainer, 'pg_dump', '-U', 'postgres', '-d', f.sourceDatabase, '-Fc', '--no-owner']);
+    const tools=isolatedPgTools(f.adminUrl,f.sourceDatabase,localTestContainer),dump=tools.dump();
     const key = randomBytes(32).toString('base64'), sealed = archive(dump, new Map(f.objects.rows), key);
     assertEncryptedBackupEnvelope(sealed,key,dump);
     assert.throws(() => restoreArchive(sealed, randomBytes(32).toString('base64')));
     const restored = restoreArchive(sealed, key), name = 'ab_restore_' + randomUUID().replaceAll('-', '');
-    docker(['exec', localTestContainer, 'createdb', '-U', 'postgres', name]);ownedRestore=name;
-    docker(['exec', '-i', localTestContainer, 'pg_restore', '-U', 'postgres', '-d', name, '--no-owner'], restored.database);
+    await tools.createRestore(name);ownedRestore=name;
+    tools.restore(name,restored.database);
     target = new Pool({ host: '127.0.0.1', port: localTestPort, user: 'postgres', password: f.secret.admin, database: name });
     for (const table of ['companies', 'customers', 'finance_accounts', 'finance_items', 'finance_chart', 'finance_journals', 'finance_entries', 'vehicle_invoices', 'finance_invoice_links', 'finance_receipts', 'vehicle_allocations', 'finance_custody_moves', 'finance_events', 'documents', 'document_versions', 'role_permissions'])
         assert.deepEqual((await target.query('select row_to_json(x) row from ab.' + table + ' x order by row_to_json(x)::text')).rows, (await f.admin.query('select row_to_json(x) row from ab.' + table + ' x order by row_to_json(x)::text')).rows);

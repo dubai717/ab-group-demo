@@ -3,7 +3,7 @@ import {localTestPort,localTestContainer} from './setup.js';
 import {assertEncryptedBackupEnvelope} from './backup-envelope-assertions.js';
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import{isolatedPgTools}from'./isolated-pg-tools.js';
 import { archive, restoreArchive } from "../src/backup.js";
 import { randomBytes, randomUUID } from "node:crypto";
 import { Pool } from "pg";
@@ -197,31 +197,7 @@ test("backup/restore: new database, encrypted file objects, IDs, links, policies
     const objectSnapshot = new Map(
       [...f.objects.rows].map(([k, v]) => [k, Buffer.from(v)]),
     );
-    const db = "ab_restore_" + randomUUID().replaceAll("-", ""),
-      dump = "/tmp/" + db + ".dump";
-    execFileSync(
-      "docker",
-      [
-        "exec",
-        localTestContainer,
-        "pg_dump",
-        "-U",
-        "postgres",
-        "-d",
-        f.sourceDatabase,
-        "-Fc",
-        "--no-owner",
-        "-f",
-        dump,
-      ],
-      { stdio: "pipe" },
-    );
-    const dumpBytes = execFileSync("docker", [
-      "exec",
-      localTestContainer,
-      "cat",
-      dump,
-    ]);
+    const db = "ab_restore_" + randomUUID().replaceAll("-", ""), tools=isolatedPgTools(f.adminUrl,f.sourceDatabase,localTestContainer),dumpBytes=tools.dump();
     const backupKey = randomBytes(32).toString("base64"),
       sealed = archive(dumpBytes, objectSnapshot, backupKey);
     assertEncryptedBackupEnvelope(sealed,backupKey,dumpBytes);
@@ -232,27 +208,8 @@ test("backup/restore: new database, encrypted file objects, IDs, links, policies
     corrupt[corrupt.length - 8] ^= 1;
     assert.throws(() => restoreArchive(corrupt, backupKey));
     const restoredArchive = restoreArchive(sealed, backupKey);
-    execFileSync(
-      "docker",
-      ["exec", localTestContainer, "createdb", "-U", "postgres", db],
-      { stdio: "pipe" },
-    );
-    ownedRestore=db;
-    execFileSync(
-      "docker",
-      [
-        "exec",
-        "-i",
-        localTestContainer,
-        "pg_restore",
-        "-U",
-        "postgres",
-        "-d",
-        db,
-        "--no-owner",
-      ],
-      { stdio: "pipe", input: restoredArchive.database },
-    );
+    await tools.createRestore(db);ownedRestore=db;
+    tools.restore(db,restoredArchive.database);
     const restoreAdmin = new Pool({
       connectionString: `postgres://postgres:${f.secret.admin}@127.0.0.1:${localTestPort}/${db}`,
     });

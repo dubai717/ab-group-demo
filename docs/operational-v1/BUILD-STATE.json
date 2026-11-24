@@ -2731,5 +2731,22 @@
       "eligibility-actor-hardened.log": "b811b8da95507d7300c4c63bb028c8af10b1563ff8f92ec2d85846fd9f4ca1e4",
       "actor-hardened-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     }
+  },
+  "resumedIsolatedBackupTooling": {
+    "status": "complete_unpublished_test_infrastructure_only",
+    "sourceRestored": false,
+    "originalSupabaseTouched": false,
+    "existingLocalClustersChanged": false,
+    "syntheticTarget": "new private RAM cluster, loopback5542",
+    "unknownFilesDeleted": false,
+    "originalFiveBackupDrills": "5 passed",
+    "targetRefusal": "1 passed",
+    "evidence": {
+      "isolated-native-restores.log": "6de9b2bacac51628820d63f09339fa2ec2f6584d1b3e8a671ebd380339fffb95",
+      "native-tools-denials.log": "52fd2a0b1647210fb882f54dcc0456eba124e52bdb409a347e0c4cddbd8120ed",
+      "native-tools-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "fullBackendRun": "running; initial direct Docker failure remains failed evidence, never promoted by targeted retry",
+    "fullOperationalUI": "running"
   }
 }
