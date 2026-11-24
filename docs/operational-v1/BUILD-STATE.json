@@ -2419,5 +2419,14 @@
       "backend/src/core.ts"
     ],
     "remaining": "Bulk document import and historical orphan inventory are not complete; no historical cleanup performed."
+  },
+  "originalCustodyChildScope": {
+    "status": "tested_unpublished_uninstalled",
+    "linkedCasesPassed": 8,
+    "source": "backend/review/company-scope-handover-items.sql",
+    "compiledReadinessPromoted": false,
+    "crossBranchAccessGranted": false,
+    "originalFinanceIntegration": "passed",
+    "remaining": "Own custody, cross-branch minimum projections, full parent/source/API/report/export acceptance and compatible activation remain incomplete."
   }
 }
