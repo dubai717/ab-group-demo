@@ -1,3 +1,4 @@
+import{encryptedUploadReadLimit,retainEncryptedUpload,verifiedEncryptedUpload,retainedUploadIdentity}from'./retained-encrypted-upload.js';
 import{registerOpeningBalancePreview}from'./opening-balance-import-preview.js';
 import{requireImportWorkAccess}from'./import-work-access.js';
 import {registerCentreImport,assertCentreImportOperator} from './centre-import.js';
@@ -38,7 +39,7 @@ import { registerDocumentCenter } from './document-center.js';
 import { documentRight } from './document-access.js';
 import { registerCollectionFollowup } from './collection-followup.js';
 import {companyAuditView} from './company-audit.js';
-import {withdrawAttachment} from './attachment-history.js';
+import {withdrawAttachment,withdrawnAttachments,archivedAttachments} from './attachment-history.js';
 import {registerTestWorkspace} from './test-workspace.js';
 import {registerRegisters} from './registers.js';
 import {registerResetControl,ResetWorker} from './reset-control.js';
@@ -1051,7 +1052,7 @@ export async function build(options: Options) {
         "storageQuotaReached",
       );
       requireOk(
-        file.length > 0 && file.length <= 10 * 1024 * 1024,
+        file.length > 0 && file.length <= 10 * 1024 * 1024 && file.toString('base64')===d.base64,
         422,
         "invalidFile",
       );
@@ -1134,6 +1135,11 @@ export async function build(options: Options) {
         );
       }
       let parentVersion: any;
+      if(parent&&d.relation==='version'){
+        await c.query('select pg_advisory_xact_lock(hashtext($1))',['archive:'+parent.id]);
+        await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',['attachment:document:'+parent.id]);
+        requireOk(!(await withdrawnAttachments(c,'document',[parent.id])).has(parent.id)&&!(await archivedAttachments(c,'document',[parent.id])).has(parent.id),409,'attachmentArchived');
+      }
       if (parent) {
         parentVersion = d.parentVersionId
           ? (
@@ -1155,8 +1161,9 @@ export async function build(options: Options) {
         );
       } else requireOk(!d.parentVersionId, 422, "invalidParent");
       if (d.relation === "version") requireOk(parent, 422, "invalidParent");
-      const documentId = d.relation === "version" ? parent.id : randomUUID(),
-        versionId = randomUUID();
+      const requestKey=req.headers['idempotency-key'],recoverable=typeof objects.getIfPresent==='function'&&z.uuid().safeParse(requestKey).success?retainedUploadIdentity(['AB-MASTER-DOCUMENT-UPLOAD-1',s.tenant_id,s.user_id,owner.company_id,owner.bank_account_id,owner.user_id,d.relation,parent?.id||null,parentVersion?.id||null,sha(file),cipher.digest(JSON.stringify({...d,base64:undefined})),String(requestKey).toLowerCase()]):null;
+      const documentId = d.relation === "version" ? parent.id : recoverable?.documentId||randomUUID(),
+        versionId = recoverable?.versionId||randomUUID();
       let version = 1;
       if (d.relation === "version")
         version =
@@ -1171,10 +1178,7 @@ export async function build(options: Options) {
       const scan = options.scan ? await options.scan(file, d.mime) : "pending";
       requireOk(scan !== "rejected", 422, "fileRejected");
       const key = `${s.tenant_id}/${documentId}/${versionId}`;
-      await objects.put(
-        key,
-        Buffer.from(cipher.seal({ bytes: file.toString("base64") })),
-      );
+      await retainEncryptedUpload(objects,cipher,key,file,'documentUploadOutcomeReviewRequired');
       if (d.relation !== "version")
         await c.query(
           "insert into ab.documents(id,tenant_id,company_id,bank_account_id,user_id,category,title,description,document_date,related_id,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",
@@ -1239,7 +1243,7 @@ export async function build(options: Options) {
         const m = await model(c, s.user_id, cipher),
           row = (
             await c.query(
-              "select d.*,v.storage_key,v.original_name,v.mime,v.sha256,v.scan_status from ab.document_versions v join ab.documents d on d.id=v.document_id where v.id=$1",
+              "select d.*,v.storage_key,v.original_name,v.mime,v.size,v.sha256,v.scan_status from ab.document_versions v join ab.documents d on d.id=v.document_id where v.id=$1",
               [uuid((req.params as any).versionId)],
             )
           ).rows[0];
@@ -1247,12 +1251,7 @@ export async function build(options: Options) {
         row.investor_registry=await investorRegistryDocumentRead(c,m,row.id);if(row.category==='investorEvidence')row.investor_evidence=await investorEvidenceRead(c,m,row.id);
         documentRight(m, row, false);
         requireOk(row.scan_status === "clean", 423, "fileQuarantined");
-        const encrypted = await objects.get(row.storage_key),
-          bytes = Buffer.from(
-            cipher.open(encrypted.toString()).bytes,
-            "base64",
-          );
-        requireOk(sha(bytes) === row.sha256, 502, "integrityFailed");
+        let bytes:Buffer;try{bytes=verifiedEncryptedUpload(cipher,await objects.get(row.storage_key,encryptedUploadReadLimit(Number(row.size))),{sha256:row.sha256,size:Number(row.size)});}catch(error){if(error instanceof ApiError&&error.code==='fileIntegrityFailed')throw new ApiError(502,'integrityFailed');throw error;}
         await audit(
           c,
           s.tenant_id,
