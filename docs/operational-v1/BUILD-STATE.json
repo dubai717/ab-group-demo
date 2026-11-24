@@ -1861,5 +1861,26 @@
       "employee-related children/documents/payroll",
       "full compiled/rollback/API/export acceptance"
     ]
+  },
+  "customerScopeRelationshipVerification": {
+    "asOf": "2026-11-24",
+    "status": "uninstalled_tested_relationship_candidate",
+    "coherentNativePassed": 6,
+    "typecheck": "passed",
+    "staticPassed": 189,
+    "sourceChecksums": {
+      "backend/review/company-scope-customers.sql": "a0294f46fc507e50955000443c6bd94e12326a78d7425e77e2183e0947defe71",
+      "backend/tests/company-scope-customers.test.ts": "133c5761336a5d36336aa92b76d0d682ee08d5d9fa913605a30d39e282294dff"
+    },
+    "logSha256": "244e04c41f33ba050925ea2f45fd629e262e8dd04d4103903107c82a9de36e3d",
+    "recursionCorrectedWithoutDroppingReferenceGuard": true,
+    "forgedNewLinksRejected": true,
+    "activationReadinessRemainsFalse": true,
+    "remaining": [
+      "original customer API/document/report/export source privacy adapters",
+      "files and linked-child relationship classification",
+      "combined compiled/signature/rollback review",
+      "actual original membership apply"
+    ]
   }
 }
