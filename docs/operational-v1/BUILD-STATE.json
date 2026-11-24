@@ -903,9 +903,9 @@
     }
   },
   "currentCI": {
-    "36": "running on efaf315; operational-ui success verified",
-    "37": "pending on c4d4b77; preserved",
-    "checkpointContainsLaterSettings": true,
+    "36": "success",
+    "37": "success",
+    "38": "new automatic checks requested by normal PR head push; outcome not verified",
     "mergeOrDeployment": false
   },
   "serviceEligibilityLatest": {
@@ -1842,5 +1842,24 @@
     "visualReview": "Arabic390px actual settings form inspected",
     "full38PredatesPresentationFix": true,
     "financialOrHostedEffect": false
+  },
+  "personnelScopeRelationshipVerification": {
+    "asOf": "2026-11-24",
+    "status": "uninstalled_tested_relationship_candidate",
+    "nativePassed": 2,
+    "typecheck": "passed",
+    "sourceChecksums": {
+      "backend/review/company-scope-personnel.sql": "66ebb5a77699ca269a0a45a0a09539062df3a5ab1d00186bb8cac3f13b857631",
+      "backend/tests/company-scope-personnel.test.ts": "c44ee912624bb30290be29557d3420c4d9a312f1e23723a3bdd2af1437eb40a7"
+    },
+    "logSha256": "c13a7e58b29015ff40201790f80cc93d98000ab38f895cfc15cb4d0762d173a7",
+    "actualScopeApply": false,
+    "hostedChanges": false,
+    "remaining": [
+      "non-bypass technical authentication-owner compatibility",
+      "cross-company HR edit/action field bounds",
+      "employee-related children/documents/payroll",
+      "full compiled/rollback/API/export acceptance"
+    ]
   }
 }
