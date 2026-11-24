@@ -7,7 +7,7 @@
         root.LedgerPolicy = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
     'use strict';
-    const rights = ['view', 'invoice_create', 'invoice_correct', 'invoice_import', 'collect', 'collection_override', 'hand_over', 'receive', 'deposit', 'deposit_verify', 'fund_manage', 'petty_spend', 'voucher_create', 'voucher_approve', 'voucher_batch', 'voucher_cancel', 'cheques', 'settle', 'journal_create', 'journal_approve', 'account_manage', 'item_manage', 'statement_upload', 'reconcile', 'close', 'group_close', 'report', 'export', 'configure', 'cards', 'card_settle', 'intercompany', 'audit'].map(x => 'ledger_' + x);
+    const rights = ['view', 'invoice_create', 'invoice_correct', 'invoice_import', 'collect', 'cross_branch_collect', 'collection_override', 'hand_over', 'receive', 'deposit', 'deposit_verify', 'fund_manage', 'petty_spend', 'voucher_create', 'voucher_approve', 'voucher_batch', 'voucher_cancel', 'cheques', 'settle', 'journal_create', 'journal_approve', 'account_manage', 'item_manage', 'statement_upload', 'reconcile', 'close', 'group_close', 'report', 'export', 'configure', 'cards', 'card_settle', 'intercompany', 'audit'].map(x => 'ledger_' + x);
     function units(x) {
         if (!/^-?\d{1,15}(\.\d{1,3})?$/.test(String(x)))
             throw Error('invalidAmount');

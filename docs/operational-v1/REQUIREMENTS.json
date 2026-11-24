@@ -278,9 +278,13 @@
         "backend/src",
         "backend/review/company-scope-handover-items.sql",
         "backend/tests/company-scope-handover-items.test.ts",
-        "docs/operational-v1/CUSTODY-CHILD-SCOPE.md"
+        "docs/operational-v1/CUSTODY-CHILD-SCOPE.md",
+        "backend/review/cross-branch-collection-source.sql",
+        "backend/src/cross-branch-collection-source.ts",
+        "backend/tests/cross-branch-collection-source.test.ts",
+        "docs/operational-v1/CROSS-BRANCH-COLLECTION-SOURCE.md"
       ],
-      "remaining": "تابع للمالية في PR115؛ لا دفتر مواز ولا تفعيل هنا."
+      "remaining": "تابع للمالية في PR115؛ لا دفتر مواز ولا تفعيل هنا. أضيفت صلاحية مستقلة بلا منح تلقائي ومصدر قراءة خاص محدود لعميل/شركة من الفواتير الأصلية مع اختبار موظف خارج نطاق ملف الشركة، والسداد الجزئي والتراجع عن الصلاحية وحدود القراءة وعدم تغيير المال. المصدر غير مثبت وغير موصول؛canCollect=false. ربط موقع الاستلام وقوالب/استثناءات التفويض وواجهة التحصيل والكاتب المالي الأصلي وسياسات المصادر والعهد والإيداع والقبول الكامل أعمال برمجية باقية."
     },
     {
       "id": "6",

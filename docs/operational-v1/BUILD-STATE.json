@@ -3020,5 +3020,26 @@
       "communication-attachment-recovery.log": "34fb0f04ff09243a80bc9d1d5bc2749737e07ae5ef8f7970ba16e05b36020557",
       "communication-attachment-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     }
+  },
+  "crossBranchMinimalSource": {
+    "status": "partial_unpublished_uninstalled_unregistered",
+    "canCollect": false,
+    "grantsAssigned": false,
+    "financialWrites": false,
+    "tests": "2 linked native; final focused native1; TypeScript/provider-free build/root162 pass",
+    "remaining": [
+      "actual receiving centre/site",
+      "standard/delegation/narrowing source integration",
+      "original receipt/allocation/journal/custody writer with narrow source policies",
+      "original UI and report/export integration",
+      "complete cross-branch financial acceptance"
+    ],
+    "evidenceSha256": {
+      "cross-branch-source-native-final.log": "dc44582635a1391af0af41371a3dee4dd11ca096f687505758b5d3257da0c4d1",
+      "cross-branch-source-final-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cross-branch-source-bounds.log": "82051d00e75f0fcd1fa7b7255f55513cd7ac94ab38e365161b1ea6884c44431a",
+      "cross-branch-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "cross-branch-root.log": "1e39fbf9f018e9f3f4fe927f5bad8f70597418718234babcc6dbdbf7ce40515e"
+    }
   }
 }

@@ -1,3 +1,4 @@
+import{reviewedPrivateJsonSourceReady}from'./reviewed-private-json-source.js';
 // Review-only private source adapter. No route, service guard, actor substitution or live installer.
 import{z}from'zod';import{requireOk,ApiError}from'./core.js';import{L}from'./ledger-domain.js';import{today,vehicleRight}from'./vehicle-domain.js';import{customerCan}from'./customers.js';import{decodeCommunicationCaseBook}from'./communication-cases.js';import{receivableAdjustmentFacts,unappliedReceiptCreditFacts}from'./receivable-amount-facts.js';import{serviceEligibilitySourceProjection}from'./service-eligibility-source.js';
 const uuid=z.uuid(),money=z.string().regex(/^\d{1,18}(?:\.\d{1,3})?$/),ciphertext=z.string().min(1).max(8388608),date=z.iso.date(),nullableId=uuid.nullable();
@@ -21,16 +22,8 @@ export function projectActualActorEligibilityPacket(raw:unknown,cipher:any,conte
 
 // Explicit reviewed body pin. Changing a proposal requires review and a new test, never runtime repair.
 export const eligibilitySourceBodyHash='9d1a4b97405c6e577481611923d17500bfecdeec6c32164eb9d885c7c20a2e88';
-export async function actualActorEligibilitySourceReady(c:any){
- const r=(await c.query(`select p.prosecdef,p.provolatile,p.proretset,p.prokind,p.proleakproof,p.proconfig,p.prorettype='jsonb'::pg_catalog.regtype returns_json,
- pg_catalog.pg_get_userbyid(p.proowner)owner,pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(p.prosrc,'UTF8')),'hex')body_hash,
- pg_catalog.has_function_privilege(current_user,p.oid,'EXECUTE')can_execute,
- exists(select 1 from pg_catalog.aclexplode(coalesce(p.proacl,pg_catalog.acldefault('f',p.proowner)))a where a.privilege_type='EXECUTE'and a.grantee not in(p.proowner,'ab_runtime'::pg_catalog.regrole::oid))public_execute,
- exists(select 1 from pg_catalog.pg_roles r where r.rolname=current_user and current_user='ab_runtime' and not r.rolsuper and not r.rolbypassrls and pg_catalog.pg_has_role(current_user,'ab_runtime','USAGE'))private_runtime,
- exists(select 1 from pg_catalog.pg_roles r where(r.rolsuper or r.rolbypassrls)and pg_catalog.pg_has_role(current_user,r.oid,'MEMBER'))bypass_member
- from pg_catalog.pg_proc p where p.oid=pg_catalog.to_regprocedure('ab.service_eligibility_source_snapshot(uuid,date)')`)).rows[0];
- return !!r&&r.prosecdef&&r.provolatile==='s'&&!r.proretset&&r.prokind==='f'&&!r.proleakproof&&r.returns_json&&r.owner==='postgres'&&r.body_hash===eligibilitySourceBodyHash&&JSON.stringify(r.proconfig)===JSON.stringify(['search_path=pg_catalog, ab, pg_temp'])&&r.can_execute&&!r.public_execute&&r.private_runtime&&!r.bypass_member;
-}
+export const actualActorEligibilitySourceReady=(c:any)=>reviewedPrivateJsonSourceReady(c,'ab.service_eligibility_source_snapshot(uuid,date)',eligibilitySourceBodyHash);
+
 async function actualActorEligibilityRead(c:any,m:any,s:any,cipher:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general'},readOnlyReview:boolean,approvalPhase=false){
  const d=z.object({customerId:uuid,companyId:uuid,type:z.enum(['vehicle','residence','general'])}).strict().parse(input);
  requireOk(!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user')&&m.actor.id===s.user_id&&m.actor.status==='Active'&&m.actor.roleId!=='investor',403,'denied');
