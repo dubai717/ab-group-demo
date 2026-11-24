@@ -1,3 +1,4 @@
+import {registerCentreImport,assertCentreImportOperator} from './centre-import.js';
 import {assertEmployeeImportOperator} from './employee-import-preview.js';
 import{registerWorkScopePreview}from'./work-scope-preview.js';
 import{registerWorkLocations}from'./employee-work-location.js';
@@ -82,6 +83,7 @@ import {registerFinance,bankNotice} from "./finance.js";
 export interface Options {
   companyImportEnabled?:boolean;
   employeeImportEnabled?:boolean;
+  centreImportEnabled?:boolean;
   backupStatusRead?:BackupStatusRead;
   pool: Pool;
   key: string;
@@ -237,15 +239,18 @@ export async function build(options: Options) {
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
         const companyImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/companies/run';
         const employeeImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/employees/run';
+        const centreImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/centres/run';
         let importModel:any;
         // Serialize permission mutations before loading their authority snapshot.
         // This also prevents a queued grant from using a pre-standard-change issuer.
-        if(!s.viewAs&&req.method!=='GET'&&(employeeImportRun||companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
+        if(!s.viewAs&&req.method!=='GET'&&(centreImportRun||employeeImportRun||companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':security-roles']);
         // Serialize original company mutations before reading the directory used by import preview receipts.
-        if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(employeeImportRun||companyImportRun||/^\/api\/companies(?:\/|$)/.test(req.url.split('?')[0])))
+        if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(centreImportRun||employeeImportRun||companyImportRun||/^\/api\/companies(?:\/|$)/.test(req.url.split('?')[0])))
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':company-directory']);
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(employeeImportRun||/^\/api\/personnel(?:\/|$)/.test(req.url.split('?')[0])))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':personnel-import-directory']);
+        if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(centreImportRun||req.url.split('?')[0]==='/api/operating-centres/apply'))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':operating-centre-directory']);
+        if(centreImportRun){importModel=await model(c,s.user_id,cipher);assertCentreImportOperator(importModel);requireOk(options.centreImportEnabled===true,503,'centreImportApplyNotEnabled');if((await c.query("select to_regprocedure('ab.hr_actor_allowed()')ok")).rows[0].ok)requireOk((await c.query('select ab.hr_actor_allowed()ok')).rows[0].ok,403,'denied');requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
         if(employeeImportRun){importModel=await model(c,s.user_id,cipher);assertEmployeeImportOperator(importModel);requireOk(options.employeeImportEnabled===true,503,'employeeImportApplyNotEnabled');if((await c.query("select to_regprocedure('ab.hr_actor_allowed()')ok")).rows[0].ok)requireOk((await c.query('select ab.hr_actor_allowed()ok')).rows[0].ok,403,'denied');requireOk(typeof req.headers['idempotency-key']==='string',422,'employeeImportKeyRequired');}
         if(companyImportRun){
           importModel=await model(c,s.user_id,cipher);assertCompanyImportOperator(importModel);requireOk(options.companyImportEnabled===true,503,'companyImportApplyNotEnabled');
@@ -296,13 +301,14 @@ export async function build(options: Options) {
             JSON.stringify(result),
           ]);
         return result;
-      },{...(s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:{}),...(req.method==='GET'&&req.url.split('?')[0]==='/api/ledger/package/document-register'?{repeatableRead:true}:{}),...(req.method==='GET'&&/^\/api\/customers\/[0-9a-f-]+\/service-eligibility-review$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&['/api/data-imports/companies/preview','/api/data-imports/employees/preview'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&/^\/api\/users\/[0-9a-f-]+\/work-scope\/preview$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{})});
+      },{...(s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:{}),...(req.method==='GET'&&req.url.split('?')[0]==='/api/ledger/package/document-register'?{repeatableRead:true}:{}),...(req.method==='GET'&&/^\/api\/customers\/[0-9a-f-]+\/service-eligibility-review$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&['/api/data-imports/centres/preview','/api/data-imports/companies/preview','/api/data-imports/employees/preview'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&/^\/api\/users\/[0-9a-f-]+\/work-scope\/preview$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{})});
     };
   registerPermissionAdmin(app,call,cipher);registerSecurityRoles(app,call,cipher);registerOperatingCentres(app,call,cipher);registerOperatingCentreWriter(app,call,cipher);registerWorkLocations(app,call,cipher);registerWorkScopePreview(app,call,cipher);
   registerFinance(app,call,cipher);
   (options as any).requestCreators={};
   registerCustomers(app,call,cipher,options);
   registerCompanyImportPreview(app,call,cipher,options.companyImportEnabled===true);
+  registerCentreImport(app,call,cipher,options.centreImportEnabled===true);
   registerServiceEligibilityReview(app,call,cipher);
   registerBackupStatus(app,call,options.backupStatusRead);
   registerCollectionFollowup(app,call,cipher);

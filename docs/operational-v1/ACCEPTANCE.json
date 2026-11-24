@@ -4047,5 +4047,33 @@
     },
     "ownerQuestionPending": "Independent destination and daily/monthly retention; no secrets requested",
     "allV1Complete": false
+  },
+  "originalCentreImport": {
+    "status": "tested_unpublished_disabled_by_default",
+    "linkedNativePassed": 10,
+    "browser": "passed_ar_en_three_widths_and_parent_context",
+    "full45Journey": "running_not_claimed_success",
+    "typecheck": "passed",
+    "originalDatedWriterReused": true,
+    "sourceAppliedOnHost": false,
+    "scopeChanged": false,
+    "financialEffect": false,
+    "sourceHashes": {
+      "backend/src/centre-import.ts": "fff30faa90be438783ff6b2a2313ee8253c11bebe0b507ddb7e39a1ca355b083",
+      "backend/src/app.ts": "66100c01d0faebd27f0f69b66369f7eee4f598ea15b6b095a3c10fb526d725c1",
+      "backend/src/view-as.ts": "fe86259692d50e5dd0f9c32a2624cae9ad7a3bcddfcd8b43515ac76da3e62451",
+      "data-import-ui.js": "3126a34d99fc5ea9c4af9b2464be825dff332385ea8249c2765276e3ee7325e5",
+      "operating-centres-ui.js": "70bdbb0080a5449bcc62ce346dc6f16245f20e2180f2f0dfc5cb3d8d0394a820",
+      "backend/tests/centre-import.test.ts": "8e0d56e8a5ec2d2cafc14b1dc18f415e194b08640823527599c86d3e0b4f4d09",
+      "backend/tests/centre-import.browser.cjs": "783eb2878bc62c1b1d28ce6808109cd8311851465439f5f105c4250fe92783c0",
+      "backend/tests/serve-organization-security-fixture.ts": "934097772b318059efe1f49b0e4a092fbea657dca77edcb2145abeefab41c506",
+      "backend/tests/operational-v1-suite.browser.cjs": "b0c99dae40c387b458688cff72f92aa3e5ec1bb8e7500bea9987e7133e462042"
+    },
+    "evidenceHashes": {
+      "work/evidence/centre-import-final-native.log": "6b1b6cbd31d7f319cb575e4a6a403a894f75bb628c6bed7dea0d7368571c8531",
+      "work/evidence/centre-import-ui-verified.log": "cf4d0e7a24398fd428c5b1143b683030be01e2a6af5fa0dc3ba60cdfd75ac42a",
+      "work/evidence/centre-import-final-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "allV1Complete": false
   }
 }
