@@ -3041,5 +3041,40 @@
       "cross-branch-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
       "cross-branch-root.log": "1e39fbf9f018e9f3f4fe927f5bad8f70597418718234babcc6dbdbf7ce40515e"
     }
+  },
+  "independentBackupRunPreparation": {
+    "status": "partial_unpublished_inactive_sandbox_only",
+    "spoolTestsPassed": 11,
+    "linkedCadenceAndDestinationTestsPassed": 20,
+    "noRealCaptureOrUpload": true,
+    "actualSchedulerInstalled": false,
+    "sourceSnapshotIdentityVerified": false,
+    "databaseRestoreVerified": false,
+    "hostLossDurabilityProven": false,
+    "noRetentionDeletion": true,
+    "remaining": [
+      "approved independent destination/retention",
+      "secure persistent volume and credentials",
+      "verified original source capture wiring",
+      "cross-process capture lease",
+      "durable scheduler and Owner failure alerts",
+      "compatible hosted isolated Auth/Storage restore",
+      "protected release approval"
+    ],
+    "evidenceSha256": {
+      "backup-spool-final-unit.log": "46b8f8e70c7ed1590eff7155be3ab94916e048d607486e2aabc0a2e728472d0b",
+      "backup-spool-final-linked.log": "06b83a005f97fc9ebc7062615080083acf17edace1eb94f9cfdc193bb39aef19",
+      "backup-spool-types-confirmed.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "backup-spool-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+    }
+  },
+  "pinnedBbeBrowser": {
+    "source": "bbe45552e2c6af9e322d4e9a81fc677da27e8258",
+    "journeys": 49,
+    "exitCode": 0,
+    "sourceUnchanged": true,
+    "isolatedPort": 5543,
+    "nativeFullSuite": "still running, not declared passed",
+    "laterBackupChangesCovered": false
   }
 }
