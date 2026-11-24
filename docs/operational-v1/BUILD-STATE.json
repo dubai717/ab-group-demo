@@ -3267,12 +3267,19 @@
     "source": "e03013bc6cda372963ca8dccb2b7f55f48cee66f",
     "uiJourneysPassed": 49,
     "uiSourceUnchanged": true,
-    "backendStatus": "running",
+    "backendStatus": "failed_fixture_digest",
     "laterMediaAndMasterDocumentChangesCovered": false,
     "evidenceSha256": {
       "ui.log": "9cb0dabc1dc5b3c9d73d4649d15f4b506968d98e75759a0a4192ed919997d043",
-      "ui-status.json": "84e80111875c9564b5fe9af5b4cb092fd54363b69f79a7eb7013d69ca0222de2"
-    }
+      "ui-status.json": "84e80111875c9564b5fe9af5b4cb092fd54363b69f79a7eb7013d69ca0222de2",
+      "backend.log": "eeb67429164d3e0e43af383ebfc2bb73b01a830266eb3aee32e1947e93fa711c",
+      "backend-status.json": "77222c6b7d75b3efdc0b6f935b7b7f2735ca933c637975d0c321a0cf500833e8"
+    },
+    "backendTests": 946,
+    "backendPassed": 945,
+    "backendFailed": 1,
+    "backendSourceUnchanged": true,
+    "failure": "Original scanner fixture had literal synthetic-digest; strict download integrity correctly refused it. Fixture corrected to actual SHA256 and corrupt-byte denial retained; full later run still required."
   },
   "originalMasterDocumentRecovery": {
     "status": "implemented_unpublished",
@@ -3289,6 +3296,15 @@
       "master-document-recovery-types4.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "master-document-recovery-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
       "master-document-recovery-root.log": "c8a4d21ad46a51b48189b8230f45995732dab0f4d12630fe23065e6be44a979f"
+    }
+  },
+  "scannerFixtureIntegrityCorrection": {
+    "sourceFixtureOnly": true,
+    "productionIntegrityWeakened": false,
+    "linkedCasesPassed": 11,
+    "newFullAcceptanceClaimed": false,
+    "evidenceSha256": {
+      "company-document-import-native4.log": "6e080471eb48342423f5567c593bb74799e0148da264351ca1ead79c53ccdf32"
     }
   }
 }
