@@ -26,7 +26,7 @@ export function registerCompanyImportPreview(app:any,call:any){
   return {name:'companies-template.'+q.source,mime:q.source==='csv'?'text/csv;charset=utf-8':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',base64:(q.source==='csv'?delimitedImportTemplate(fields):importWorkbook(fields)).toString('base64'),fields,previewOnly:true,canApply:false};
  }));
  app.post('/api/data-imports/companies/preview',call(async(c:any,m:any,_s:any,req:any)=>{
-  need(m);const d=z.object({format:z.enum(['csv','xlsx']),base64:z.string().min(4).max(10666668)}).strict().parse(req.body),bytes=importBytes(d.base64);
+  need(m);const context=(await c.query("select current_setting('transaction_isolation')isolation,current_setting('transaction_read_only')read_only")).rows[0];requireOk(context.isolation==='repeatable read'&&context.read_only==='on',409,'companyPreviewSnapshotRequired');const d=z.object({format:z.enum(['csv','xlsx']),base64:z.string().min(4).max(10666668)}).strict().parse(req.body),bytes=importBytes(d.base64);
   const rows=d.format==='csv'?delimitedImportRows(bytes):await customerSpreadsheet(bytes,null);
   requireOk(rows.length>0&&rows.length<=200,422,'companyPreviewRowLimit');
   const known=new Set(fields.map(f=>f.key)),unknownColumns=[...new Set(rows.flatMap((r:any)=>Object.keys(r).filter(k=>!known.has(k))))];
@@ -42,6 +42,6 @@ export function registerCompanyImportPreview(app:any,call:any){
     plan.push({row:i+2,source,state:sameSource?'duplicateSource':matches.length?'needsReview':'valid',matches:matches.map((co:any)=>({id:co.id,arabicName:co.arabicName,englishName:co.englishName,tradeLicenseNumber:co.tradeLicenseNumber,issuingAuthority:co.issuingAuthority||''}))});
    }catch(e:any){plan.push({row:i+2,source,state:'invalid',code:e instanceof ApiError?e.code:'invalidRow',fieldErrors:e instanceof ApiError?(e as any).fieldErrors||{}:{}});}
   }
-  return {previewOnly:true,canApply:false,sourceHash:sha(bytes),fields,plan,counts:{total:plan.length,valid:plan.filter(r=>r.state==='valid').length,review:plan.filter(r=>r.state==='needsReview').length,duplicates:plan.filter(r=>r.state==='duplicateSource').length,invalid:plan.filter(r=>r.state==='invalid').length},reason:'companyImportApplyNotAvailable'};
+  return {snapshot:{isolation:context.isolation,readOnly:true},previewOnly:true,canApply:false,sourceHash:sha(bytes),fields,plan,counts:{total:plan.length,valid:plan.filter(r=>r.state==='valid').length,review:plan.filter(r=>r.state==='needsReview').length,duplicates:plan.filter(r=>r.state==='duplicateSource').length,invalid:plan.filter(r=>r.state==='invalid').length},reason:'companyImportApplyNotAvailable'};
  }));
 }

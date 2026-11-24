@@ -3683,5 +3683,29 @@
     "latestUnpushedCodeCI": "not_yet_triggered",
     "merge": false,
     "deployment": false
+  },
+  "companyPreviewReadOnlyCorrection": {
+    "asOf": "2026-11-24",
+    "status": "tested_unpublished",
+    "scope": "company preview has repeatable-read/read-only transaction; no request_dedup source cache",
+    "nativePassed": 8,
+    "nativeIncludes": "original View As and company preview snapshot/zero-cache assertions",
+    "browser": "actual original company preview AR/EN1440/768/390 passed",
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "sourceChecksums": {
+      "backend/src/app.ts": "cc95a211608c0c05b99bf20c6f8226a551e5eabd6207cee073e1da2661cbc865",
+      "backend/src/view-as.ts": "12365fea51185576cc9ab1817bc0583e274e938ff272f73aa1d30be420f0a6b1",
+      "backend/src/company-import-preview.ts": "b4992acfa24419d0de0269e31d70a51adf370cc186c6a85057b7727bee3214af",
+      "backend/tests/company-import-preview.test.ts": "daf23601fa4823bd8e219dd347d8f666cdcca3edb3acc85d5a99b43b2c550ddd"
+    },
+    "logs": {
+      "company-preview-readonly-native.log": "ff7afe9aaac0cea5dbe0937d17acdc46bf4531d7f581de3f0f304751b7e6512b",
+      "company-preview-readonly-browser.log": "eed296272be8ff2aa607386552c9855afbc819026fe5c28e57527deb53ab1f81",
+      "company-preview-readonly-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "company-preview-readonly-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+    },
+    "actualImport": false,
+    "releaseReady": false
   }
 }
