@@ -12,7 +12,7 @@ export function verifiedPersonnelUpload(cipher:any,encrypted:Buffer,expected:{sh
 export async function retainPersonnelUpload(objects:RecoverablePersonnelObjects,cipher:any,path:string,bytes:Buffer){
  const encrypted=Buffer.from(cipher.seal({bytes:bytes.toString('base64')}));
  try{await objects.put(path,encrypted);return{recovered:false};}catch(error:any){
-  if([400,401,403,422].includes(error.status)||(Number.isInteger(error.providerStatus)&&error.providerStatus<500&&error.providerStatus!==409)||!objects.getIfPresent)throw error;
+  if([400,401,403,422].includes(error.status)||(Number.isInteger(error.providerStatus)&&error.providerStatus<500&&error.providerStatus!==409&&error.providerConflict!==true)||!objects.getIfPresent)throw error;
   // A create-only conflict or lost reply may follow a completed upload. Read only that exact key.
   const existing=await objects.getIfPresent(path);if(!existing)throw error;
   try{verifiedPersonnelUpload(cipher,existing,{sha256:sha(bytes),size:bytes.length});}catch{throw new ApiError(409,'personnelUploadOutcomeReviewRequired');}

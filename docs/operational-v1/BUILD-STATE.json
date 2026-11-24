@@ -2464,5 +2464,16 @@
     "uiSyntax": "passed",
     "typecheck": "passed",
     "providerFreeBuild": "passed"
+  },
+  "originalStorageDuplicateCompatibility": {
+    "status": "tested_unpublished",
+    "linkedNativePassed": 12,
+    "originalApiWithHttpProvider": "passed_late_db_rollback_then_legacy_400_duplicate_recovery",
+    "maximumErrorReplyBytes": 4096,
+    "providerMessagesExposed": false,
+    "upsertEnabled": false,
+    "actualSupabaseChanged": false,
+    "typecheck": "passed",
+    "providerFreeBuild": "passed"
   }
 }

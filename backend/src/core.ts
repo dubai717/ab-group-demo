@@ -222,7 +222,7 @@ export function supabase(
   const objects: ObjectStore = {
     async put(name, bytes) {
       requireOk(adminKey, 503, "storageNotConfigured");
-      await call(
+      const r=await call(
         objectPath(name),
         adminKey,
         {
@@ -233,8 +233,13 @@ export function supabase(
           },
           body: new Uint8Array(bytes),
         },
-        adminKey,
+        adminKey,true,
       );
+      if(!r.ok){
+        let duplicate=r.status===409;
+        if(r.status===400&&r.body){const reader=r.body.getReader(),chunks:Buffer[]=[];let size=0;try{for(;;){const part=await reader.read();if(part.done)break;size+=part.value.byteLength;if(size>4096)throw Error('limit');chunks.push(Buffer.from(part.value));}const body=JSON.parse(Buffer.concat(chunks).toString());duplicate=['ResourceAlreadyExists','KeyAlreadyExists','already_exists','Duplicate'].includes(body.code)||['ResourceAlreadyExists','KeyAlreadyExists','already_exists','Duplicate'].includes(body.error);}catch{/* No unbounded/provider error text is retained. */}finally{await reader.cancel().catch(()=>{});reader.releaseLock();}}else await r.body?.cancel().catch(()=>{});
+        throw Object.assign(new ApiError(duplicate?409:r.status===400||r.status===401?401:502,duplicate?'storageObjectAlreadyExists':'providerUnavailable'),{providerStatus:r.status,providerConflict:duplicate});
+      }
     },
     async get(name) {
       requireOk(adminKey, 503, "storageNotConfigured");
