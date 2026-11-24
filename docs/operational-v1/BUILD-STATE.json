@@ -2718,7 +2718,7 @@
       "providerFreeBuild": "passed",
       "rootTests": "162 passed; separate baseline from previous 189",
       "originalScopeReceivables": "17 passed",
-      "fullOperationalBrowser": "running",
+      "fullOperationalBrowser": "47 passed, run started on55180fc before opening-source UI addition; not latest48 acceptance",
       "hardenedActualActor": "passed including original unapplied confirmed receipt and private-only function ACL"
     },
     "evidence": {
@@ -2748,5 +2748,22 @@
     },
     "fullBackendRun": "running; initial direct Docker failure remains failed evidence, never promoted by targeted retry",
     "fullOperationalUI": "running"
+  },
+  "openingSourceWorkbench": {
+    "asOf": "2026-11-24",
+    "status": "partial_unpublished_readonly_review_interface",
+    "registered": "Owner template and readonly preview only",
+    "financialWriter": false,
+    "realImport": false,
+    "historicalComparisonComplete": false,
+    "partyMappingComplete": false,
+    "acceptance": "11 linked native; AR/EN browser at1440/768/390; TypeScript/provider-free build passed",
+    "sourceDataChanged": false,
+    "evidence": {
+      "opening-linked-final.log": "98d17eeaaea3a613744bd8904a894215ce587f31aed0528353a80b962cf27b0d",
+      "opening-final-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "opening-final-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "opening-browser-final.log": "8b80b497cc6e661c944c1ae63abb09e35364ec2f20ff6d15f53b97f51be3b29b"
+    }
   }
 }
