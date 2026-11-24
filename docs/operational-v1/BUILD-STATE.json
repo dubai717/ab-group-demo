@@ -3076,5 +3076,22 @@
     "isolatedPort": 5543,
     "nativeFullSuite": "still running, not declared passed",
     "laterBackupChangesCovered": false
+  },
+  "combinedScopeCandidates": {
+    "status": "partial_unpublished_test_only",
+    "candidateFilesInstalledInSyntheticFixture": 11,
+    "linkedCasesPassed": 6,
+    "originalCorePinUnchanged": true,
+    "canApply": false,
+    "sourcePayloadVerified": false,
+    "actualScopeActivated": false,
+    "browser": "AR/EN1440/768/390 readiness explanation, retained edits/retry/target switching passed",
+    "evidenceSha256": {
+      "scope-composition-native3.log": "b159cc0d8dd3d7d66592907f1455cfacee023fcf0fb653ff7531e6825be06057",
+      "scope-composition-linked.log": "35486e852a729157e4caa4a5d1a50b7f9cdacd1a7c7079a1aad36aa72cec6a79",
+      "scope-composition-readiness-native.log": "bb9fb0c0fdca07fe6d6dd391e12ba0724990d208611638a4fd1900cf13378d47",
+      "scope-readiness-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "scope-readiness-browser.log": "4246cc517fbba90111972bffd04314f9cb0e4a6e6ff5f1459b455c3ff1cf3a15"
+    }
   }
 }
