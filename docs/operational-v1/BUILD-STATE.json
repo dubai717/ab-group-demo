@@ -2674,6 +2674,22 @@
     "evidence": {
       "original-communications-model-budget-native.log": "619765370db09951a12c4801219920091ee8b105c89afd3ae56be21d8901b90c",
       "original-communications-model-budget-types.log": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10"
+    },
+    "templateSourceBudget": {
+      "status": "tested_unpublished",
+      "linkedNativePassed": 26,
+      "fiveRecipientPreviewModelPackets": 2,
+      "financialInvoiceReads": 1,
+      "financialInvoiceRowsTransferred": 1,
+      "unrelatedCompanyInvoicesTransferred": false,
+      "customerNameCacheLeaksToUnauthorizedRecipient": false,
+      "stalePaidBalanceConfirmation": "refused_and_fresh_balance_preserved",
+      "sourceFinancialFunctionsChanged": false,
+      "typecheck": "passed",
+      "evidence": {
+        "communication-template-budget-linked.log": "452d1f8af3d7b0dbbaf4a550c65b3e0f70a957adee5793010a55d569546c9110",
+        "communication-template-budget-current-types.log": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10"
+      }
     }
   }
 }
