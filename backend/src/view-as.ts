@@ -4,7 +4,7 @@ import {audit} from './data.js';
 import {assertTestAccess} from './test-users.js';
 export const viewAsCookie='ab_view_as';
 const controls=new Set(['/api/view-as/start','/api/view-as/stop','/api/view-as/control','/api/logout']);
-export const readonlyPostPaths=new Set(['/api/data-imports/companies/preview','/api/central-reports/preview','/api/central-reports/export','/api/personnel/export','/api/communication-templates/preview','/api/communications/from-template/preview']);
+export const readonlyPostPaths=new Set(['/api/data-imports/employees/preview','/api/data-imports/companies/preview','/api/central-reports/preview','/api/central-reports/export','/api/personnel/export','/api/communication-templates/preview','/api/communications/from-template/preview']);
 export const isReadOnlyPost=(path:string)=>readonlyPostPaths.has(path)||/^\/api\/users\/[a-f0-9-]{36}\/work-scope\/preview$/i.test(path)||/^\/api\/central-reports\/runs\/[a-f0-9-]{36}\/export$/i.test(path);
 async function assertPreviewTarget(pool:any,s:any,target:string,testEnabled:boolean){try{await transaction(pool,s.tenant_id,target,async c=>{if((await c.query("select to_regprocedure('ab.hr_actor_allowed()')ok")).rows[0].ok)requireOk((await c.query('select ab.hr_actor_allowed()ok')).rows[0].ok,403,'viewAsUnavailable');await assertTestAccess(c,target,testEnabled);},{readOnly:true,auditActor:s.user_id});}catch(error){if(error instanceof ApiError&&error.status===401)throw new ApiError(403,'viewAsUnavailable');throw error;}}
 export async function projectOwnerSession(pool:any,cipher:any,s:any,req:any,testEnabled:boolean){

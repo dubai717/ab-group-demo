@@ -2151,5 +2151,57 @@
     "financialEffect": false,
     "permissionsChanged": false,
     "allV1Complete": false
+  },
+  "originalEmployeeImportPreview": {
+    "status": "preview_tested_unpublished_apply_unimplemented",
+    "linkedNativePassed": 65,
+    "guardUnitPassed": 1,
+    "rootChecksPassed": 162,
+    "languages": [
+      "ar",
+      "en"
+    ],
+    "widths": [
+      1440,
+      768,
+      390
+    ],
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "full43Journey": "running_not_claimed_passed",
+    "realImportPerformed": false,
+    "permissionsChanged": false,
+    "financialEffect": false,
+    "hostedBackupProved": false,
+    "sourceHashes": {
+      "backend/src/employee-import-preview.ts": "3e23bc6415ae187df949df6743f0513b081a42550e2e16a76481f88382f1a91e",
+      "backend/src/personnel.ts": "a996111710271509a947227c343ee951d5da48f618bc853fb73ad08d20ca0f78",
+      "backend/src/view-as.ts": "e39628a23f29b5491385f57335cf455e7bb83b56d2637d6bbf17ece7b31a16e1",
+      "backend/src/app.ts": "216c721eaea78b623a2a79a651ebe95f69b4207380f4eeb3ccdaa396bae3b7b2",
+      "backend/tests/employee-import-preview.test.ts": "f5912f8ff3591d0b4a2db4f4d15a9b76b2bf00b091b1fbbdc848d36b269d686a",
+      "backend/tests/employee-import-preview.browser.cjs": "6cd8af59985dfa92ec26042a6333cb263d76fab62e1e985d11a74fd50ffee220",
+      "backend/tests/isolated-pg-tools.ts": "c62d2a596f8382fa5ce23830574439cc335c7be0925c1200ad4e30c380ffe751",
+      "backend/tests/isolated-pg-tools.test.ts": "7daa50a01af8867a3a0123b99a89539e3a50bfbd84cc4c869eafcc005009c483",
+      "backend/tests/personnel.test.ts": "0ae18dd1334044e3e3d3cd5c5a2fd31db3be4629da6abfc7d0b3b3b9719ea986",
+      "backend/tests/import-context.browser.cjs": "17fa729ecf242c75ced36742bd11b20b39ac35b2fd30b4bf6b0ff4601afbe324",
+      "data-import-ui.js": "c72cdc9d6cebc2099139a749262f1baad373c557fac63bca9c07bfac614c7cac",
+      "personnel-ui.js": "1cc24acef6c0a954dd219df4d79097ac787e2ec83905b95e61a323c110465ec5"
+    },
+    "evidenceHashes": {
+      "work/evidence/employee-import-personnel-native-repaired.log": "13f2602a4d27a1a13557eddd3a3fc31a8ac1dd30091050d4de72f43fc58bbcb5",
+      "work/evidence/employee-import-preview-browser.log": "3eddea7d9984b6e63aa7ab2700ce770bab516c2e4e4ea5740cc6f78ce21434ae",
+      "work/evidence/employee-import-context-browser.log": "a76a70467673f2647e983792ecff225b118b64e71ba377b0307d397c5fd0662c",
+      "work/evidence/employee-company-shared-preview-browser.log": "eed296272be8ff2aa607386552c9855afbc819026fe5c28e57527deb53ab1f81",
+      "work/evidence/employee-import-preview-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "work/evidence/employee-import-preview-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "work/evidence/employee-import-preview-root.log": "6fba6c752786000b3d550c47556432d16776c76858eb17be47c632b25ec77d80",
+      "work/evidence/employee-import-pg-tools-unit.log": "bf8904ac9703fc7f4f311c90ca3ac37a8c1e8cf6630ca6990f7fd8d0c5973357"
+    },
+    "remaining": [
+      "Employee apply and original receipt recovery",
+      "Documents/organization mappings and company-scope integration",
+      "Final integrated acceptance"
+    ],
+    "allV1Complete": false
   }
 }
