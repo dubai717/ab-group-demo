@@ -2819,6 +2819,20 @@
       "new-service-hook-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
       "new-service-guard-browser.log": "d2486ee580e333900439062147a43dd46ad0a0bda41703c507d734ce602cdb3c",
       "new-service-guard-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "isolatedApprovalPrototype": {
+      "status": "partial_isolated_only",
+      "liveCallbackConfigured": false,
+      "actualThreeTypeApprovals": "passed; original Reject/Return available; fresh receipts allow InProgress/registration; no extra financial documents",
+      "executionGuardInstalled": false,
+      "evidence": {
+        "service-approval-hook-native.log": "fa9f83409df396f505ee4b08becd634cbde37da9ec3fb2001bafcac994332b78",
+        "service-approval-hook-final-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "service-create-approve-linked.log": "00eefb9339030702e33ae7a357326f1ae467531cd72915c95b5fcdf06723a406",
+        "service-approval-final-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "service-approval-final-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+      },
+      "linkedAcceptance": "3 linked original creation/actual-actor/approval cases passed"
     }
   }
 }
