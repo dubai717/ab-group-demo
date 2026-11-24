@@ -42,7 +42,11 @@
         "backend/src/service-eligibility-source.ts",
         "backend/tests/service-eligibility-source.test.ts",
         "backend/tests/service-eligibility-review.browser.cjs",
-        "docs/operational-v1/SERVICE-ELIGIBILITY-SOURCE.md"
+        "docs/operational-v1/SERVICE-ELIGIBILITY-SOURCE.md",
+        "backend/review/service-eligibility-source.sql",
+        "backend/src/service-eligibility-actor-source.ts",
+        "backend/tests/service-eligibility-actor-source.test.ts",
+        "docs/operational-v1/SERVICE-ELIGIBILITY-ACTOR-SOURCE.md"
       ],
       "remaining": "الحساب ومراجعة المصدر الأصلي للمالك داخل ملف العميل مختبران، مع لقطة متسقة للقراءة فقط وإعادة الحساب بعد قبض معتمد في بيئة وهمية. القاعدة غير مفعلة ولا يوجد حارس إنشاء/اعتماد/تنفيذ بعد؛ تبقى إعدادات النطاق والمخرجات المحدودة للموظف والاستثناء المؤقت والتكامل والقبول النهائي أعمالاً برمجية."
     },

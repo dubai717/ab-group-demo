@@ -2717,15 +2717,19 @@
       "types": "passed",
       "providerFreeBuild": "passed",
       "rootTests": "162 passed; separate baseline from previous 189",
-      "originalScopeReceivables": "running",
-      "fullOperationalBrowser": "running"
+      "originalScopeReceivables": "17 passed",
+      "fullOperationalBrowser": "running",
+      "hardenedActualActor": "passed including original unapplied confirmed receipt and private-only function ACL"
     },
     "evidence": {
       "eligibility-linked.log": "b1d2023bcd5f2c86cdb3b7ab4ef4f50a05a25fd689427a6ff8992e5cb745e411",
       "eligibility-actor-final.log": "93bf1688f8fd2868adb890db6a617c406355fd991a9b0ce259ae5b0e58f0de05",
       "actor-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "resumed-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
-      "resumed-root.log": "dd51b6b03ff9736104d7ede06dcea2d6db4784ee10ad48c99a5e2e572a4b3bd5"
+      "resumed-root.log": "dd51b6b03ff9736104d7ede06dcea2d6db4784ee10ad48c99a5e2e572a4b3bd5",
+      "eligibility-original-linked.log": "e59e9c81fa9b0a224c179d0a05b65818d9f582ca78b870eb867b4f705d87d13a",
+      "eligibility-actor-hardened.log": "b811b8da95507d7300c4c63bb028c8af10b1563ff8f92ec2d85846fd9f4ca1e4",
+      "actor-hardened-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     }
   }
 }
