@@ -2774,9 +2774,15 @@
     },
     "fullBackendRerun": {
       "startSource": "0bf4158f2048eaadac23ea06c428712663fcbaff",
-      "state": "running",
+      "state": "completed",
       "laterCheckpointsNotClaimedFullyCovered": true,
-      "log": "work/evidence/final-full-backend-0bf4158.log"
+      "log": "work/evidence/final-full-backend-0bf4158.log",
+      "tests": 904,
+      "passed": 904,
+      "failed": 0,
+      "exit": 0,
+      "note": "run began0bf4158 while continuation advanced; not snapshot-pinned acceptance of later checkpoints",
+      "logSha256": "81387bce38cf0b28c70f61c40f4256cd4edafc85513c92abd92f8c97e681b6ef"
     }
   },
   "openingSourceWorkbench": {
@@ -2855,16 +2861,20 @@
     "sourceDataChanged": false,
     "executionHookInstalled": false,
     "operatingPolicyActivated": false,
-    "supportedSource": "original matched vehicle funds receipt with original approval chronology",
+    "supportedSource": "original matched funds receipt, and separate Cash approval plus actual original registration-task start",
     "unsupportedSource": [
-      "cash actual task start",
-      "bank-direct actual bank source",
+      "bank-direct actual bank/operational source",
       "nonvehicle actual execution source"
     ],
     "tests": "one native case including current entered-date refusal, explicit append-only historical copies, Dubai boundary, mismatch and tenant refusal; types passed",
     "evidence": {
       "execution-proof-bounded.log": "5ff35eb29563e8ffba303f29f0e54717f9c180c9f53a4f183c379d1b532f252d",
-      "execution-proof-bounded-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    }
+      "execution-proof-bounded-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cash-execution-proof-native.log": "09008df612f3dbffac1de2fa68c4a16ef80598b73a94157fe554bdf8784da694",
+      "cash-execution-proof-final-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "execution-chronology-linked.log": "165c57a11491ac9f811ae5aa9d46456fa8327caafdc8425525d5d2b7c7bf4eec",
+      "execution-chronology-linked-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cashAcceptance": "9 linked original chronological/policy cases passed; no task-creation-only exemption or financial/vehicle creation"
   }
 }
