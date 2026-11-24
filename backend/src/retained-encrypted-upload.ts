@@ -15,3 +15,9 @@ export async function retainEncryptedUpload(objects:RecoverableEncryptedObjects,
   return{recovered:true};
  }
 }
+
+// Stable identity is namespaced by the ORIGINAL validated source and exact request.
+export function retainedUploadIdentity(parts:unknown[]){
+ const namespace=JSON.stringify(parts);if(namespace.length>16384)throw Error('uploadIdentityReviewRequired');
+ const uuid=(purpose:string)=>{const chars=sha(namespace+':'+purpose).slice(0,32).split('');chars[12]='8';chars[16]=((parseInt(chars[16],16)&3)|8).toString(16);const h=chars.join('');return[h.slice(0,8),h.slice(8,12),h.slice(12,16),h.slice(16,20),h.slice(20)].join('-');};return{documentId:uuid('document'),versionId:uuid('version')};
+}

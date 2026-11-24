@@ -3074,7 +3074,7 @@
     "exitCode": 0,
     "sourceUnchanged": true,
     "isolatedPort": 5543,
-    "nativeFullSuite": "still running, not declared passed",
+    "nativeFullSuite": "919/919 passed, exit0; see pinnedBbeAcceptance",
     "laterBackupChangesCovered": false
   },
   "combinedScopeCandidates": {
@@ -3092,6 +3092,52 @@
       "scope-composition-readiness-native.log": "bb9fb0c0fdca07fe6d6dd391e12ba0724990d208611638a4fd1900cf13378d47",
       "scope-readiness-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "scope-readiness-browser.log": "4246cc517fbba90111972bffd04314f9cb0e4a6e6ff5f1459b455c3ff1cf3a15"
+    }
+  },
+  "verifiedCI50": {
+    "source": "e92fe2a31dc9f88fcbbddfd1ec5d2cdb30f206e4",
+    "run": 50,
+    "id": 45483339555,
+    "status": "completed",
+    "conclusion": "success",
+    "laterChangesCovered": false,
+    "deployPerformed": false
+  },
+  "pinnedBbeAcceptance": {
+    "source": "bbe45552e2c6af9e322d4e9a81fc677da27e8258",
+    "nativeTests": 919,
+    "nativePassed": 919,
+    "nativeFailed": 0,
+    "nativeExitCode": 0,
+    "uiJourneys": 49,
+    "uiExitCode": 0,
+    "sourceUnchanged": true,
+    "lockedDependencies": true,
+    "isolatedBackendPort": 5542,
+    "isolatedUiPort": 5543,
+    "laterSpoolCompositionAndFileChangesCovered": false,
+    "evidenceSha256": {
+      "pinned-bbe-backend-status.json": "287903017c863a499d7c6ca680da7924084d15708a9bce2ac9384ee1023dbf2e",
+      "pinned-bbe-ui-status.json": "21fab063c2cc2e5ed643a8cfff34bafd8f40cfe3bca28dc08242007b54105b70",
+      "pinned-bbe-backend.log": "5fcff35e6969d187a257b758ecb0d331e9f4c07e8b977d93ce71184148591ad7",
+      "pinned-bbe-ui.log": "3d873e64622f549d7094cf3d23098a0d7f24a7708bd30a58bb03a1b70041bab7"
+    }
+  },
+  "originalCustomerVehicleFiles": {
+    "status": "implemented_unpublished",
+    "linkedTestsPassed": 15,
+    "fixedOriginalPersonnelIdentityPreserved": true,
+    "historicalFilesModified": false,
+    "financialDataChanged": false,
+    "remaining": [
+      "stable original import row/file mapping",
+      "broader document import adapters",
+      "real provider and final integrated acceptance"
+    ],
+    "evidenceSha256": {
+      "original-file-recovery-native.log": "325c71fb359eb710188d18175861d3da9a9a2b4cc9c064a4a5fc0fc77c73c2df",
+      "original-file-recovery-linked.log": "91f81253238f510e6b785f91cd1488386d991c11b9e93298b69b4cd342987b27",
+      "original-file-recovery-final-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     }
   }
 }
