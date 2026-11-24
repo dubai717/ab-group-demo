@@ -30,6 +30,12 @@ test('Unified document index preserves original storage, ACLs, versions and reve
    assert.equal((await f.admin.query('select count(*)::int n from ab.document_archive_events where document_id=$1',[original])).rows[0].n,2);
    await assert.rejects(f.admin.query('delete from ab.document_archive_events where document_id=$1',[original]));
   });
+
+  await t.test('withdrawing an already restored attachment can be explicitly restored without a duplicate archive event',async()=>{
+   const url='/api/document-center/document/'+original+'/archive',events=(await f.admin.query('select count(*)::int n from ab.document_archive_events where document_id=$1',[original])).rows[0].n;
+   await f.req('POST','/api/documents/'+version+'/withdraw',{reason:'Synthetic withdrawal after prior restoration'});assert.equal((await f.req('GET','/api/document-center')).rows.some((r:any)=>r.id===original),false);
+   await f.req('POST',url,{action:'restore',reason:'Synthetic authorized removal of withdrawal'});assert.equal((await f.req('GET','/api/document-center')).rows.some((r:any)=>r.id===original),true);assert.equal((await f.admin.query('select count(*)::int n from ab.document_archive_events where document_id=$1',[original])).rows[0].n,events);assert.equal(count(),before);await f.req('POST',url,{action:'restore',reason:'Unchanged repeated restore'},409);
+  });
   await t.test('a link never grants source access to another user',async()=>{
    const u=await f.employee();await f.login(u.username,u.password);assert.equal((await f.req('GET','/api/document-center')).rows.length,0);
    await f.req('POST','/api/document-center/document/'+original+'/archive',{action:'archive',reason:'Unauthorized'},403);

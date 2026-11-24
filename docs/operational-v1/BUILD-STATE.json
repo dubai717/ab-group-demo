@@ -2603,5 +2603,28 @@
     "full47Exit": 0,
     "laterSharedGuard": "8_native_10_source_viewas_189_root_5_ui_journeys_and_localized_refusal_passed",
     "globalLatestAllTests": "not_claimed"
+  },
+  "attachmentRenewalBoundary": {
+    "status": "tested_unpublished",
+    "linkedNativePassed": 13,
+    "additionalRaceAndOpeningCasesPassed": 3,
+    "originalHistoryReused": true,
+    "historyReads": "explicit_parent_ids_only",
+    "archiveAndWithdrawalLocksReused": true,
+    "concurrentHiddenVersionPrevented": true,
+    "originalDocumentCenterRestoration": "explicit_only_without_duplicate_archive_event",
+    "customerVehicleOriginalCycles": "passed",
+    "historicalFinancialChanges": false,
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "rootChecksPassed": 189,
+    "full47": "running_not_claimed",
+    "evidence": {
+      "attachment-boundary-complete-native.log": "8f8d3b4638a632fd10edb3bc991276172cfe6f75bce7c10ea6c16205b9d32f6a",
+      "archive-withdraw-races-and-opening-preview.log": "ae48a836adcc1e9fadd027692d5faaa9cbf227ac0d26bf536e0b24b7af44e99e",
+      "attachment-boundary-final-types.log": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+      "attachment-boundary-final-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "attachment-boundary-final-root.log": "09a0eb122218328f0b50152c0671719144b4eda7f96d898bc44a97f37b1dc290"
+    }
   }
 }
