@@ -1,0 +1,7 @@
+# Catalog-only relationship coverage inventory
+
+The existing Owner scope preview now includes a bounded inventory of tenant tables, their actual foreign-key parents, presence of company columns, RLS flags and restrictive-policy counts. It reads PostgreSQL catalogs only, including in a read-only transaction, and returns no business records, document content or SQL policy definitions. At most512 tables and64 distinct parent names per table are returned; truncation is explicit. No hosted query was run for this feature.
+
+A table without `company_id` is no longer invisible to the review simply because its financial/customer/communication parent owns the company. Explicit existing candidate filenames are hints for review, not assertions that policies are installed or accepted. Unclassified tables remain unreviewed, including original document versions. Presence of tenant RLS alone never proves company authorization. Every relationshipAccepted flag remains false and full readiness remains false; compiled protection fingerprints were not changed.
+
+Four linked native tests passed: existing compiled readiness and drift protection, partial-source handling, original Owner preparation and this inventory. A disposable synthetic FK-only table is detected despite lacking a company column. Original Owner preview still preserves actual memberships and exception grants, returns uncached simulation only and performs no apply. TypeScript passed. Further child/user/task/investor/own-custody/shared/report/export rules remain engineering work.

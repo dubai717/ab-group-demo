@@ -2438,5 +2438,16 @@
     "providerFreeBuild": "passed",
     "typecheck": "passed",
     "nativeRestore": "owned_isolated_database_only"
+  },
+  "scopeRelationshipInventory": {
+    "status": "tested_unpublished_readonly",
+    "catalogOnly": true,
+    "linkedNativePassed": 4,
+    "maximumTables": 512,
+    "maximumParentsPerTable": 64,
+    "complete": false,
+    "canApply": false,
+    "compiledPinChanged": false,
+    "remaining": "Classify and accept remaining original and financial child/user/task/investor/self-custody/shared sources; table/policy existence does not prove action authorization."
   }
 }
