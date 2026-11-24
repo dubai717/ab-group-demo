@@ -2702,5 +2702,30 @@
     "serviceControllerGuardsInstalled": false,
     "typecheck": "passed",
     "evidenceSha256": "885b09b49d5d82744f228912ec27bef1694ddda57362c8863c4b08fd673c4689"
+  },
+  "resumedActualActorEligibilitySource": {
+    "asOf": "2026-11-24",
+    "status": "partial_unpublished_uninstalled",
+    "source": "b62edbd plus reviewed actual-actor source candidate",
+    "originalSourceDatabaseChanged": false,
+    "runtimeRegistered": false,
+    "controllerGuardInstalled": false,
+    "scopeActivated": false,
+    "tests": {
+      "linkedPolicyAndManualSource": "15 passed before final adapter permission extension",
+      "actualActorFinal": "1 passed, native multi-company actual worker and original service permissions",
+      "types": "passed",
+      "providerFreeBuild": "passed",
+      "rootTests": "162 passed; separate baseline from previous 189",
+      "originalScopeReceivables": "running",
+      "fullOperationalBrowser": "running"
+    },
+    "evidence": {
+      "eligibility-linked.log": "b1d2023bcd5f2c86cdb3b7ab4ef4f50a05a25fd689427a6ff8992e5cb745e411",
+      "eligibility-actor-final.log": "93bf1688f8fd2868adb890db6a617c406355fd991a9b0ce259ae5b0e58f0de05",
+      "actor-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resumed-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "resumed-root.log": "dd51b6b03ff9736104d7ede06dcea2d6db4784ee10ad48c99a5e2e572a4b3bd5"
+    }
   }
 }
