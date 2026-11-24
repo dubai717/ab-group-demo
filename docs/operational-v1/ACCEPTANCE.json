@@ -3707,5 +3707,26 @@
     },
     "actualImport": false,
     "releaseReady": false
+  },
+  "statementChildScope": {
+    "asOf": "2026-11-24",
+    "status": "tested_uninstalled_candidate",
+    "combinedNativePassed": 4,
+    "finalFocusedNativePassed": 1,
+    "typecheck": "passed",
+    "sourceChecksums": {
+      "backend/review/company-scope-statement-lines.sql": "3c863439859f7998c6af7f90071389a512087aed3c5c293f906328c14a256fd6",
+      "backend/tests/company-scope-statement-lines.test.ts": "7311cd91fe7e405fd799cd5ef8cad6845c6c00a133b8a752a2afef2a8f158b6d"
+    },
+    "logs": {
+      "financial-document-children-native.log": "1451728855143c9c61c549207ce2c61de5819739af34efaa2f0ba094f2e8e367",
+      "financial-document-children-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "statement-child-final-native.log": "2e7fc267f761894a1bf78e56ee21637d6260e2ba338af58baaa6c3f4b51e559a",
+      "company-preview-readonly-existing-import-browser.log": "085bbcaaec9372535b10354790d32e67b127121a4799e235cfd3d1059fa0bcc8"
+    },
+    "postedJournalsInTest": false,
+    "realFinancialEffect": false,
+    "canApply": false,
+    "allV1Complete": false
   }
 }
