@@ -2449,5 +2449,15 @@
     "canApply": false,
     "compiledPinChanged": false,
     "remaining": "Classify and accept remaining original and financial child/user/task/investor/self-custody/shared sources; table/policy existence does not prove action authorization."
+  },
+  "originalPersonnelReadIntegrity": {
+    "status": "tested_unpublished",
+    "originalLinkedNativePassed": 67,
+    "wrongEncryptedFileDenied": true,
+    "failedReadAuditedAsSuccess": false,
+    "sourceDataChanged": false,
+    "uiSyntax": "passed",
+    "typecheck": "passed",
+    "providerFreeBuild": "passed"
   }
 }

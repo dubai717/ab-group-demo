@@ -341,7 +341,7 @@ const modal=CenterForms.form(t('الوحدة الإدارية','Administrative u
     }
     catch (err) {
         if (err.message !== 'staleSession') {
-            error = err.message;
+            error = err.message==='fileIntegrityFailed'?t('تعذر التحقق من سلامة المرفق؛ لم يُفتح الملف. يرجى مراجعة المسؤول.','The attachment failed its integrity check and was not opened. Contact the administrator.'):err.message;
             redraw();
         }
     }finally{if(statusAction){b._directoryBusy=false;b.disabled=false;b.removeAttribute('aria-busy');}} }); }); const evalMonth=document.querySelector('#hr-evaluation-month'),evalCompany=document.querySelector('#hr-evaluation-company');if(evalMonth)evalMonth.addEventListener('change',async()=>{evaluationMonth=evalMonth.value;await load();});if(evalCompany)evalCompany.addEventListener('change',async()=>{evaluationCompany=evalCompany.value;await load();});
