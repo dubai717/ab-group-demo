@@ -3167,7 +3167,6 @@
     "remaining": [
       "broader document-only import adapters",
       "historical cross-company relationship review",
-      "accepted/reused attachment reporting",
       "final integrated acceptance"
     ],
     "evidenceSha256": {
@@ -3193,6 +3192,25 @@
       "import-cache-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "import-cache-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
       "import-cache-root.log": "0a2b77891b2806b110738ce97cb97f3d9b915137c5bc2ae708649efa802afed5"
+    }
+  },
+  "originalImportAttachmentResults": {
+    "status": "implemented_unpublished",
+    "linkedNativeCasesPassed": 6,
+    "originalBrowserJourney": "AR/EN actual isolated synthetic CSV + PDF save, lost upload reply, three widths",
+    "outcomes": [
+      "stored",
+      "existing",
+      "recovered"
+    ],
+    "automaticDocumentApproval": false,
+    "historicalReceiptsRewritten": false,
+    "evidenceSha256": {
+      "import-file-results-native3.log": "c13fdbc6d55777274353438e008d4674a90ebbcffe75f47fe0ce03c937eebdd5",
+      "import-file-results-browser2.log": "69217a1aeaca3b278571c54ceda1f6e57fffc17cff085367df4e4f03ad8c7c5f",
+      "import-file-results-types2.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "import-file-results-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "import-file-results-root.log": "b16dc5da94c0ce4f70c1eeda72a1d041577bf78cf6733705e16e30ece213f5b0"
     }
   }
 }
