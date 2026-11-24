@@ -903,11 +903,10 @@
     }
   },
   "currentCI": {
-    "run": 30,
-    "id": 45256610817,
-    "commit": "44ada49cd5e770e4353bd251192f6b25de17f0e3",
-    "status": "in_progress",
-    "conclusion": null
+    "36": "running on efaf315; operational-ui success verified",
+    "37": "pending on c4d4b77; preserved",
+    "checkpointContainsLaterSettings": true,
+    "mergeOrDeployment": false
   },
   "serviceEligibilityLatest": {
     "policy": "Owner approved sum of actual last two due months",
@@ -1814,5 +1813,34 @@
       "backend/tests/document-reminder.browser.cjs": "eac840860d7a1c20e5c30bdc0a3faa9b1fd2478c94235dcab175a9832bdaae8c",
       "backend/tests/operational-v1-suite.browser.cjs": "f5cb63c4ffea91ed8b93b0e16c5e874f48f8486b4501b1319abb0c28f96ab357"
     }
+  },
+  "pausedReminderPresentationVerification": {
+    "asOf": "2026-11-24",
+    "scope": "Presentation-only paused status on original expiry cards",
+    "reproducedBeforeFix": true,
+    "fixedBrowser": "AR/EN1440/768/390; saved pause remains explicit after reopen",
+    "providerFreeBuild": "passed",
+    "staticPassed": 189,
+    "sourceChecksums": {
+      "communications-ui.js": "298ff9bb06c361f85e9ec51d02cb91de28dc9041856cdd44d93c8a97b124ce80",
+      "backend/tests/document-reminder.browser.cjs": "010ffcf579b05d9ded69d9415bab200def334b9a0d7a6056ee7db602f671c505"
+    },
+    "logs": {
+      "reminder-paused-reproduction.log": "24d64274de657eff87e9bb9e2dbfa6332425502d5881759f65a24d8c4224ef57",
+      "reminder-paused-fixed-browser.log": "353d4f49e032189495f7bc050e42600b01b82e430a7278974ba2213b607e6c01",
+      "reminder-paused-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "reminder-paused-static.log": "6810abe2ce355a22f458912d162d3a03ecd49eadd27de6be3aac0cfdde3201ae"
+    },
+    "fieldPreviewScreenshots": {
+      "operational-reminder-settings-form-en-390.png": "64bea603dd4d2fc1d3c929d63a1caf31427a2acad40a2b14643b9b190f7b6833",
+      "operational-reminder-settings-form-en-768.png": "590410dfd0b7f59187b9658708a77062874f2ccc97c8383716f145a12cd03208",
+      "operational-reminder-settings-form-en-1440.png": "b535fd2409aaa6dbf7ed249f79b4d22231b292c7ecdd278d2172e476f1e8470f",
+      "operational-reminder-settings-form-ar-390.png": "94e1d6a8857c828559fa7aab3255ab0109b3eb8813d3f985f0f993091f9a4577",
+      "operational-reminder-settings-form-ar-768.png": "3530eeb868b8007594f9471372bc9302d98754951e206ce88e03ac8fd4ed6451",
+      "operational-reminder-settings-form-ar-1440.png": "96d75e9d99b69a8e76913ba8f0a8f46039397f7a69e829df3b834a6f98a24c97"
+    },
+    "visualReview": "Arabic390px actual settings form inspected",
+    "full38PredatesPresentationFix": true,
+    "financialOrHostedEffect": false
   }
 }
