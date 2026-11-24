@@ -6,7 +6,7 @@ export type WhatsAppWebhookBatch=ReturnType<typeof normalizeWhatsAppWebhook>;
 export interface WhatsAppIngressSink{
  // The original message adapter must durably deduplicate each normalized dedupKey.
  // Return committed only after its original transaction actually commits.
- commit(batch:WhatsAppWebhookBatch,context:{eventHash:string;signal:AbortSignal}):Promise<{committed:true}>;
+ commit(batch:WhatsAppWebhookBatch,context:{eventHash:string;signal:AbortSignal;rawEnvelope:Buffer}):Promise<{committed:true}>;
 }
 export async function registerWhatsAppWebhookBoundary(app:any,config:{mode:'disabled'|'sandbox';appSecret?:string;verifyToken?:string;bindings?:WhatsAppBinding[];sink?:WhatsAppIngressSink}){
  if(config.mode==='disabled')return{registered:false,externalSendingEnabled:false};
@@ -29,7 +29,7 @@ export async function registerWhatsAppWebhookBoundary(app:any,config:{mode:'disa
    if(active>=4)return rejected(503,'whatsappIngressBusy');active++;
    const controller=new AbortController();let timer:ReturnType<typeof setTimeout>|undefined;
    try{
-    const context={eventHash:createHash('sha256').update(req.body).digest('hex'),signal:controller.signal};
+    const context={eventHash:createHash('sha256').update(req.body).digest('hex'),signal:controller.signal,rawEnvelope:req.body};
     const deadline=new Promise<never>((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('whatsappIngressDeadline'));},5000);});
     // A timeout may follow a real commit. Retry safety belongs to the original sink's stable keys.
     const work=Promise.resolve().then(()=>sink.commit(batch,context)).finally(()=>{active--;});

@@ -3997,5 +3997,30 @@
     "permissionsChanged": false,
     "fullCompatibilityProved": false,
     "evidence": "docs/operational-v1/HOSTED-OWNER-READONLY-REVIEW.md"
+  },
+  "officialWhatsAppDurableIngress": {
+    "status": "tested_uninstalled_unregistered_sandbox_only",
+    "linkedNativePassed": 27,
+    "actualPostgresReceipt": true,
+    "originalEnvelopeEncryptedOnce": true,
+    "isolatedEncryptedRestoreParity": "passed",
+    "providerCalls": false,
+    "hostedSchemaInstalled": false,
+    "messagesCreated": false,
+    "processingPrincipalChosenAutomatically": false,
+    "externalAuthorInferred": false,
+    "sourceHashes": {
+      "backend/review/whatsapp-ingress.sql": "ea0989721a117adcb3844ce5bc9368b2a4183e6000eb263fb18eaa77418f9340",
+      "backend/src/whatsapp-ingress-store.ts": "15554aeecc29473dbd9acfdbf39a850d11276178023011ea37338213f5f33dc4",
+      "backend/src/whatsapp-webhook-boundary.ts": "b31b467862d1cbe89e61630472846c92522f7774b3ae2029aa125ffba1986031",
+      "backend/tests/whatsapp-ingress-store.test.ts": "123f55a7cef13389cbab1bbd8515f4e6207a0d95856c92c44334828ebfc0171c"
+    },
+    "evidenceHashes": {
+      "work/evidence/whatsapp-ingress-durable-restore-native.log": "82b838ea3c4217b4e91ee6b361a84242ba57e89b0c9c2bf13314051c19a6626a",
+      "work/evidence/whatsapp-ingress-final-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "work/evidence/whatsapp-ingress-store-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+    },
+    "allWhatsAppComplete": false,
+    "allV1Complete": false
   }
 }
