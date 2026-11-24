@@ -2535,7 +2535,7 @@
       "competingChainRows": "review_required",
       "changedChain": "preview_invalidated",
       "missingWorkGuard": "refused_before_cached_receipt",
-      "expandedFull47": "running_not_claimed",
+      "expandedFull47": "passed_application_source_0e55bf7_exit_0",
       "sourceFiles": {
         "backend/src/personnel-document-import.ts": "37a47b27c206cbcf95800542c32b97123865e622773bfbdfc7ee722ce91f608a",
         "backend/src/personnel-documents.ts": "ae4ce75ce3d0f6cca4114f04d92cacba93c81f97345db9493de74155887ed4ac",
@@ -2567,5 +2567,41 @@
     "evidenceSha256": "42038f214902cf8fc73b14e200337b7d0e5c994ccb10ceb3f52cbafd6744f67f",
     "typecheck": "passed_after_explicit_query_row_annotation",
     "typecheckCorrection": "Initial new-test TS7022 corrected with explicit query-row annotation; runtime drill already passed. No runtime-source change."
+  },
+  "originalImportWorkProtection": {
+    "status": "tested_unpublished_default_off",
+    "missingOriginalGuard": "503_before_cached_success",
+    "actualDeniedGuard": "403",
+    "identitySubstitution": false,
+    "sourceGuardRepaired": false,
+    "linkedNativePassed": 8,
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "rootChecksPassed": 189,
+    "focusedUi": "passed_five_original_journeys_then_localized_refusal_and_same_key_recovery",
+    "evidence": {
+      "import-work-guard-integration-native.log": "e200186c425f92ab0c9fee555145186229e2d4b2f75a7b00d69f0b8871c4f3a0",
+      "scope-relationship-controller-linked.log": "9bf66f18bf2867b907bc6ab5c8f39f8823e3cc3c015a565b2676f310953fbad9",
+      "import-work-guard-focused-ui.log": "7f1723cda54122224909182156eca2cc2932d256c3a1f4360e85b07c9a5b4438",
+      "import-guard-localized-browser.log": "34e47d9fb7ab06cc34475b2669f5a8f9ac45138d7c0f6c2b1d83c0aa08b44dfd",
+      "import-work-guard-root.log": "549b04db8feb9c0d0e553c20163b69b5cf1cd58c030e15121ec131115d5b3f74",
+      "import-work-guard-final-types.log": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10",
+      "import-work-guard-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+    }
+  },
+  "scopeRelationshipDetails": {
+    "status": "tested_unpublished_readonly_owner_only",
+    "maximumRelationships": 64,
+    "maximumColumnsPerRelationship": 32,
+    "businessRowsRead": false,
+    "sourceControllerViewAsLinkedPassed": 10,
+    "canApply": false,
+    "relationshipAccepted": false
+  },
+  "currentLocalChecks": {
+    "full47Source": "0e55bf7_application_source_before_shared_guard",
+    "full47Exit": 0,
+    "laterSharedGuard": "8_native_10_source_viewas_189_root_5_ui_journeys_and_localized_refusal_passed",
+    "globalLatestAllTests": "not_claimed"
   }
 }

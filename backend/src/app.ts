@@ -1,3 +1,4 @@
+import{requireImportWorkAccess}from'./import-work-access.js';
 import {registerCentreImport,assertCentreImportOperator} from './centre-import.js';
 import {assertEmployeeImportOperator} from './employee-import-preview.js';
 import{registerWorkScopePreview}from'./work-scope-preview.js';
@@ -252,12 +253,12 @@ export async function build(options: Options) {
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':company-directory']);
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(employeeDocumentImportRun||employeeImportRun||/^\/api\/personnel(?:\/|$)/.test(req.url.split('?')[0])))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':personnel-import-directory']);
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(centreImportRun||req.url.split('?')[0]==='/api/operating-centres/apply'))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':operating-centre-directory']);
-        if(centreImportRun){importModel=await model(c,s.user_id,cipher);assertCentreImportOperator(importModel);requireOk(options.centreImportEnabled===true,503,'centreImportApplyNotEnabled');if((await c.query("select to_regprocedure('ab.hr_actor_allowed()')ok")).rows[0].ok)requireOk((await c.query('select ab.hr_actor_allowed()ok')).rows[0].ok,403,'denied');requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
-        if(employeeDocumentImportRun){importModel=await model(c,s.user_id,cipher);assertEmployeeImportOperator(importModel);requireOk(options.employeeDocumentImportEnabled===true,503,'personnelDocumentImportApplyNotEnabled');requireOk(typeof options.objects?.getIfPresent==='function',503,'personnelDocumentRecoveryRequired');requireOk((await c.query("select to_regprocedure('ab.hr_actor_allowed()')ok")).rows[0].ok,503,'personnelDocumentWorkGuardRequired');requireOk((await c.query('select ab.hr_actor_allowed()ok')).rows[0].ok,403,'denied');requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
-        if(employeeImportRun){importModel=await model(c,s.user_id,cipher);assertEmployeeImportOperator(importModel);requireOk(options.employeeImportEnabled===true,503,'employeeImportApplyNotEnabled');if((await c.query("select to_regprocedure('ab.hr_actor_allowed()')ok")).rows[0].ok)requireOk((await c.query('select ab.hr_actor_allowed()ok')).rows[0].ok,403,'denied');requireOk(typeof req.headers['idempotency-key']==='string',422,'employeeImportKeyRequired');}
+        if(centreImportRun){importModel=await model(c,s.user_id,cipher);assertCentreImportOperator(importModel);requireOk(options.centreImportEnabled===true,503,'centreImportApplyNotEnabled');await requireImportWorkAccess(c);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
+        if(employeeDocumentImportRun){importModel=await model(c,s.user_id,cipher);assertEmployeeImportOperator(importModel);requireOk(options.employeeDocumentImportEnabled===true,503,'personnelDocumentImportApplyNotEnabled');requireOk(typeof options.objects?.getIfPresent==='function',503,'personnelDocumentRecoveryRequired');await requireImportWorkAccess(c);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
+        if(employeeImportRun){importModel=await model(c,s.user_id,cipher);assertEmployeeImportOperator(importModel);requireOk(options.employeeImportEnabled===true,503,'employeeImportApplyNotEnabled');await requireImportWorkAccess(c);requireOk(typeof req.headers['idempotency-key']==='string',422,'employeeImportKeyRequired');}
         if(companyImportRun){
           importModel=await model(c,s.user_id,cipher);assertCompanyImportOperator(importModel);requireOk(options.companyImportEnabled===true,503,'companyImportApplyNotEnabled');
-          if((await c.query("select to_regprocedure('ab.hr_actor_allowed()')ok")).rows[0].ok)requireOk((await c.query('select ab.hr_actor_allowed()ok')).rows[0].ok,403,'denied');
+          await requireImportWorkAccess(c);
           requireOk(typeof req.headers['idempotency-key']==='string',422,'companyImportKeyRequired');
         }
         // Personnel export contains personal contact data; never cache the file in request_dedup.
