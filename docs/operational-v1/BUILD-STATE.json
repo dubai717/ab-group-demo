@@ -2719,7 +2719,8 @@
       "rootTests": "162 passed; separate baseline from previous 189",
       "originalScopeReceivables": "17 passed",
       "fullOperationalBrowser": "47 passed, run started on55180fc before opening-source UI addition; not latest48 acceptance",
-      "hardenedActualActor": "passed including original unapplied confirmed receipt and private-only function ACL"
+      "hardenedActualActor": "passed including original unapplied confirmed receipt and private-only function ACL",
+      "contextCompleteness": "passed duplicate contract and late foreign-tenant confirmation rejection, minimal reason retained"
     },
     "evidence": {
       "eligibility-linked.log": "b1d2023bcd5f2c86cdb3b7ab4ef4f50a05a25fd689427a6ff8992e5cb745e411",
@@ -2729,7 +2730,9 @@
       "resumed-root.log": "dd51b6b03ff9736104d7ede06dcea2d6db4784ee10ad48c99a5e2e572a4b3bd5",
       "eligibility-original-linked.log": "e59e9c81fa9b0a224c179d0a05b65818d9f582ca78b870eb867b4f705d87d13a",
       "eligibility-actor-hardened.log": "b811b8da95507d7300c4c63bb028c8af10b1563ff8f92ec2d85846fd9f4ca1e4",
-      "actor-hardened-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "actor-hardened-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "eligibility-context-final.log": "cc5c3d9d5615db62beab59b571dfdd4c38b0acc45edf9cb5f118b684a0745d23",
+      "eligibility-context-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     }
   },
   "resumedIsolatedBackupTooling": {
@@ -2747,7 +2750,14 @@
       "native-tools-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "fullBackendRun": "running; initial direct Docker failure remains failed evidence, never promoted by targeted retry",
-    "fullOperationalUI": "running"
+    "fullOperationalUI": "running",
+    "investorOriginalRestoreHelper": {
+      "acceptance": "8 original cases passed across investor monthly schema/preservation, registry and vehicle workflow, after native tooling recovery",
+      "evidence": {
+        "investor-native-restores.log": "4cbe881f6f5f71cdca935fb1d6e2d2abcb7d30ca6f7f70b03413f22f247ee55b",
+        "investor-restore-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
   },
   "openingSourceWorkbench": {
     "asOf": "2026-11-24",
