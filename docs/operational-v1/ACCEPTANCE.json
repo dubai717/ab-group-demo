@@ -3728,5 +3728,31 @@
     "realFinancialEffect": false,
     "canApply": false,
     "allV1Complete": false
+  },
+  "whatsAppHttpBoundary": {
+    "asOf": "2026-11-24",
+    "status": "tested_inactive_http_boundary",
+    "protocolAndHttpPassed": 12,
+    "originalCommunicationsLinkedPassed": 24,
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "rootStaticPassed": 162,
+    "sourceChecksums": {
+      "backend/src/whatsapp-webhook-boundary.ts": "0a7302fdb2d22c2517c0b1190f6d461a629c0f65db0c3b744ce2483720862cf8",
+      "backend/src/whatsapp-cloud-contract.ts": "28b300df41333300f7d579edf69ec174e30fecda01f292fe343c1bd1adb527fc",
+      "backend/tests/whatsapp-webhook-boundary.test.ts": "db1a62bcf5c1cf95e88142ee8d75ab8fce817059d29534e240a3def154d7de09"
+    },
+    "logs": {
+      "whatsapp-http-boundary-final.log": "7fdbe5c3604bb2cf317e76fb7178a745e73c663f34cac8bd6f08f07dfe42c631",
+      "whatsapp-original-linked-native.log": "69ac0f871214a5927b76e83c507aa7bfeee39ca7aa023c4397023ad98c5bcc22",
+      "whatsapp-http-boundary-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "whatsapp-http-boundary-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "whatsapp-http-boundary-static.log": "72bc8de7da5e0a80c0e595eea2befdb7bff5e4920c202caff6d79cc3a30c1228"
+    },
+    "sink": "explicit in-memory contract double; not original durable persistence",
+    "appRegistered": false,
+    "externalSent": false,
+    "originalDatabaseChanged": false,
+    "allV1Complete": false
   }
 }
