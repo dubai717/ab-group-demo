@@ -12,6 +12,6 @@ The original centre source viewer offers the shared importer, hides/restores its
 
 - `centre-import.test.ts`: absent-source refusal, default-off cached receipt refusal, read-only zero-cache preview, original creation and links, repeated reference review, same/different-key races, stale token, second-row rollback/recovery, encrypted provenance, original snapshot/membership/grant/journal parity and unauthorized refusal.
 - `centre-import.browser.cjs`: actual original permission/source windows, retained unsaved employee denial reason, CSV validation, explicit new-only confirmation, lost committed reply same key/body, acknowledged GET-only readback retry, original dated source, parent-context suppression and AR/EN1440/768/390.
--10 linked original source/writer/View As native cases passed. TypeScript passed; final45-journey UI verification is running and is not claimed complete. Tests do not touch hosted data.
+-10 linked original source/writer/View As native cases passed. TypeScript passed; the final45-journey UI suite passed with exit0 on thec3d8bb6 runtime baseline. Tests do not touch hosted data.
 
 Remaining: final acceptance, permitted legacy-column/reference mapping and actual source/scope application. Importing this source is not approval to apply geographic memberships. No real import, new role, financial movement, migration or deployment was performed.

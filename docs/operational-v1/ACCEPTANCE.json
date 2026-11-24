@@ -4052,7 +4052,7 @@
     "status": "tested_unpublished_disabled_by_default",
     "linkedNativePassed": 10,
     "browser": "passed_ar_en_three_widths_and_parent_context",
-    "full45Journey": "running_not_claimed_success",
+    "full45Journey": "passed_on_c3d8bb6",
     "typecheck": "passed",
     "originalDatedWriterReused": true,
     "sourceAppliedOnHost": false,
@@ -4072,8 +4072,13 @@
     "evidenceHashes": {
       "work/evidence/centre-import-final-native.log": "6b1b6cbd31d7f319cb575e4a6a403a894f75bb628c6bed7dea0d7368571c8531",
       "work/evidence/centre-import-ui-verified.log": "cf4d0e7a24398fd428c5b1143b683030be01e2a6af5fa0dc3ba60cdfd75ac42a",
-      "work/evidence/centre-import-final-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "work/evidence/centre-import-final-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "work/evidence/operational-centre-import-full-45.log": "a93e584e82e67cc9589e4db5158241e66102a9d53f9f0b5a4ed58c276fa1d233",
+      "work/evidence/operational-centre-import-full-45.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "work/evidence/centre-import-root.log": "84de4d68412001ab6961a4f058d61b8acde72cebb2de5e55417fa9aca3a85d41"
     },
-    "allV1Complete": false
+    "allV1Complete": false,
+    "full45ExitCode": 0,
+    "rootChecksPassed": 162
   }
 }
