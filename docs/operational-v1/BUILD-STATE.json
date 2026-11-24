@@ -1794,5 +1794,25 @@
       "scheduler and operational acceptance"
     ],
     "full38BaselineBeforeTheseSettings": "c4d4b77"
+  },
+  "datedSettingsFullBrowserVerification": {
+    "asOf": "2026-11-24",
+    "testedApplicationCommit": "2dae1e0795543716c6b472750b57c09cb1da19b4",
+    "browserJourneys": 38,
+    "exit": 0,
+    "logSha256": "b89eb715d401fa26fea8b42e2ce6adcf64aea4f03464a62d40677816ffd6c2d1",
+    "providerFreeBuild": "passed",
+    "staticPassed": 189,
+    "typecheck": "passed",
+    "latestSourceSettingsNativePassed": 12,
+    "allV1Complete": false,
+    "sourceChecksums": {
+      "backend/src/document-reminder-settings.ts": "9e5b322ac40020ae3a7d528f16600df7201b655e8564b4cd42d0779140b0365c",
+      "backend/src/document-center.ts": "b9eeb4944433b77f0e21b10e69b03a73f05ac26033868d38b9567f7940832c18",
+      "backend/src/document-reminder-plan.ts": "a9e01091a5fde6826378cff04f9a8f9774abfe62ad6d35cdcf33443ffb76f3a8",
+      "communications-ui.js": "fe6282aeec1c6caa7c1086de27d15fe0a99079dd810ddb1f5ecdba5d91f5c587",
+      "backend/tests/document-reminder.browser.cjs": "eac840860d7a1c20e5c30bdc0a3faa9b1fd2478c94235dcab175a9832bdaae8c",
+      "backend/tests/operational-v1-suite.browser.cjs": "f5cb63c4ffea91ed8b93b0e16c5e874f48f8486b4501b1319abb0c28f96ab357"
+    }
   }
 }

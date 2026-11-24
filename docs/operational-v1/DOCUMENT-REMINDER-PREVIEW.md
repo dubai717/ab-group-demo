@@ -1,5 +1,7 @@
 # Document reminder preview — unpublished
 
+This records the initial preview checkpoint. Dated preview settings were subsequently implemented; see [DOCUMENT-REMINDER-SETTINGS.md](DOCUMENT-REMINDER-SETTINGS.md). Delivery/scheduler limitations remain current.
+
 The original authorized document-expiry GET now includes read-only dates for30 days before expiry and the expiry day. Existing current-version selection, archive/withdrawal/source ACLs and file endpoints remain authoritative. No file bytes are loaded. Keys bind source/root/field/current version/expiry/offset, so a replacement cannot inherit an old scheduled event. Past dates are not replayed as fresh due events.
 
 The existing expiry dialog labels the dates as a preview. Sending remains disabled, fee is0AED, there is no invoice/journal/task/notification creation, and expiry does not block collection. Dates come from the existing normalized expiry projection; database DATE values are not passed as unnormalized input. Native replacement tests reproduced and corrected that initial integration mismatch.
