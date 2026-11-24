@@ -3130,7 +3130,6 @@
     "historicalFilesModified": false,
     "financialDataChanged": false,
     "remaining": [
-      "stable original import row/file mapping",
       "broader document import adapters",
       "real provider and final integrated acceptance"
     ],
@@ -3156,6 +3155,28 @@
       "object-budget-native.log": "62b5fad064e8561af684efaece328086d95c40eb152ebe36473bff6ca91a906f",
       "object-budget-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
       "object-budget-root.log": "684d554e64acd251eb6bcd15485eadfac512f6f3aed535b67ff996e0c6b16c27"
+    }
+  },
+  "originalImportAttachments": {
+    "status": "implemented_unpublished",
+    "linkedCasesPassed": 13,
+    "originalWritersAndPermissionsRetained": true,
+    "wholeBatchRollbackRecovery": true,
+    "sourcePacketRereadPerFile": false,
+    "realImportPerformed": false,
+    "remaining": [
+      "cached import receipt current-authority checks",
+      "broader document-only import adapters",
+      "historical cross-company relationship review",
+      "accepted/reused attachment reporting",
+      "final integrated acceptance"
+    ],
+    "evidenceSha256": {
+      "import-file-origin-regressions.log": "c7116a9b6e9246f33e375828a30f47776a57dd314a22de34181f78f29e09a6ba",
+      "import-file-origin-native3.log": "59857ccb3a3154b7c7296cc78098ad60bc4eec8d75f481d93fff88808cac32c4",
+      "import-file-origin-linked.log": "1f9de5ed7ea23ad90f12e5c9ec0ef47fca60100e6de554e77ee3eb898a0384b6",
+      "import-file-origin-types3.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "import-file-origin-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
     }
   }
 }

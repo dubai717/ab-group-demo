@@ -1,0 +1,17 @@
+// A transient provenance reference from the ORIGINAL locked import loop. It grants
+// no permission and cannot be reconstructed from client JSON or retained across requests.
+import{z}from'zod';import{requireOk,sha}from'./core.js';import{retainedUploadIdentity}from'./retained-encrypted-upload.js';
+const origins=new WeakSet<object>(),uuid=z.uuid(),hex=z.string().regex(/^[a-f0-9]{64}$/);
+const schema=z.object({kind:z.enum(['customers','vehicles']),tenantId:uuid,actorId:uuid,companyId:uuid,importId:uuid,sourceHash:hex,previewToken:hex,row:z.number().int().min(1).max(10001),attachmentIndex:z.number().int().min(0).max(10000),existingOwnerId:uuid.nullable(),name:z.string().min(1).max(200),mime:z.string().min(1).max(100),fileHash:hex}).strict();
+export function originalImportAttachmentOrigin(kind:'customers'|'vehicles',r:any,d:any,s:any,planIndex:number,attachmentIndex:number,file:any){
+ requireOk(!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user')&&r.tenant_id===s.tenant_id&&r.actor_id===s.user_id,403,'importAttachmentOriginRequired');
+ requireOk(Number.isInteger(planIndex)&&planIndex>=r.cursor&&planIndex<Math.min(r.cursor+25,d.plan.length),409,'importAttachmentOriginRequired');const p=d.plan[planIndex],t=d.tables.find((v:any)=>v.name===d.table);requireOk(p&&t&&t.rows[p.sourceIndex],409,'importAttachmentOriginRequired');
+ const files=[...t.rows[p.sourceIndex].attachments,...d.zipFiles.filter((x:any)=>x.key===String(p.source.fileNumber||p.source.sourceId||''))];requireOk(Number.isInteger(attachmentIndex)&&files[attachmentIndex]===file&&typeof file.base64==='string',409,'importAttachmentOriginRequired');
+ const origin=Object.freeze(schema.parse({kind,tenantId:s.tenant_id,actorId:s.user_id,companyId:r.company_id,importId:r.id,sourceHash:r.source_hash,previewToken:d.token,row:p.row,attachmentIndex,existingOwnerId:p.target?.id||null,name:file.name,mime:file.mime,fileHash:sha(Buffer.from(file.base64,'base64'))}));origins.add(origin);return origin;
+}
+export async function checkedImportAttachmentIdentity(c:any,s:any,kind:'customers'|'vehicles',owner:{id:string;company_id:string},cipher:any,d:any,digest:string,raw:unknown){
+ requireOk(raw!==null&&typeof raw==='object'&&origins.has(raw as object),409,'importAttachmentOriginRequired');const p=schema.parse(raw);requireOk(!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user')&&p.kind===kind&&p.tenantId===s.tenant_id&&p.actorId===s.user_id&&p.companyId===owner.company_id&&p.name===d.name&&d.title===p.name&&p.mime===d.mime&&p.fileHash===digest&&d.kind==='other'&&!d.parentId,409,'importAttachmentOriginRequired');
+ if(p.existingOwnerId)requireOk(p.existingOwnerId===owner.id,409,'importAttachmentTargetChanged');
+ else{const table=kind==='customers'?'customers':'vehicles';requireOk((await c.query('select 1 from ab.'+table+' where id=$1 and tenant_id=$2 and company_id=$3 and created_by=$4 and created_at=transaction_timestamp()',[owner.id,s.tenant_id,p.companyId,s.user_id])).rowCount===1,409,'importAttachmentTargetChanged');}
+ return{...retainedUploadIdentity(['AB-ORIGINAL-IMPORT-ATTACHMENT-1',p.kind,p.tenantId,p.actorId,p.companyId,p.importId,p.sourceHash,p.previewToken,p.row,p.attachmentIndex,p.existingOwnerId||'new-in-current-transaction',p.fileHash,cipher.digest(JSON.stringify({...d,base64:undefined}))]),audit:{importId:p.importId,row:p.row,attachmentIndex:p.attachmentIndex,sourceHash:p.sourceHash}};
+}
