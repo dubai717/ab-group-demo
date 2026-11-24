@@ -2428,5 +2428,15 @@
     "crossBranchAccessGranted": false,
     "originalFinanceIntegration": "passed",
     "remaining": "Own custody, cross-branch minimum projections, full parent/source/API/report/export acceptance and compatible activation remain incomplete."
+  },
+  "boundedWhatsAppAcknowledgements": {
+    "status": "tested_unpublished_inactive",
+    "maximumBytes": 65536,
+    "linkedNativePassed": 16,
+    "unknownRetriedAutomatically": false,
+    "realProviderCalled": false,
+    "providerFreeBuild": "passed",
+    "typecheck": "passed",
+    "nativeRestore": "owned_isolated_database_only"
   }
 }

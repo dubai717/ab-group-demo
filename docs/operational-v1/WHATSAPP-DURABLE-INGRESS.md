@@ -22,3 +22,7 @@ The coherent27-case run includes original internal communications, Meta protocol
 - Actual consent/templates/window, reminder scheduling, outbound durable dispatch and final integration acceptance.
 
 Queued receipt is not an opened conversation, a resolved complaint, a collected payment or a notification delivered to the Owner. No actual send is enabled.
+
+## Bounded sandbox acknowledgements
+
+The original sandbox dispatcher now bounds provider acknowledgement bodies at64KiB using both declared size and streamed bytes. Oversized, malformed or interrupted responses retain unknown delivery and the original message lease; no automatic retransmission or fabricated success.16 linked protocol, HTTP and durable-ingress cases passed, including the original encrypted local archive restore. The native test adapter was required because the existing Docker exec temporary area is full; no hosted cleanup or restore occurred. TypeScript and provider-free build passed. This remains inactive and does not prove a real provider connection, original external-author thread integration or customer delivery.

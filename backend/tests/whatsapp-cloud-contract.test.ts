@@ -22,3 +22,11 @@ test('one official number routes a centre across approved companies without inve
  assert.equal(prepare(input({binding:shared,companyId:shared.companyIds[1],authorized:false})).ready,false,'Binding membership never grants original user authority');
  assert.throws(()=>normalizeWhatsAppWebhook(raw,signature,secret,[{...shared,companyIds:[shared.companyIds[0],shared.companyIds[0]]}]));
 });
+
+test('official sandbox dispatch bounds provider acknowledgements and retains unknown without repeat on oversized, broken or malformed bodies',async()=>{
+ for(const mode of['declared','stream','malformed','broken']){
+  const store=new OriginalMessageStore(),plan=prepare(input());let calls=0,cancelled=false;
+  const fetcher:typeof fetch=async()=>{calls++;if(mode==='malformed')return new Response('{invalid',{status:200});const body=new ReadableStream<Uint8Array>({pull(c){if(mode==='broken'){c.error(Error('Synthetic private provider failure'));return;}c.enqueue(new Uint8Array(mode==='stream'?65537:1));},cancel(){cancelled=true;}});return new Response(body,{status:200,headers:mode==='declared'?{'content-length':'65537'}:{}});};
+  const result=await dispatch(plan,config,store,fetcher);assert.equal(result.status,'unknown');assert.equal(result.externalSent,null);assert.equal(result.financialEffect,false);if(['declared','stream'].includes(mode))assert.equal(cancelled,true);assert.equal((await dispatch(plan,config,store,fetcher)).status,'unknown');assert.equal(calls,1);assert(!JSON.stringify(result).includes('provider failure'));
+ }
+});
