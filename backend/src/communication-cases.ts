@@ -1,8 +1,10 @@
 // Case metadata belongs to its original authorized conversation, never a receivables ledger.
 import {z} from 'zod';import {randomUUID} from 'node:crypto';
-import {requireOk,ApiError} from './core.js';import {audit,has} from './data.js';
+import{caseResponseDeadline}from'./case-response-deadline.js';import{employeeWorkCalendar}from'./employee-work-calendar.js';
+import {requireOk,ApiError} from './core.js';import {audit,has,model} from './data.js';
 const uuid=z.uuid().transform(v=>v.toLowerCase()),text=z.string().trim().min(1).max(2000),kind=z.enum(['payment_claim','financial_dispute','complaint']);
-const caseSchema=z.object({id:uuid,number:z.number().int().positive(),kind,subject:z.string().trim().min(1).max(200),creationDigest:z.string().length(64),state:z.enum(['Open','Investigating','AwaitingCustomer','Resolved']),openedBy:uuid,openedAt:z.iso.datetime(),updatedBy:uuid,updatedAt:z.iso.datetime(),claimedBy:uuid.nullable(),contributorIds:z.array(uuid).max(100),followupReviewRequired:z.boolean(),resolution:z.object({by:uuid,at:z.iso.datetime(),note:text}).strict().nullable()}).strict();
+const responseSchema=z.object({employeeId:uuid,calendarRevision:z.number().int().positive(),recordedBy:uuid,recordedAt:z.iso.datetime(),dueAt:z.iso.datetime(),dueOn:z.iso.date(),workingDays:z.literal(3),startDayExcluded:z.literal(true),timeZone:z.literal('Asia/Dubai'),deliveryVerified:z.literal(false),note:text}).strict();
+const caseSchema=z.object({id:uuid,number:z.number().int().positive(),kind,subject:z.string().trim().min(1).max(200),creationDigest:z.string().length(64),state:z.enum(['Open','Investigating','AwaitingCustomer','Resolved']),openedBy:uuid,openedAt:z.iso.datetime(),updatedBy:uuid,updatedAt:z.iso.datetime(),claimedBy:uuid.nullable(),contributorIds:z.array(uuid).max(100),followupReviewRequired:z.boolean(),responseDeadline:responseSchema.nullable().optional(),resolution:z.object({by:uuid,at:z.iso.datetime(),note:text}).strict().nullable()}).strict();
 const bookSchema=z.object({version:z.literal(1),tenantId:uuid,threadId:uuid,revision:z.number().int().min(0),cases:z.array(caseSchema).max(50)}).strict();
 const createSchema=z.object({revision:z.number().int().min(0),caseId:uuid,kind,subject:z.string().trim().min(1).max(200),note:text}).strict();
 const actionSchema=z.object({revision:z.number().int().positive(),action:z.enum(['claim','await_customer','resolve','reopen']),note:z.string().trim().max(2000).default('')}).strict().superRefine((d,c)=>{if(d.action!=='claim'&&!d.note)c.addIssue({code:'custom',path:['note'],message:'caseReasonRequired'});});
@@ -13,16 +15,16 @@ export function transitionCommunicationCase(before:Case,action:z.infer<typeof ac
  if(action==='claim'&&before.claimedBy===actor&&before.state!=='Open'&&!note.trim())return before;
  const next={...before,updatedBy:actor,updatedAt:at,contributorIds:[...new Set([...before.contributorIds,actor])]};
  if(action==='claim'){next.claimedBy=actor;if(next.state==='Open')next.state='Investigating';}
- if(action==='await_customer'){next.state='AwaitingCustomer';next.followupReviewRequired=true;}
+ if(action==='await_customer'){next.state='AwaitingCustomer';next.followupReviewRequired=true;next.responseDeadline=null;}
  if(action==='resolve'){next.state='Resolved';next.resolution={by:actor,at,note};next.followupReviewRequired=false;}
- if(action==='reopen'){next.state='Open';next.claimedBy=null;next.resolution=null;next.followupReviewRequired=false;}
+ if(action==='reopen'){next.state='Open';next.responseDeadline=null;next.claimedBy=null;next.resolution=null;next.followupReviewRequired=false;}
  return caseSchema.parse(next);
 }
 const key=(thread:string)=>'communication-cases-v1:'+thread;
 async function read(c:any,cipher:any,s:any,threadId:string){const row=(await c.query('select value from ab.settings where tenant_id=$1 and key=$2',[s.tenant_id,key(threadId)])).rows[0];if(!row)return{version:1 as const,tenantId:s.tenant_id,threadId,revision:0,cases:[] as Case[]};return decodeCommunicationCaseBook(cipher,row.value,s.tenant_id,threadId);}
 export function decodeCommunicationCaseBook(cipher:any,value:any,tenantId:string,threadId:string){const parsed=bookSchema.safeParse(cipher.open(value.cipher));requireOk(parsed.success&&parsed.data.tenantId===tenantId&&parsed.data.threadId===threadId,409,'caseSourceReviewRequired');return parsed.data!;}
 const norm=(s:string)=>s.normalize('NFKC').trim().replace(/\s+/g,' ').toLowerCase();
-const labels:any={opened:'فتح موضوع / Topic opened',claim:'تولي المعالجة / Handling claimed',await_customer:'بانتظار العميل / Awaiting customer',resolve:'حل إداري للموضوع / Topic resolved administratively',reopen:'إعادة فتح الموضوع / Topic reopened'};
+const labels:any={response_deadline:'مهلة مراجعة الرد / Response review deadline',opened:'فتح موضوع / Topic opened',claim:'تولي المعالجة / Handling claimed',await_customer:'بانتظار العميل / Awaiting customer',resolve:'حل إداري للموضوع / Topic resolved administratively',reopen:'إعادة فتح الموضوع / Topic reopened'};
 export async function requireCommunicationCase(c:any,cipher:any,s:any,threadId:string,caseId:string){await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':'+key(threadId)]);const record=await readCommunicationCase(c,cipher,s,threadId,caseId);requireOk(record.state!=='Resolved',409,'caseTaskReviewRequired');return record;}
 // MVCC reference check for original task delegation: no case lock after task locks.
 export async function readCommunicationCase(c:any,cipher:any,s:any,threadId:string,caseId:string){const book=await read(c,cipher,s,threadId),record=book.cases.find((r:Case)=>r.id===uuid.parse(caseId));requireOk(record,404,'notFound');return record;}
@@ -56,6 +58,18 @@ export function registerCommunicationCases(app:any,route:any,cipher:any,thread:a
   requireOk(book.revision===d.revision,409,'caseRevisionConflict');requireOk(book.cases.length<50,422,'caseRangeReviewRequired');if(book.cases.some((x:Case)=>x.kind===d.kind&&norm(x.subject)===norm(d.subject)))throw Object.assign(new ApiError(409,'caseTopicExists'),{fieldErrors:{subject:'caseTopicExists'}});
   const now=new Date().toISOString(),record=caseSchema.parse({id:d.caseId,number:book.cases.length+1,kind:d.kind,subject:d.subject,creationDigest:digest,state:'Open',openedBy:s.user_id,openedAt:now,updatedBy:s.user_id,updatedAt:now,claimedBy:null,contributorIds:[s.user_id],followupReviewRequired:false,resolution:null}),next={...book,revision:book.revision+1,cases:[...book.cases,record]};
   await persist(c,m,s,r,book,next,'opened',record,d.note);return reply(next,m,s,{created:true,caseId:record.id});
+ }));
+ app.post('/api/communications/:id/cases/:caseId/response-deadline',route(async(c:any,m:any,s:any,req:any)=>{
+  requireOk(!s.viewAs,403,'viewAsReadOnly');requireOk(has(m.actor,'manage_notifications'));const d=z.object({revision:z.number().int().positive(),employeeId:uuid,note:text}).strict().parse(req.body);
+  await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':'+key(uuid.parse(req.params.id))]);const r=await source(c,m,req.params.id),book=await read(c,cipher,s,r.id),prior=book.cases.find((x:Case)=>x.id===uuid.parse(req.params.caseId));requireOk(prior,404,'notFound');requireOk(book.revision===d.revision,409,'caseRevisionConflict');requireOk(prior.state!=='Resolved',409,'caseTransitionInvalid');
+  // Only an existing participant assigned to this company supplies an actual work calendar.
+  const e=(await c.query("select * from ab.hr_employees where id=$1 and state='Active'",[d.employeeId])).rows[0];requireOk(e&&e.user_id&&m.state.users.some((u:any)=>u.id===e.user_id&&u.status==='Active'),422,'caseResponseEmployeeReviewRequired');
+  try{await thread(c,await model(c,e.user_id,cipher),r.id);}catch(error){if(error instanceof ApiError&&[401,403,404].includes(error.status))throw new ApiError(422,'caseResponseEmployeeReviewRequired');throw error;}
+  const participant=(await c.query('select 1 from ab.communication_participants where thread_id=$1 and user_id=$2',[r.id,e.user_id])).rows.length;requireOk(participant,422,'caseResponseEmployeeReviewRequired');
+  const day=new Date(Date.now()+4*3600000).toISOString().slice(0,10),assigned=e.company_id===r.company_id||(await c.query('select 1 from ab.hr_assignments where employee_id=$1 and company_id=$2 and effective_on<=$3 and(until_on is null or until_on>=$3)',[e.id,r.company_id,day])).rows.length;requireOk(assigned,422,'caseResponseEmployeeReviewRequired');
+  const calendar=await employeeWorkCalendar(c,cipher,s.tenant_id,e.id);requireOk(calendar.revision>0&&calendar.versions.length,409,'caseResponseCalendarReviewRequired');const at=new Date().toISOString();let deadline;try{deadline=caseResponseDeadline(at,calendar.versions);}catch{throw new ApiError(409,'caseResponseCalendarReviewRequired');}
+  const record=caseSchema.parse({...prior,state:'AwaitingCustomer',updatedBy:s.user_id,updatedAt:at,contributorIds:[...new Set([...prior.contributorIds,s.user_id])],followupReviewRequired:true,responseDeadline:{...deadline,employeeId:e.id,calendarRevision:calendar.revision,recordedBy:s.user_id,recordedAt:at,deliveryVerified:false,note:d.note}}),next={...book,revision:book.revision+1,cases:book.cases.map((x:Case)=>x.id===prior.id?record:x)};
+  await persist(c,m,s,r,book,next,'response_deadline',record,d.note+'\n'+deadline.dueAt);return reply(next,m,s,{saved:true,caseId:record.id});
  }));
  app.post('/api/communications/:id/cases/:caseId/actions',route(async(c:any,m:any,s:any,req:any)=>{
   requireOk(!s.viewAs,403,'viewAsReadOnly');requireOk(has(m.actor,'manage_notifications'));const parsed=actionSchema.safeParse(req.body);if(!parsed.success)throw Object.assign(new ApiError(422,'invalid'),{fieldErrors:Object.fromEntries(parsed.error.issues.filter(x=>x.path.length).map(x=>[String(x.path[0]),x.message==='caseReasonRequired'?'caseReasonRequired':'invalid']))});const d=parsed.data;

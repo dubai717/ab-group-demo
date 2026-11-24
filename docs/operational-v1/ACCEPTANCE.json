@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-23",
+  "asOf": "2026-11-24",
   "data": "isolated synthetic PostgreSQL and fake external providers only",
   "releaseReady": false,
   "evidence": [
@@ -3335,5 +3335,40 @@
     "checkpointCommit": "0f91f0c",
     "prCurrentHead": "92ff24228c2ef3b6134e91b1cb02ab6f8a212fea",
     "prPushDeferred": "Preserve running CI34 and pending CI35; checkpoint pushed without replacing pending run."
+  },
+  "caseResponseDeadlineVerification": {
+    "asOf": "2026-11-24",
+    "status": "partial_unpublished",
+    "scope": "Internal three-working-date review only; no verified customer delivery/final-followup/closure",
+    "unitPassed": 3,
+    "nativePassed": 5,
+    "staticPassed": 189,
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "browser": "AR/EN original topic suite passed at 1440/768/390 including response date",
+    "sourceChecksums": {
+      "backend/src/case-response-deadline.ts": "eb25346600ca99fca0606eccc0507f71b47d77a6e301bc69ac2267b815634256",
+      "backend/src/communication-cases.ts": "5f695afbca6adc56a4bc18e307ba1841cb2f6a819b3cd72e1c5e3269fef7acbe",
+      "communications-ui.js": "74dc8e5b8fe1977968cc5649bacbbb627ce8bfda2129a9b706ee8cf8b51193c5",
+      "backend/tests/case-response-deadline.test.ts": "5febba279295f5226e5a2df52d7356705db17c3d410d0cbf34478da8bc72c82d",
+      "backend/tests/case-response-deadline-source.test.ts": "d913d5fce6557b8d13168b8acf993ee36f20a22b6c5417461d2e9413db2237b2",
+      "backend/tests/communication-cases.browser.cjs": "7f9703d08b1ad3588812cfab79fda4f1b265badec1e51f7319eb97603e56d581"
+    },
+    "evidenceChecksums": {
+      "case-deadline-unit.log": "c75cd0a4ef45b2dd1bb145042e0686ee5cf8100aedd4baa8d3c421e78b5c6dc1",
+      "case-deadline-native.log": "c25eaa2952f2b7d775953489c6e3953279e48e8b2c1aacf848ab484e11c616e5",
+      "case-deadline-browser.log": "e44d85f1e43f4a756ce86631000047432a9f32022d32936282381fc2df057e39",
+      "case-deadline-static.log": "c36647a282e4052834c23d3e4aea462919d50d869a13f222c3b1b8bc8b608ce5",
+      "case-deadline-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+    },
+    "financialEffect": false,
+    "externalSent": false,
+    "noResponseClosureAvailable": false,
+    "published": false
+  },
+  "verifiedCIBaseline": {
+    "run34": "success on 721a1a3",
+    "run35": "success on 92ff242",
+    "latestChangesNotYetCI": true
   }
 }
