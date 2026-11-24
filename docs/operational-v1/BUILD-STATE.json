@@ -3242,5 +3242,23 @@
       "whatsapp-envelope-binding-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
       "whatsapp-envelope-binding-root.log": "8654b4a5303d27e201057d52b523d2f3f8ddc5d1ba606e6083f59501ab96903a"
     }
+  },
+  "originalWhatsAppMediaAttachment": {
+    "status": "implemented_unpublished_inactive_browser_pending",
+    "linkedNativeCasesPassed": 11,
+    "actualOriginalMessageAndEncryptedAttachmentWriter": true,
+    "actualSourceAuthorizationBeforeDownload": true,
+    "originalGeneralAttachmentMetadataPreserved": true,
+    "sourceEnvelopeAndMediaChecksumsVerified": true,
+    "documentApproved": false,
+    "realProviderCalled": false,
+    "liveRegistered": false,
+    "evidenceSha256": {
+      "whatsapp-original-media-types3.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "whatsapp-original-media-types4.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "whatsapp-original-media-linked.log": "e408c11d440c8b686e440e7811be20f946f391cb70f4a526b96d8f5fb5f362ab",
+      "whatsapp-original-media-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "whatsapp-original-media-root.log": "dd2a48f5f0abb50d84d211522b355d0d790294739630ebb7f2d680f6fd3c7492"
+    }
   }
 }

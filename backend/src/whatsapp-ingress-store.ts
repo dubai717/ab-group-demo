@@ -9,10 +9,11 @@ const status=z.object({...route,status:z.enum(['sent','delivered','read','failed
 const input=z.object({messages:z.array(message).max(1000),statuses:z.array(status).max(1000),financialEffect:z.literal(false)}).strict().refine(v=>v.messages.length+v.statuses.length<=1000);
 const digest=(value:any)=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 function canonical(value:any,depth=0):any{if(depth>32)throw Error('whatsappIngressDepthReviewRequired');if(Array.isArray(value))return value.map(v=>canonical(v,depth+1));if(value&&typeof value==='object')return Object.fromEntries(Object.keys(value).sort().map(k=>[k,canonical(value[k],depth+1)]));return value;}
+export function whatsappProviderEventHash(kind:string,phoneNumberId:string,providerAccountId:string,payload:unknown){return digest(canonical({kind,phoneNumberId,providerAccountId,payload}));}
 function rawProviderEvents(bytes:Buffer){
  const raw=JSON.parse(bytes.toString('utf8')),out=new Map<string,any>();requireOk(raw.object==='whatsapp_business_account'&&Array.isArray(raw.entry),422,'whatsappIngressEnvelopeRequired');let count=0;
  for(const entry of raw.entry)for(const change of entry.changes||[]){if(change.field!=='messages')continue;const value=change.value,phone=value?.metadata?.phone_number_id;
-  for(const [kind,events]of[['message',value?.messages||[]],['status',value?.statuses||[]]]as const)for(const event of events){requireOk(++count<=1000,422,'whatsappIngressLimit');const key=createHash('sha256').update(phone+':'+kind+':'+event.id+(kind==='status'?':'+event.status+':'+event.timestamp:'')).digest('hex'),facts={kind,phoneNumberId:phone,providerAccountId:entry.id,payload:event},hash=digest(canonical(facts));requireOk(!out.has(key)||out.get(key).hash===hash,409,'whatsappIngressContentReviewRequired');out.set(key,{...facts,hash});}
+  for(const [kind,events]of[['message',value?.messages||[]],['status',value?.statuses||[]]]as const)for(const event of events){requireOk(++count<=1000,422,'whatsappIngressLimit');const key=createHash('sha256').update(phone+':'+kind+':'+event.id+(kind==='status'?':'+event.status+':'+event.timestamp:'')).digest('hex'),facts={kind,phoneNumberId:phone,providerAccountId:entry.id,payload:event},hash=whatsappProviderEventHash(kind,phone,entry.id,event);requireOk(!out.has(key)||out.get(key).hash===hash,409,'whatsappIngressContentReviewRequired');out.set(key,{...facts,hash});}
  }return out;
 }
 
