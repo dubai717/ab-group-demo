@@ -3370,5 +3370,35 @@
     "run34": "success on 721a1a3",
     "run35": "success on 92ff242",
     "latestChangesNotYetCI": true
+  },
+  "documentReminderPreviewVerification": {
+    "asOf": "2026-11-24",
+    "status": "partial_unpublished_preview_only",
+    "nativePassed": 9,
+    "staticPassed": 189,
+    "typecheck": "passed",
+    "providerFreeBuild": "passed",
+    "browser": "No new expiry-dialog browser acceptance claimed; existing case suite predates this small preview addition",
+    "sourceChecksums": {
+      "backend/src/document-reminder-plan.ts": "b9296d145a46e76ef0810d546ff91f01b2d46c299aeaf2696bc8727fd63d0b86",
+      "backend/src/document-center.ts": "fa5af0786a35c8def9d280b5f24246ebde04288f1b2a5036a0c7fb364b41bad1",
+      "communications-ui.js": "80a2996d1dff444a97b870bd9d7fa0a8d07f84a2385e0b2f564ce0ff8924e6bf",
+      "backend/tests/document-reminder-plan.test.ts": "200ecfb5d01bb9cf81c053ce20b54505262038cf809eafc8da8af55b4a22eaf4",
+      "backend/tests/document-reminder-source.test.ts": "dd537f16d58169b492783e90ccea8814563ff26151557f1f7cbcfe97a84292c8"
+    },
+    "evidenceChecksums": {
+      "document-reminder-native.log": "ee815a2e1626a1f0f16f41e23d0749b8a7f328877181f469aea300b70b1f109a",
+      "document-reminder-static.log": "0f715d12749acbed87a0ade1ab8c32c968bf19c685eef15eee3baa7b62a90d4c",
+      "document-reminder-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+    },
+    "liveEnabled": false,
+    "externalSent": false,
+    "financialEffect": false,
+    "remaining": [
+      "dated company/type/customer settings",
+      "durable authorized dispatch state and retry",
+      "official provider/templates/consent",
+      "scheduler and full browser/permission acceptance"
+    ]
   }
 }
