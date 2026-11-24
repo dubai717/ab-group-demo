@@ -2763,7 +2763,21 @@
         "investor-restore-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       }
     },
-    "initialFailureAttribution": "legacy direct Docker paths bypassed selected native tools; no Docker container for new RAM cluster; exact failure retained in full log"
+    "initialFailureAttribution": "legacy direct Docker paths bypassed selected native tools; no Docker container for new RAM cluster; exact failure retained in full log",
+    "firstFullBackendResult": {
+      "tests": 903,
+      "passed": 899,
+      "failed": 4,
+      "exit": 1,
+      "cause": "four original direct Docker backup paths did not use native override; new RAM cluster has no corresponding Docker container",
+      "evidence": "129c0f66599661454d36aa3dfe4b62192f33e2386e854d18abe51c222efba4ef"
+    },
+    "fullBackendRerun": {
+      "startSource": "0bf4158f2048eaadac23ea06c428712663fcbaff",
+      "state": "running",
+      "laterCheckpointsNotClaimedFullyCovered": true,
+      "log": "work/evidence/final-full-backend-0bf4158.log"
+    }
   },
   "openingSourceWorkbench": {
     "asOf": "2026-11-24",
@@ -2799,8 +2813,9 @@
     "id": 45464800982,
     "source": "55180fc4278e868bd8f7114a06b3096a5eda82ee",
     "operationalUi": "success",
-    "originalRegressions": "in_progress_at_last_observation",
-    "deployment": false
+    "originalRegressions": "in_progress, original issuer-proof browser at last observation",
+    "deployment": false,
+    "originalNative": "success"
   },
   "newServiceCreationPrototype": {
     "status": "partial_isolated_only_unpublished",
@@ -2833,6 +2848,23 @@
         "service-approval-final-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
       },
       "linkedAcceptance": "3 linked original creation/actual-actor/approval cases passed"
+    }
+  },
+  "originalExecutionChronology": {
+    "status": "partial_readonly_unregistered",
+    "sourceDataChanged": false,
+    "executionHookInstalled": false,
+    "operatingPolicyActivated": false,
+    "supportedSource": "original matched vehicle funds receipt with original approval chronology",
+    "unsupportedSource": [
+      "cash actual task start",
+      "bank-direct actual bank source",
+      "nonvehicle actual execution source"
+    ],
+    "tests": "one native case including current entered-date refusal, explicit append-only historical copies, Dubai boundary, mismatch and tenant refusal; types passed",
+    "evidence": {
+      "execution-proof-bounded.log": "5ff35eb29563e8ffba303f29f0e54717f9c180c9f53a4f183c379d1b532f252d",
+      "execution-proof-bounded-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     }
   }
 }
