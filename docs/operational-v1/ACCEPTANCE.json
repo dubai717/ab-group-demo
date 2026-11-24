@@ -3844,18 +3844,18 @@
     ],
     "typecheck": "passed",
     "providerFreeBuild": "passed",
-    "full43Journey": "running_not_claimed_passed",
+    "full43Journey": "passed_on_9af90dca09a8e6df406ff114dc4da4fcfb659830",
     "realImportPerformed": false,
     "permissionsChanged": false,
     "financialEffect": false,
     "hostedBackupProved": false,
     "sourceHashes": {
-      "backend/src/employee-import-preview.ts": "3e23bc6415ae187df949df6743f0513b081a42550e2e16a76481f88382f1a91e",
+      "backend/src/employee-import-preview.ts": "dfe6fe02ba2546d5c69b59d1c62fe8755d3adbdfbe82d32bbe9b4512b6442569",
       "backend/src/personnel.ts": "a996111710271509a947227c343ee951d5da48f618bc853fb73ad08d20ca0f78",
       "backend/src/view-as.ts": "e39628a23f29b5491385f57335cf455e7bb83b56d2637d6bbf17ece7b31a16e1",
       "backend/src/app.ts": "216c721eaea78b623a2a79a651ebe95f69b4207380f4eeb3ccdaa396bae3b7b2",
-      "backend/tests/employee-import-preview.test.ts": "f5912f8ff3591d0b4a2db4f4d15a9b76b2bf00b091b1fbbdc848d36b269d686a",
-      "backend/tests/employee-import-preview.browser.cjs": "6cd8af59985dfa92ec26042a6333cb263d76fab62e1e985d11a74fd50ffee220",
+      "backend/tests/employee-import-preview.test.ts": "8e96c9d888c48ff17df26b2a46ddf880cac92a3cba4d2202442d4863a89104c4",
+      "backend/tests/employee-import-preview.browser.cjs": "d16fcca352e3f53d52ce1ed4cba1c22312cab4b9e4175a4f5ec3059be9063686",
       "backend/tests/isolated-pg-tools.ts": "c62d2a596f8382fa5ce23830574439cc335c7be0925c1200ad4e30c380ffe751",
       "backend/tests/isolated-pg-tools.test.ts": "7daa50a01af8867a3a0123b99a89539e3a50bfbd84cc4c869eafcc005009c483",
       "backend/tests/personnel.test.ts": "0ae18dd1334044e3e3d3cd5c5a2fd31db3be4629da6abfc7d0b3b3b9719ea986",
@@ -3871,13 +3871,39 @@
       "work/evidence/employee-import-preview-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "work/evidence/employee-import-preview-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
       "work/evidence/employee-import-preview-root.log": "6fba6c752786000b3d550c47556432d16776c76858eb17be47c632b25ec77d80",
-      "work/evidence/employee-import-pg-tools-unit.log": "bf8904ac9703fc7f4f311c90ca3ac37a8c1e8cf6630ca6990f7fd8d0c5973357"
+      "work/evidence/employee-import-pg-tools-unit.log": "bf8904ac9703fc7f4f311c90ca3ac37a8c1e8cf6630ca6990f7fd8d0c5973357",
+      "work/evidence/operational-employee-preview-full-43-final.log": "840de046459cfe1234664a02c96d393a6b9d746e597de5ad3466222baab9d11e",
+      "work/evidence/operational-employee-preview-full-43-final.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "work/evidence/employee-import-field-native-final.log": "a5e67deb510d54a7eab8bcd928ec7f1494db5312b8278e2e3ed07bea221f26a3",
+      "work/evidence/employee-import-field-browser.log": "3eddea7d9984b6e63aa7ab2700ce770bab516c2e4e4ea5740cc6f78ce21434ae",
+      "work/evidence/employee-import-field-typecheck-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "work/evidence/employee-import-field-build-final.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "work/evidence/employee-import-operational-review.log": "4cdecfdb99460f97c3ae32ede61d7151f3cb609bcc114bc075d4345af9541729",
+      "work/evidence/employee-import-financial-review.log": "22ba1e29583a8da2ec0942d6cd361e35091d7c0cc1a090614dc767487a043a04"
     },
     "remaining": [
       "Employee apply and original receipt recovery",
       "Documents/organization mappings and company-scope integration",
       "Final integrated acceptance"
     ],
-    "allV1Complete": false
+    "allV1Complete": false,
+    "full43ExitCode": 0,
+    "laterFieldErrorCorrection": {
+      "requiredVsInvalid": true,
+      "companyPhoneFieldsBound": true,
+      "originalPendingSchemaReadiness": true,
+      "focusedNativePassed": 11,
+      "focusedBrowser": "passed_ar_en_three_widths",
+      "typecheck": "passed",
+      "providerFreeBuild": "passed"
+    }
+  },
+  "githubCheckpointPolicy": {
+    "prHead": "29095d514f9d8dab065fb0b64f443d88c7b3ca71",
+    "pendingRun": 45398591987,
+    "runNumber": 42,
+    "pendingRunNotReplaced": true,
+    "laterCodeSavedToCheckpoint": true,
+    "nextPush": "Normal PR fast-forward after queued CI42 starts; do not cancel or replace a pending run."
   }
 }
