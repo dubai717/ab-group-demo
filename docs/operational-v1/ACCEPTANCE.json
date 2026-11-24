@@ -4022,5 +4022,30 @@
     },
     "allWhatsAppComplete": false,
     "allV1Complete": false
+  },
+  "independentBackupPreparation": {
+    "status": "tested_inactive_preparation",
+    "linkedNativePassed": 30,
+    "approvedRetentionPolicyAvailable": false,
+    "actualDestinationConfigured": false,
+    "actualSchedulerInstalled": false,
+    "canExecute": false,
+    "canDelete": false,
+    "hostedBackupPerformed": false,
+    "realRestorePerformed": false,
+    "sourceHashes": {
+      "backend/deploy/independent-backup-store.ts": "e49c9b473cf3f7d0b9a5064d3b6ecb2be68344c388977200099d2af690629d4a",
+      "backend/deploy/backup-cadence-plan.ts": "6862f627fc82fc2ef05f133a17af861afb75b8d17db77f56fa50c2fb83f094b2",
+      "backend/tests/independent-backup-store.test.ts": "2b45255713324128794ee1d9860c7b564996f83363c0fb6a06fec8d3b7a5e1fa",
+      "backend/tests/backup-cadence-plan.test.ts": "3f5468dcd9e21f2d7dd5f27acce5a33d37319fa4f01345a5116e043c0183f165",
+      ".github/workflows/staging-backup.yml.example": "3f9a3c9f33a10572217d1b4c31446b1b8f17807b2b2a98cb7a49750d986cca8a"
+    },
+    "evidenceHashes": {
+      "work/evidence/independent-backup-current-native.log": "d1174ad8d3d4f4a232d62e19f81bf3395b94e18118ecc078d5b26780615c26df",
+      "work/evidence/independent-backup-current-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "work/evidence/independent-backup-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030"
+    },
+    "ownerQuestionPending": "Independent destination and daily/monthly retention; no secrets requested",
+    "allV1Complete": false
   }
 }
