@@ -3227,5 +3227,20 @@
       "backup-capture-lease-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
       "backup-capture-lease-root.log": "e7b5aa10ac015fed75eed21f13c5f813ae892e5d50682e2671890315fd0840b8"
     }
+  },
+  "whatsappIngressEnvelopeBinding": {
+    "status": "implemented_unpublished_inactive",
+    "linkedCasesPassed": 24,
+    "normalizedSourceFieldsMatchedToRetainedEnvelope": true,
+    "omittedOrRepeatedEventsRefused": true,
+    "sourceMutationCases": 10,
+    "externalSent": false,
+    "liveRegistered": false,
+    "evidenceSha256": {
+      "whatsapp-envelope-binding-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "whatsapp-envelope-binding-linked.log": "0d7a4d32b2f104326be0058844ac61db025ebb988cdf7378eab247686ef91f5a",
+      "whatsapp-envelope-binding-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "whatsapp-envelope-binding-root.log": "8654b4a5303d27e201057d52b523d2f3f8ddc5d1ba606e6083f59501ab96903a"
+    }
   }
 }
