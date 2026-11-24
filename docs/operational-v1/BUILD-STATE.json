@@ -3212,5 +3212,20 @@
       "import-file-results-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
       "import-file-results-root.log": "b16dc5da94c0ce4f70c1eeda72a1d041577bf78cf6733705e16e30ece213f5b0"
     }
+  },
+  "backupCaptureLease": {
+    "status": "implemented_unpublished_inactive",
+    "filesystemLeaseCrossProcessTested": true,
+    "sourceCaptureNotRepeatedByCompetingRunner": true,
+    "crashedLeaseFailsClosed": true,
+    "automaticStaleLeaseDeletion": false,
+    "linkedCasesPassed": 23,
+    "realSourceOrDestinationContacted": false,
+    "evidenceSha256": {
+      "backup-capture-lease-linked.log": "df2c5eaad6a0ae0c8ce1b3c1a0aee9800bbfae1155ffa561e5429dba318a9523",
+      "backup-capture-lease-types2.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "backup-capture-lease-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "backup-capture-lease-root.log": "e7b5aa10ac015fed75eed21f13c5f813ae892e5d50682e2671890315fd0840b8"
+    }
   }
 }
