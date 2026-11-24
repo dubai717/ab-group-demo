@@ -1,0 +1,7 @@
+# Original communication authorization read budget — unpublished
+
+The existing internal compose/send paths now reuse the original model constructor through a fresh transaction-local packet. Recipient policy instances still represent their actual accounts, isolated from each other; source ACLs, optional internal-notice preferences, sender identity and original audit/notification paths remain. Nothing is cached across requests. Historical large participant lists are processed in100-account chunks instead of being truncated. No new grant, actor switch or communication system is introduced.
+
+The five-recipient native controller test measured **3 full model packets for compose** (actor, actual-recipient validation, notification fan-out) and **2 for a reply**. It also proves an opted-out internal recipient receives no optional notice, a newly revoked source-view grant is honored on the next reply, that revoked participant cannot open the original thread, staff sender remains the real Owner, and no receipt/journal/task changes occur.25 linked communications/case/follow-up/model/WhatsApp cases passed; TypeScript passed. The prior implementation loop rebuilt the full users/roles/banks/grants dataset separately for every target.
+
+This is code-path evidence and a synthetic query-count measurement, **not attribution of the institution's historical86.58GB Egress**. No hosted usage/log or live customer data was read for this change. External delivery is still inactive, and optional internal preference rules are separate from required inbound/Owner notices.

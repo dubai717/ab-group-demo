@@ -2657,5 +2657,23 @@
       "recipient-model-original-regressions.log": "c238a6383c10a8259bd4140d74870f527d16af2a344fb53177d4fdb7c0a464c4",
       "recipient-model-original-types.log": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10"
     }
+  },
+  "originalCommunicationReadBudget": {
+    "status": "tested_unpublished",
+    "linkedNativePassed": 25,
+    "fiveRecipientComposeModelPackets": 3,
+    "fiveRecipientReplyModelPackets": 2,
+    "sourcePermissionsAndPreferences": "preserved_and_fresh_revocation_tested",
+    "historicalLargeParticipantLists": "original_behavior_preserved_in_100_actor_chunks",
+    "crossRequestCache": false,
+    "actorIdentityChanged": false,
+    "financialOrTaskEffect": false,
+    "historicalEgressAttribution": "not_claimed",
+    "typecheck": "passed",
+    "fullLatestUi": "not_yet_claimed",
+    "evidence": {
+      "original-communications-model-budget-native.log": "619765370db09951a12c4801219920091ee8b105c89afd3ae56be21d8901b90c",
+      "original-communications-model-budget-types.log": "dd8879895d9716fbde8f006c4a854dc2ebf55f88f06ab1c2c0c8b947b7dabb10"
+    }
   }
 }
