@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-24",
+  "asOf": "2026-11-25T01:35:11.650158+00:00",
   "data": "isolated synthetic PostgreSQL and fake external providers only",
   "releaseReady": false,
   "evidence": [
@@ -4080,5 +4080,51 @@
     "allV1Complete": false,
     "full45ExitCode": 0,
     "rootChecksPassed": 162
+  },
+  "latestPinnedAcceptance": {
+    "source": "899446d8c37aacadf04ca7bc73ec3a9dc5b036c4",
+    "backendStatus": "passed",
+    "uiCode": 0,
+    "uiSourceUnchanged": true,
+    "uiCompletedAt": "2026-11-25T01:13:01.966Z",
+    "uiJourneysPassed": 53,
+    "laterConsentAndRetainedProofCovered": false,
+    "evidenceSha256": {
+      "ui.log": "0841099cda1ccd8e14a3afd9b550f11f489442ea9392cba53ce501bc1738f6f7",
+      "ui-status.json": "f1fc3c2160ff8ae1d000407b9d0a0ed970bb243485638d5b666b50ad9cdcd2fa",
+      "backend.log": "5c03b66b99b2ef60251fee768d5ec93566215763453fd5e24d89d2d1c0cbfb99",
+      "backend-status.json": "74254bd4c4e4b33b9e5047c9b4d2f917c09d0fc4bf9dc5630cf614f799f0c194"
+    },
+    "backendCode": 0,
+    "backendPassed": 966,
+    "backendFailed": 0,
+    "backendSourceUnchanged": true,
+    "backendCompletedAt": "2026-11-25T01:32:24.579Z",
+    "laterSourceChangesCovered": false,
+    "releaseReady": false
+  },
+  "originalReviewedWhatsAppReply": {
+    "state": "implemented_unpublished_isolated_preview_only",
+    "linkedCasesPassed": 10,
+    "originalStaffMessageAndActualAuthorRetained": true,
+    "ownerReviewNotConsentOrFinancialApproval": true,
+    "originalLanguageNotNationality": true,
+    "retainedIncomingWindowBoundToActualPhoneAccountAndThread": true,
+    "oldReviewCannotUndoRevocation": true,
+    "readOnlyRepeatableSnapshot": true,
+    "clientApprovalFlagsRefused": true,
+    "providerSendPerformed": false,
+    "remaining": [
+      "Management UI and employee authority",
+      "Original durable dispatch/status",
+      "Official templates/configuration",
+      "Financial/document source reminders and acceptance"
+    ],
+    "evidenceSha256": {
+      "whatsapp-reply-native.log": "5fd73e3074527774b2268901c534f53262ca4a5b0686ecb2264d031eafd9ff51",
+      "whatsapp-reply-types3.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "whatsapp-reply-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "whatsapp-reply-root.log": "393c01bb8a4501db6b1cc7826255afc42c08ac45d022ed54191aed19deed8fdb"
+    }
   }
 }
