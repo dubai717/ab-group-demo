@@ -9,6 +9,50 @@ import { today } from '../src/vehicle-domain.js';
 import { model } from '../src/data.js';
 import { readCrossBranchCollectionSource, readCrossBranchReceivingSite } from '../src/cross-branch-collection-source.js';
 
+async function collectThroughBrowser(
+  origin:string,companyId:string,invoiceId:string,
+  worker:{username:string;password:string},owner:{username:string;password:string},
+){
+  const {chromium}=await import('playwright');
+  const browser=await chromium.launch({executablePath:process.env.AB_BROWSER_EXECUTABLE,args:['--no-sandbox']});
+  try{
+    const open=async(credentials:typeof worker,locale:string,width:number)=>{
+      const page=await browser.newPage({viewport:{width,height:960}});
+      await page.goto(origin);
+      await page.locator('#username').fill(credentials.username);
+      await page.locator('#password').fill(credentials.password);
+      await page.locator('#login-form [type=submit]').click();
+      await page.locator('.account-menu summary').waitFor();
+      await page.evaluate((language)=>{(window as any).setLocale(language);},locale);
+      await page.locator('.account-menu summary').click();
+      await page.locator('[data-cross-branch-collection]').click();
+      return page;
+    };
+    const reporter=await open(worker,'ar',390),lookup=reporter.locator('[data-lookup]');
+    await lookup.locator('[name=companyId]').fill(companyId);
+    await lookup.locator('[name=invoiceId]').fill(invoiceId);
+    await lookup.locator('button').click();
+    const report=reporter.locator('[data-report]');
+    await report.locator('[name=amount]').fill('12.500');
+    await report.locator('[name=actual]').check();
+    await report.locator('button').click();
+    await reporter.waitForFunction(()=>Boolean(document.querySelector<HTMLInputElement>('[name=reportId]')?.value));
+    const reportId=await reporter.locator('[name=reportId]').inputValue();
+    assert.match(reportId,/^[a-f0-9-]{36}$/);
+    const approver=await open(owner,'en',1280);
+    await approver.locator('[name=reportId]').fill(reportId);
+    await approver.locator('[data-status] button').click();
+    const confirm=approver.locator('[data-confirm]');
+    await confirm.locator('[name=amount]').fill('12.500');
+    await confirm.locator('[name=actual]').check();
+    await confirm.locator('button').click();
+    await approver.getByText('Report confirmed and receipt posted.').waitFor();
+    await reporter.locator('[data-status] button').click();
+    await reporter.locator('[data-record]').getByText(/مرحّل/).waitFor();
+    return reportId;
+  }finally{await browser.close();}
+}
+
 test('cross-branch receiving site uses actual dated work location and separate legal-company authority', async () => {
   const f = await businessCentersFixture();
   let app: Awaited<ReturnType<typeof build>> | undefined;
@@ -177,6 +221,19 @@ test('cross-branch receiving site uses actual dated work location and separate l
         assert.equal((await c.query('select 1 from ab.'+table+' where '+key+'=$1',[value])).rowCount,0,table);
       }
     });
+    if(process.env.AB_CROSS_BRANCH_LIVE_BROWSER==='1'){
+      const browserInvoice=await f.bill('100');
+      await app.listen({host:'127.0.0.1',port:3100});
+      const reportId=await collectThroughBrowser(origin,f.co1,browserInvoice.id,worker,
+        {username:f.username,password:f.password});
+      const linked=(await f.admin.query(
+        `select r.company_id,r.holder_id,r.created_by,a.amount::text from ab.cross_branch_collection_posting p
+         join ab.finance_receipts r on r.tenant_id=p.tenant_id and r.batch_id=p.batch_id
+         join ab.vehicle_allocations a on a.receipt_id=r.id and a.invoice_id=$2
+         where p.intake_id=$1`,[reportId,browserInvoice.id],
+      )).rows;
+      assert.deepEqual(linked,[{company_id:f.co1,holder_id:worker.id,created_by:f.org.user,amount:'12.500'}]);
+    }
     await setCompanyScope([f.co1,f.co2],2,workerScope);
     for(const action of ['ledger_collect','customer_view','ledger_hand_over']){
       await f.req('POST','/api/users/'+worker.id+'/grants',{action,scope:{type:'company',id:f.co1},delegable:false});
