@@ -413,6 +413,7 @@ function saveState() {
 
 function isUserAllowed(user, permission) {
   if (!user) return false;
+  if(globalThis.ABCentral?.enabled&&user.id===ABCentral.actor?.id&&['view_tasks','create_task','assign_task','update_task_status'].includes(permission))return ABCentral.actor.permissions.includes(permission);
   const role = app.state.roles.find(r => r.id === user.roleId);
   if (!role) return false;
   if (user.roleId === 'owner') return true;
@@ -461,7 +462,7 @@ function getSidebarItems(user) {
     { id: 'tasks', label: localeText('tasks'), permission: 'view_tasks' },
     { id: 'reports', label: localeText('reports'), permission: 'view_reports' },
     { id: 'notifications', label: localeText('notifications'), permission: 'manage_notifications' }
-  ].filter(item => item.id !== 'bankAccounts' || BankAccounts.canEnter());
+  ].filter(item => item.id !== 'bankAccounts' || BankAccounts.canEnter()).filter(item=>!globalThis.ABCentral?.enabled||item.id!=='tasks'||isUserAllowed(user,'view_tasks'));
 
   if (!user) return [];
 

@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-25T03:28:39.746942+00:00",
+  "asOf": "2026-11-25T04:16:08.735832+00:00",
   "branch": "feature/operational-v1-independent",
   "financialPR": 115,
   "financialPREdited": false,
@@ -3740,5 +3740,43 @@
       "ci57-credit-isolated.log": "cf753f4096b232b7a0ea76d91ae84e44a9a5bff7992616f6c843a5fda427960b",
       "ci57-credit-final.log": "cf753f4096b232b7a0ea76d91ae84e44a9a5bff7992616f6c843a5fda427960b"
     }
+  },
+  "frozen04aAcceptance": {
+    "source": "04a626bf97659657f5926320078cdc182cc9ad33",
+    "backendPassed": 986,
+    "backendFailed": 0,
+    "backendStatus": {
+      "source": "04a626bf97659657f5926320078cdc182cc9ad33",
+      "sourceUnchanged": true,
+      "code": 0,
+      "signal": null,
+      "completedAt": "2026-11-25T03:57:54.028Z"
+    },
+    "uiJourneysPassed": 54,
+    "uiStatus": {
+      "source": "04a626bf97659657f5926320078cdc182cc9ad33",
+      "sourceUnchanged": true,
+      "code": 0,
+      "signal": null,
+      "completedAt": "2026-11-25T03:38:31.543Z"
+    },
+    "laterScopedTaskPermissionsCovered": false,
+    "evidenceSha256": {
+      "backend.log": "2982b6b8edc9f518be8094814d8f47074c71c3dda57489ed07516e561b59d94b",
+      "backend-status.json": "1d8edf963d8b83e8642cea8ce7f1f77c61856a14001e83872737774e47d3da20",
+      "ui.log": "433d5aca06304798ba416b89fd78c0854ae6bea51b29470f28b40584c62d7279",
+      "ui-status.json": "5ff0457e2ce1e1424c3e22dd6cfe415d311c37fced9c6e604817f04e23c743d5"
+    }
+  },
+  "scopedTaskPermissionWork": {
+    "state": "work_in_progress_unpublished",
+    "backendPriorLinkedPassed": 71,
+    "narrowReviewPriorLinkedPassed": 15,
+    "newReviewPermissionInstalledHosted": false,
+    "noParallelPermissionSystem": true,
+    "creatorBrowserFinalPending": true,
+    "fullSameHeadAcceptancePending": true,
+    "sourceDataChanged": false,
+    "financial95Promoted": false
   }
 }

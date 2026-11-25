@@ -1,13 +1,13 @@
 // Exact task deadlines and approved waiting over the original task, employee,
 // schedule, notification and audit sources. No financial due-date or penalty effects.
 import{z}from'zod';import{requireOk,sha,ApiError}from'./core.js';
-import{task,taskRight,hrRight,employeeIn,taskEvent,auditHR,notice}from'./personnel-domain.js';
+import{task,taskRight,hrRight,taskReviewRight,employeeIn,taskEvent,auditHR,notice}from'./personnel-domain.js';
 import{decodedEmployeeWorkCalendar}from'./employee-work-calendar.js';import{dueTaskEscalations}from'./operational-work-clock.js';
 const id=z.uuid(),instant=z.iso.datetime({offset:true}),reason=z.string().trim().min(1).max(2000),key=(taskId:string)=>'personnel:task-clock-v1:'+taskId;
 const input=z.object({revision:z.number().int().min(0),taskRevision:z.number().int().positive(),dueAt:instant,reason,waiting:z.array(z.object({from:instant,to:instant,reason}).strict()).max(20).default([])}).strict();
 async function timing(c:any,cipher:any,tenant:string,taskId:string){const r=(await c.query('select value from ab.settings where tenant_id=$1 and key=$2',[tenant,key(taskId)])).rows[0];if(!r)return null;const d=cipher.open(r.value.cipher);requireOk(d.taskId===taskId&&d.status==='Recorded',409,'taskClockSourceReviewRequired');return d;}
 export async function saveTaskWorkingClock(c:any,m:any,s:any,cipher:any,t:any,e:any,raw:any){
- const d=input.parse(raw);requireOk(hrRight(m,'task_manage',t.company_id)||taskRight(m,'assign',t.company_id)||e.manager_id===m.actor.id,403,'taskClockApprovalDenied');requireOk(e.user_id!==m.actor.id||m.actor.roleId==='owner',403,'independentReviewRequired');requireOk(!['Completed','Closed'].includes(t.state),409,'taskTerminal');
+ const d=input.parse(raw);requireOk(taskReviewRight(m,t.company_id,e),403,'taskClockApprovalDenied');requireOk(e.user_id!==m.actor.id||m.actor.roleId==='owner',403,'independentReviewRequired');requireOk(!['Completed','Closed'].includes(t.state),409,'taskTerminal');
   const dueAt=new Date(d.dueAt).toISOString();requireOk(d.waiting.every(w=>Date.parse(w.to)>Date.parse(w.from)&&Date.parse(w.from)>=Date.parse(dueAt)),422,'invalidTaskWaitingInterval');
   await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':'+key(t.id)]);const old=await timing(c,cipher,s.tenant_id,t.id),content={dueAt,reason:d.reason,employeeId:t.employee_id,waiting:d.waiting.map(w=>({...w,from:new Date(w.from).toISOString(),to:new Date(w.to).toISOString()}))},digest=sha(JSON.stringify(content));if(old?.digest===digest)return{taskId:t.id,revision:old.revision,existing:true,financialEffect:false};requireOk((old?.revision||0)===d.revision&&t.revision===d.taskRevision,409,'revisionConflict');
   const next={...content,taskId:t.id,status:'Recorded',revision:d.revision+1,digest,approvedBy:s.user_id,approvedAt:new Date().toISOString(),waiting:content.waiting.map(w=>({...w,approvedBy:s.user_id}))};

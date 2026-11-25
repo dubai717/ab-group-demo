@@ -31,7 +31,7 @@ async function readModelPacket(c: PoolClient) {
   // The optional narrowing overrides share this packet; no actor input is interpolated,
   // no parallel clients or cross-request/user cache are introduced.
   const reads = await c.query([
-    "select data from ab.roles",
+    "select data,exists(select 1 from ab.permissions where id='task_review')task_review_ready from ab.roles",
     "select c.*,l.id license_id,l.number,l.authority,l.issued_on::text,l.expires_on::text from ab.companies c left join ab.company_licenses l on l.company_id=c.id and l.is_primary",
     "select u.*,coalesce((select jsonb_agg(company_id) from ab.user_companies m where m.user_id=u.id and m.active),'[]') company_ids,coalesce((select jsonb_agg(department_id) from ab.user_departments m where m.user_id=u.id and m.active),'[]') department_ids from ab.users u",
     "select * from ab.departments",
@@ -135,6 +135,11 @@ function modelFromPacket(reads:{rows:any[]}[],actorId:string,cipher:Cipher){
       permissions: policy.bankPermissions(user.id, co.id),
     })),
   };
+  // Scoped legacy task additions affect navigation only where an actual company grant applies.
+  // Task controllers independently resolve each original company; no global has() fallback is added.
+  const taskRights=['view_tasks','create_task','assign_task','update_task_status'];
+  const companyTaskPermissions=companies.map((co:any)=>({companyId:co.id,permissions:taskRights.filter(right=>!policy.isDenied(actor.id,right)&&(actor.permissions.includes(right)&&(actor.companyIds||[]).includes(co.id)||policy.can(actor.id,right,{id:co.id,companyIds:[co.id],departmentIds:[]})||policy.can(actor.id,'hr_task_manage',{id:co.id,companyIds:[co.id],departmentIds:[]})))}));
+  Object.assign(actor,{companyTaskPermissions,permissions:[...new Set([...actor.permissions,...companyTaskPermissions.flatMap((row:any)=>row.permissions)])]});
   for(const action of ['edit','activate','deactivate'])if(policy.isDenied(actor.id,action==='edit'?'edit_company':action+'_company'))actor.companyPermissions={...(actor.companyPermissions||{}),[action]:'deny'};
   const references = reads[5].rows;
   state.bankReference = references
@@ -173,6 +178,7 @@ function modelFromPacket(reads:{rows:any[]}[],actorId:string,cipher:Cipher){
     grants,
     initialGrants,
     initialDenials,
+    taskReviewReady:reads[0].rows.length>0&&reads[0].rows.every((row:any)=>row.task_review_ready===true),
     auditCipher:cipher,
     getNextGrants: () => nextGrants,
   };

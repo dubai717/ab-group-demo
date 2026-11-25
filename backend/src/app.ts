@@ -1,3 +1,4 @@
+import{guardOriginalTaskMutationReceipt}from'./task-mutation-receipt.js';
 import{guardVehicleExecutionReceipt}from'./service-authorized-continuation.js';
 import{assertWhatsAppReviewOperator,registerWhatsAppReviewManagement,type WhatsAppReviewConfig}from'./whatsapp-review-management.js';
 import{assertExecutionExceptionOperator,registerExecutionExceptionManagement}from'./service-execution-exceptions.js';
@@ -257,6 +258,7 @@ export async function build(options: Options) {
       const s = await session(req);
       if(req.body)req.body=normalizeContactPayload(req.body);
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
+        const originalTaskMutation=req.method==='POST'?/^\/api\/personnel\/tasks(?:\/([0-9a-f-]+)\/(action|working-clock))?$/i.exec(req.url.split('?')[0]):null;
         const guardedVehicleExecution=req.method==='POST'&&typeof options.beforeServiceExecution==='function'?/^\/api\/vehicle-requests\/([0-9a-f-]+)\/(disburse|register)$/i.exec(req.url.split('?')[0]):null;
         const whatsAppReviewMutation=req.method==='POST'&&(/^\/api\/customers\/[0-9a-f-]+\/whatsapp-consent$/i.test(req.url.split('?')[0])||/^\/api\/communications\/[0-9a-f-]+\/whatsapp-review(?:\/[0-9a-f-]+\/revoke)?$/i.test(req.url.split('?')[0]));
         const serviceExceptionMutation=req.method==='POST'&&/^\/api\/customers\/[0-9a-f-]+\/service-execution-exceptions(?:\/[0-9a-f-]+\/revoke)?$/i.test(req.url.split('?')[0]);
@@ -266,6 +268,7 @@ export async function build(options: Options) {
         const centreImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/centres/run';
         const originalImportRun=req.method==='POST'?/^\/api\/data-imports\/(customers|vehicles)\/(?:upload|[0-9a-f-]{36}\/(?:run|preview))$/i.exec(req.url.split('?')[0]):null;
         let importModel:any,originalImportReceiptGuard:((outcome:any)=>Promise<void>)|undefined;
+        if(!s.viewAs&&originalTaskMutation)await c.query('select pg_advisory_xact_lock_shared(hashtextextended($1,0))',[s.tenant_id+':security-roles']);
         // Serialize permission mutations before loading their authority snapshot.
         // This also prevents a queued grant from using a pre-standard-change issuer.
         if(!s.viewAs&&req.method!=='GET'&&(guardedVehicleExecution||whatsAppReviewMutation||serviceExceptionMutation||originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
@@ -275,7 +278,7 @@ export async function build(options: Options) {
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':company-directory']);
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(employeeDocumentImportRun||employeeImportRun||/^\/api\/personnel(?:\/|$)/.test(req.url.split('?')[0])))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':personnel-import-directory']);
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(centreImportRun||req.url.split('?')[0]==='/api/operating-centres/apply'))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':operating-centre-directory']);
-        if(guardedVehicleExecution)importModel=await model(c,s.user_id,cipher);
+        if(guardedVehicleExecution||originalTaskMutation)importModel=await model(c,s.user_id,cipher);
         if(whatsAppReviewMutation){importModel=await model(c,s.user_id,cipher);await assertWhatsAppReviewOperator(c,importModel,s,cipher,req.url.startsWith('/api/customers/')?'customer':'thread',req.params.id,options.whatsAppReview);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
         if(serviceExceptionMutation){importModel=await model(c,s.user_id,cipher);await assertExecutionExceptionOperator(c,importModel,s,req.params.id,options.serviceExecutionExceptionsEnabled===true);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
         if(originalImportRun){importModel=await model(c,s.user_id,cipher);const guard=originalImportRunGuards.get(originalImportRun[1].toLowerCase());requireOk(guard,503,'importGuardUnavailable');originalImportReceiptGuard=await guard(c,importModel,s,req);}
@@ -298,7 +301,7 @@ export async function build(options: Options) {
           uuid(key);
           // A retry can overlap a still-running customer creation after response loss.
           // Serialize its existing receipt before reading the cache, without changing other domains.
-          if (['POST','PATCH'].includes(req.method) && (/^\/api\/ledger\/(?:collections|custody|deposits)(?:\/|\?|$)/i.test(req.url)||/^\/api\/customers(?:\/[0-9a-f-]+)?(?:\?|$)/i.test(req.url)||/^\/api\/communications\/[0-9a-f-]+\/(?:task|cases(?:\/[0-9a-f-]+\/actions)?)(?:\?|$)/i.test(req.url)||/^\/api\/customers\/[0-9a-f-]+\/request-drafts(?:\/[0-9a-f-]+\/submit)?(?:\?|$)/i.test(req.url)))
+          if (['POST','PATCH'].includes(req.method) && (originalTaskMutation||/^\/api\/ledger\/(?:collections|custody|deposits)(?:\/|\?|$)/i.test(req.url)||/^\/api\/customers(?:\/[0-9a-f-]+)?(?:\?|$)/i.test(req.url)||/^\/api\/communications\/[0-9a-f-]+\/(?:task|cases(?:\/[0-9a-f-]+\/actions)?)(?:\?|$)/i.test(req.url)||/^\/api\/customers\/[0-9a-f-]+\/request-drafts(?:\/[0-9a-f-]+\/submit)?(?:\?|$)/i.test(req.url)))
             await c.query('select pg_advisory_xact_lock(hashtext($1))',['customer-save-receipt:'+s.user_id+':'+key]);
           const cached = (
             await c.query(
@@ -316,6 +319,7 @@ export async function build(options: Options) {
             if(req.method==='POST'&&/^\/api\/communications\/[0-9a-f-]+\/(?:task|cases(?:\/[0-9a-f-]+\/actions)?)(?:\?|$)/i.test(req.url))
               await authorizedCommunicationThread(c,await model(c,s.user_id,cipher),cipher,uuid(req.params.id));
             await originalImportReceiptGuard?.(cached.response);
+            if(originalTaskMutation)await guardOriginalTaskMutationReceipt(c,importModel,s,originalTaskMutation[1],originalTaskMutation[2],req.body,cached.response);
             if(guardedVehicleExecution)await guardVehicleExecutionReceipt(c,importModel,s,cipher,guardedVehicleExecution[1],guardedVehicleExecution[2].toLowerCase()as 'disburse'|'register',cached.response);
             if(!whatsAppReviewMutation)return cached.response;
             // Re-run the original idempotent proof after fresh authorization/source checks.
@@ -338,7 +342,7 @@ export async function build(options: Options) {
             JSON.stringify(result),
           ]);
         return result;
-      },{...(s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:{}),...(req.method==='GET'&&/^\/api\/communications\/[0-9a-f-]+\/whatsapp-review(?:\/(?:plan|delivery))?$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='GET'&&req.url.split('?')[0]==='/api/ledger/package/document-register'?{repeatableRead:true}:{}),...(req.method==='GET'&&/^\/api\/customers\/[0-9a-f-]+\/service-eligibility-review$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&['/api/data-imports/company-documents/preview','/api/data-imports/opening-balances/preview','/api/data-imports/personnel-documents/preview','/api/data-imports/centres/preview','/api/data-imports/companies/preview','/api/data-imports/employees/preview'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&/^\/api\/users\/[0-9a-f-]+\/work-scope\/preview$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{})});
+      },{...(s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:{}),...(req.method==='GET'&&/^\/api\/communications\/[0-9a-f-]+\/whatsapp-review(?:\/(?:plan|delivery))?$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='GET'&&req.url.split('?')[0]==='/api/ledger/package/document-register'?{repeatableRead:true}:{}),...(req.method==='GET'&&req.url.split('?')[0]==='/api/personnel/tasks/options'?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='GET'&&/^\/api\/customers\/[0-9a-f-]+\/service-eligibility-review$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&['/api/data-imports/company-documents/preview','/api/data-imports/opening-balances/preview','/api/data-imports/personnel-documents/preview','/api/data-imports/centres/preview','/api/data-imports/companies/preview','/api/data-imports/employees/preview'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&/^\/api\/users\/[0-9a-f-]+\/work-scope\/preview$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{})});
     };
   registerPermissionAdmin(app,call,cipher);registerSecurityRoles(app,call,cipher);registerOperatingCentres(app,call,cipher);registerOperatingCentreWriter(app,call,cipher);registerWorkLocations(app,call,cipher);registerWorkScopePreview(app,call,cipher);
   registerFinance(app,call,cipher);
@@ -875,6 +879,7 @@ export async function build(options: Options) {
     "/api/users/:id/grants",
     call(async (c, m, s, req) => {
       const target = uuid(req.params.id);
+      requireOk((req.body as any)?.action!=='task_review'||m.taskReviewReady,503,'taskReviewPermissionPending');
       m.policy.grant(s.user_id, target, bounded(req.body));
       const next = m.getNextGrants() || [];
       for (const row of next) {
