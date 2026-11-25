@@ -17,6 +17,12 @@ function rawProviderEvents(bytes:Buffer){
  }return out;
 }
 
+export const whatsappStatusLookupKey=(cipher:any,account:string,phone:string,message:string)=>
+ cipher.digest(JSON.stringify(['whatsapp-delivery-v1',account,phone,message]));
+export async function whatsappStatusLookupAvailable(c:any){
+ return (await c.query("select exists(select 1 from pg_catalog.pg_attribute where attrelid=to_regclass('ab.communication_provider_events') and attname='status_lookup_key' and not attisdropped) ok")).rows[0]?.ok===true;
+}
+
 export function createWhatsAppIngressStore(config:{mode:'disabled'|'sandbox';pool:any;cipher:any;tenantId:string;processingActorId:string}):WhatsAppIngressSink{
  if(config.mode!=='sandbox')throw Error('whatsappIngressNotEnabled');const tenant=z.uuid().parse(config.tenantId),actor=z.uuid().parse(config.processingActorId);
  // An explicit existing processing principal is not the external message's author.
@@ -27,12 +33,18 @@ export function createWhatsAppIngressStore(config:{mode:'disabled'|'sandbox';poo
    if(context.signal.aborted)throw Error('whatsappIngressAborted');
    requireOk((await c.query("select 1 from ab.users where tenant_id=ab.tenant()and id=$1 and role_id='owner'and status='Active'",[actor])).rowCount===1,403,'whatsappIngressPrincipalReviewRequired');
    requireOk((await c.query("select to_regclass('ab.communication_provider_events')ok")).rows[0].ok,503,'whatsappIngressSchemaReviewRequired');
+   const indexed=batch.statuses.length>0&&await whatsappStatusLookupAvailable(c);
    let inserted=0;
    for(const [kind,events]of[['message',batch.messages],['status',batch.statuses]]as const)for(const event of events){
     if(context.signal.aborted)throw Error('whatsappIngressAborted');
     // Stable provider content excludes mutable configured routing hints and envelope bundling/order.
     const {dedupKey}=event,provider=providerEvents.get(dedupKey);requireOk(provider?.kind===kind&&provider.phoneNumberId===event.phoneNumberId&&provider.providerAccountId===event.providerAccountId,422,'whatsappIngressEnvelopeMismatch');const p=provider.payload;requireOk(event.externalId===p.id&&typeof p.timestamp==='string'&&/^\d{1,12}$/.test(p.timestamp)&&event.occurredAt===new Date(Number(p.timestamp)*1000).toISOString(),422,'whatsappIngressEnvelopeMismatch');if(kind==='message'){const m=event as z.infer<typeof message>;requireOk(m.from===p.from&&m.type===p.type&&m.text===(p.type==='text'?p.text?.body:null)&&m.mediaId===(['image','document','audio','video','sticker'].includes(p.type)?p[p.type]?.id:null)&&m.contextId===(p.context?.id||null),422,'whatsappIngressEnvelopeMismatch');}else{const s=event as z.infer<typeof status>;requireOk(s.status===p.status&&s.providerCode===(typeof p.errors?.[0]?.code==='number'?p.errors[0].code:null),422,'whatsappIngressEnvelopeMismatch');}const payloadHash=provider.hash;
-    const added=await c.query("insert into ab.communication_provider_events(tenant_id,id,provider,event_key,event_kind,payload_hash,envelope_hash,payload_cipher,received_by)values($1,$2,'meta_cloud',$3,$4,$5,$6,$7,$8)on conflict(tenant_id,provider,event_key)do nothing",[tenant,randomUUID(),dedupKey,kind,payloadHash,envelopeHash,config.cipher.seal({kind,event}),actor]);
+    const values=[tenant,randomUUID(),dedupKey,kind,payloadHash,envelopeHash,config.cipher.seal({kind,event}),actor];
+    const statusKey=indexed&&kind==='status'?whatsappStatusLookupKey(config.cipher,event.providerAccountId,event.phoneNumberId,event.externalId):null;
+    const added=await c.query(statusKey
+     ?"insert into ab.communication_provider_events(tenant_id,id,provider,event_key,event_kind,payload_hash,envelope_hash,payload_cipher,received_by,status_lookup_key)values($1,$2,'meta_cloud',$3,$4,$5,$6,$7,$8,$9)on conflict(tenant_id,provider,event_key)do nothing"
+     :"insert into ab.communication_provider_events(tenant_id,id,provider,event_key,event_kind,payload_hash,envelope_hash,payload_cipher,received_by)values($1,$2,'meta_cloud',$3,$4,$5,$6,$7,$8)on conflict(tenant_id,provider,event_key)do nothing",
+     statusKey?[...values,statusKey]:values);
     inserted+=added.rowCount||0;
     const saved=(await c.query("select event_kind,payload_hash from ab.communication_provider_events where tenant_id=$1 and provider='meta_cloud'and event_key=$2",[tenant,dedupKey])).rows[0];
     requireOk(saved?.event_kind===kind&&saved?.payload_hash===payloadHash,409,'whatsappIngressContentReviewRequired');
