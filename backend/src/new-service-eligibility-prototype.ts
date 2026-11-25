@@ -4,13 +4,14 @@ import{serviceActivation,serviceActivationFrame}from'./service-activation-clock.
 import{z}from'zod';import{ApiError,requireOk}from'./core.js';import{actualActorServiceEligibilityCreationCheck,actualActorServiceEligibilityApprovalCheck}from'./service-eligibility-actor-source.js';
 function isolatedServiceGuard(cipher:any,effectiveFrom:string,phase:'create'|'approve'){
  const activation=serviceActivation(effectiveFrom);
- return async(c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general';requestId?:string})=>{
+ return async(c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general';requestId?:string;requestRevision?:number})=>{
   const database=(await c.query('select current_database()name')).rows[0]?.name;
   requireOk(typeof database==='string'&&/^ab_backup_[a-f0-9]{32}$/.test(database),503,'isolatedEligibilityPrototypeOnly');
   if(!serviceActivationFrame(activation,new Date()).active)return;
-  const {requestId,...identity}=input;
+  const {requestId,requestRevision,...identity}=input;
   const result=await (phase==='approve'?actualActorServiceEligibilityApprovalCheck:actualActorServiceEligibilityCreationCheck)(c,m,s,cipher,identity);
-  if(phase==='approve'&&requestId&&result.status==='blocked'&&await useExecutionException(c,m,s,cipher,{...identity,requestId,phase:'approve'},result))return;
+  if(requestId&&result.status==='blocked'&&(phase==='approve'||requestRevision!==undefined)&&
+      await useExecutionException(c,m,s,cipher,{...identity,requestId,requestRevision,phase},result))return;
   if(result.status!=='allowed')throw new ApiError(409,result.status==='blocked'?'newServiceArrearsBlocked':'newServiceArrearsReviewRequired');
  };
 }

@@ -3,11 +3,47 @@ test('isolated original service creators reject arrears before request/task crea
  const request=await f.request();await f.fund(request.id);const vehicle=await f.register(request.id);await f.contract(vehicle.id,{startOn:'2026-09-01'});
  for(const file of['operating-centres.sql','company-scope-upper-bound.sql','company-scope-customers.sql','service-eligibility-source.sql'])await f.admin.query(await readFile('backend/review/'+file,'utf8'));
  const worker=await f.employee('general_manager');for(const action of['customer_view','customer_edit','vehicle_create'])await f.req('POST','/api/users/'+worker.id+'/grants',{action,scope:{type:'company',id:f.co1},delegable:false});const owner=await f.runtime.connect();try{await owner.query('begin');await owner.query("select set_config('ab.tenant',$1,true),set_config('ab.actor',$2,true)",[f.org.tenant,f.org.user]);const version=randomUUID();await owner.query("insert into ab.user_access_scope_versions(id,tenant_id,user_id,revision,selection_kind,payload_cipher,created_by)values($1,$2,$3,1,'companies',$4,$5)",[version,f.org.tenant,worker.id,security(f.secret.key).seal({companyIds:[f.co1]}),f.org.user]);await owner.query('insert into ab.user_access_scope_companies values($1,$2,$3,$4)',[f.org.tenant,worker.id,version,f.co1]);await owner.query('commit');}catch(e){await owner.query('rollback');throw e;}finally{owner.release();}
- const cipher=security(f.secret.key);app=await build({pool:f.runtime,key:f.secret.key,origin:'http://127.0.0.1:3100',secureCookies:false,auth:f.auth,objects:f.objects,scan:async()=>'clean',beforeNewService:isolatedNewServiceEligibilityGuard(cipher,today())});await app.ready();
+ const cipher=security(f.secret.key);app=await build({pool:f.runtime,key:f.secret.key,origin:'http://127.0.0.1:3100',secureCookies:false,auth:f.auth,objects:f.objects,scan:async()=>'clean',serviceExecutionExceptionsEnabled:true,beforeNewService:isolatedNewServiceEligibilityGuard(cipher,today())});await app.ready();
  let cookie='',csrf='';const req=async(method:any,url:string,body?:any,status=200,key=randomUUID())=>{const r=await app.inject({method,url,payload:body,headers:{cookie,origin:'http://127.0.0.1:3100','x-ab-request':'1','x-csrf-token':csrf,'idempotency-key':key}});assert.equal(r.statusCode,status,url+' '+r.body);return r.json();};const auth=await app.inject({method:'POST',url:'/api/login',payload:{username:f.username,password:f.password},headers:{origin:'http://127.0.0.1:3100','x-ab-request':'1'}});cookie=String(auth.headers['set-cookie']).split(';')[0];csrf=(await req('GET','/api/bootstrap')).csrfToken;
  const snapshot=async()=>({requests:(await f.admin.query('select count(*)n from ab.vehicle_requests')).rows[0].n,events:(await f.admin.query('select count(*)n from ab.customer_events')).rows[0].n,journals:(await f.admin.query('select count(*)n from ab.finance_journals')).rows[0].n,tasks:(await f.admin.query('select count(*)n from ab.tasks')).rows[0].n,invoices:(await f.admin.query('select count(*)n from ab.vehicle_invoices')).rows[0].n,receipts:(await f.admin.query('select count(*)n from ab.finance_receipts')).rows[0].n,dedup:(await f.admin.query('select count(*)n from ab.request_dedup')).rows[0].n}),before=await snapshot(),service='/api/customers/'+f.client+'/requests',vehiclePath='/api/customers/'+f.client+'/vehicle-requests',general={clientKey:randomUUID(),type:'general',companyId:f.co1,subject:'Synthetic free service',expectedAmount:'0',submit:true},residence={...general,clientKey:randomUUID(),type:'residence',transactionType:'renewal'},cash={companyId:f.co1,vehicleType:'Sedan',approximateValue:'1000',expectedFunding:'0',financeType:'cash',make:'Synthetic',model:'Fixture',year:'2026'};
  for(const [path,body]of[[service,general],[service,{...general,requiresApproval:false}],[service,residence],[vehiclePath,cash]]){const denial=await req('POST',path as string,body,409);assert.equal(denial.error,'newServiceArrearsBlocked');assert(denial.reference);}assert.deepEqual(await snapshot(),before);
  const workerAuth=await app.inject({method:'POST',url:'/api/login',payload:{username:worker.username,password:worker.password},headers:{origin:'http://127.0.0.1:3100','x-ab-request':'1'}}),ownerCookie=cookie,ownerCsrf=csrf;assert.equal(workerAuth.statusCode,200);cookie=String(workerAuth.headers['set-cookie']).split(';')[0];csrf=(await req('GET','/api/bootstrap')).csrfToken;assert.equal((await req('POST',service,{...general,clientKey:randomUUID()},409)).error,'newServiceArrearsBlocked');await req('GET','/api/ledger/receivables?customerId='+f.client,undefined,403);cookie=ownerCookie;csrf=ownerCsrf;assert.deepEqual(await snapshot(),before);
+ const drafts='/api/customers/'+f.client+'/request-drafts',exceptions='/api/customers/'+f.client+'/service-execution-exceptions',draftId=randomUUID();
+ cookie=String(workerAuth.headers['set-cookie']).split(';')[0];csrf=(await req('GET','/api/bootstrap')).csrfToken;
+ const workerCookie=cookie,workerCsrf=csrf;
+ const draft={draftId,type:'general',fields:{companyId:f.co1,subject:'Synthetic original draft',expectedAmount:'0'},revision:0};
+ const first=await req('POST',drafts,draft);
+ await req('POST',drafts+'/'+draftId+'/submit',{revision:first.revision},409);
+ cookie=ownerCookie;csrf=ownerCsrf;
+ const listed=(await req('GET',exceptions)).requests.find((row:any)=>row.id===draftId);
+ assert.equal(listed.requestRevision,first.revision);
+ assert.equal(listed.draftOwnerId,worker.id);
+ assert.deepEqual(listed.phases,['create']);
+ const grant={clientKey:randomUUID(),customerId:f.client,companyId:f.co1,requestId:draftId,requestRevision:first.revision,userId:worker.id,
+  type:'general',phase:'create',startsAt:new Date(Date.now()-60000).toISOString(),endsAt:new Date(Date.now()+300000).toISOString(),reason:'Synthetic exact draft exception'};
+ await req('POST',exceptions,{...grant,userId:f.org.user},409);
+ await req('POST',exceptions,grant);
+ cookie=workerCookie;csrf=workerCsrf;
+ const changed=await req('POST',drafts,{...draft,revision:first.revision,fields:{...draft.fields,subject:'Synthetic changed draft'}});
+ await req('POST',drafts+'/'+draftId+'/submit',{revision:changed.revision},409);
+ cookie=ownerCookie;csrf=ownerCsrf;
+ const approved=await req('POST',exceptions,{...grant,clientKey:randomUUID(),requestRevision:changed.revision});
+ cookie=workerCookie;csrf=workerCsrf;
+ await req('POST',service,{...general,clientKey:draftId},409);
+ const draftKey=randomUUID(),createdDraft=await req('POST',drafts+'/'+draftId+'/submit',{revision:changed.revision},200,draftKey);
+ assert(createdDraft.id);
+ assert.equal((await req('POST',drafts+'/'+draftId+'/submit',{revision:changed.revision},200,draftKey)).id,createdDraft.id);
+ assert.equal((await req('GET',service+'/'+createdDraft.id)).state,'Submitted');
+ const vehicleDraftId=randomUUID(),vehicleDraft=await req('POST',drafts,{draftId:vehicleDraftId,type:'vehicle',fields:cash,revision:0});
+ cookie=ownerCookie;csrf=ownerCsrf;
+ await req('POST',exceptions,{...grant,clientKey:randomUUID(),type:'vehicle',requestId:vehicleDraftId,requestRevision:vehicleDraft.revision});
+ cookie=workerCookie;csrf=workerCsrf;
+ const createdVehicle=await req('POST',drafts+'/'+vehicleDraftId+'/submit',{revision:vehicleDraft.revision});
+ assert.equal((await f.admin.query('select funding_state from ab.vehicle_requests where id=$1',[createdVehicle.id])).rows[0].funding_state,'Requested');
+ cookie=ownerCookie;csrf=ownerCsrf;
+ assert.equal((await req('GET',exceptions)).rows.find((row:any)=>row.id===approved.id).uses,1);
+ const afterDraft=await snapshot();
+ for(const k of ['journals','invoices','receipts'] as const)assert.equal(afterDraft[k],before[k]);
  // Debt settlement remains on the untouched original receipt path in this disposable fixture.
  const bills=(await f.admin.query("select id,amount::text,due_on from ab.vehicle_invoices where customer_id=$1 and due_on<$2 and kind in('finance','service')",[f.client,today()])).rows;for(const bill of bills)await req('POST','/api/ledger/invoices/adopt',{invoiceId:bill.id,itemId:f.items.loan,issuedOn:bill.due_on.toISOString().slice(0,10),confirmHistoricalClassification:true});await req('POST','/api/ledger/collections/invoices',{companyId:f.co1,customerId:f.client,currency:'AED',receivedOn:today(),actualCashReceived:true,invoices:bills.map((r:any)=>({invoiceId:r.id,amount:r.amount}))});
  const settled=await snapshot(),saved=await req('POST',service,general);assert(saved.id);const cashSaved=await req('POST',vehiclePath,cash);assert(cashSaved.id);const created=await snapshot();for(const k of['journals','invoices','receipts']as const)assert.equal(created[k],settled[k]);await f.bill('100',f.items.loan);const now=await snapshot();assert.equal((await req('POST',service,{...general,clientKey:randomUUID()},409)).error,'newServiceArrearsReviewRequired');assert.deepEqual(await snapshot(),now);const replay=await req('POST',service,general);assert.equal(replay.id,saved.id);assert.equal(replay.existing,true);
