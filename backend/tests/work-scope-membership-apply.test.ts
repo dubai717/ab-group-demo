@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { businessCentersFixture } from './business-centers-fixture.js';
 import { build } from '../src/app.js';
+import { transaction } from '../src/core.js';
 import { today } from '../src/vehicle-domain.js';
 
 test('reviewed centre membership updates original memberships and retains independent grants', async () => {
@@ -67,6 +68,35 @@ test('reviewed centre membership updates original memberships and retains indepe
   await f.req('POST','/api/users/'+worker.id+'/grants',{action:'edit',scope:{type:'department',id:department.id},delegable:false});
   const departmentPreview=await f.req('POST',scope+'preview',narrow);
   assert.equal((await apply({...narrow,confirm:true,reviewHash:departmentPreview.reviewHash},409)).error,'workScopeOutsideRightsReviewRequired');
+  const compiledWorker=await f.employee();
+  const compiledUrl='/api/users/'+compiledWorker.id+'/work-scope/';
+  await f.admin.query(await readFile('backend/review/company-scope-upper-bound.sql','utf8'));
+  const replaceCompiled=async(revision:number,previous:string|null)=>transaction(f.runtime,f.org.tenant,f.org.user,async c=>{
+   const id=randomUUID();
+   await c.query(`insert into ab.user_access_scope_versions(id,tenant_id,user_id,revision,previous_id,selection_kind,payload_cipher,created_by)
+      values($1,$2,$3,$4,$5,'companies','synthetic reviewed source',$6)`,[id,f.org.tenant,compiledWorker.id,revision,previous,f.org.user]);
+   for(const company of [f.co1,f.co2])await c.query('insert into ab.user_access_scope_companies values($1,$2,$3,$4)',[f.org.tenant,compiledWorker.id,id,company]);
+   return id;
+  });
+  const originalCompiled=await replaceCompiled(1,null);
+  const compiledUser=(await f.req('GET','/api/users/'+compiledWorker.id+'/permission-summary')).user;
+  const proposed={revision:compiledUser.revision,asOf:today(),selection:{kind:'centres',ids:[centreId]}};
+  const compiledRequest=(action:string,payload:unknown)=>app!.inject({method:'POST',url:compiledUrl+action,payload:payload as any,headers:{...headers,'idempotency-key':randomUUID()}});
+  const planBefore=await compiledRequest('preview',proposed);
+  assert.equal(planBefore.json().membershipApplication.available,true,planBefore.body);
+  const mismatch=await compiledRequest('preview',{...proposed,selection:{kind:'companies',ids:[f.co1]}});
+  assert.equal(mismatch.json().membershipApplication.reason,'workScopeCompiledMembershipReviewRequired');
+  const latestCompiled=await replaceCompiled(2,originalCompiled);
+  const stale=await compiledRequest('apply-memberships',{...proposed,confirm:true,reviewHash:planBefore.json().reviewHash});
+  assert.equal(stale.statusCode,409,stale.body);
+  assert.equal(stale.json().error,'workScopeReviewChanged');
+  const latest=await compiledRequest('preview',proposed);
+  const synced=await compiledRequest('apply-memberships',{...proposed,confirm:true,reviewHash:latest.json().reviewHash});
+  assert.equal(synced.statusCode,200,synced.body);
+  assert.equal(synced.json().changed,true);
+  assert.deepEqual(synced.json().companyIds,[f.co1,f.co2].sort());
+  assert.equal(latest.json().compiledMembership.id,latestCompiled);
+
  }finally{
   if(app)await app.close();
   await f.close();
