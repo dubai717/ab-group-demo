@@ -18,7 +18,32 @@ test('original direct bank settlement binds eligibility and registration to actu
     }
     const origin = 'http://127.0.0.1:3100';
     const cipher = security(f.secret.key);
-    const activation = new Date(Date.now() - 60000).toISOString();
+    const create = async () => {
+      const r = await f.req('POST', '/api/customers/' + f.client + '/vehicle-requests', {
+        companyId: f.co1, vehicleType: 'Truck', financeType: 'bank', approximateValue: '36000',
+        expectedFunding: '36000', months: 48, expectedMonthly: '950', totalObligation: '45600',
+        registrationMonthlyFee: '0', currency: 'AED',
+      });
+      const path = '/api/vehicle-requests/' + r.id;
+      await f.req('POST', path + '/funding-decision', { decision: 'approve', revision: 1 });
+      return { id: r.id, path };
+    };
+    const started = await create();
+    const waiting = await create();
+    const proof = await f.proof();
+    const terms = {
+      revision: 2, bankExecution: 'bank_direct', bankSettlementConfirmed: true,
+      bankSettlementReference: 'Synthetic evidence of direct supplier payment', bankReferenceId: 'demo-bank',
+      bankContractNumber: 'SYNTH-DIRECT', bankPrincipal: '36000', bankTotal: '39600', bankMonthly: '1100',
+      bankMonths: 36, bankStartOn: '2027-01-01', bankFundingOn: f.date, bankFees: '0',
+      documentVersionId: proof, confirm: true,
+    };
+    const historical = await create();
+    await f.req('POST', historical.path + '/bank-arrangement', terms);
+    const latestEvent = (await f.admin.query(
+      "select created_at from ab.vehicle_events where request_id=$1 and kind='bank_contract_approved'",
+      [historical.id])).rows[0];
+    const activation = new Date(latestEvent.created_at.getTime() + 1).toISOString();
     const guard = isolatedDirectBankEligibilityGuard(cipher, activation);
     let failAfterReceipt = false;
     app = await build({
@@ -39,26 +64,6 @@ test('original direct bank settlement binds eligibility and registration to actu
       const result = await app!.inject({ method: 'POST', url, payload, headers: { ...headers, 'idempotency-key': key } });
       assert.equal(result.statusCode, expected, url + ' ' + result.body);
       return result.json();
-    };
-    const create = async () => {
-      const r = await f.req('POST', '/api/customers/' + f.client + '/vehicle-requests', {
-        companyId: f.co1, vehicleType: 'Truck', financeType: 'bank', approximateValue: '36000',
-        expectedFunding: '36000', months: 48, expectedMonthly: '950', totalObligation: '45600',
-        registrationMonthlyFee: '0', currency: 'AED',
-      });
-      const path = '/api/vehicle-requests/' + r.id;
-      await f.req('POST', path + '/funding-decision', { decision: 'approve', revision: 1 });
-      return { id: r.id, path };
-    };
-    const started = await create();
-    const waiting = await create();
-    const proof = await f.proof();
-    const terms = {
-      revision: 2, bankExecution: 'bank_direct', bankSettlementConfirmed: true,
-      bankSettlementReference: 'Synthetic evidence of direct supplier payment', bankReferenceId: 'demo-bank',
-      bankContractNumber: 'SYNTH-DIRECT', bankPrincipal: '36000', bankTotal: '39600', bankMonthly: '1100',
-      bankMonths: 36, bankStartOn: '2027-01-01', bankFundingOn: f.date, bankFees: '0',
-      documentVersionId: proof, confirm: true,
     };
     const events = async (id: string) => (await f.admin.query(
       "select kind from ab.vehicle_events where request_id=$1 and kind in('bank_contract_approved','service_direct_bank_eligibility_passed') order by kind",
@@ -89,6 +94,10 @@ test('original direct bank settlement binds eligibility and registration to actu
     const postings = async () => (await f.admin.query('select count(*)::int n from ab.finance_operations')).rows[0].n;
     const before = await postings();
     assert.ok((await post(started.path + '/register', registration)).id);
+    assert.ok((await post(historical.path + '/register', {
+      ...registration, plate: 'SYNTH-HISTORIC', vin: randomUUID().replaceAll('-', '').slice(0, 17),
+    })).id);
+    assert.deepEqual(await events(historical.id), ['bank_contract_approved']);
     assert.equal(await postings(), before);
     assert.equal((await f.admin.query('select count(*)::int n from ab.vehicle_funds where request_id=$1', [started.id])).rows[0].n, 0);
     assert.equal((await f.req('GET', review)).simulation.status, 'blocked');

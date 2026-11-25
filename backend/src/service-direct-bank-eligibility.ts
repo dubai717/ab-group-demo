@@ -24,13 +24,13 @@ async function request(c: any, s: any, input: Settlement) {
 
 async function settlementEvent(c: any, s: any, cipher: any, input: Settlement, row: any, eventId: string) {
   const event = (await c.query(`
-    select actor_id, created_at,
+    select actor_id, actor_type, created_at,
            case when octet_length(payload_cipher)<=262144 then payload_cipher end payload_cipher
     from ab.vehicle_events
     where id=$1 and tenant_id=$2 and company_id=$3 and request_id=$4 and kind='bank_contract_approved'`,
     [eventId, s.tenant_id, input.companyId, input.requestId])).rows[0];
   requireOk(row.finance_type === 'bank' && row.funding_state === 'Approved' &&
-    typeof row.payload_cipher === 'string' && typeof event?.payload_cipher === 'string' &&
+    typeof row.payload_cipher === 'string' && typeof event?.payload_cipher === 'string' && event.actor_type === 'user' &&
     row.created_at instanceof Date && event.created_at instanceof Date &&
     event.created_at >= row.created_at && event.created_at.getTime() <= Date.now(),
     409, 'eligibilityContinuationReviewRequired');
@@ -90,7 +90,7 @@ export async function continueEligibleDirectBankSettlement(c: any, s: any, ciphe
     from ab.vehicle_events
     where tenant_id=$1 and company_id=$2 and request_id=$3 and kind=$4 and source_key=$5 limit 2`,
     [s.tenant_id, input.companyId, input.requestId, receiptKind, sourceKey(input.requestId, activation)])).rows;
-  if (!rows.length) return false;
+  if (!rows.length) return continuePriorDirectBankSettlement(c, s, cipher, input, activation);
   requireOk(rows.length === 1 && typeof rows[0].payload_cipher === 'string', 409, 'eligibilityContinuationReviewRequired');
   const receipt = rows[0];
   const original = cipher.open(receipt.payload_cipher)?.after;
@@ -105,6 +105,28 @@ export async function continueEligibleDirectBankSettlement(c: any, s: any, ciphe
     serviceActivationFrame(activation, event.created_at).active, 409, 'eligibilityContinuationReviewRequired');
   await audit(c, s.tenant_id, s.user_id, 'service_direct_bank_eligibility_continued', 'vehicle_request',
     input.requestId, ['originalBankSettlement', 'originalEligibilityReceipt']);
+  return true;
+}
+
+async function continuePriorDirectBankSettlement(c: any, s: any, cipher: any, input: Settlement, activation: Activation) {
+  const activationInstant = activation.effectiveAt || activation.effectiveFrom + 'T00:00:00+04:00';
+  const candidates = (await c.query(`
+    select e.id
+    from ab.vehicle_events e join ab.vehicle_requests r
+      on r.id=e.request_id and r.tenant_id=e.tenant_id and r.company_id=e.company_id
+    where e.tenant_id=$1 and e.company_id=$2 and e.request_id=$3 and r.customer_id=$4
+      and r.finance_type='bank' and r.funding_state='Approved'
+      and e.kind='bank_contract_approved' and e.created_at<$5::timestamptz limit 2`,
+    [s.tenant_id, input.companyId, input.requestId, input.customerId, activationInstant])).rows;
+  if (!candidates.length) return false;
+  const row = await request(c, s, input);
+  requireOk(typeof row.payload_cipher === 'string', 409, 'eligibilityContinuationReviewRequired');
+  if (cipher.open(row.payload_cipher)?.bankExecution !== 'bank_direct') return false;
+  requireOk(candidates.length === 1, 409, 'eligibilityContinuationReviewRequired');
+  const event = await settlementEvent(c, s, cipher, input, row, candidates[0].id);
+  requireOk(!serviceActivationFrame(activation, event.created_at).active, 409, 'eligibilityContinuationReviewRequired');
+  await audit(c, s.tenant_id, s.user_id, 'service_prior_direct_bank_settlement_continued', 'vehicle_request',
+    input.requestId, ['originalBankSettlement', 'preActivationExecution']);
   return true;
 }
 
