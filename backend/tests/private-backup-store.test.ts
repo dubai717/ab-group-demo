@@ -41,3 +41,7 @@ test('public bucket prevents any upload attempt',async()=>{
  let writes=0;const store=privateBackupStore(endpoint,'test-only',async(_input,init)=>{if(init?.method==='POST')writes++;return Response.json({...bucket,public:true});});
  await assert.rejects(()=>store.upload(newBackupPaths().archive,bytes),/BACKUP_BUCKET_NOT_PRIVATE/);assert.equal(writes,0);
 });
+
+test('original backup destination metadata is bounded and nonstandard service ports are refused before any provider request',async()=>{
+ let calls=0;const mock:typeof fetch=async()=>{calls++;return Response.json({...bucket,padding:'x'.repeat(17000)});};assert.throws(()=>privateBackupStore(endpoint+':8443','synthetic',mock),/BACKUP_ENDPOINT/);assert.equal(calls,0);await assert.rejects(privateBackupStore(endpoint,'synthetic',mock).verifyBucket(bytes.length),/BACKUP_STATUS_READ_LIMIT/);assert.equal(calls,1);
+});

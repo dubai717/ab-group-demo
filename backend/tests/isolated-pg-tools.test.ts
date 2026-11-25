@@ -1,0 +1,6 @@
+import{test}from'node:test';import assert from'node:assert/strict';import{isolatedPgTools}from'./isolated-pg-tools.js';import{localTestPort,localTestContainer}from'./setup.js';
+test('test backup tooling refuses hosted, wrong-port, privileged-options and operating database targets before any process or SQL starts',async()=>{
+ const name='ab_backup_'+'a'.repeat(32),url='postgres://postgres:synthetic-only@127.0.0.1:'+localTestPort+'/'+name;
+ for(const value of[url.replace('127.0.0.1','db.example.test'),url.replace(String(localTestPort),String(localTestPort+1)),url+'?options=--anything',url+'#fragment',url.replace('postgres://','https://'),url.replace('postgres:synthetic-only','other:synthetic-only'),url.replace(name,'ab_test')])assert.throws(()=>isolatedPgTools(value,name,localTestContainer),/OWNED_LOCAL_SYNTHETIC_DATABASE_REQUIRED/);
+ const tools=isolatedPgTools(url,name,localTestContainer);for(const target of['ab_test',name,'postgres','ab_restore_not-owned','ab_restore_'+'b'.repeat(32)+';DROP DATABASE anything']){await assert.rejects(tools.createRestore(target),/NEW_OWNED_RESTORE_TARGET_REQUIRED/);assert.throws(()=>tools.restore(target,Buffer.alloc(0)),/NEW_OWNED_RESTORE_TARGET_REQUIRED/);}
+});

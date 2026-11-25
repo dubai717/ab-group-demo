@@ -40,6 +40,7 @@ export class TestObjects implements ObjectStore {
     if (this.rows.has(key)) throw Error("overwrite denied");
     this.rows.set(key, bytes);
   }
+  async getIfPresent(key:string){return this.rows.get(key)||null;}
   async get(key: string) {
     const b = this.rows.get(key);
     if (!b) throw Error("missing");

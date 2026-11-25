@@ -1,0 +1,11 @@
+# Personnel relationship boundary — uninstalled review candidate
+
+`backend/review/company-scope-personnel.sql` is not a migration/runtime installer. Only owned random localhost synthetic databases were used.
+
+Four additional restrictive policies preserve original tenant/active-actor policies. With an explicit scope, employee SELECT uses actual legal employer or a currently effective work assignment; personal self visibility is separate. Future/ended work assignments cannot widen current scope. Own or assigned visibility does not authorize mutation of another legal employer's employee row: INSERT/UPDATE/DELETE are bounded to the primary legal employer. Original API field/action authority is still required; this is an upper bound, not a replacement permission engine or completed cross-company HR edit workflow.
+
+A known unconfigured source retains existing behavior; explicit empty/unknown/foreign-tenant sources fail closed, with personal own-row visibility subject to original active-work constraints. No account, original work membership, grant, leave balance or financial row changes. No new role, membership, bypass privilege or SECURITY DEFINER function is created.
+
+FORCE RLS can otherwise hide personnel facts from existing pre-authentication/hold/return SECURITY DEFINER functions when their existing technical owner cannot bypass RLS. The candidate therefore refuses an unreviewed non-bypass postgres owner rather than guessing, weakening a policy or granting privileges. Supporting such an owner remains engineering work requiring narrowly reviewed existing authentication functions. The synthetic original owner already has its established privileges; no role bits were changed. Do not use a passing local superuser environment as evidence about hosted ownership.
+
+Two coherent native cases passed: actual employer/dated assignment/own/empty/unknown/foreign-tenant reads; rejected out-of-employer updates/inserts; original-row/grant/account/journal parity; actual restricted return portal under explicit empty scope, owned leave report only, no work cookie/bootstrap/work login, and unchanged permissions/leaves/financials. TypeScript passed. This does not claim full employee-document/payroll/investor/private/task/customer/FK coverage, compatible rollback, actual membership apply or deployment readiness. Scope application remains disabled.

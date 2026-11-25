@@ -1,0 +1,55 @@
+name: Independent operational V1 checks (no deployment)
+on:
+  pull_request:
+    branches: [feature/finance-completion-build]
+permissions:
+  contents: read
+concurrency:
+  group: operational-v1-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  original-regressions:
+    uses: ./.github/workflows/staging-checks.yml
+  operational-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node backend/deploy/build.mjs
+      - run: npm run backend:test:db
+      - name: Prepare browser without external provider credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          browser_path=$(command -v google-chrome || true)
+          if test -n "$browser_path"; then
+            echo "AB_BROWSER_EXECUTABLE=$browser_path" >> "$GITHUB_ENV"
+          else
+            node node_modules/playwright/cli.js install --with-deps chromium
+          fi
+      - name: Exact-invoice payment reporting and independent browser confirmation
+        run: |
+          node backend/tests/cross-branch-collection-ui.browser.cjs
+          AB_CROSS_BRANCH_LIVE_BROWSER=1 node --import tsx --test backend/tests/cross-branch-receiving-site.test.ts
+      - name: Actual prospect and permissions flows with synthetic providers only
+        run: node backend/tests/operational-v1-suite.browser.cjs
+      - name: Preserve synthetic UI evidence only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: operational-v1-synthetic-ui
+          path: |
+            work/operational-*.png
+            work/dual-permissions-*.png
+            work/individual-task-*.png
+            work/company-document-import-*.png
+            work/backup-capture-status-*.png
+            work/original-whatsapp-media-*.png
+          if-no-files-found: ignore
+          retention-days: 7

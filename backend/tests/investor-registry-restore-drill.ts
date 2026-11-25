@@ -1,7 +1,7 @@
 import {localTestPort,localTestContainer} from './setup.js';
 import {assertEncryptedBackupEnvelope} from './backup-envelope-assertions.js';
 import assert from 'node:assert/strict';
-import {execFileSync} from 'node:child_process';
+import{isolatedPgTools}from'./isolated-pg-tools.js';import{disposeSyntheticRestoreCopy}from'./dispose-synthetic-database.js';
 import {randomBytes,randomUUID} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {Pool} from 'pg';
@@ -11,14 +11,12 @@ import {transaction} from '../src/core.js';
 // Exclusively synthetic local fixture databases. No hosted backup, role changes or restore-in-place.
 export async function investorRegistryRestoreDrill(f:any,upgrade:boolean){
  assert.match(f.sourceDatabase,/^ab_backup_[a-f0-9]+$/);
- const env={...process.env};
- for(const k of ['DOCKER_HOST','DOCKER_CONTEXT','DOCKER_TLS','DOCKER_TLS_VERIFY','DOCKER_CERT_PATH'])delete env[k];
- const docker=(args:string[],input?:Buffer)=>execFileSync('docker',['--host=unix:///var/run/docker.sock',...args],{env,stdio:['pipe','pipe','pipe'],input,maxBuffer:64*1024*1024});
+ const tools=isolatedPgTools(f.adminUrl,f.sourceDatabase,localTestContainer);
  const tables=(await f.admin.query("select tablename from pg_tables where schemaname='ab' order by tablename")).rows.map((r:any)=>r.tablename);
  assert(tables.every((t:string)=>/^[a-z_0-9]+$/.test(t)));
  const columns:any={};for(const t of tables)columns[t]=(await f.admin.query("select column_name from information_schema.columns where table_schema='ab' and table_name=$1 order by ordinal_position",[t])).rows.map((r:any)=>'"'+r.column_name.replaceAll('"','""')+'"').join(',');
  const snapshot=async(pool:Pool)=>{const rows:any={};for(const t of tables)rows[t]=(await pool.query('select to_jsonb(x) row from (select '+columns[t]+' from ab.'+t+') x order by to_jsonb(x)::text')).rows;return rows;};
- const before=await snapshot(f.admin),dump=docker(['exec',localTestContainer,'pg_dump','-U','postgres','-d',f.sourceDatabase,'-Fc','--no-owner']);
+ const before=await snapshot(f.admin),dump=tools.dump();
  const key=randomBytes(32).toString('base64'),sealed=archive(dump,new Map(f.objects.rows),key);
  assertEncryptedBackupEnvelope(sealed,key,dump);
  assert.throws(()=>restoreArchive(sealed,randomBytes(32).toString('base64')));
@@ -27,8 +25,8 @@ export async function investorRegistryRestoreDrill(f:any,upgrade:boolean){
  assert.deepEqual(restored.database,dump);assert.deepEqual(restored.objects,new Map(f.objects.rows));
  const name='ab_restore_'+randomUUID().replaceAll('-','');let target:Pool|undefined,runtime:Pool|undefined,created=false;
  try{
-  docker(['exec',localTestContainer,'createdb','-U','postgres',name]);created=true;
-  docker(['exec','-i',localTestContainer,'pg_restore','-U','postgres','-d',name,'--no-owner','--exit-on-error'],restored.database);
+  await tools.createRestore(name);created=true;
+  tools.restore(name,restored.database);
   target=new Pool({host:'127.0.0.1',port:localTestPort,user:'postgres',password:f.secret.admin,database:name});
   assert.deepEqual(await snapshot(target),before);
   if(upgrade){
@@ -53,6 +51,6 @@ export async function investorRegistryRestoreDrill(f:any,upgrade:boolean){
  }finally{
   if(runtime)await runtime.end();if(target)await target.end();
   // Only the random database this drill created; never the source or any hosted database.
-  if(created)docker(['exec',localTestContainer,'dropdb','-U','postgres',name]);
+  if(created)await disposeSyntheticRestoreCopy(f.adminUrl,f.sourceDatabase,name);
  }
 }

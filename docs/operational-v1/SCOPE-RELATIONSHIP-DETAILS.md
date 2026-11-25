@@ -1,0 +1,7 @@
+# Actual source FK details — Owner review only
+
+The original work-scope controller now provides `GET /api/users/work-scope/relationships/:table` to an actual Active Owner, refusing View As and ordinary workers. It reports bounded **catalog metadata only** for one tenant-bearing original ab table: each foreign-key constraint, ordered child/parent column pairs, parent schema/table, validation/deferral flags and whether that same constraint includes tenant_id→tenant_id. It retains distinct FKs to the same parent, so an id-only link cannot be mistaken for a composite tenant relationship merely because the parent name matches.
+
+Names are validated and used as parameters; no dynamic business-table query is executed. At most64 relationships and32 column pairs each are returned, with explicit totals/truncation. Unknown sources refuse404; query parameters are strict. No payloads, customer rows, policy definitions, source credentials or grants are returned. No result marks a relationship accepted or authorizes scope application: `complete=false`, `canApply=false`, `foreignKeyAloneProvesAuthorization=false`.
+
+Read-only synthetic catalog tests prove composite versus id-only links, multiple edges and original custody parent relationships. Controller tests prove Owner-only access, no request-dedup writes, invalid-query/source refusal and worker denial. Original View As and source-preview linked tests remain passing. This does not install any scope candidate or resolve private/shared/cross-branch authorization.

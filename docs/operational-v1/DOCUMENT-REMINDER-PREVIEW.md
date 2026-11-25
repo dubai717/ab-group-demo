@@ -1,0 +1,11 @@
+# Document reminder preview — unpublished
+
+This records the initial preview checkpoint. Dated preview settings were subsequently implemented; see [DOCUMENT-REMINDER-SETTINGS.md](DOCUMENT-REMINDER-SETTINGS.md). Delivery/scheduler limitations remain current.
+
+The original authorized document-expiry GET now includes read-only dates for30 days before expiry and the expiry day. Existing current-version selection, archive/withdrawal/source ACLs and file endpoints remain authoritative. No file bytes are loaded. Keys bind source/root/field/current version/expiry/offset, so a replacement cannot inherit an old scheduled event. Past dates are not replayed as fresh due events.
+
+The existing expiry dialog labels the dates as a preview. Sending remains disabled, fee is0AED, there is no invoice/journal/task/notification creation, and expiry does not block collection. Dates come from the existing normalized expiry projection; database DATE values are not passed as unnormalized input. Native replacement tests reproduced and corrected that initial integration mismatch.
+
+Three policy checks plus the actual source and original document-centre suite passed9 checks in one serial run. Replacement versions remove the old preview; repeated GETs do not change audit/notification/object counts; an unauthorized user cannot see the source. TypeScript, provider-free build and189 static checks passed before the final date-normalization correction; current-head rechecks are recorded separately. No claim of a running scheduler, persisted per-company/customer schedule settings, approved external delivery, durable dispatch/outbox or full reminder acceptance. These remain engineering/external prerequisites, not completed by this preview.
+
+Current-source validation additionally passed the actual expiry-dialog browser AR/EN1440/768/390, no file/write/send on opening, held prior-page suppression, and one full38-journey operational browser run exit0. The Arabic phone screenshot was visually reviewed. This is still not scheduler/provider acceptance.

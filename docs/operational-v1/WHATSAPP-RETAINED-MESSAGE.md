@@ -1,0 +1,7 @@
+# Retained original WhatsApp message proof
+
+Original text and media linkers now share the bounded tenant-specific original envelope reader. It verifies canonical base64, original envelope SHA256, original provider-event content hash, configured provider account/number, actual external ID/author/time/type/text/media/context and complete raw occurrence binding before creating a new original conversation message. It does not infer a customer, approve a document, create money or contact the provider.
+
+Identical raw occurrences of the same provider message are valid rebundling; all matching occurrences must have the same original content hash. Previously media required exactly one occurrence even though ingress legitimately deduplicates identical occurrences. A conflicting duplicate is refused, as are caller-supplied author/time/text/binding changes. Tenant binding and envelope/event budgets remain enforced, and existing media error codes are preserved. Existing committed replay remains source-authorized without another media download. No malformed source is silently omitted or mapped to a staff author.
+
+Four focused pure cases and original text/media native regressions pass in the16-case linked group. The negative time test was corrected after its first synthetic alternate time accidentally equalled the source; production acceptance was not weakened. Native tests retain real PostgreSQL/AES/RLS and explicit fake transport only. No actual Meta call, live webhook, sender configuration or real message.

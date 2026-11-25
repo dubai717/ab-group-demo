@@ -1,3 +1,4 @@
+import {decodeIndividualDenials} from './individual-denials-source.js';
 import {companyAuditFields} from './company-audit.js';
 import { createRequire } from "node:module";
 import { randomUUID } from "node:crypto";
@@ -25,20 +26,36 @@ export async function audit(
     [randomUUID(), tenant, actor, action, kind, id, fields, randomUUID()],
   );
 }
-export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
+async function readModelPacket(c: PoolClient) {
   // One simple-protocol packet, on this caller's existing transaction and RLS context.
-  // Statements and transformations are unchanged; no actor input is interpolated,
+  // The optional narrowing overrides share this packet; no actor input is interpolated,
   // no parallel clients or cross-request/user cache are introduced.
   const reads = await c.query([
-    "select data from ab.roles",
+    "select data,exists(select 1 from ab.permissions where id='task_review')task_review_ready from ab.roles",
     "select c.*,l.id license_id,l.number,l.authority,l.issued_on::text,l.expires_on::text from ab.companies c left join ab.company_licenses l on l.company_id=c.id and l.is_primary",
     "select u.*,coalesce((select jsonb_agg(company_id) from ab.user_companies m where m.user_id=u.id and m.active),'[]') company_ids,coalesce((select jsonb_agg(department_id) from ab.user_departments m where m.user_id=u.id and m.active),'[]') department_ids from ab.users u",
     "select * from ab.departments",
     "select * from ab.permission_grants where revoked_at is null",
     "select * from ab.bank_references",
     "select * from ab.bank_accounts",
+    "select key,value,tenant_id from ab.settings where key like 'user-denials-v1:%' and length(key)=52",
   ].join(';\n')) as unknown as { rows: any[] }[];
-  requireOk(Array.isArray(reads) && reads.length === 7 && reads.every(r => Array.isArray(r.rows)), 502, 'modelReadIncomplete');
+  requireOk(Array.isArray(reads) && reads.length === 8 && reads.every(r => Array.isArray(r.rows)), 502, 'modelReadIncomplete');
+  return reads;
+}
+export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
+  return modelFromPacket(await readModelPacket(c),actorId,cipher);
+}
+// Bounded, transaction-local fan-out. Same original policy construction for each ACTUAL recipient.
+// No cross-request cache, role/context changes, retained model array or permission writes.
+export async function forEachActorModel(c:PoolClient,cipher:Cipher,actorIds:string[],consume:(target:ReturnType<typeof modelFromPacket>,actorId:string)=>Promise<void>|void){
+  requireOk(Array.isArray(actorIds)&&actorIds.length<=100&&actorIds.every(id=>typeof id==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(id)),422,'actorModelRangeRequired');
+  const ids=[...new Set(actorIds.map(id=>id.toLowerCase()))];if(!ids.length)return{requested:0,active:0,unavailable:0,sourcePackets:0};
+  const reads=await readModelPacket(c);let active=0;
+  for(const id of ids){if(!reads[2].rows.some(r=>r.id===id&&r.status==='Active'))continue;const isolated=reads.map(r=>({rows:structuredClone(r.rows)}));await consume(modelFromPacket(isolated,id,cipher),id);active++;}
+  return{requested:ids.length,active,unavailable:ids.length-active,sourcePackets:1};
+}
+function modelFromPacket(reads:{rows:any[]}[],actorId:string,cipher:Cipher){
   const roles = reads[0].rows.map(
     (r) => r.data,
   );
@@ -99,8 +116,9 @@ export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
     bankReference: [],
     bankAccountPurposes: [],
   };
+  const initialDenials = decodeIndividualDenials(reads[7].rows,cipher,users);
   const policy = UserPolicy.createService(state, undefined, {
-    initialGrants,
+    initialGrants,initialDenials,
     auditCipher:cipher,
     grantsChanged: (rows: any[]) => {
       nextGrants = rows;
@@ -111,12 +129,18 @@ export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
   const actor = {
     ...user,
     permissions:
-      roles.find((r: any) => r.id === user.roleId)?.permissions || [],
+      (roles.find((r: any) => r.id === user.roleId)?.permissions || []).filter((right:string)=>!policy.isDenied(user.id,right)),
     companyBankPermissions: companies.map((co: any) => ({
       companyId: co.id,
       permissions: policy.bankPermissions(user.id, co.id),
     })),
   };
+  // Scoped legacy task additions affect navigation only where an actual company grant applies.
+  // Task controllers independently resolve each original company; no global has() fallback is added.
+  const taskRights=['view_tasks','create_task','assign_task','update_task_status'];
+  const companyTaskPermissions=companies.map((co:any)=>({companyId:co.id,permissions:taskRights.filter(right=>!policy.isDenied(actor.id,right)&&(actor.permissions.includes(right)&&(actor.companyIds||[]).includes(co.id)||policy.can(actor.id,right,{id:co.id,companyIds:[co.id],departmentIds:[]})||policy.can(actor.id,'hr_task_manage',{id:co.id,companyIds:[co.id],departmentIds:[]})))}));
+  Object.assign(actor,{companyTaskPermissions,permissions:[...new Set([...actor.permissions,...companyTaskPermissions.flatMap((row:any)=>row.permissions)])]});
+  for(const action of ['edit','activate','deactivate'])if(policy.isDenied(actor.id,action==='edit'?'edit_company':action+'_company'))actor.companyPermissions={...(actor.companyPermissions||{}),[action]:'deny'};
   const references = reads[5].rows;
   state.bankReference = references
     .filter((r) => r.kind === "bank")
@@ -153,6 +177,8 @@ export async function model(c: PoolClient, actorId: string, cipher: Cipher) {
     company,
     grants,
     initialGrants,
+    initialDenials,
+    taskReviewReady:reads[0].rows.length>0&&reads[0].rows.every((row:any)=>row.task_review_ready===true),
     auditCipher:cipher,
     getNextGrants: () => nextGrants,
   };
@@ -208,6 +234,24 @@ export function bounded(data: unknown, max = 64000) {
   requireOk(Buffer.byteLength(JSON.stringify(data)) <= max, 422, "tooLarge");
   return data as any;
 }
+// Shared by the original writer and read-only file previews. No persistence here.
+export function validateCompanyInput(input:any, isUpdate=false) {
+  const data=bounded(input,1024*1024);
+  const fieldErrors:Record<string,string>={};for(const key of ['arabicName','englishName','tradeLicenseNumber'])if((!isUpdate||Object.hasOwn(data,key))&&(typeof data[key]!=='string'||!data[key].trim()))fieldErrors[key]='required';
+  if(data.email&&!/^[^\s@]+@[^\s@]+$/.test(data.email))fieldErrors.email='invalidEmail';
+  for(const key of ['issueDate','expiryDate','establishmentDate'])if(data[key]&&!CompanyPolicy.validDate(data[key]))fieldErrors[key]='invalidDates';
+  if(Object.keys(fieldErrors).length)throw Object.assign(new ApiError(422,'invalidFields'),{fieldErrors});
+  return data;
+}
+export function prepareNewCompany(m:any,data:any) {
+  requireOk(m.company.canCreate());
+  validateCompanyInput(data);
+  m.company.prepare(data, []);
+  const state=structuredClone(m.state), id=randomUUID();
+  state.companies.push({id,status:'Active',documents:[]});
+  CompanyPolicy.createService({state:()=>state,actor:()=>({...m.actor,companyPermissions:undefined,permissions:['edit_company']}),persist:()=>true,validateLocation:(d:any)=>location(state,d)}).update(id,data);
+  return state.companies.find((co:any)=>co.id===id);
+}
 export async function persistCompany(
   c: PoolClient,
   m: any,
@@ -220,10 +264,7 @@ export async function persistCompany(
   const statusOnly=id&&Object.keys(data).every(k=>['revision','status'].includes(k))&&Object.hasOwn(data,'status');
   requireOk(!id||m.company.canRead());
   requireOk(id?(statusOnly?(data.status==='Active'?m.company.canActivate():m.company.canDeactivate()):m.company.canEdit()):m.company.canCreate());
-  const fieldErrors:Record<string,string>={};for(const key of ['arabicName','englishName','tradeLicenseNumber'])if((!id||Object.hasOwn(data,key))&&(typeof data[key]!=='string'||!data[key].trim()))fieldErrors[key]='required';
-  if(data.email&&!/^[^\s@]+@[^\s@]+$/.test(data.email))fieldErrors.email='invalidEmail';
-  for(const key of ['issueDate','expiryDate','establishmentDate'])if(data[key]&&!CompanyPolicy.validDate(data[key]))fieldErrors[key]='invalidDates';
-  if(Object.keys(fieldErrors).length)throw Object.assign(new ApiError(422,'invalidFields'),{fieldErrors});
+  validateCompanyInput(data, !!id);
 
   const prior = id
     ? structuredClone(m.state.companies.find((co: any) => co.id === id))
@@ -235,26 +276,10 @@ export async function persistCompany(
     m.state.areas = await loadAreas(c);
     m.company.update(id, data);
   } else {
-    requireOk(m.company.canCreate());
-    requireOk(
-      data.arabicName?.trim() &&
-        data.englishName?.trim() &&
-        data.tradeLicenseNumber?.trim(),
-      422,
-      "required",
-    );
-    m.company.prepare(data, []);
-    const temporary = { id: randomUUID(), status: "Active", documents: [] };
-    m.state.companies.push(temporary);
-    id = temporary.id;
     m.state.areas = await loadAreas(c);
-    // Creation is already authorized above. Preserve its existing initial-field policy independently of edit/status overrides.
-    CompanyPolicy.createService({
-      state: () => m.state,
-      actor: () => ({ ...m.actor, companyPermissions:undefined, permissions: ["edit_company"] }),
-      persist: () => true,
-      validateLocation: (d: any) => location(m.state, d),
-    }).update(id, data);
+    const temporary=prepareNewCompany(m,data);
+    m.state.companies.push(temporary);
+    id=temporary.id;
   }
   const row = m.state.companies.find((co: any) => co.id === id);
   const {

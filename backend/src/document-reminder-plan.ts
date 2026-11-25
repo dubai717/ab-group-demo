@@ -1,0 +1,8 @@
+// Read-only projection of an already authorized/current document. No transport or scheduler.
+import{z}from'zod';import{createHash}from'node:crypto';
+const day=z.iso.date(),id=z.string().min(1).max(256),input=z.object({source:id,id,field:id.optional(),type:id.optional(),versionId:id.nullable().optional(),expiresOn:day,archived:z.boolean().optional(),withdrawn:z.boolean().optional()}).strict();
+export function documentReminderPlan(raw:unknown,asOf:string,policy:{daysBefore:number[];enabled:boolean;ruleId?:string|null;revision?:number}={daysBefore:[30,0],enabled:true}){
+ const r=input.parse(raw);day.parse(asOf);z.array(z.number().int().min(0).max(365)).min(1).max(12).refine(v=>new Set(v).size===v.length).parse(policy.daysBefore);const inactive=r.archived||r.withdrawn||!policy.enabled;
+ const events=[...policy.daysBefore].sort((a,b)=>b-a).map(daysBefore=>{const scheduledOn=new Date(Date.parse(r.expiresOn+'T00:00:00Z')-daysBefore*86400000).toISOString().slice(0,10),identity={source:r.source,id:r.id,field:r.field||r.type||'',versionId:r.versionId||null,expiresOn:r.expiresOn,daysBefore};return{daysBefore,scheduledOn,key:createHash('sha256').update(JSON.stringify(identity)).digest('hex'),state:inactive?'suppressed':scheduledOn===asOf?'due':scheduledOn>asOf?'future':'past',reason:inactive?(!policy.enabled?'schedule_disabled':'not_current_document'):'delivery_configuration_and_consent_required'};});
+ return{events,asOf,settingsRevision:policy.revision||0,ruleId:policy.ruleId||null,currentVersionOnly:true,planningOnly:true,externalSent:false,financialEffect:false,serviceFeeAED:'0.000',liveEnabled:false,documentExpiryBlocksCollection:false};
+}

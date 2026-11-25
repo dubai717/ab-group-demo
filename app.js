@@ -334,6 +334,7 @@ function getLocale() {
 }
 
 function setLocale(locale) {
+  if(globalThis.OperatingCentresUI?.leave&&!OperatingCentresUI.leave())return;
   localStorage.setItem(LOCALE_KEY, locale);
   document.body.dir = locale === 'ar' ? 'rtl' : 'ltr';
   document.documentElement.lang = locale;
@@ -412,6 +413,7 @@ function saveState() {
 
 function isUserAllowed(user, permission) {
   if (!user) return false;
+  if(globalThis.ABCentral?.enabled&&user.id===ABCentral.actor?.id&&['view_tasks','create_task','assign_task','update_task_status'].includes(permission))return ABCentral.actor.permissions.includes(permission);
   const role = app.state.roles.find(r => r.id === user.roleId);
   if (!role) return false;
   if (user.roleId === 'owner') return true;
@@ -460,7 +462,7 @@ function getSidebarItems(user) {
     { id: 'tasks', label: localeText('tasks'), permission: 'view_tasks' },
     { id: 'reports', label: localeText('reports'), permission: 'view_reports' },
     { id: 'notifications', label: localeText('notifications'), permission: 'manage_notifications' }
-  ].filter(item => item.id !== 'bankAccounts' || BankAccounts.canEnter());
+  ].filter(item => item.id !== 'bankAccounts' || BankAccounts.canEnter()).filter(item=>!globalThis.ABCentral?.enabled||item.id!=='tasks'||isUserAllowed(user,'view_tasks'));
 
   if (!user) return [];
 
@@ -476,7 +478,7 @@ function getSidebarItems(user) {
     return allItems.filter(item => item.id === 'bankAccounts' || ['dashboard', 'users', 'reports'].includes(item.id));
   }
 
-  return allItems.filter(item => ['bankAccounts', 'users'].includes(item.id) || isUserAllowed(user, item.permission));
+  return allItems.filter(item => (globalThis.ABCentral?.enabled && item.id === 'dashboard') || ['bankAccounts', 'users'].includes(item.id) || isUserAllowed(user, item.permission));
 }
 
 function render() {
@@ -495,6 +497,10 @@ function render() {
     return;
   }
 
+  if(globalThis.CommunicationsUI?.pendingLink?.())app.state.currentPage='notifications';
+  const accountMenuContext = [currentUser.id, globalThis.ABCentral?.authorityVersion, app.state.currentPage, getLocale()].join(':');
+  const previousAccountMenu = appEl.querySelector('.account-menu');
+  const keepAccountMenuOpen = previousAccountMenu?.open && previousAccountMenu.dataset.renderContext === accountMenuContext;
   const sidebarItems = getSidebarItems(currentUser).filter(i=>!['roles','departments'].includes(i.id));
   if(CustomerUI.canEnter())sidebarItems.push({id:'customers',label:getLocale()==='ar'?'العملاء':'Customers'});
   if(PersonnelUI.canEnter())sidebarItems.push({id:'personnel',label:getLocale()==='ar'?'شؤون الموظفين':'Personnel'});
@@ -537,12 +543,12 @@ function render() {
             <button class="lang-switch" data-action="toggle-language">
               ${getLocale() === 'ar' ? 'English' : 'العربية'}
             </button>
-            <details class="account-menu">
+            <details class="account-menu" data-render-context="${AuthFlows.escape(accountMenuContext)}" ${keepAccountMenuOpen?'open':''}>
               <summary class="user-pill" title="${AuthFlows.escape(currentUser.fullName)}">
                 <span class="avatar">${AuthFlows.escape(currentUser.fullName.slice(0,1).toUpperCase())}</span>
                 <span><span>${AuthFlows.escape(currentUser.fullName)}</span><span class="muted account-role">${getRoleName(currentUser.roleId)}</span></span>
               </summary>
-              <div class="account-popover"><button class="ghost-btn" type="button" data-auth="settings">${AuthFlows.text('accountSettings')}</button></div>
+              <div class="account-popover">${globalThis.CrossBranchCollectionUI?.entry()||''}<button class="ghost-btn" type="button" data-auth="settings">${AuthFlows.text('accountSettings')}</button></div>
             </details>
           </div>
         </header>
@@ -737,6 +743,7 @@ function renderCompanies(user) {
       </div>
 
       <div class="company-desc">${localeText('legalEntitiesDesc')}</div>
+      ${!app.state.companyFormOpen&&globalThis.ABCentral?.actor?.roleId==='owner'?`<div class="register-actions"><button type="button" class="ghost-btn" data-company-import-preview>${getLocale()==='ar'?'معاينة ملف شركات':'Preview company file'}</button><button type="button" class="ghost-btn" data-company-document-import>${getLocale()==='ar'?'استيراد مستندات شركات':'Import company documents'}</button></div>`:''}
       ${CompanyDocuments.renderSaveNotice()}
 
       ${canManage && app.state.companyFormOpen ? `
@@ -1014,6 +1021,8 @@ function renderLogin() {
             <div id="login-error" class="error-box" role="alert" aria-live="polite"></div>
           </form>
 
+          <button class="auth-link" type="button" data-leave-portal-open hidden>${locale === 'ar' ? 'خدمة الموظف أثناء الإجازة — إشعار العودة' : 'Leave self-service — report return'}</button>
+
           <div class="demo-box">
             <h4>${localeText('demoAccess')}</h4>
             <div class="demo-users">
@@ -1028,6 +1037,7 @@ function renderLogin() {
   `;
 
   AuthFlows.mountLogin();
+  globalThis.LeaveReturnUI?.bindLogin();
   globalThis.ABCentral?.enabled&&globalThis.ABCentral.bind();
   const form = document.getElementById('login-form');
   if (form) form.addEventListener('submit', handleLogin);
@@ -1094,6 +1104,7 @@ async function handleLogin(event) {
 }
 
 function bindGlobalEvents() {
+  document.querySelector('[data-cross-branch-collection]')?.addEventListener('click',()=>CrossBranchCollectionUI.open());
   ViewAsUI.bind();
   BusinessCenters.bind();
   CommunicationsUI.bind();
@@ -1275,6 +1286,8 @@ function bindGlobalEvents() {
 
   document.querySelector('[data-company-back]')?.addEventListener('click',async()=>{if(!await WorkspaceUI.leave())return;app.state.companyFormOpen=false;render();});
   const companyGridHost=document.querySelector('.company-panel');if(companyGridHost&&!app.state.companyFormOpen)RegisterStore.get('companies').bind(companyGridHost);
+  document.querySelector('button[data-company-import-preview]')?.addEventListener('click',()=>DataImportUI.open('companies',[]));
+  document.querySelector('button[data-company-document-import]')?.addEventListener('click',()=>DataImportUI.open('company-documents',app.state.companies));
   const openCompanyBtn = document.querySelector('[data-action="open-company-form"]');
   if (openCompanyBtn) {
     openCompanyBtn.addEventListener('click', () => {

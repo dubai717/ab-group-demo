@@ -1,0 +1,7 @@
+# Batch import work-access protection — unpublished
+
+The four opt-in original company, employee, centre and personnel-document batch writers now require the existing `ab.hr_actor_allowed()` definition and an actual boolean permission result in the current tenant/actor transaction **before reading a cached success receipt**. Previously company/employee/centre imports checked the guard only when its definition existed; absence could silently skip that work-access check. The document adapter already refused missing protection. The shared helper fails with a traced503 `importWorkAccessUnavailable` when the definition cannot be found, and403 when the original guard denies access. Database errors remain errors. It does not assume Owner identity, repair a function, change roles or install permissions.
+
+The existing shared import dialog explains unavailable work protection in Arabic/English and retains its source files. No opt-in import is enabled in server.ts. No original leave policy, Auth setting or operational database definition is changed.
+
+Eight linked native cases passed: original company/employee/centre/version import behavior, missing protection on all four endpoints before malformed input/cached receipt, unchanged metadata/receipts/companies/grants on refusal and exact cached recovery after protection returns.10 source/controller/View As cases passed separately. TypeScript, provider-free build and189 existing root checks passed. Focused UI results are recorded in BUILD-STATE after completion. No live import or hosted change occurred.

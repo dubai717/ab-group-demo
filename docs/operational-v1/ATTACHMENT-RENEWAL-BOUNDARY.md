@@ -1,0 +1,11 @@
+# Original archive / withdrawal and batch renewal — unpublished
+
+Personnel renewal preview now checks the existing document archive and withdrawal history for only its explicitly referenced original parent. The original history helpers accept an optional bounded ID filter; existing callers retain their original behavior. No new history ledger, file removal, automatic restoration or document approval is introduced.
+
+Apply obtains the existing archive and attachment advisory locks in their original order before rechecking source visibility and version state. A concurrently committed archive or withdrawal invalidates the signed review and prevents an invisible new version or object upload. Read-only preview takes no write lock. Original approved versions and ciphertext remain immutable.
+
+A reproducible original document-center defect was also fixed: after archive→restore→withdraw, another explicit authorized restore was rejected because the previous archive event was already restore. The original endpoint now clears the withdrawal through its original audited helper and avoids inserting a redundant archive event. Unchanged duplicate restores still refuse409, and source authorization stays unchanged. This is logical attachment visibility, not database/system restoration.
+
+Evidence:13 linked native cases passed across original attachment/document-center/import/independent-backup paths. A separate3-case run proves both actual concurrent archive and withdrawal locks, source refusal, successful explicit original visibility restoration, immutable prior bytes and read-only opening-source preparation. Customer and vehicle lineages survive the full cycle, retaining both customer versions, files, receipts, journals and funding records. TypeScript, provider-free build and189 root regressions passed before the additional test-only race extension; a current full47 browser run is tracked separately.
+
+The first targeted audit-filter attempt exposed the original audit entity_id text type (SQL42883); it was corrected to a parameterized text[] filter and the linked run passed. A repeated local dump test accidentally omitted the existing native test-tool override and hit the known Docker temporary-space failure; the native-tool rerun passed. No unknown filesystem data was removed, and no hosted database was queried or restored for these tests.

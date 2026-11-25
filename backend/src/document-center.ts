@@ -1,3 +1,5 @@
+import{decodeDocumentReminderSettings,resolveDocumentReminderSettings,registerDocumentReminderSettings}from'./document-reminder-settings.js';
+import{documentReminderPlan}from'./document-reminder-plan.js';
 import {documentExpiry} from './document-expiry.js';
 import {today} from './vehicle-domain.js';
 import {withdrawnAttachments,restoreAttachment} from './attachment-history.js';
@@ -18,6 +20,7 @@ const kind=z.enum(['document','customer','vehicle']);
 const schema=z.object({q:z.string().max(200).default(''),companyId:z.uuid().optional(),customerId:z.uuid().optional(),vehicleId:z.uuid().optional(),type:z.string().max(60).optional(),from:z.iso.date().optional(),to:z.iso.date().optional(),archive:z.enum(['current','archived','all']).default('current'),expiring:z.enum(['true','false']).default('false')}).strict();
 async function permitted(fn:()=>Promise<any>|any){try{await fn();return true;}catch(e){if(e instanceof ApiError&&[403,404].includes(e.status))return false;throw e;}}
 export function registerDocumentCenter(app:any,call:any,cipher:any,options:any){
+    registerDocumentReminderSettings(app,call,cipher);
     async function authorize(c:any,m:any,source:string,r:any,write=false){
         if(source==='customer'){requireOk(customerCan(m,'documents',r.company_id));return;}
         if(source==='vehicle'){requireOk(vehicleRight(m,'documents',r.company_id));return;}
@@ -45,7 +48,7 @@ export function registerDocumentCenter(app:any,call:any,cipher:any,options:any){
         for(const r of docRows){
             if(!await allowed('document',r))continue;
             let meta:any={name:r.original_name,title:r.version_title,kind:r.version_category};let companyId=r.company_id,endpoint='documents/'+r.version_id+'/file';
-            if(r.employee_id){const rec=(await c.query('select r.payload_cipher,r.expires_on,e.company_id from ab.hr_document_records r join ab.hr_employees e on e.id=r.employee_id where r.version_id=$1',[r.version_id])).rows[0];if(!rec)continue;meta={...cipher.open(rec.payload_cipher),expiresOn:rec.expires_on};companyId=rec.company_id;endpoint='personnel/employees/'+r.employee_id+'/documents/'+r.version_id;}
+            if(r.employee_id){const rec=(await c.query("select r.payload_cipher,to_char(r.expires_on,'YYYY-MM-DD') expires_on,e.company_id from ab.hr_document_records r join ab.hr_employees e on e.id=r.employee_id where r.version_id=$1",[r.version_id])).rows[0];if(!rec)continue;meta={...cipher.open(rec.payload_cipher),expiresOn:rec.expires_on};companyId=rec.company_id;endpoint='personnel/employees/'+r.employee_id+'/documents/'+r.version_id;}
             else if(r.personnel_library_id){const rec=(await c.query('select v.payload_cipher,l.company_id from ab.hr_library_versions v join ab.hr_library l on l.id=v.library_id where v.version_id=$1',[r.version_id])).rows[0];if(!rec)continue;meta=cipher.open(rec.payload_cipher);companyId=rec.company_id;endpoint='personnel/library/'+r.personnel_library_id+'/documents/'+r.version_id;}
             if(hasPersonnel&&r.user_id){if(!linkedMetadata.has(r.user_id)){const staff=(await c.query('select id,company_id from ab.hr_employees where user_id=$1',[r.user_id])).rows[0];if(staff)linkedCompanies.set(r.user_id,staff.company_id);linkedMetadata.set(r.user_id,staff?(await c.query("select payload_cipher from ab.hr_audit_events where employee_id=$1 and kind='linked_document_metadata'order by created_at desc,id desc",[staff.id])).rows.map((x:any)=>cipher.open(x.payload_cipher).after):[]);}if(linkedCompanies.has(r.user_id))companyId=linkedCompanies.get(r.user_id);const extra=linkedMetadata.get(r.user_id)!.find((x:any)=>x.versionId===r.version_id);if(extra)meta={...meta,...extra};}
             if(r.bank_account_id)companyId=m.state.bankAccounts.find((b:any)=>b.id===r.bank_account_id)?.companyId;
@@ -81,11 +84,33 @@ export function registerDocumentCenter(app:any,call:any,cipher:any,options:any){
         if(q.expiring==='true'){const recorded=(await c.query("select entity_id,action,actor_id,created_at from ab.audit_events where entity_type='document_expiry'and entity_id=any($1::text[])order by created_at,id",[visible.map((r:any)=>r.versionId)])).rows;visible=visible.map(r=>({...r,expiryAction:recorded.filter((a:any)=>a.entity_id===r.versionId).at(-1)||null}));}
         return {rows:visible,archiveAvailable:available,contentSearch:textReady,contentSearchMode:'PDF text layers and metadata; no OCR or AI',ai:'notActivated',ocr:'notActivated',originalStorageOnly:true};
     };app.get('/api/document-center',route(listDocuments));
-    app.get('/api/document-expiries',route(async(c:any,m:any,s:any,req:any)=>{const documents=await listDocuments(c,m,s,{query:{expiring:'true'}}),rows=[...documents.rows],asOf=today();const add=(source:string,id:string,field:string,expiresOn:any,title:string,companyId:string,reference:string)=>{const expiry=documentExpiry(expiresOn,asOf);if(expiry&&expiry.days<=90)rows.push({source,id,field,versionId:null,title,type:field,companyId,reference,expiresOn:expiry.date,expiry,canManage:false,recordOnly:true});};
+    const documentExpiries=async(c:any,m:any,s:any)=>{
+     const documents=await listDocuments(c,m,s,{query:{expiring:'true'}}),rows=[...documents.rows],asOf=today();const add=(source:string,id:string,field:string,expiresOn:any,title:string,companyId:string,reference:string)=>{const expiry=documentExpiry(expiresOn,asOf);if(expiry&&expiry.days<=90)rows.push({source,id,field,versionId:null,title,type:field,companyId,reference,expiresOn:expiry.date,expiry,canManage:false,recordOnly:true});};
      if((await c.query("select to_regclass('ab.customers') ok")).rows[0].ok){const permitted=m.state.companies.filter((co:any)=>customerCan(m,'view',co.id)).map((co:any)=>co.id),clients=(await c.query('select id,company_id,file_number,payload_cipher from ab.customers where company_id=any($1::uuid[])limit 20001',[permitted])).rows;requireOk(clients.length<=20000,422,'registerTooLarge');for(const r of clients){const data=cipher.open(r.payload_cipher);for(const d of data.identityDocuments||[])if(!d.verifiedVersionId||!rows.some((x:any)=>x.versionId===d.verifiedVersionId))add('customer-record',r.id,d.kind,d.expiresOn,data.fullName,r.company_id,String(r.file_number));}}
      if((await c.query("select to_regclass('ab.vehicles') ok")).rows[0].ok){const permitted=m.state.companies.filter((co:any)=>vehicleRight(m,'view',co.id)).map((co:any)=>co.id),vehicles=(await c.query('select id,company_id,file_number,payload_cipher from ab.vehicles where company_id=any($1::uuid[])limit 20001',[permitted])).rows;requireOk(vehicles.length<=20000,422,'registerTooLarge');for(const r of vehicles){const d=cipher.open(r.payload_cipher);for(const field of ['ownershipExpiresOn','insuranceExpiresOn'])add('vehicle-record',r.id,field,d[field],d.plate||String(r.file_number),r.company_id,String(r.file_number));}}
      if(m.company.canRead())for(const co of m.state.companies.filter((co:any)=>m.actor.roleId==='owner'||m.actor.companyIds?.includes(co.id)))add('company-record',co.id,'tradeLicence',co.expiryDate,co.arabicName||co.englishName,co.id,co.tradeLicenseNumber||'');
-     return{rows,total:rows.length,asOf};}));
+     const companyIds=[...new Set(rows.map(r=>r.companyId).filter(Boolean))],settingsRows=(await c.query('select key,value from ab.settings where tenant_id=$1 and key=any($2::text[])',[s.tenant_id,companyIds.map(id=>'document-reminder-settings-v1:'+id)])).rows,settings=new Map(companyIds.map(companyId=>[companyId,decodeDocumentReminderSettings(cipher,settingsRows.find((r:any)=>r.key==='document-reminder-settings-v1:'+companyId)?.value,s.tenant_id,companyId)]));
+     return{canConfigureReminders:m.actor.roleId==='owner'&&!s.viewAs,rows:rows.map(r=>({...r,reminderPlan:documentReminderPlan({source:r.source,id:r.id,...(r.field?{field:r.field}:{}),...(r.type?{type:r.type}:{}),versionId:r.versionId||null,expiresOn:r.expiry.date,archived:r.archived||false,withdrawn:r.withdrawn||false},asOf,resolveDocumentReminderSettings(settings.get(r.companyId)?.rules||[],{type:r.type,customerId:r.customerId||(r.source==='customer-record'?r.id:undefined)},asOf))})),total:rows.length,asOf,remindersPlanningOnly:true,externalSent:false,financialEffect:false};
+    };
+    app.get('/api/document-expiries',route(documentExpiries));
+    app.get('/api/document-reminders/due-review',route(async(c:any,m:any,s:any,req:any)=>{
+     requireOk(!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user')&&m.actor.id===s.user_id&&
+       m.actor.roleId==='owner'&&m.actor.status==='Active',403,'ownerOnly');
+     const {companyId}=z.object({companyId:z.uuid()}).strict().parse(req.query);
+     requireOk(m.state.companies.some((company:any)=>company.id===companyId&&company.status==='Active'),404,'notFound');
+     const current=await documentExpiries(c,m,s);
+     const slots=new Map<string,{key:string;source:string;id:string;versionId:string|null;scheduledOn:string}>();
+     for(const row of current.rows){
+      if(row.companyId!==companyId||(row.versionId&&row.scanStatus!=='clean'))continue;
+      for(const event of row.reminderPlan.events){
+       if(event.state!=='due')continue;
+       slots.set(event.key,{key:event.key,source:row.source,id:row.id,versionId:row.versionId||null,scheduledOn:event.scheduledOn});
+       requireOk(slots.size<=5000,422,'documentReminderReviewTooLarge');
+      }
+     }
+     return{companyId,asOf:current.asOf,slots:[...slots.values()].sort((a,b)=>a.key.localeCompare(b.key)),
+       reviewOnly:true,externalSent:false,financialEffect:false};
+    }));
 
     app.post('/api/document-center/:source/:id/expiry-action',route(async(c:any,m:any,s:any,req:any)=>{const source=kind.parse(req.params.source),originalRow=await original(c,m,source,z.uuid().parse(req.params.id),false),d=z.object({versionId:z.uuid(),action:z.enum(['acknowledged','renewing']),reason:z.string().max(2000).default('')}).strict().parse(req.body);if(d.action==='renewing')await authorize(c,m,source,originalRow.row,true);const row=(await c.query(source==='document'?'select document_id owner from ab.document_versions where id=$1':'select id,parent_id from ab.'+source+'_files where id=$1',[d.versionId])).rows[0];requireOk(row,404,'notFound');requireOk(source==='document'?row.owner===originalRow.root:await attachmentRoot(c,(source+'_files')as 'customer_files'|'vehicle_files',d.versionId)===originalRow.root,422,'invalidReference');await c.query('select pg_advisory_xact_lock(hashtext($1))',['expiry:'+d.versionId]);const previous=(await c.query("select action from ab.audit_events where entity_type='document_expiry'and entity_id=$1 order by created_at desc,id desc limit 1",[d.versionId])).rows[0];if(previous?.action!==d.action)await audit(c,s.tenant_id,s.user_id,d.action,'document_expiry',d.versionId,['original:'+source+':'+originalRow.root,'retained-originals']);return{saved:true,action:d.action};}));
     app.post('/api/document-center/:source/:id/archive',route(async(c:any,m:any,s:any,req:any)=>{
@@ -93,8 +118,8 @@ export function registerDocumentCenter(app:any,call:any,cipher:any,options:any){
         requireOk((await c.query("select to_regclass('ab.document_archive_events') ok")).rows[0].ok,503,'documentCenterMigrationPending');
         await c.query('select pg_advisory_xact_lock(hashtext($1))',['archive:'+r.root]);
         const latest=(await c.query('select action from ab.document_archive_events where '+r.column+'=$1 order by created_at desc,id desc limit 1',[r.root])).rows[0]?.action;
-        const withdrawalKind=source==='document'?'document':source+'_file',withdrawn=(await withdrawnAttachments(c,withdrawalKind)).has(r.root);requireOk(latest!==d.action&&(d.action==='archive'||latest==='archive'||withdrawn),409,'archiveStateConflict');if(d.action==='restore'&&withdrawn)await restoreAttachment(c,s.tenant_id,s.user_id,withdrawalKind,r.root,d.reason);
-        await c.query('insert into ab.document_archive_events(id,tenant_id,'+r.column+',action,reason_cipher,created_by)values($1,$2,$3,$4,$5,$6)',[randomUUID(),s.tenant_id,r.root,d.action,cipher.seal({reason:d.reason}),s.user_id]);
+        const withdrawalKind=source==='document'?'document':source+'_file',withdrawn=(await withdrawnAttachments(c,withdrawalKind)).has(r.root);requireOk(d.action==='archive'?latest!=='archive':latest==='archive'||withdrawn,409,'archiveStateConflict');if(d.action==='restore'&&withdrawn)await restoreAttachment(c,s.tenant_id,s.user_id,withdrawalKind,r.root,d.reason);
+        if(latest!==d.action)await c.query('insert into ab.document_archive_events(id,tenant_id,'+r.column+',action,reason_cipher,created_by)values($1,$2,$3,$4,$5,$6)',[randomUUID(),s.tenant_id,r.root,d.action,cipher.seal({reason:d.reason}),s.user_id]);
         await audit(c,s.tenant_id,s.user_id,'document_'+d.action,'document_center',r.root,['state']);return {saved:true,archived:d.action==='archive',fileDeleted:false};
     }));
     app.get('/api/document-center/:source/:id/link-options',route(async(c:any,m:any,_s:any,req:any)=>{await original(c,m,z.enum(['document','customer','vehicle']).parse(req.params.source),z.uuid().parse(req.params.id),true);const options:any[]=[];for(const [type,table]of [['company','companies'],['customer','customers'],['vehicle','vehicles']]){const rows=(await c.query('select * from ab.'+table+' limit 20001')).rows;requireOk(rows.length<=20000,422,'registerTooLarge');for(const r of rows){try{await targetAllowed(c,m,{[type+'Id']:r.id});const p=type==='company'?r.data:cipher.open(r.payload_cipher);options.push({type,id:r.id,name:p.arabicName||p.englishName||p.fullName||p.plate||r.id});}catch(e:any){if(![403,404].includes(e.status))throw e;}}}return {options,originalFilesOnly:true};}));

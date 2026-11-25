@@ -1,3 +1,21 @@
+import{guardDirectBankSettlementReplay}from'./service-direct-bank-eligibility.js';
+import{guardOriginalTaskMutationReceipt}from'./task-mutation-receipt.js';
+import{guardVehicleExecutionReceipt}from'./service-authorized-continuation.js';
+import{assertWhatsAppReviewOperator,registerWhatsAppReviewManagement,type WhatsAppReviewConfig}from'./whatsapp-review-management.js';
+import{assertExecutionExceptionOperator,registerExecutionExceptionManagement}from'./service-execution-exceptions.js';
+import{registerCompanyDocumentImport}from'./company-document-import.js';
+import{encryptedUploadReadLimit,retainEncryptedUpload,verifiedEncryptedUpload,retainedUploadIdentity}from'./retained-encrypted-upload.js';
+import{registerOpeningBalancePreview}from'./opening-balance-import-preview.js';
+import{requireImportWorkAccess}from'./import-work-access.js';
+import {registerCentreImport,assertCentreImportOperator} from './centre-import.js';
+import {assertEmployeeImportOperator} from './employee-import-preview.js';
+import{assertCompiledMembershipProfileChange,assertWorkScopeMembershipOperator,registerWorkScopePreview}from'./work-scope-preview.js';
+import{registerWorkLocations}from'./employee-work-location.js';
+import{databaseServiceFailure}from'./database-errors.js';
+import{registerBackupStatus,type BackupStatusRead}from'./backup-status.js';
+import{permissionResetAuditView}from'./permission-reset-audit.js';
+import {registerServiceEligibilityReview} from './service-eligibility-source.js';
+import {registerLeaveReturnPortal}from'./leave-return-portal.js';
 import {userEnrollment} from './user-enrollment.js';
 import {securityRoleCompany} from './security-role-access.js';
 import {assertEmployeeLoginHierarchy} from './personnel-structure.js';
@@ -9,12 +27,14 @@ import {registerMyWork} from './my-work.js';
 import {investorProfileLock,investorRegistryDocumentRead} from './investor-registry.js';
 import {registerPermissionAdmin} from './permission-admin.js';
 import {registerSecurityRoles} from './security-roles.js';
+import {registerOperatingCentres} from './operating-centres.js';
+import {registerOperatingCentreWriter} from './operating-centre-write.js';
 import {investorEvidenceRead,investorEvidenceUpload,recordInvestorEvidence,registerInvestorEvidence} from './investor-evidence.js';
 import {registerRecordLinks} from './record-links.js';
 import {registerInvestorRatingPolicy} from './investor-rating.js';
 import { projectOwnerSession,registerViewAs,viewAsCookie,isReadOnlyPost } from './view-as.js';
 import { indexDocumentText } from './document-text.js';
-import { registerCommunications } from './communications.js';
+import { registerCommunications,authorizedCommunicationThread } from './communications.js';
 import { registerCentralDashboard } from './central-dashboard.js';
 import { registerCentralReports } from './central-reports.js';
 import { registerInvestors } from './investors.js';
@@ -25,7 +45,7 @@ import { registerDocumentCenter } from './document-center.js';
 import { documentRight } from './document-access.js';
 import { registerCollectionFollowup } from './collection-followup.js';
 import {companyAuditView} from './company-audit.js';
-import {withdrawAttachment} from './attachment-history.js';
+import {withdrawAttachment,withdrawnAttachments,archivedAttachments} from './attachment-history.js';
 import {registerTestWorkspace} from './test-workspace.js';
 import {registerRegisters} from './registers.js';
 import {registerResetControl,ResetWorker} from './reset-control.js';
@@ -63,12 +83,32 @@ import {
   bounded,
 } from "./data.js";
 import {registerLedger} from './ledger.js';
+import {verifyCrossBranchReceivingSite} from './cross-branch-collection-source.js';
+import {need as needLedger,customer as ledgerCustomer} from './ledger-domain.js';
 import {registerPersonnel} from './personnel.js';
 import {registerVehicles} from './vehicles.js';
 import {registerRequestDrafts} from './request-drafts.js';
 import {registerCustomers} from './customers.js';
+import {registerCompanyImportPreview,assertCompanyImportOperator} from './company-import-preview.js';
 import {registerFinance,bankNotice} from "./finance.js";
 export interface Options {
+  // Trusted server seam; unset in server.ts. No public flag or live policy activation.
+  beforeNewService?: (c:any,m:any,s:any,input:{requestId?:string;requestRevision?:number;customerId:string;companyId:string;type:'vehicle'|'residence'|'general'})=>Promise<void>;
+  beforeServiceApproval?: (c:any,m:any,s:any,input:{requestId:string;customerId:string;companyId:string;type:'vehicle'|'residence'|'general'})=>Promise<void>;
+  beforeCustomerServiceExecution?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'residence'|'general';requestId:string})=>Promise<void>;
+  beforeRegistrationTaskStart?: (c:any,m:any,s:any,input:{taskId:string;requestId:string;companyId:string;employeeId:string})=>Promise<void>;
+  confirmDirectBankEligibility?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;requestId:string;eventId:string})=>Promise<void>;
+  beforeServiceExecution?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'vehicle';requestId:string;phase:'disburse'|'register'})=>Promise<void>;
+  whatsAppReview?:WhatsAppReviewConfig;
+  crossBranchCollectionEnabled?:boolean;
+  workScopeMembershipApplyEnabled?:boolean;
+  serviceExecutionExceptionsEnabled?:boolean;
+  companyImportEnabled?:boolean;
+  employeeImportEnabled?:boolean;
+  employeeDocumentImportEnabled?:boolean;
+  companyDocumentImportEnabled?:boolean;
+  centreImportEnabled?:boolean;
+  backupStatusRead?:BackupStatusRead;
   pool: Pool;
   key: string;
   origin: string;
@@ -121,7 +161,12 @@ export async function build(options: Options) {
   app.setErrorHandler((e: any, req, reply) => {
     let status = e.status || e.statusCode || 422,
       code = e.code || e.message;
-    if (code === "duplicate") {
+    const dbFault=!(e instanceof ApiError)&&databaseServiceFailure(e);
+    if (status===429) {
+      code='rateLimited';
+    } else if (dbFault) {
+      status=503;code="unavailable";
+    } else if (code === "duplicate") {
       status = 409;
     } else if (["denied", "ownerProtected"].includes(code)) {
       status = 403;
@@ -163,10 +208,11 @@ export async function build(options: Options) {
       code = status >= 500 ? "unavailable" : "invalid";
     }
     if (status < 400 || status > 599) status = 422;
+    if(dbFault)console.error(JSON.stringify({event:'database_service_failure',reference:req.id,sqlState:e.code,status,stage:['GET','HEAD'].includes(req.method)?'read':'write'}));
     const customerSaveRequest=['POST','PATCH'].includes(req.method)&&/^\/api\/customers(?:\/[0-9a-f-]+)?(?:\?|$)/i.test(req.url);const customerRequest=/^\/api\/(?:customers|customer-drafts)(?:[/?]|$)/.test(req.url);if(customerRequest)console.error(JSON.stringify({event:customerSaveRequest?'customer_save_failed':'customer_request_failed',reference:req.id,stage:req.url.includes('/files')?'attachment':req.method==='GET'?'read':customerSaveRequest?'save':'validation',status,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),sqlState:typeof e.code==='string'&&/^[0-9A-Z]{5}$/.test(e.code)?e.code:undefined}));
     const enrollmentRequest=req.method==='POST'&&req.url.split('?')[0]==='/api/users';
     if(enrollmentRequest){const sqlState=typeof e.code==='string'&&/^[0-9A-Z]{5}$/.test(e.code)?e.code:undefined,providerCode=['email_exists','user_already_exists','email_address_invalid','email_address_not_authorized','weak_password','unexpected_failure'].includes(e.providerCode)?e.providerCode:undefined;console.error(JSON.stringify({event:'user_enrollment_failed',reference:req.id,stage:(req as any).enrollmentStage||'request',code:sqlState||String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),providerCode,constraint:typeof e.constraint==='string'&&/^[a-z_0-9]{1,80}$/.test(e.constraint)?e.constraint:undefined}));if((req as any).enrollmentAuthCreated&&!(e instanceof ApiError)){code='enrollmentIncomplete';status=503;}}
-    const ledgerReadReviewRequest=req.method==='GET'&&/^\/api\/ledger\/manual-claims\/[0-9a-f-]+\/bank-source(?:\?|$)/i.test(req.url);const ledgerActionRequest=req.method!=='GET'&&/^\/api\/ledger\//.test(req.url);if(ledgerActionRequest||ledgerReadReviewRequest)console.error(JSON.stringify({event:ledgerReadReviewRequest?'ledger_read_review_failed':'ledger_action_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),status}));const bankApprovalRequest=req.method==='POST'&&/^\/api\/finance\/operations\/[0-9a-f-]+\/approve(?:\?|$)/i.test(req.url);if(bankApprovalRequest)console.error(JSON.stringify({event:'bank_approval_failed',reference:req.id,status,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60)}));const vehicleDecisionRequest=req.method==='POST'&&/^\/api\/vehicle-requests\/[0-9a-f-]+\/funding-decision(?:\?|$)/i.test(req.url);const collectionAttemptRequest=req.method==='POST'&&/^\/api\/collections\/tasks\/[0-9a-f-]+\/attempts(?:\?|$)/i.test(req.url);if(collectionAttemptRequest)console.error(JSON.stringify({event:'collection_attempt_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),status}));if(vehicleDecisionRequest)console.error(JSON.stringify({event:'vehicle_decision_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),status}));reply.code(status).send({ error: code, ...(customerRequest||enrollmentRequest||vehicleDecisionRequest||collectionAttemptRequest||ledgerActionRequest||ledgerReadReviewRequest||bankApprovalRequest?{reference:req.id}:{}), ...(e instanceof ApiError && (e as any).fieldErrors ? {fieldErrors:(e as any).fieldErrors}: {}) });
+    const communicationCaseRead=req.method==='GET'&&/^\/api\/communications\/[0-9a-f-]+\/cases(?:\/[0-9a-f-]+\/(?:history|tasks))?(?:\?|$)/i.test(req.url);if(communicationCaseRead)console.error(JSON.stringify({event:'communication_case_read_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,''),status}));const communicationTaskRequest=req.method==='POST'&&/^\/api\/communications\/[0-9a-f-]+\/(?:task|cases(?:\/[0-9a-f-]+\/actions)?)(?:\?|$)/i.test(req.url);if(communicationTaskRequest)console.error(JSON.stringify({event:'communication_workflow_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,''),status}));const personnelTaskRequest=/^\/api\/personnel(?:[/?]|$)/.test(req.url);const leaveReturnRequest=/^\/api\/personnel\/leaves\/[0-9a-f-]+\/return(?:\/|\?|$)/i.test(req.url);if(leaveReturnRequest)console.error(JSON.stringify({event:'leave_return_review_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,''),status}));const ledgerReadReviewRequest=req.method==='GET'&&/^\/api\/ledger\/manual-claims\/[0-9a-f-]+\/bank-source(?:\?|$)/i.test(req.url);const ledgerActionRequest=req.method!=='GET'&&/^\/api\/ledger\//.test(req.url);if(ledgerActionRequest||ledgerReadReviewRequest)console.error(JSON.stringify({event:ledgerReadReviewRequest?'ledger_read_review_failed':'ledger_action_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),status}));const bankApprovalRequest=req.method==='POST'&&/^\/api\/finance\/operations\/[0-9a-f-]+\/approve(?:\?|$)/i.test(req.url);if(bankApprovalRequest)console.error(JSON.stringify({event:'bank_approval_failed',reference:req.id,status,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60)}));const vehicleDecisionRequest=req.method==='POST'&&/^\/api\/vehicle-requests\/[0-9a-f-]+\/funding-decision(?:\?|$)/i.test(req.url);const collectionAttemptRequest=req.method==='POST'&&/^\/api\/collections\/tasks\/[0-9a-f-]+\/attempts(?:\?|$)/i.test(req.url);if(collectionAttemptRequest)console.error(JSON.stringify({event:'collection_attempt_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),status}));if(vehicleDecisionRequest)console.error(JSON.stringify({event:'vehicle_decision_failed',reference:req.id,code:String(code).replace(/[^a-zA-Z0-9_]/g,'').slice(0,60),status}));reply.code(status).send({ error: code, ...(status>=500||communicationCaseRead||communicationTaskRequest||customerRequest||enrollmentRequest||vehicleDecisionRequest||collectionAttemptRequest||ledgerActionRequest||ledgerReadReviewRequest||bankApprovalRequest||leaveReturnRequest||personnelTaskRequest||req.url.split('?')[0]==='/api/system/backup-status'||/^\/api\/data-imports(?:[/?]|$)/.test(req.url)?{reference:req.id}:{}), ...(e instanceof ApiError && (e as any).fieldErrors ? {fieldErrors:(e as any).fieldErrors}: {}) });
   });
   const uuid = (v: any) => z.uuid().parse(v);
   const session = async (req: any,realOnly=false) => {
@@ -176,7 +222,7 @@ export async function build(options: Options) {
       401,
       "loginRequired",
     );
-    if((await pool.query("select to_regprocedure('ab.hr_enforce_session(text)') ok")).rows[0].ok)await pool.query("select ab.hr_enforce_session($1)",[sha(sid)]);
+    const employment=(await pool.query("select to_regprocedure('ab.hr_enforce_session(text)') ok,to_regprocedure('ab.hr_enforce_session_with_evidence(text)') evidenced")).rows[0];if(employment.evidenced)await pool.query("select ab.hr_enforce_session_with_evidence($1)",[sha(sid)]);else if(employment.ok)await pool.query("select ab.hr_enforce_session($1)",[sha(sid)]);
     const r = await pool.query("select * from ab.read_session($1)", [sha(sid)]);
     requireOk(r.rowCount === 1, 401, "loginRequired");
     const s = r.rows[0];
@@ -211,13 +257,77 @@ export async function build(options: Options) {
   registerTestUsers(app,{pool,key:options.key,auth,enabled:options.testUsersEnabled===true,session});
   registerTestWorkspace(app,{pool,auth,enabled:options.testUsersEnabled===true,session});
   registerResetControl(app,{pool,key:options.key,auth,enabled:options.resetEnabled===true,worker:options.resetWorker,session,status:options.resetStatus});
+  const originalImportRunGuards=new Map<string,(c:PoolClient,m:any,s:any,req:any)=>Promise<(outcome:any)=>Promise<void>>>();
+  const registerOriginalImportRunGuard=(kind:string,guard:(c:PoolClient,m:any,s:any,req:any)=>Promise<(outcome:any)=>Promise<void>>)=>{requireOk(['customers','vehicles'].includes(kind)&&!originalImportRunGuards.has(kind),500,'importGuardRegistrationRequired');originalImportRunGuards.set(kind,guard);};
   const call =
     (handler: (c: PoolClient, m: any, s: any, req: any) => Promise<any>) =>
     async (req: any) => {
       const s = await session(req);
       if(req.body)req.body=normalizeContactPayload(req.body);
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
+        const originalTaskMutation=req.method==='POST'?/^\/api\/personnel\/tasks(?:\/([0-9a-f-]+)\/(action|working-clock))?$/i.exec(req.url.split('?')[0]):null;
+        const guardedVehicleExecution=req.method==='POST'&&typeof options.beforeServiceExecution==='function'?/^\/api\/vehicle-requests\/([0-9a-f-]+)\/(disburse|register)$/i.exec(req.url.split('?')[0]):null;
+        const guardedDirectBank=req.method==='POST'&&options.confirmDirectBankEligibility&&req.body?.bankExecution==='bank_direct'?/^\/api\/vehicle-requests\/([0-9a-f-]+)\/bank-arrangement$/i.exec(req.url.split('?')[0]):null;
+        const whatsAppReviewMutation=req.method==='POST'&&(/^\/api\/customers\/[0-9a-f-]+\/whatsapp-consent$/i.test(req.url.split('?')[0])||/^\/api\/communications\/[0-9a-f-]+\/whatsapp-review(?:\/[0-9a-f-]+\/revoke)?$/i.test(req.url.split('?')[0]));
+        const serviceExceptionMutation=req.method==='POST'&&/^\/api\/customers\/[0-9a-f-]+\/service-execution-exceptions(?:\/[0-9a-f-]+\/revoke)?$/i.test(req.url.split('?')[0]);
+        const companyImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/companies/run';
+        const employeeDocumentImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/personnel-documents/run';const companyDocumentImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/company-documents/run';
+        const employeeImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/employees/run';
+        const centreImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/centres/run';
+        const scopeMembershipApply=req.method==='POST'&&/^\/api\/users\/[a-f0-9-]{36}\/work-scope\/apply-memberships$/i.test(req.url.split('?')[0]);
+        const crossBranchIntake=req.method==='POST'&&req.url.split('?')[0]==='/api/ledger/collections/cross-branch-intake';
+        const crossBranchPosting=req.method==='POST'&&/^\/api\/ledger\/collections\/cross-branch-intake\/[a-f0-9-]{36}\/post$/i.test(req.url.split('?')[0]);
+        const crossBranchCollection=req.method==='POST'&&req.url.split('?')[0]==='/api/ledger/collections/invoices'&&
+          req.body?.receivingSite!==undefined;
+        const originalImportRun=req.method==='POST'?/^\/api\/data-imports\/(customers|vehicles)\/(?:upload|[0-9a-f-]{36}\/(?:run|preview))$/i.exec(req.url.split('?')[0]):null;
+        let importModel:any,originalImportReceiptGuard:((outcome:any)=>Promise<void>)|undefined;
+        if(!s.viewAs&&originalTaskMutation)await c.query('select pg_advisory_xact_lock_shared(hashtextextended($1,0))',[s.tenant_id+':security-roles']);
+        // Serialize permission mutations before loading their authority snapshot.
+        // This also prevents a queued grant from using a pre-standard-change issuer.
+        if(!s.viewAs&&req.method!=='GET'&&(crossBranchIntake||crossBranchPosting||crossBranchCollection||guardedVehicleExecution||guardedDirectBank||whatsAppReviewMutation||serviceExceptionMutation||originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
+          await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':security-roles']);
+        if(crossBranchPosting){
+          requireOk(options.crossBranchCollectionEnabled===true,503,'crossBranchCollectionNotEnabled');
+          requireOk(!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user'),403,'denied');
+          const actor=(await c.query("select current_database() db,exists(select 1 from ab.users where tenant_id=ab.tenant() and id=$1 and role_id='owner' and status='Active') allowed",[s.user_id])).rows[0];
+          requireOk(/^ab_backup_[a-f0-9]{32}$/.test(actor?.db||''),503,'crossBranchCollectionNotEnabled');
+          requireOk(actor?.allowed===true,403,'ownerOnly');
+          await requireImportWorkAccess(c);
+        }
+        // Serialize original company mutations before reading the directory used by import preview receipts.
+        if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(scopeMembershipApply||originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/companies(?:\/|$)/.test(req.url.split('?')[0])))
+          await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':company-directory']);
+        if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(employeeDocumentImportRun||employeeImportRun||/^\/api\/personnel(?:\/|$)/.test(req.url.split('?')[0])))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':personnel-import-directory']);
+        if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(scopeMembershipApply||crossBranchIntake||crossBranchCollection||centreImportRun||req.url.split('?')[0]==='/api/operating-centres/apply'))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':operating-centre-directory']);
+        if(guardedVehicleExecution||guardedDirectBank||originalTaskMutation)importModel=await model(c,s.user_id,cipher);
+        if(whatsAppReviewMutation){importModel=await model(c,s.user_id,cipher);await assertWhatsAppReviewOperator(c,importModel,s,cipher,req.url.startsWith('/api/customers/')?'customer':'thread',req.params.id,options.whatsAppReview);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
+        if(serviceExceptionMutation){importModel=await model(c,s.user_id,cipher);await assertExecutionExceptionOperator(c,importModel,s,req.params.id,options.serviceExecutionExceptionsEnabled===true);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
+        if(originalImportRun){importModel=await model(c,s.user_id,cipher);const guard=originalImportRunGuards.get(originalImportRun[1].toLowerCase());requireOk(guard,503,'importGuardUnavailable');originalImportReceiptGuard=await guard(c,importModel,s,req);}
+        if(centreImportRun){importModel=await model(c,s.user_id,cipher);assertCentreImportOperator(importModel);requireOk(options.centreImportEnabled===true,503,'centreImportApplyNotEnabled');await requireImportWorkAccess(c);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
+        if(companyDocumentImportRun){importModel=await model(c,s.user_id,cipher);assertEmployeeImportOperator(importModel);requireOk(options.companyDocumentImportEnabled===true&&typeof options.objects?.getIfPresent==='function',503,'companyDocumentImportApplyNotEnabled');await requireImportWorkAccess(c);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
+        if(employeeDocumentImportRun){importModel=await model(c,s.user_id,cipher);assertEmployeeImportOperator(importModel);requireOk(options.employeeDocumentImportEnabled===true,503,'personnelDocumentImportApplyNotEnabled');requireOk(typeof options.objects?.getIfPresent==='function',503,'personnelDocumentRecoveryRequired');await requireImportWorkAccess(c);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
+        if(employeeImportRun){importModel=await model(c,s.user_id,cipher);assertEmployeeImportOperator(importModel);requireOk(options.employeeImportEnabled===true,503,'employeeImportApplyNotEnabled');await requireImportWorkAccess(c);requireOk(typeof req.headers['idempotency-key']==='string',422,'employeeImportKeyRequired');}
+        if(companyImportRun){
+          importModel=await model(c,s.user_id,cipher);assertCompanyImportOperator(importModel);requireOk(options.companyImportEnabled===true,503,'companyImportApplyNotEnabled');
+          await requireImportWorkAccess(c);
+          requireOk(typeof req.headers['idempotency-key']==='string',422,'companyImportKeyRequired');
+        }
+        if(scopeMembershipApply){
+          importModel=await model(c,s.user_id,cipher);
+          await assertWorkScopeMembershipOperator(c,importModel,s,options.workScopeMembershipApplyEnabled===true);
+        }
+        if(crossBranchCollection){
+          requireOk(options.crossBranchCollectionEnabled===true,503,'crossBranchCollectionNotEnabled');
+          requireOk(!s.viewAs&&typeof req.headers['idempotency-key']==='string',403,'denied');
+          importModel=await model(c,s.user_id,cipher);
+          const companyId=uuid(req.body.companyId),customerId=uuid(req.body.customerId);
+          needLedger(importModel,'collect',companyId);
+          await ledgerCustomer(c,importModel,customerId,companyId);
+          req.verifiedReceivingSite=await verifyCrossBranchReceivingSite(
+            c,importModel,s,companyId,z.iso.date().parse(req.body.receivedOn),req.body.receivingSite);
+        }
         // Personnel export contains personal contact data; never cache the file in request_dedup.
+        let whatsAppReceiptRechecked=false;
         const key = s.viewAs || req.method === "GET" || isReadOnlyPost(req.url.split("?")[0]) ? undefined : req.headers["idempotency-key"];
         const fingerprint = cipher.digest(
           req.method + req.url + JSON.stringify(req.body || null),
@@ -226,7 +336,7 @@ export async function build(options: Options) {
           uuid(key);
           // A retry can overlap a still-running customer creation after response loss.
           // Serialize its existing receipt before reading the cache, without changing other domains.
-          if (['POST','PATCH'].includes(req.method) && (/^\/api\/ledger\/(?:collections|custody|deposits)(?:\/|\?|$)/i.test(req.url)||/^\/api\/customers(?:\/[0-9a-f-]+)?(?:\?|$)/i.test(req.url)||/^\/api\/customers\/[0-9a-f-]+\/request-drafts(?:\/[0-9a-f-]+\/submit)?(?:\?|$)/i.test(req.url)))
+          if (['POST','PATCH'].includes(req.method) && (originalTaskMutation||/^\/api\/ledger\/(?:collections|custody|deposits)(?:\/|\?|$)/i.test(req.url)||/^\/api\/customers(?:\/[0-9a-f-]+)?(?:\?|$)/i.test(req.url)||/^\/api\/communications\/[0-9a-f-]+\/(?:task|cases(?:\/[0-9a-f-]+\/actions)?)(?:\?|$)/i.test(req.url)||/^\/api\/customers\/[0-9a-f-]+\/request-drafts(?:\/[0-9a-f-]+\/submit)?(?:\?|$)/i.test(req.url)))
             await c.query('select pg_advisory_xact_lock(hashtext($1))',['customer-save-receipt:'+s.user_id+':'+key]);
           const cached = (
             await c.query(
@@ -240,16 +350,32 @@ export async function build(options: Options) {
               409,
               "idempotencyConflict",
             );
-            return cached.response;
+            // A receipt recovers the original outcome, never access revoked since that outcome.
+            if(req.method==='POST'&&/^\/api\/communications\/[0-9a-f-]+\/(?:task|cases(?:\/[0-9a-f-]+\/actions)?)(?:\?|$)/i.test(req.url))
+              await authorizedCommunicationThread(c,await model(c,s.user_id,cipher),cipher,uuid(req.params.id));
+            if(crossBranchIntake){
+              requireOk(options.crossBranchCollectionEnabled===true,503,'crossBranchCollectionNotEnabled');
+              const visible=await c.query('select 1 from ab.cross_branch_collection_intake where tenant_id=$1 and id=$2 and reported_by=$3',
+                [s.tenant_id,cached.response.id,s.user_id]);
+              requireOk(visible.rowCount===1,404,'notFound');
+            }
+            await originalImportReceiptGuard?.(cached.response);
+            if(originalTaskMutation)await guardOriginalTaskMutationReceipt(c,importModel,s,originalTaskMutation[1],originalTaskMutation[2],req.body,cached.response);
+            if(guardedDirectBank)await guardDirectBankSettlementReplay(c,importModel,s,cipher,guardedDirectBank[1],cached.response);
+            if(guardedVehicleExecution)await guardVehicleExecutionReceipt(c,importModel,s,cipher,guardedVehicleExecution[1],guardedVehicleExecution[2].toLowerCase()as 'disburse'|'register',cached.response);
+            if(!whatsAppReviewMutation)return cached.response;
+            // Re-run the original idempotent proof after fresh authorization/source checks.
+            // The old transport receipt never re-approves a changed phone/content or opt-out.
+            whatsAppReceiptRechecked=true;
           }
         }
         const result = await handler(
           c,
-          await model(c, s.user_id, cipher),
+          importModel||await model(c, s.user_id, cipher),
           s,
           req,
         );
-        if (key)
+        if (key&&!whatsAppReceiptRechecked)
           await c.query("insert into ab.request_dedup values($1,$2,$3,$4,$5)", [
             s.tenant_id,
             s.user_id,
@@ -258,12 +384,18 @@ export async function build(options: Options) {
             JSON.stringify(result),
           ]);
         return result;
-      },{...(s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:{}),...(req.method==='GET'&&req.url.split('?')[0]==='/api/ledger/package/document-register'?{repeatableRead:true}:{})});
+      },{...(s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:{}),...(req.method==='GET'&&/^\/api\/communications\/[0-9a-f-]+\/whatsapp-review(?:\/(?:plan|delivery))?$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='GET'&&req.url.split('?')[0]==='/api/ledger/package/document-register'?{repeatableRead:true}:{}),...(req.method==='GET'&&['/api/personnel/tasks/options','/api/document-reminders/due-review','/api/ledger/collections/cross-branch-preview','/api/ledger/collections/cross-branch-invoice'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='GET'&&/^\/api\/customers\/[0-9a-f-]+\/service-eligibility-review$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&['/api/data-imports/company-documents/preview','/api/data-imports/opening-balances/preview','/api/data-imports/personnel-documents/preview','/api/data-imports/centres/preview','/api/data-imports/companies/preview','/api/data-imports/employees/preview'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&/^\/api\/users\/[0-9a-f-]+\/work-scope\/preview$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{})});
     };
-  registerPermissionAdmin(app,call,cipher);registerSecurityRoles(app,call,cipher);
+  registerPermissionAdmin(app,call,cipher);registerSecurityRoles(app,call,cipher);registerOperatingCentres(app,call,cipher);registerOperatingCentreWriter(app,call,cipher);registerWorkLocations(app,call,cipher);registerWorkScopePreview(app,call,cipher,options.workScopeMembershipApplyEnabled===true);
   registerFinance(app,call,cipher);
   (options as any).requestCreators={};
-  registerCustomers(app,call,cipher,options);
+  registerCustomers(app,call,cipher,{...options,registerOriginalImportRunGuard});
+  registerCompanyImportPreview(app,call,cipher,options.companyImportEnabled===true);
+  registerOpeningBalancePreview(app,call,cipher);
+  registerCentreImport(app,call,cipher,options.centreImportEnabled===true);
+  registerServiceEligibilityReview(app,call,cipher,{executionExceptions:options.serviceExecutionExceptionsEnabled===true});
+  registerExecutionExceptionManagement(app,call,cipher,options.serviceExecutionExceptionsEnabled===true);
+  registerBackupStatus(app,call,options.backupStatusRead);
   registerCollectionFollowup(app,call,cipher);
   registerDocumentCenter(app,call,cipher,options);
   registerApprovalCenter(app,call,cipher);
@@ -277,11 +409,12 @@ export async function build(options: Options) {
   registerCentralReports(app,call,cipher);
   registerCentralDashboard(app,call,cipher);
   registerCommunications(app,call,cipher,options);
-  registerVehicles(app,call,cipher,options);
+  registerWhatsAppReviewManagement(app,call,cipher,options.whatsAppReview);
+  registerVehicles(app,call,cipher,{...options,registerOriginalImportRunGuard});
   registerRequestDrafts(app,call,cipher,(options as any).requestCreators);
   registerRegisters(app,call,cipher);
-  registerLedger(app,call,cipher,{objects});
-  registerPersonnel(app,call,cipher,options);
+  registerLedger(app,call,cipher,{objects,crossBranchCollectionEnabled:options.crossBranchCollectionEnabled});
+  registerPersonnel(app,call,cipher,options);registerLeaveReturnPortal(app,options);
   app.get("/api/health", async () => {
     await pool.query("select 1");
     return {
@@ -312,7 +445,7 @@ export async function build(options: Options) {
         requireOk(email, 401, "loginFailed");
         const actual = await auth.verify(user.token);
         requireOk(actual === user.id, 401, "loginFailed");
-        if((await pool.query("select to_regprocedure('ab.hr_enforce_auth(uuid)') ok")).rows[0].ok)await pool.query("select ab.hr_enforce_auth($1)",[uuid(user.id)]);
+        const employment=(await pool.query("select to_regprocedure('ab.hr_enforce_auth(uuid)') ok,to_regprocedure('ab.hr_enforce_auth_with_evidence(uuid)') evidenced")).rows[0];if(employment.evidenced)await pool.query("select ab.hr_enforce_auth_with_evidence($1)",[uuid(user.id)]);else if(employment.ok)await pool.query("select ab.hr_enforce_auth($1)",[uuid(user.id)]);
         const p = (
           await pool.query("select * from ab.principal($1)", [uuid(user.id)])
         ).rows[0];
@@ -396,7 +529,7 @@ export async function build(options: Options) {
           "select * from ab.audit_events where ($1::boolean or actor_id=$2) order by created_at desc limit 500",
           [m.actor.roleId === "owner", s.user_id],
         )
-      ).rows.map((raw) => {const r=companyAuditView(cipher,raw,canCompany&&(securityRoleCompany(m,raw.entity_id)));return ({
+      ).rows.map((raw) => {const r=permissionResetAuditView(cipher,companyAuditView(cipher,raw,canCompany&&(securityRoleCompany(m,raw.entity_id))),m.actor.roleId==="owner");return ({
         entityType:r.entity_type,companyChange:r.companyChange,
         id: r.id,
         at: r.created_at.toISOString(),
@@ -422,15 +555,44 @@ export async function build(options: Options) {
       const grants = m.initialGrants.filter((g: any) =>
         visibleUsers.some((u: any) => u.id === g.userId),
       );
+      // Minimal references preserve explicit user-admin grants in a scoped client
+      // bootstrap. They are not accounts or company-document access grants.
+      const ownScopes = grants.filter((g:any)=>g.userId===s.user_id&&['create','edit','status','assign','grant','reset','attachments','redelegate'].includes(g.entry.action)).map((g:any)=>g.entry.scope);
+      const reportingUsers = new Map<string,{id:string;managerId:string}>();
+      for(const scope of ownScopes.filter((v:any)=>v.type==='reports')){
+        for(const row of visibleUsers){let current:any=row;const seen=new Set<string>(),path:{id:string;managerId:string}[]=[];
+          while(current&&!seen.has(current.id)){seen.add(current.id);path.push({id:current.id,managerId:current.managerId||''});if(current.id===scope.id){for(const node of path)reportingUsers.set(node.id,node);break;}current=m.state.users.find((u:any)=>u.id===current.managerId);}
+        }
+        const root=m.state.users.find((u:any)=>u.id===scope.id);if(root)reportingUsers.set(root.id,{id:root.id,managerId:''});
+      }
+      const userScopeReferences={companies:m.state.companies.filter((co:any)=>ownScopes.some((v:any)=>v.type==='company'&&v.id===co.id)).map((co:any)=>({id:co.id,englishName:co.englishName,arabicName:co.arabicName})),reportingUsers:[...reportingUsers.values()]};
       const settings = (await c.query("select key,value from ab.settings"))
         .rows;
+      let crossBranchCollection=null;
+      if(options.crossBranchCollectionEnabled===true&&!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user')){
+        const access=(await c.query(`select current_database() db,
+          to_regclass('ab.cross_branch_collection_intake') is not null ready,
+          ab.hr_actor_allowed() working,
+          exists(select 1 from ab.permission_grants g join ab.users issuer
+            on issuer.tenant_id=g.tenant_id and issuer.id=g.issuer_id
+            where g.tenant_id=ab.tenant() and g.user_id=$1 and g.permission_id='ledger_cross_branch_collect'
+            and g.scope_type='company' and g.revoked_at is null and issuer.status='Active' and issuer.role_id='owner')
+          and not exists(select 1 from ab.settings where tenant_id=ab.tenant()
+            and key='user-denials-v1:'||$1::uuid::text) granted`,[s.user_id])).rows[0];
+        const owner=m.actor.roleId==='owner';
+        if(/^ab_backup_[a-f0-9]{32}$/.test(access.db)&&access.ready&&access.working&&
+          m.actor.status==='Active'&&m.actor.roleId!=='investor'&&(owner||access.granted))
+          crossBranchCollection={canConfirm:owner};
+      }
+
       return {
         actor: m.actor,
+        crossBranchCollection,
         viewAs:s.viewAs||null,
         resetTestDatabaseAvailable: options.resetEnabled===true&&m.actor.roleId==='owner'&&m.actor.username==='trial_4db27b82b8bf',
         testUsersAvailable: options.testUsersEnabled===true&&m.actor.roleId==='owner',
         audit: ownAudit,
-        summary: m.policy.summary(),
+        summary: m.policy.summary(s.user_id),
         bankAccountAudit,
         csrfToken: cipher.digest("csrf:" + s.sid),
         users,
@@ -442,6 +604,8 @@ export async function build(options: Options) {
         bankAccountPurposes: m.state.bankAccountPurposes,
         areas,
         grants,
+        userScopeReferences,
+        individualDenials:m.initialDenials.filter((r:any)=>m.actor.roleId==='owner'||r.userId===s.user_id).map((r:any)=>({userId:r.userId,actions:r.actions})),
         companyDocumentAlertDays: settings.find(
           (r) => r.key === "companyDocumentAlertDays",
         )?.value || [60, 30, 7],
@@ -511,8 +675,9 @@ export async function build(options: Options) {
     "/api/companies/:id",
     call(async (c, m, s, req) => {const companyId=uuid(req.params.id);requireOk(securityRoleCompany(m,companyId),403,'companyScopeDenied');return m.company.get(companyId);}),
   );
+  const visibleBank=(m:any,id:string)=>{requireOk(m.state.companies.some((co:any)=>m.bank.can('view',co.id)),403,'denied');requireOk(m.state.bankAccounts.some((b:any)=>b.id===id),404,'notFound');return m.bank.get(id);};
   const saveBank=async(c:any,m:any,s:any,req:any,bankId?:string)=>{
-    const prior=bankId?m.bank.get(bankId):null;
+    const prior=bankId?visibleBank(m,bankId):null;
     const saved=await persistBank(c,m,cipher,s.tenant_id,req.body,bankId);
     const row=(await c.query('select company_id,status,revision from ab.bank_accounts where id=$1',[saved])).rows[0];
     const action=!prior?'created':prior.status!==row.status?(row.status==='Closed'?'closed':'status'):'updated';
@@ -523,7 +688,7 @@ export async function build(options: Options) {
   app.patch('/api/bank-accounts/:id',call((c,m,s,req)=>saveBank(c,m,s,req,uuid(req.params.id))));
   app.get(
     "/api/bank-accounts/:id",
-    call(async (c, m, s, req) => m.bank.get(uuid(req.params.id))),
+    call(async (c, m, s, req) => visibleBank(m,uuid(req.params.id))),
   );
   app.post(
     "/api/references/:kind",
@@ -624,6 +789,8 @@ export async function build(options: Options) {
     if (id) {
       previous = m.policy.actor(id);
       requireOk(previous, 404, "notFound");
+      // Authorize before private fields, revision checks, or no-op persistence.
+      requireOk(m.policy.get(s.user_id, previous.id) && (m.actor.roleId === 'owner' || ['edit','assign','status'].some(action => m.policy.can(s.user_id, action, previous))), 403, 'denied');
       assertRevision(previous.revision, input.revision);
       if((await c.query("select to_regclass('ab.hr_employees') ok")).rows[0].ok&&(await c.query('select 1 from ab.hr_employees where user_id=$1',[id])).rowCount){for(const key of ['nameAr','nameEn','emiratesId','nationality','phone','jobTitle','hireDate'])if(Object.hasOwn(input,key))requireOk(String(input[key]||'')===String(previous[key]||''),409,'employeeProfileRequired');}
       input = { ...previous, ...input };
@@ -640,6 +807,7 @@ export async function build(options: Options) {
     const saved = m.policy.update(s.user_id, id || null, input, [], {
       roleId: input.baseRole || "employee",
     });
+    if(previous)await assertCompiledMembershipProfileChange(c,s.tenant_id,previous,saved);
     let authId: string | undefined,ticket:any;
     if(!id){requireOk(!(await c.query('select 1 from ab.users where lower(username)=lower($1)or lower(auth_email)=lower($2)',[saved.username,saved.email])).rowCount,409,'duplicate');ticket=await enrollment.reserve(s,input,saved,employeeSource?.id);if(employeeSource)await assertEmployeeLoginHierarchy(c,cipher,employeeSource.id,ticket.record.userId);}
     if (!id) {
@@ -772,6 +940,7 @@ export async function build(options: Options) {
     "/api/users/:id/grants",
     call(async (c, m, s, req) => {
       const target = uuid(req.params.id);
+      requireOk((req.body as any)?.action!=='task_review'||m.taskReviewReady,503,'taskReviewPermissionPending');
       m.policy.grant(s.user_id, target, bounded(req.body));
       const next = m.getNextGrants() || [];
       for (const row of next) {
@@ -827,7 +996,7 @@ export async function build(options: Options) {
         await c.query(
           "select id,actor_id,actor_type,action,entity_type,entity_id,fields,created_at from ab.audit_events order by created_at desc limit 500",
         )
-      ).rows.map(r=>companyAuditView(cipher,r,true));
+      ).rows.map(r=>permissionResetAuditView(cipher,companyAuditView(cipher,r,true),true));
     }),
   );
   // Explicit ownership FKs; no generic ownerId that can point outside the tenant/account.
@@ -871,10 +1040,7 @@ export async function build(options: Options) {
       })).filter(r=>q.history==='true'||!r.withdrawn);
     }),
   );
-  app.post(
-    "/api/documents",
-    call(async (c, m, s, req) => {
-      const d = z
+  const masterDocumentInput = z
         .object({
           companyId: z.uuid().optional(),
           bankAccountId: z.uuid().optional(),
@@ -910,18 +1076,11 @@ export async function build(options: Options) {
           base64: z.string().min(4).max(13981016),
         })
         .strict()
-        .parse(req.body);
-      const owner:any = {
-        company_id: d.companyId || null,
-        bank_account_id: d.bankAccountId || null,
-        user_id: d.userId || null,
-      };
-      requireOk(
-        Object.values(owner).filter(Boolean).length === 1,
-        422,
-        "invalid",
-      );
-      let investorEvidence:any=null;requireOk(d.category==='investorEvidence'?!!d.investorAgreementId&&!d.companyId&&!d.bankAccountId&&!!d.userId:!d.investorAgreementId,422,'investorEvidenceContextRequired');if(d.category==='investorEvidence'){investorEvidence=await investorEvidenceUpload(c,m,d.investorAgreementId!,d.userId!,d.parentId);owner.investor_evidence=true;owner.category=d.category;}
+        ;
+  const masterDocumentOwner=(d:any)=>{const owner={company_id:d.companyId||null,bank_account_id:d.bankAccountId||null,user_id:d.userId||null};requireOk(Object.values(owner).filter(Boolean).length===1,422,'invalid');requireOk(d.category==='investorEvidence'?!!d.investorAgreementId&&!d.companyId&&!d.bankAccountId&&!!d.userId:!d.investorAgreementId,422,'investorEvidenceContextRequired');return owner;};
+  const putMasterDocument=async(c:any,m:any,s:any,req:any,importOrigin?:{sourceHash:string;attachmentHash:string;row:number})=>{
+      const d=masterDocumentInput.parse(req.body);
+      const owner:any=masterDocumentOwner(d);let investorEvidence:any=null;if(d.category==='investorEvidence'){investorEvidence=await investorEvidenceUpload(c,m,d.investorAgreementId!,d.userId!,d.parentId);owner.investor_evidence=true;owner.category=d.category;}
       let linkedEmployeeForDocuments:any=null;if(owner.user_id&&d.category!=='investorEvidence'&&(await c.query("select to_regclass('ab.hr_employees') ok")).rows[0].ok){const linked=(await c.query('select * from ab.hr_employees where user_id=$1',[owner.user_id])).rows[0];linkedEmployeeForDocuments=linked;if(linked){requireOk(hrRight(m,'document_update',linked.company_id)||linked.user_id===m.actor.id,403,'employeeDocumentsRequired');requireOk(d.relation==='version'&&d.parentId&&d.parentVersionId,409,'employeeProfileRequired');}}
       let initialEnrollment = false;
       if (
@@ -972,7 +1131,7 @@ export async function build(options: Options) {
         "storageQuotaReached",
       );
       requireOk(
-        file.length > 0 && file.length <= 10 * 1024 * 1024,
+        file.length > 0 && file.length <= 10 * 1024 * 1024 && file.toString('base64')===d.base64,
         422,
         "invalidFile",
       );
@@ -1055,6 +1214,11 @@ export async function build(options: Options) {
         );
       }
       let parentVersion: any;
+      if(parent&&d.relation==='version'){
+        await c.query('select pg_advisory_xact_lock(hashtext($1))',['archive:'+parent.id]);
+        await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',['attachment:document:'+parent.id]);
+        requireOk(!(await withdrawnAttachments(c,'document',[parent.id])).has(parent.id)&&!(await archivedAttachments(c,'document',[parent.id])).has(parent.id),409,'attachmentArchived');
+      }
       if (parent) {
         parentVersion = d.parentVersionId
           ? (
@@ -1076,8 +1240,9 @@ export async function build(options: Options) {
         );
       } else requireOk(!d.parentVersionId, 422, "invalidParent");
       if (d.relation === "version") requireOk(parent, 422, "invalidParent");
-      const documentId = d.relation === "version" ? parent.id : randomUUID(),
-        versionId = randomUUID();
+      const requestKey=req.headers['idempotency-key'],recoverable=typeof objects.getIfPresent==='function'&&z.uuid().safeParse(requestKey).success?retainedUploadIdentity(['AB-MASTER-DOCUMENT-UPLOAD-1',s.tenant_id,s.user_id,owner.company_id,owner.bank_account_id,owner.user_id,d.relation,parent?.id||null,parentVersion?.id||null,sha(file),cipher.digest(JSON.stringify({...d,base64:undefined})),String(requestKey).toLowerCase()]):null;
+      const documentId = d.relation === "version" ? parent.id : recoverable?.documentId||randomUUID(),
+        versionId = recoverable?.versionId||randomUUID();
       let version = 1;
       if (d.relation === "version")
         version =
@@ -1092,10 +1257,7 @@ export async function build(options: Options) {
       const scan = options.scan ? await options.scan(file, d.mime) : "pending";
       requireOk(scan !== "rejected", 422, "fileRejected");
       const key = `${s.tenant_id}/${documentId}/${versionId}`;
-      await objects.put(
-        key,
-        Buffer.from(cipher.seal({ bytes: file.toString("base64") })),
-      );
+      await retainEncryptedUpload(objects,cipher,key,file,'documentUploadOutcomeReviewRequired');
       if (d.relation !== "version")
         await c.query(
           "insert into ab.documents(id,tenant_id,company_id,bank_account_id,user_id,category,title,description,document_date,related_id,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",
@@ -1141,14 +1303,15 @@ export async function build(options: Options) {
         "uploaded",
         "document",
         documentId,
-        ["version", String(version), d.category],
+        ["version", String(version), d.category,...(importOrigin?["sourceHash:"+importOrigin.sourceHash,"attachmentHash:"+importOrigin.attachmentHash,"sourceRow:"+importOrigin.row]:[])],
       );
       if(d.investorProfileId)await audit(c,s.tenant_id,s.user_id,'investor_profile_uploaded','document',documentId,['profile:'+d.investorProfileId,'sha256:'+sha(file)]);
       if(investorEvidence)await recordInvestorEvidence(c,m,s,cipher,investorEvidence,documentId,versionId);
       await indexDocumentText(c,cipher,s,'version_id',versionId,file,d.mime,scan);
       return { id: documentId, versionId, version, scanStatus: scan };
-    }),
-  );
+  };
+  app.post('/api/documents',call(putMasterDocument));
+  registerCompanyDocumentImport(app,call,cipher,{prepare:(raw:any)=>{const d=masterDocumentInput.parse(raw);masterDocumentOwner(d);return d;},authorize:(m:any,companyId:string)=>documentRight(m,{company_id:companyId,bank_account_id:null,user_id:null},true),validDate:BankPolicy.validDate,recoverable:typeof objects.getIfPresent==='function',put:putMasterDocument},options.companyDocumentImportEnabled===true);
   app.post('/api/documents/:versionId/withdraw',call(async(c,m,s,req)=>{const body=z.object({reason:z.string().trim().min(1).max(2000)}).strict().parse(req.body);const row=(await c.query('select d.* from ab.documents d join ab.document_versions v on v.document_id=d.id where v.id=$1',[uuid(req.params.versionId)])).rows[0];requireOk(row,404,'notFound');row.investor_registry=await investorRegistryDocumentRead(c,m,row.id);if(row.category==='investorEvidence')row.investor_evidence=await investorEvidenceRead(c,m,row.id);documentRight(m,row,true);return withdrawAttachment(c,s.tenant_id,s.user_id,'document',row.id,body.reason);}));
   app.get("/api/documents/:versionId/file", async (req, reply) => {
     const s = await session(req);
@@ -1160,7 +1323,7 @@ export async function build(options: Options) {
         const m = await model(c, s.user_id, cipher),
           row = (
             await c.query(
-              "select d.*,v.storage_key,v.original_name,v.mime,v.sha256,v.scan_status from ab.document_versions v join ab.documents d on d.id=v.document_id where v.id=$1",
+              "select d.*,v.storage_key,v.original_name,v.mime,v.size,v.sha256,v.scan_status from ab.document_versions v join ab.documents d on d.id=v.document_id where v.id=$1",
               [uuid((req.params as any).versionId)],
             )
           ).rows[0];
@@ -1168,12 +1331,7 @@ export async function build(options: Options) {
         row.investor_registry=await investorRegistryDocumentRead(c,m,row.id);if(row.category==='investorEvidence')row.investor_evidence=await investorEvidenceRead(c,m,row.id);
         documentRight(m, row, false);
         requireOk(row.scan_status === "clean", 423, "fileQuarantined");
-        const encrypted = await objects.get(row.storage_key),
-          bytes = Buffer.from(
-            cipher.open(encrypted.toString()).bytes,
-            "base64",
-          );
-        requireOk(sha(bytes) === row.sha256, 502, "integrityFailed");
+        let bytes:Buffer;try{bytes=verifiedEncryptedUpload(cipher,await objects.get(row.storage_key,encryptedUploadReadLimit(Number(row.size))),{sha256:row.sha256,size:Number(row.size)});}catch(error){if(error instanceof ApiError&&error.code==='fileIntegrityFailed')throw new ApiError(502,'integrityFailed');throw error;}
         await audit(
           c,
           s.tenant_id,
@@ -1228,7 +1386,14 @@ export async function build(options: Options) {
       "area-reference.js",
       "company-documents.js",
       "bank-accounts.js",
+      "annual-leave-plans-ui.js",
+      "employee-work-calendar-ui.js",
+      "task-working-clock-ui.js",
+      "leave-return-ui.js",
+      "permission-matrix-ui.js",
       "user-management.js",
+      "operating-centres-ui.js",
+      "employee-work-location-ui.js",
       "demo-credentials.js",
       "auth-flows.js",
       "central-client.js",
@@ -1239,6 +1404,7 @@ export async function build(options: Options) {
       "customer-policy.js",
       "customers.js",
       "customer-workspace-ui.js",
+      "service-exceptions-ui.js",
       "customer-requests-ui.js",
       "finance-policy.js",
       "finance-workbench.js",
@@ -1257,9 +1423,11 @@ export async function build(options: Options) {
       "center-forms.js",
       "view-as-ui.js",
       "collection-ui.js",
+      "cross-branch-collection-ui.js",
       "dashboard-ui.js",
       "my-work-ui.js",
       "reports-ui.js",
+      "whatsapp-review-ui.js",
       "communications-ui.js",
       "record-links.js",
       "marketing-ui.js",
