@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-25T02:35:49.310415+00:00",
+  "asOf": "2026-11-25T02:47:54.189538+00:00",
   "data": "isolated synthetic PostgreSQL and fake external providers only",
   "releaseReady": false,
   "evidence": [
@@ -4181,5 +4181,28 @@
       "whatsapp-review-ui-browser.log": "053eba13f6804f022a77238e2557c766228344877e066b70c79b517c4be99a10",
       "whatsapp-review-api-root.log": "331209751efb4f78bdcffe91bb6fe8df7d63e88969d9f6d136ee8c44162d8c24"
     }
+  },
+  "originalWhatsAppRetainedDelivery": {
+    "state": "implemented_unpublished_isolated_readonly",
+    "linkedCasesPassed": 11,
+    "rootPassed": 189,
+    "browser": "original dialog AR/EN 1440/768/390: unknown refused, signed synthetic read event verified after opt-out; no send or polling",
+    "prospectiveCapturedBinding": true,
+    "historicalBackfill": false,
+    "financialEffect": false,
+    "sourceDataChanged": false,
+    "evidenceSha256": {
+      "whatsapp-delivery-verified-native.log": "0c03153b345623b64c71c549a262d9c63face809ae814af27865922fcfa94453",
+      "whatsapp-delivery-verified-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "whatsapp-delivery-verified-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "whatsapp-delivery-verified-root.log": "fbdc34b90492ea0b7d3201d698c7557934820f7038d22a2e3bd941388fa18d8c",
+      "whatsapp-delivery-final-browser.log": "053eba13f6804f022a77238e2557c766228344877e066b70c79b517c4be99a10"
+    },
+    "remaining": [
+      "Indexed provider status lookup for large histories",
+      "Employee and technical acknowledgement authority",
+      "Official setup/templates",
+      "Financial/document reminders and complete acceptance"
+    ]
   }
 }
