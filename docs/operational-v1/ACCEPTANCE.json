@@ -4392,5 +4392,25 @@
         "sha256": "45f9a15416f08cc86d24798c6c990ab8a96bd006e6ca9aa206dab76dfe2a7bf3"
       }
     ]
+  },
+  "delegationCoverageAcceptance": {
+    "previousFullAcceptance": {
+      "commit": "05e440922896514b91f3a64cbbde628e8f2c7ab6",
+      "run": "https://github.com/dubai717/ab-group-demo/actions/runs/45617808245",
+      "conclusion": "success"
+    },
+    "pullRequestHead": {
+      "commit": "7c097d2f38f0bda06aaac098f10d51cc6be9729f",
+      "run": "https://github.com/dubai717/ab-group-demo/actions/runs/45652143503",
+      "fullAcceptance": "in_progress",
+      "focusedPass": 6,
+      "logSha256": "3e5d207c7360e019db5132f6eb2661188cdbe0b6bf968179acd85ce25b9dd09c"
+    },
+    "checkpoint": {
+      "commit": "a9f5186e690a5456261bdfa0fcc398cd10fb7dd0",
+      "focusedPass": 6,
+      "logSha256": "3dcd106cb85c6cdb03e3fdd18955356c2ce40c163e9a91cff70dfd8ce8b3feb0",
+      "productionOrStagingDeployPerformed": false
+    }
   }
 }
