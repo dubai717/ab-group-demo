@@ -1,3 +1,4 @@
+import{useExecutionException}from'./service-execution-exceptions.js';
 import{serviceActivation,serviceActivationFrame}from'./service-activation-clock.js';
 // Isolated build acceptance only. No environment flag, server registration, approval or live activation.
 import{z}from'zod';import{ApiError,requireOk}from'./core.js';import{actualActorServiceEligibilityCreationCheck,actualActorServiceEligibilityApprovalCheck}from'./service-eligibility-actor-source.js';
@@ -39,6 +40,8 @@ export function isolatedCustomerServiceExecutionEligibilityGuard(cipher:any,effe
   // approval. Existing re-submission establishes mandatory review through the original API.
   requireOk(!history.some((e:any)=>e.action==='status'&&e.state==='InProgress'),409,'serviceAlreadyStarted');
   requireOk(history.filter((e:any)=>e.action==='request_approval').at(-1)?.decision==='Approved',409,'requestApprovalRequired');
-  await eligibility(c,m,s,{customerId:d.customerId,companyId:d.companyId,type:d.type});
+  const decision=await actualActorServiceEligibilityCreationCheck(c,m,s,cipher,{customerId:d.customerId,companyId:d.companyId,type:d.type});
+  if(decision.status==='blocked'&&await useExecutionException(c,m,s,cipher,{...d,phase:'start'},decision))return;
+  if(decision.status!=='allowed')throw new ApiError(409,decision.status==='blocked'?'newServiceArrearsBlocked':'newServiceArrearsReviewRequired');
  };
 }

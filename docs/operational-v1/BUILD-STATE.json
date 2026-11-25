@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-25T00:30:08.961935+00:00",
+  "asOf": "2026-11-25T00:45:21.449106+00:00",
   "branch": "feature/operational-v1-independent",
   "financialPR": 115,
   "financialPREdited": false,
@@ -3405,5 +3405,48 @@
       "service-activation-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
       "service-activation-root.log": "75c251223c04cffcbeab21282b68d6aea5d2abc06cab1aee197bccab62e0e4af"
     }
+  },
+  "timedExecutionExceptions": {
+    "state": "implemented_unpublished_isolated_adapter",
+    "linkedCasesPassed": 13,
+    "originalCustomerHistoryAndAuditReused": true,
+    "actualOwnerOnlyGrantRevoke": true,
+    "requestUserCompanyPhaseAndExactTimeBound": true,
+    "reviewSourceCannotBeOverridden": true,
+    "originalActionAndApprovalChecksPreserved": true,
+    "revocationAndRetryReread": true,
+    "lateActionRollbackTested": true,
+    "noFinancialEffect": true,
+    "realExceptionGranted": false,
+    "remaining": [
+      "Owner management UI and fresh-authority HTTP boundary",
+      "Narrow employee history proof",
+      "Creation/final-approval policy adapters if approved",
+      "Full lifecycle/bank-direct coverage and final acceptance"
+    ],
+    "evidenceSha256": {
+      "service-exceptions-native5.log": "155c23c4343558aede548efc91f386655d96f8492ec72d0b359a0c1506a8d0fa",
+      "service-exceptions-types7.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "service-exceptions-build2.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "service-exceptions-root2.log": "a350fc1540616bcd1de9047c4588e60798697688d7c1ec8975dcba9fa5a1a14b"
+    }
+  },
+  "latestVerifiedIndependentCI": {
+    "number": 54,
+    "runId": 45508732138,
+    "source": "46d5e308f3ee805b356754ee0223b4c2a43a725b",
+    "status": "completed",
+    "conclusion": "success",
+    "deployment": false
+  },
+  "CI53Diagnosis": {
+    "number": 53,
+    "runId": 45503319140,
+    "conclusion": "failure",
+    "originalRegressions": "945/946 native; customer quarantine fixture literal digest refused by strict original download",
+    "operationalUI": "success",
+    "correctedIn": "46d5e30",
+    "verifiedJobLog": 138846764156,
+    "protectionWeakened": false
   }
 }
