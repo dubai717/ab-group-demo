@@ -24,3 +24,28 @@ test('coverage rejects overlap and financial sources; uncertain reassignment rol
  const c=await f.admin.connect(),cipher=security(f.secret.key);try{await c.query('BEGIN');await c.query("select set_config('ab.tenant',$1,true),set_config('ab.actor',$2,true)",[f.org.tenant,f.org.user]);const m=await model(c,f.org.user,cipher),s={tenant_id:f.org.tenant,user_id:f.org.user},r=await reconcileLeaveDelegations(c,cipher,m,s,f.co1,tomorrow);assert.equal(r.returned,0);assert.equal(r.review[0].reason,'taskAssignmentReviewRequired');await notifyLeaveDelegationReviews(c,cipher,m,s,f.co1,r.review);await notifyLeaveDelegationReviews(c,cipher,m,s,f.co1,r.review);await c.query('COMMIT');}catch(err){await c.query('ROLLBACK');throw err;}finally{c.release();}
  const current=(await f.admin.query('select employee_id from ab.tasks where id=any($1::uuid[])',[tasks.slice(0,2).map(t=>t.id)])).rows;assert(current.every(t=>t.employee_id===e.id));assert.equal((await f.admin.query("select count(*) n from ab.hr_task_events where kind='leave_delegation_returned'")).rows[0].n,'0');assert.equal((await f.admin.query('select state from ab.hr_delegations where id=$1',[d.id])).rows[0].state,'Active');assert.equal((await f.admin.query("select count(*) n from ab.finance_notifications where entity_id=$1 and user_id=$2 and action='personnel:delegation_review'",[d.id,f.org.user])).rows[0].n,'1');assert.equal((await f.admin.query("select count(*) n from ab.hr_audit_events where kind='leave_delegation_review'")).rows[0].n,'1');assert.equal((await f.admin.query('select count(*) n from ab.finance_journals')).rows[0].n,'0');
  }finally{await f.close();}});
+
+test('extending manual coverage cannot overlap the next delegation for the same task',async()=>{
+ const f=await personnelFixture();
+ try{
+  const people=[];
+  for(let i=0;i<3;i++)people.push(await f.req('POST','/api/personnel/employees',{
+   companyId:f.co1,nameAr:'تغطية اصطناعية '+i,nameEn:'Synthetic coverage '+i,jobTitle:'Test',hiredOn:'2024-01-01',
+  }));
+  const todayDay=today(),tomorrow=new Date(Date.parse(todayDay+'T00:00:00Z')+86400000).toISOString().slice(0,10);
+  const task=await f.req('POST','/api/personnel/tasks',{
+   companyId:f.co1,employeeId:people[0].id,title:'Synthetic coverage extension',expectedResult:'Original work',dueOn:todayDay,
+  });
+  const base={companyId:f.co1,originalId:people[0].id,taskIds:[task.id],reason:'Synthetic bounded coverage'};
+  const first=await f.req('POST','/api/personnel/delegations',{...base,substituteId:people[1].id,startsOn:todayDay,endsOn:todayDay});
+  const second=await f.req('POST','/api/personnel/delegations',{...base,substituteId:people[2].id,startsOn:tomorrow,endsOn:tomorrow});
+  const extend={action:'extend',endsOn:tomorrow,reason:'Synthetic extension'};
+  const decision='/api/personnel/delegations/'+first.id+'/decision';
+  const refused=await f.req('POST',decision,extend,409);
+  assert.equal(refused.error,'taskDelegationOverlap');
+  assert.equal((await f.req('GET','/api/personnel/delegations/'+first.id+'/history')).state,'Active');
+  await f.req('POST','/api/personnel/delegations/'+second.id+'/decision',{action:'transfer',reason:'Close next fixture'});
+  await f.req('POST',decision,extend);
+  assert.equal((await f.req('GET','/api/personnel/delegations/'+first.id+'/history')).state,'Extended');
+ }finally{await f.close();}
+});

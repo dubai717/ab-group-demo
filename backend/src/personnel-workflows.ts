@@ -163,8 +163,22 @@ export function registerPersonnelWorkflows(app: any, route: any, cipher: any) {
         created++;
     } return { created, paymentsCreated: 0, approvalRequired: true }; }));
     app.post('/api/personnel/followup/:companyId', route(async (c: any, m: any, s: any, r: any) => { z.object({ confirm: z.literal(true) }).strict().parse(r.body); return personnelFollowup(c, cipher, m, s, id.parse(r.params.companyId)); }));
+    async function lockDelegationOrigin(c:any,tenantId:string,companyId:string,originalId:string){
+        await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[tenantId+':delegation-origin:'+companyId+':'+originalId]);
+    }
+    async function assertCoverageAvailable(c:any,input:{
+        tenantId:string;companyId:string;originalId:string;startsOn:string;endsOn:string;taskIds:Set<string>;exceptId?:string;
+    }){
+        const overlapping=(await c.query(`select payload_cipher from ab.hr_delegations
+            where tenant_id=$1 and company_id=$2 and original_id=$3 and state in('Active','Extended')
+            and starts_on<=$4 and ends_on>=$5 and ($6::uuid is null or id<>$6) limit 2001`,
+            [input.tenantId,input.companyId,input.originalId,input.endsOn,input.startsOn,input.exceptId||null])).rows;
+        requireOk(overlapping.length<=2000,422,'delegationRangeRequired');
+        requireOk(!overlapping.some((row:any)=>(cipher.open(row.payload_cipher).taskIds||[])
+            .some((taskId:string)=>input.taskIds.has(taskId))),409,'taskDelegationOverlap');
+    }
     app.post('/api/personnel/delegations', route(async (c: any, m: any, s: any, r: any) => { const d = z.object({ companyId: id, originalId: id, substituteId: id, leaveId:id.optional(), startsOn: day, endsOn: day, taskIds: z.array(id).min(1).max(1000), reason: text }).strict().parse(r.body); need(m, 'task_delegate', d.companyId); H.days(d.startsOn, d.endsOn); requireOk(d.originalId !== d.substituteId, 422, 'invalidSubstitute'); await employeeIn(c, d.originalId, d.companyId); const substitute=await employeeIn(c, d.substituteId, d.companyId);
-        await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':delegation-origin:'+d.companyId+':'+d.originalId]);
+        await lockDelegationOrigin(c,s.tenant_id,d.companyId,d.originalId);
         const chosen=new Set(d.taskIds);
         requireOk(chosen.size===d.taskIds.length,422,'duplicateTask');
         const linked=await validateLeaveDelegation(c,cipher,m,s,d);if(linked?.existingId)return{id:linked.existingId,saved:true,existing:true,authorityTransferred:false};
@@ -172,16 +186,18 @@ export function registerPersonnelWorkflows(app: any, route: any, cipher: any) {
             [d.taskIds,d.companyId,d.originalId])).rows;
         requireOk(tasks.length===new Set(d.taskIds).size,422,'invalidTaskScope');
         if(!linked){
-            const overlap=(await c.query("select payload_cipher from ab.hr_delegations where tenant_id=$1 and company_id=$2 and original_id=$3 and state in('Active','Extended') and starts_on<=$4 and ends_on>=$5 limit 2001",
-                [s.tenant_id,d.companyId,d.originalId,d.endsOn,d.startsOn])).rows;
-            requireOk(overlap.length<=2000,422,'delegationRangeRequired');
-            requireOk(!overlap.some((row:any)=>(cipher.open(row.payload_cipher).taskIds||[]).some((taskId:string)=>chosen.has(taskId))),409,'taskDelegationOverlap');
+            await assertCoverageAvailable(c,{...d,tenantId:s.tenant_id,taskIds:chosen});
             const review=await delegatedTaskSourceReview(c,cipher,s.tenant_id,tasks,substitute);
             requireOk(!review,409,review||'communicationDelegateSourceReviewRequired');
         }
  const key = randomUUID(); await c.query('insert into ab.hr_delegations(id,tenant_id,company_id,original_id,substitute_id,starts_on,ends_on,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9)', [key, s.tenant_id, d.companyId, d.originalId, d.substituteId, d.startsOn, d.endsOn, cipher.seal({...d,...(linked?{leaveLinkedVersion:1,leaveLinkedDigest:linked.digest}:{})}), s.user_id]); await auditHR(c, cipher, s, { id: d.originalId, company_id: d.companyId }, 'delegation_created', null, d); return { id: key, saved: true, authorityTransferred: false }; }));
-    app.post('/api/personnel/delegations/:id/decision', route(async (c: any, m: any, s: any, r: any) => { requireOk(m.actor.roleId === 'owner'); const d = z.object({ action: z.enum(['return', 'extend', 'transfer']), endsOn: day.optional(), reason: text }).strict().parse(r.body), row = (await c.query("select *,to_char(ends_on,'YYYY-MM-DD') end_day from ab.hr_delegations where id=$1 for update", [id.parse(r.params.id)])).rows[0]; requireOk(row, 404, 'notFound'); requireOk(['Active', 'Extended'].includes(row.state), 409, 'invalidState'); const data = cipher.open(row.payload_cipher);if(data.leaveLinkedVersion===1){requireOk(d.action!=='transfer',409,'linkedDelegationReassignmentReviewRequired');if(d.action==='extend'){const leave=(await c.query("select * from ab.hr_leaves where id=$1 and state='Approved'",[data.leaveId])).rows[0];requireOk(leave&&d.endsOn&&d.endsOn<=leave.ends_on.toISOString().slice(0,10),409,'delegationOutsideApprovedLeave');}} if (d.action === 'extend')
-        requireOk(d.endsOn && d.endsOn >= today() && d.endsOn > row.end_day, 422, 'invalidDate'); if (d.action === 'return') {
+    app.post('/api/personnel/delegations/:id/decision', route(async (c: any, m: any, s: any, r: any) => { requireOk(m.actor.roleId === 'owner'); const d = z.object({ action: z.enum(['return', 'extend', 'transfer']), endsOn: day.optional(), reason: text }).strict().parse(r.body), row = (await c.query("select *,to_char(ends_on,'YYYY-MM-DD') end_day from ab.hr_delegations where id=$1 for update", [id.parse(r.params.id)])).rows[0]; requireOk(row, 404, 'notFound'); requireOk(['Active', 'Extended'].includes(row.state), 409, 'invalidState'); const data = cipher.open(row.payload_cipher);if(data.leaveLinkedVersion===1){requireOk(d.action!=='transfer',409,'linkedDelegationReassignmentReviewRequired');if(d.action==='extend'){const leave=(await c.query("select * from ab.hr_leaves where id=$1 and state='Approved'",[data.leaveId])).rows[0];requireOk(leave&&d.endsOn&&d.endsOn<=leave.ends_on.toISOString().slice(0,10),409,'delegationOutsideApprovedLeave');}} if (d.action === 'extend') {
+        const endsOn=d.endsOn;
+        requireOk(endsOn && endsOn >= today() && endsOn > row.end_day,422,'invalidDate');
+        await lockDelegationOrigin(c,s.tenant_id,row.company_id,row.original_id);
+        await assertCoverageAvailable(c,{tenantId:s.tenant_id,companyId:row.company_id,originalId:row.original_id,
+            startsOn:row.end_day,endsOn,taskIds:new Set<string>(data.taskIds),exceptId:row.id});
+    } if (d.action === 'return') {
         const original=await employeeIn(c, row.original_id, row.company_id);
         const tasks=(await c.query("select * from ab.tasks where id=any($1::uuid[]) and company_id=$2 and employee_id=$3 and state not in('Completed','Closed') order by id for update",
             [data.taskIds,row.company_id,row.substitute_id])).rows;
