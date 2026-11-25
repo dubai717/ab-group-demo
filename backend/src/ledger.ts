@@ -370,6 +370,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
     }));
     app.post('/api/ledger/collections/cross-branch-intake',route(async(c:any,m:any,s:any,req:any)=>{
         await requireIntake(c);
+        requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');
         const d=z.object({...intakeFields,amount:positive,actualCashReceived:z.literal(true)}).strict().parse(req.body);
         const site=await verifyCrossBranchReceivingSite(c,m,s,d.companyId,d.receivedOn,d.receivingSite);
         const params=[s.tenant_id,randomUUID(),d.companyId,d.invoiceId,s.user_id,d.amount,d.receivedOn,site.centreId,site.centreSourceId,site.locationSourceId];
@@ -392,6 +393,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
     }));
     app.post('/api/ledger/collections/cross-branch-intake/:id/post',route(async(c:any,m:any,s:any,req:any)=>{
         await requireIntake(c);
+        requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');
         const confirmation=z.object({confirmActualCash:z.literal(true),confirmedAmount:positive}).strict().parse(req.body);
         const intakeId=id.parse(req.params.id);
         const intake=(await c.query(`select i.*,to_char(i.received_on,'YYYY-MM-DD') receipt_day, v.customer_id
@@ -419,7 +421,12 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         requireOk(options.crossBranchCollectionEnabled===true,503,'crossBranchCollectionNotEnabled');
         const database=(await c.query('select current_database() database')).rows[0]?.database;
         requireOk(/^ab_backup_[a-f0-9]{32}$/.test(database),503,'crossBranchCollectionNotEnabled');
-        return readCrossBranchCollectionSource(c,m,s,cipher,req.query);
+        const query=z.object({companyId:id,customerId:id}).strict().parse(req.query);
+        need(m,'collect',query.companyId);
+        await customer(c,m,query.customerId,query.companyId);
+        const intakeInstalled=(await c.query("select to_regclass('ab.cross_branch_collection_intake') is not null ready")).rows[0]?.ready;
+        requireOk(!intakeInstalled,410,'crossBranchExactInvoiceRequired');
+        return readCrossBranchCollectionSource(c,m,s,cipher,query);
     }));
     app.post('/api/ledger/collections/invoices',route(async(c:any,m:any,s:any,req:any)=>{
         const d=z.object({companyId:id,customerId:id,currency:z.literal('AED'),receivedOn:day,actualCashReceived:z.literal(true),receivingSite:crossBranchReceivingSiteSelection.optional(),invoices:z.array(z.object({invoiceId:id,amount:money,discountAmount:money.default('0'),discountReason:z.string().trim().max(2000).default('')}).strict()).min(1).max(100)}).strict().parse(req.body);

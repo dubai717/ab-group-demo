@@ -16,7 +16,7 @@ test('cross-branch receiving site uses actual dated work location and separate l
     const worker = await f.employee();
     const cipher = security(f.secret.key);
     const bill=await f.bill('100');
-    for (const file of ['operating-centres.sql', 'employee-work-locations.sql', 'cross-branch-collection-source.sql', 'cross-branch-receiving-site.sql','cross-branch-collection-intake.sql']) {
+    for (const file of ['operating-centres.sql', 'employee-work-locations.sql', 'cross-branch-collection-source.sql', 'cross-branch-receiving-site.sql','company-scope-upper-bound.sql','company-scope-customers.sql']) {
       await f.admin.query(await readFile('backend/review/' + file, 'utf8'));
     }
     const read = (companyId = f.co1, session = {}) => transaction(f.runtime, f.org.tenant, worker.id, async c =>
@@ -46,6 +46,16 @@ test('cross-branch receiving site uses actual dated work location and separate l
     };
     await selectSite(centreId, 0, '2026-01-01');
     await selectSite(null, 1, '2099-01-01');
+    const setCompanyScope=(companyIds:string[],revision:number,previousId:string|null)=>
+      transaction(f.runtime,f.org.tenant,f.org.user,async c=>{
+        const version=randomUUID();
+        await c.query("insert into ab.user_access_scope_versions(id,tenant_id,user_id,revision,previous_id,selection_kind,payload_cipher,created_by) values($1,$2,$3,$4,$5,'companies',$6,$7)",
+          [version,f.org.tenant,worker.id,revision,previousId,cipher.seal({companyIds}),f.org.user]);
+        for(const companyId of companyIds)
+          await c.query('insert into ab.user_access_scope_companies values($1,$2,$3,$4)',[f.org.tenant,worker.id,version,companyId]);
+        return version;
+      });
+    const workerScope=await setCompanyScope([f.co2],1,null);
     const readOnlySite: any = await read();
     assert.equal(readOnlySite.centreId, centreId);
     assert.equal(readOnlySite.companyId, f.co1);
@@ -60,6 +70,10 @@ test('cross-branch receiving site uses actual dated work location and separate l
     { readOnly: true, repeatableRead: true, auditActor: worker.id });
     assert.equal(source.state, 'reviewed_source');
     assert.deepEqual((source as any).receivingSite, readOnlySite);
+    await f.admin.query(await readFile('backend/review/cross-branch-collection-intake.sql','utf8'));
+    await assert.rejects(transaction(f.runtime,f.org.tenant,worker.id,c=>
+      c.query('select ab.cross_branch_collection_source($1,$2)',[f.client,f.co1])),
+    (error:any)=>error.code==='42501');
     await assert.rejects(read(f.co2), (error: any) => error.status === 403);
     await assert.rejects(read(f.co1, { viewAs: true }), (error: any) => error.status === 403);
     await assert.rejects(read(f.co1, { actor_type: 'service' }), (error: any) => error.status === 403);
@@ -91,10 +105,8 @@ test('cross-branch receiving site uses actual dated work location and separate l
     };
     await login(worker.username,worker.password);
     await collect(payload,403);
-    const preview=await app.inject({url:'/api/ledger/collections/cross-branch-preview?companyId='+f.co1+'&customerId='+f.client,headers});
-    assert.equal(preview.statusCode,200,preview.body);
-    assert.equal(preview.json().rows[0].id,bill.id);
-    assert.equal(preview.json().receivingSite.locationSourceId,receivingSite.locationSourceId);
+    const previewPath='/api/ledger/collections/cross-branch-preview?companyId='+f.co1+'&customerId='+f.client;
+    assert.equal((await app.inject({url:previewPath,headers})).statusCode,403);
     const invoicePath='/api/ledger/collections/cross-branch-invoice?companyId='+f.co1+'&invoiceId='+bill.id;
     const exact=await app.inject({url:invoicePath,headers});
     assert.equal(exact.statusCode,200,exact.body);
@@ -106,6 +118,9 @@ test('cross-branch receiving site uses actual dated work location and separate l
     const tables=['finance_receipts','finance_journals','finance_custody_moves','vehicle_allocations'];
     const financeCounts=async()=>Promise.all(tables.map(async table=>(await f.admin.query('select count(*) n from ab.'+table)).rows[0].n));
     const beforeIntake=await financeCounts();
+    const noIntakeKey=await app.inject({method:'POST',url:intakePath,payload:intakeBody,headers});
+    assert.equal(noIntakeKey.statusCode,422,noIntakeKey.body);
+    assert.equal(noIntakeKey.json().error,'idempotencyRequired');
     const intakeKey=randomUUID(),intakeResult=await intake(intakeBody,intakeKey);
     assert.equal(intakeResult.statusCode,200,intakeResult.body);
     assert.deepEqual((await intake(intakeBody,intakeKey)).json(),intakeResult.json());
@@ -127,6 +142,9 @@ test('cross-branch receiving site uses actual dated work location and separate l
     assert.equal(intakeRecord.statusCode,200,intakeRecord.body);
     assert.equal(intakeRecord.json().amount,'25.000');
     assert.equal(intakeRecord.json().state,'reported');
+    const noApprovalKey=await app.inject({method:'POST',url:approvePath,payload:{confirmActualCash:true,confirmedAmount:'25'},headers});
+    assert.equal(noApprovalKey.statusCode,422,noApprovalKey.body);
+    assert.equal(noApprovalKey.json().error,'idempotencyRequired');
     assert.equal((await approveIntake(randomUUID(),'24')).statusCode,422);
     const confirmationKey=randomUUID();
     const confirmed=await approveIntake(confirmationKey);
@@ -144,9 +162,21 @@ test('cross-branch receiving site uses actual dated work location and separate l
       c.query('select batch_id,posted_by from ab.cross_branch_collection_posting')),
     (error:any)=>error.code==='42501');
 
+    await transaction(f.runtime,f.org.tenant,worker.id,async c=>{
+      for(const [table,key,value] of [
+        ['customers','id',f.client],['vehicle_invoices','id',bill.id],
+        ['finance_receipts','id',confirmedReceipt],['finance_journals','source_key','receipt:'+confirmedReceipt],
+      ]){
+        assert.equal((await c.query('select 1 from ab.'+table+' where '+key+'=$1',[value])).rowCount,0,table);
+      }
+    });
+    await setCompanyScope([f.co1,f.co2],2,workerScope);
     for(const action of ['ledger_collect','customer_view','ledger_hand_over']){
       await f.req('POST','/api/users/'+worker.id+'/grants',{action,scope:{type:'company',id:f.co1},delegable:false});
     }
+    const preview=await app.inject({url:previewPath,headers});
+    assert.equal(preview.statusCode,410,preview.body);
+    assert.equal(preview.json().error,'crossBranchExactInvoiceRequired');
     await collect({...payload,receivingSite:{...receivingSite,centreSourceId:randomUUID()}},409);
     await collect({...payload,invoices:[{invoiceId:bill.id,amount:'25',discountAmount:'1',discountReason:'Invalid cross-branch discount'}]},422);
     const key=randomUUID(),posted=await collect(payload,200,key);

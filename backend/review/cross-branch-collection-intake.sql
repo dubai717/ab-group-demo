@@ -3,11 +3,21 @@ BEGIN;
 SET LOCAL search_path=pg_catalog,ab,pg_temp;
 DO $$BEGIN
  IF current_user<>'postgres' OR to_regprocedure('ab.cross_branch_receiving_site(uuid)') IS NULL
+ OR NOT EXISTS(SELECT 1 FROM pg_policy WHERE NOT polpermissive AND polname='reviewed_customer_identity_read'
+               AND polrelid='ab.customers'::regclass)
+ OR EXISTS (
+  SELECT 1 FROM unnest(ARRAY['ab.vehicle_invoices','ab.finance_receipts','ab.finance_journals']::regclass[]) AS source(oid)
+  WHERE NOT EXISTS(SELECT 1 FROM pg_policy WHERE NOT polpermissive AND polname='reviewed_company_upper_bound' AND polrelid=source.oid)
+ )
  OR NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='ab_runtime')
  OR EXISTS(SELECT 1 FROM pg_roles WHERE (rolsuper OR rolbypassrls) AND pg_has_role('ab_runtime',oid,'MEMBER'))
  OR EXISTS(SELECT 1 FROM pg_roles WHERE rolname IN('anon','authenticated') AND pg_has_role(oid,'ab_runtime','MEMBER'))
  THEN RAISE EXCEPTION 'private cross-branch prerequisites required' USING ERRCODE='42501'; END IF;
 END$$;
+
+-- The earlier synthetic customer-wide lookup returns an encrypted profile to its adapter.
+-- Once invoice-only intake is installed, the runtime must not be able to call that lookup.
+REVOKE EXECUTE ON FUNCTION ab.cross_branch_collection_source(uuid,uuid) FROM ab_runtime;
 
 CREATE TABLE ab.cross_branch_collection_intake (
  tenant_id uuid NOT NULL REFERENCES ab.organizations,
