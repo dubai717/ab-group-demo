@@ -33,6 +33,8 @@ jobs:
           else
             node node_modules/playwright/cli.js install --with-deps chromium
           fi
+      - name: Exact-invoice payment reporting and independent browser confirmation
+        run: node backend/tests/cross-branch-collection-ui.browser.cjs
       - name: Actual prospect and permissions flows with synthetic providers only
         run: node backend/tests/operational-v1-suite.browser.cjs
       - name: Preserve synthetic UI evidence only

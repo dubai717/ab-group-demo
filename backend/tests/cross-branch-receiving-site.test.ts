@@ -96,14 +96,16 @@ test('cross-branch receiving site uses actual dated work location and separate l
       const r=await app!.inject({method:'POST',url:'/api/login',payload:{username,password},headers:{origin,'x-ab-request':'1'}});
       assert.equal(r.statusCode,200);
       headers.cookie=String(r.headers['set-cookie']).split(';')[0];
-      headers['x-csrf-token']=(await app!.inject({url:'/api/bootstrap',headers})).json().csrfToken;
+      const bootstrap=(await app!.inject({url:'/api/bootstrap',headers})).json();
+      headers['x-csrf-token']=bootstrap.csrfToken;
+      return bootstrap;
     };
     const collect=async(body:unknown,status=200,key=randomUUID())=>{
       const result=await app!.inject({method:'POST',url:path,payload:body as any,headers:{...headers,'idempotency-key':key}});
       assert.equal(result.statusCode,status,result.body);
       return result.json();
     };
-    await login(worker.username,worker.password);
+    assert.deepEqual((await login(worker.username,worker.password)).crossBranchCollection,{canConfirm:false});
     await collect(payload,403);
     const previewPath='/api/ledger/collections/cross-branch-preview?companyId='+f.co1+'&customerId='+f.client;
     assert.equal((await app.inject({url:previewPath,headers})).statusCode,403);
@@ -137,7 +139,7 @@ test('cross-branch receiving site uses actual dated work location and separate l
       method:'POST',url:approvePath,payload:{confirmActualCash:true,confirmedAmount},headers:{...headers,'idempotency-key':key},
     });
     assert.equal((await approveIntake()).statusCode,403);
-    await login();
+    assert.deepEqual((await login()).crossBranchCollection,{canConfirm:true});
     const intakeRecord=await app.inject({url:intakePath+'/'+intakeResult.json().id,headers});
     assert.equal(intakeRecord.statusCode,200,intakeRecord.body);
     assert.equal(intakeRecord.json().amount,'25.000');

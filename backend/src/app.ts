@@ -568,8 +568,24 @@ export async function build(options: Options) {
       const userScopeReferences={companies:m.state.companies.filter((co:any)=>ownScopes.some((v:any)=>v.type==='company'&&v.id===co.id)).map((co:any)=>({id:co.id,englishName:co.englishName,arabicName:co.arabicName})),reportingUsers:[...reportingUsers.values()]};
       const settings = (await c.query("select key,value from ab.settings"))
         .rows;
+      let crossBranchCollection=null;
+      if(options.crossBranchCollectionEnabled===true&&!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user')){
+        const access=(await c.query(`select current_database() db,
+          to_regclass('ab.cross_branch_collection_intake') is not null ready,
+          ab.hr_actor_allowed() working,
+          exists(select 1 from ab.permission_grants g join ab.users issuer
+            on issuer.tenant_id=g.tenant_id and issuer.id=g.issuer_id
+            where g.tenant_id=ab.tenant() and g.user_id=$1 and g.permission_id='ledger_cross_branch_collect'
+            and g.scope_type='company' and g.revoked_at is null and issuer.status='Active' and issuer.role_id='owner') granted`,[s.user_id])).rows[0];
+        const owner=m.actor.roleId==='owner';
+        if(/^ab_backup_[a-f0-9]{32}$/.test(access.db)&&access.ready&&access.working&&
+          m.actor.status==='Active'&&m.actor.roleId!=='investor'&&(owner||access.granted))
+          crossBranchCollection={canConfirm:owner};
+      }
+
       return {
         actor: m.actor,
+        crossBranchCollection,
         viewAs:s.viewAs||null,
         resetTestDatabaseAvailable: options.resetEnabled===true&&m.actor.roleId==='owner'&&m.actor.username==='trial_4db27b82b8bf',
         testUsersAvailable: options.testUsersEnabled===true&&m.actor.roleId==='owner',

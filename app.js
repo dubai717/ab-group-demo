@@ -545,7 +545,7 @@ function render() {
                 <span class="avatar">${AuthFlows.escape(currentUser.fullName.slice(0,1).toUpperCase())}</span>
                 <span><span>${AuthFlows.escape(currentUser.fullName)}</span><span class="muted account-role">${getRoleName(currentUser.roleId)}</span></span>
               </summary>
-              <div class="account-popover"><button class="ghost-btn" type="button" data-auth="settings">${AuthFlows.text('accountSettings')}</button></div>
+              <div class="account-popover">${globalThis.CrossBranchCollectionUI?.entry()||''}<button class="ghost-btn" type="button" data-auth="settings">${AuthFlows.text('accountSettings')}</button></div>
             </details>
           </div>
         </header>
@@ -1101,6 +1101,7 @@ async function handleLogin(event) {
 }
 
 function bindGlobalEvents() {
+  document.querySelector('[data-cross-branch-collection]')?.addEventListener('click',()=>CrossBranchCollectionUI.open());
   ViewAsUI.bind();
   BusinessCenters.bind();
   CommunicationsUI.bind();

@@ -101,6 +101,7 @@
     if(revision!==bootstrapRevision)return false;
     if(C.actor?.id!==b.actor.id||authorityReduced(b)||JSON.stringify(C.viewAs||null)!==JSON.stringify(b.viewAs||null)){authorityRevision++;C.hiddenUserId=null;globalThis.CenterForms?.clear();globalThis.RecordLinks?.reset?.();globalThis.AttachmentViewer?.close();globalThis.FinanceWorkbench?.reset();globalThis.CustomerUI?.reset();globalThis.VehicleUI?.reset();globalThis.PersonnelUI?.reset();globalThis.LedgerUI?.reset();globalThis.RegisterStore?.clear();globalThis.RegisterView?.clear();globalThis.FinancialTables?.clear();C.documents.clear();C.documentOwnerKey=null;C.documentHistory=false;C.enrollment.clear();globalThis.TaxControlUI?.reset();globalThis.DashboardUI?.invalidate();activeUser=activeCompany=activeBank=null;globalThis.CompanyDocuments?.centralSelect?.(null);globalThis.UserManagement?.centralSelect?.(null);}
     C.actor = b.actor;
+    C.crossBranchCollection=b.crossBranchCollection||null;
     C.viewAs=b.viewAs||null;C.previewUncertain=false;
     C.resetTestDatabaseAvailable=b.resetTestDatabaseAvailable===true;
     C.csrf = b.csrfToken;

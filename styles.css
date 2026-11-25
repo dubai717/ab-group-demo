@@ -1278,3 +1278,8 @@ form .record-field-control:disabled,form .record-field-control[readonly]{color:v
 [data-whatsapp-review-panel]{min-width:0;overflow-wrap:anywhere;margin-block-start:.75rem}[data-whatsapp-review-panel] fieldset{min-width:0;border:1px solid var(--border-color,#ded5cc);padding:.65rem}[data-whatsapp-review-panel] select,[data-whatsapp-review-panel] input,[data-whatsapp-review-panel] textarea{max-width:100%;box-sizing:border-box}[data-whatsapp-review-panel] textarea,[data-whatsapp-review-panel] select{width:100%}.whatsapp-original-reply-text{white-space:pre-wrap;border-inline-start:3px solid var(--accent,#986529);padding:.5rem;margin-block:.5rem}
 
 [data-whatsapp-review-panel] .form-grid>label{display:grid;gap:.35rem;min-width:0}[data-wa-language]{display:block;line-height:1.6}
+
+.cross-branch-collection-dialog .form-grid[hidden] { display: none; }
+.cross-branch-collection-dialog .form-grid { margin-block-end: 1rem; }
+.cross-branch-collection-dialog [data-invoice] { grid-column: 1 / -1; }
+.cross-branch-collection-dialog [data-record] { overflow-wrap: anywhere; }
