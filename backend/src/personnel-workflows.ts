@@ -22,11 +22,11 @@ export async function personnelFollowup(c: any, cipher: any, m: any, s: any, co:
     await remindAnnualLeavePlans(c,cipher,m,s,co,now);
     for (const e of employees) {
         if(e.company_id!==co)continue;
-        const docs = (await c.query("select distinct on(r.kind) r.*,v.scan_status from ab.hr_document_records r join ab.document_versions v on v.id=r.version_id where employee_id=$1 and state='Approved'and v.scan_status='clean'order by r.kind,r.created_at desc,r.id desc", [e.id])).rows;
+        const docs = (await c.query("select distinct on(r.kind) r.*,to_char(r.expires_on,'YYYY-MM-DD') expiry_day,v.scan_status from ab.hr_document_records r join ab.document_versions v on v.id=r.version_id where employee_id=$1 and state='Approved'and v.scan_status='clean'order by r.kind,r.created_at desc,r.id desc", [e.id])).rows;
         for (const r of docs) {
-            if (!r.expires_on)
+            if (!r.expiry_day)
                 continue;
-            const due = r.expires_on.toISOString().slice(0, 10), remaining = Math.floor((Date.parse(due) - Date.parse(now)) / 864e5), responsible = r.company_responsible ? r.responsible_id : e.id;
+            const due = r.expiry_day, remaining = Math.floor((Date.parse(due) - Date.parse(now)) / 864e5), responsible = r.company_responsible ? r.responsible_id : e.id;
             if (!responsible)
                 continue;
             if (remaining <= Math.max(...cfg.documentDays)) {
