@@ -1273,3 +1273,5 @@ form .record-field-control:disabled,form .record-field-control[readonly]{color:v
   [data-thread-cases] .case-topic-table td:last-child button { display: block; width: 100%; margin: 3px 0; white-space: normal; padding: 6px 3px; }
   [data-thread-cases] .case-mobile-meta { display: block; font-size: .75rem; margin-bottom: 4px; }
 }
+/* Scoped service exception controls reuse the current customer review dialog. */
+.service-exception-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem;border:1px solid var(--border-color,#ded5cc);padding:.65rem;min-width:0}.service-exception-fields label{display:grid;gap:.25rem;min-width:0}.service-exception-fields input,.service-exception-fields select,.service-exception-fields textarea{max-width:100%;width:100%;box-sizing:border-box}.service-exception-record{border-block-start:1px solid var(--border-color,#ded5cc);padding:.65rem 0;overflow-wrap:anywhere}.service-exception-record input{max-width:100%;box-sizing:border-box}@media(max-width:600px){.service-exception-fields{grid-template-columns:minmax(0,1fr)}}

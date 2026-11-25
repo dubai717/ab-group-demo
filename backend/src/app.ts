@@ -1,3 +1,4 @@
+import{assertExecutionExceptionOperator,registerExecutionExceptionManagement}from'./service-execution-exceptions.js';
 import{registerCompanyDocumentImport}from'./company-document-import.js';
 import{encryptedUploadReadLimit,retainEncryptedUpload,verifiedEncryptedUpload,retainedUploadIdentity}from'./retained-encrypted-upload.js';
 import{registerOpeningBalancePreview}from'./opening-balance-import-preview.js';
@@ -90,6 +91,7 @@ export interface Options {
   beforeServiceApproval?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general'})=>Promise<void>;
   beforeCustomerServiceExecution?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'residence'|'general';requestId:string})=>Promise<void>;
   beforeServiceExecution?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'vehicle';requestId:string;phase:'disburse'|'register'})=>Promise<void>;
+  serviceExecutionExceptionsEnabled?:boolean;
   companyImportEnabled?:boolean;
   employeeImportEnabled?:boolean;
   employeeDocumentImportEnabled?:boolean;
@@ -250,6 +252,7 @@ export async function build(options: Options) {
       const s = await session(req);
       if(req.body)req.body=normalizeContactPayload(req.body);
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
+        const serviceExceptionMutation=req.method==='POST'&&/^\/api\/customers\/[0-9a-f-]+\/service-execution-exceptions(?:\/[0-9a-f-]+\/revoke)?$/i.test(req.url.split('?')[0]);
         const companyImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/companies/run';
         const employeeDocumentImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/personnel-documents/run';const companyDocumentImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/company-documents/run';
         const employeeImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/employees/run';
@@ -258,13 +261,14 @@ export async function build(options: Options) {
         let importModel:any,originalImportReceiptGuard:((outcome:any)=>Promise<void>)|undefined;
         // Serialize permission mutations before loading their authority snapshot.
         // This also prevents a queued grant from using a pre-standard-change issuer.
-        if(!s.viewAs&&req.method!=='GET'&&(originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
+        if(!s.viewAs&&req.method!=='GET'&&(serviceExceptionMutation||originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':security-roles']);
         // Serialize original company mutations before reading the directory used by import preview receipts.
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/companies(?:\/|$)/.test(req.url.split('?')[0])))
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':company-directory']);
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(employeeDocumentImportRun||employeeImportRun||/^\/api\/personnel(?:\/|$)/.test(req.url.split('?')[0])))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':personnel-import-directory']);
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(centreImportRun||req.url.split('?')[0]==='/api/operating-centres/apply'))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':operating-centre-directory']);
+        if(serviceExceptionMutation){importModel=await model(c,s.user_id,cipher);await assertExecutionExceptionOperator(c,importModel,s,req.params.id,options.serviceExecutionExceptionsEnabled===true);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
         if(originalImportRun){importModel=await model(c,s.user_id,cipher);const guard=originalImportRunGuards.get(originalImportRun[1].toLowerCase());requireOk(guard,503,'importGuardUnavailable');originalImportReceiptGuard=await guard(c,importModel,s,req);}
         if(centreImportRun){importModel=await model(c,s.user_id,cipher);assertCentreImportOperator(importModel);requireOk(options.centreImportEnabled===true,503,'centreImportApplyNotEnabled');await requireImportWorkAccess(c);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
         if(companyDocumentImportRun){importModel=await model(c,s.user_id,cipher);assertEmployeeImportOperator(importModel);requireOk(options.companyDocumentImportEnabled===true&&typeof options.objects?.getIfPresent==='function',503,'companyDocumentImportApplyNotEnabled');await requireImportWorkAccess(c);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
@@ -329,7 +333,8 @@ export async function build(options: Options) {
   registerCompanyImportPreview(app,call,cipher,options.companyImportEnabled===true);
   registerOpeningBalancePreview(app,call,cipher);
   registerCentreImport(app,call,cipher,options.centreImportEnabled===true);
-  registerServiceEligibilityReview(app,call,cipher);
+  registerServiceEligibilityReview(app,call,cipher,{executionExceptions:options.serviceExecutionExceptionsEnabled===true});
+  registerExecutionExceptionManagement(app,call,cipher,options.serviceExecutionExceptionsEnabled===true);
   registerBackupStatus(app,call,options.backupStatusRead);
   registerCollectionFollowup(app,call,cipher);
   registerDocumentCenter(app,call,cipher,options);
@@ -1318,6 +1323,7 @@ export async function build(options: Options) {
       "customer-policy.js",
       "customers.js",
       "customer-workspace-ui.js",
+      "service-exceptions-ui.js",
       "customer-requests-ui.js",
       "finance-policy.js",
       "finance-workbench.js",

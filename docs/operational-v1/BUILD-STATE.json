@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-25T00:45:21.449106+00:00",
+  "asOf": "2026-11-25T01:02:32.702176+00:00",
   "branch": "feature/operational-v1-independent",
   "financialPR": 115,
   "financialPREdited": false,
@@ -3419,9 +3419,8 @@
     "noFinancialEffect": true,
     "realExceptionGranted": false,
     "remaining": [
-      "Owner management UI and fresh-authority HTTP boundary",
       "Narrow employee history proof",
-      "Creation/final-approval policy adapters if approved",
+      "Creation/final-approval eligibility exception adapters without replacing original approval",
       "Full lifecycle/bank-direct coverage and final acceptance"
     ],
     "evidenceSha256": {
@@ -3448,5 +3447,26 @@
     "correctedIn": "46d5e30",
     "verifiedJobLog": 138846764156,
     "protectionWeakened": false
+  },
+  "timedExecutionExceptionManagement": {
+    "state": "implemented_unpublished_default_disabled_isolated_only",
+    "originalCustomerReviewReused": true,
+    "ownerAuthorityAndWorkGuardBeforeCachedResponse": true,
+    "roleMutationsSerializedBeforeModelLoad": true,
+    "linkedNativeCasesPassed": 19,
+    "additionalCashSourceRefusalPassed": true,
+    "browser": "AR/EN original profile and manual review; request/user/phase/UAE period; explicit confirmation; lost POST reply same key; acknowledged save GET-only recovery; reason-required revoke; pending close/profile navigation refused; three widths",
+    "noPolling": true,
+    "policyActivated": false,
+    "financialEffect": false,
+    "hostedDataChanged": false,
+    "evidenceSha256": {
+      "service-exception-management-types2.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "service-exception-management-native.log": "e2f64c7781ca911b4d1088f4c7449eb073551e439d1246c850a37ce2b481b6c4",
+      "service-exception-management-cash-api.log": "8c479d392a64da3f32a05729198ee9a5c28ba71a5d69e7867387842d1ebc6fc0",
+      "service-exception-management-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "service-exception-management-root.log": "a4df9f0f14959768df40d22a6719056d39b483efd077dfe8e3ec4a70a0bbc8bd",
+      "service-exception-management-browser.log": "789a657bf707329bc768f22ab2d8c5df90173d1c812eab8c56aa62f85f3c54b7"
+    }
   }
 }
