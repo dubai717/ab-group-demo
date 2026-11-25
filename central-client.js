@@ -286,7 +286,7 @@
   function error(e) {
     show(
       text("لم يُؤكَّد اكتمال العملية: ", "Operation not confirmed: ") +
-        ({verificationUnavailable:text('حُفظ السجل، لكن تعذر تأكيد استرجاعه. أعد المحاولة دون إنشاء سجل جديد.','Record committed, but readback could not be confirmed. Retry without creating another record.'),invalidFields:text('راجع الحقول المحددة في النموذج.','Review the highlighted fields.'),duplicate:text('يوجد حساب مطابق؛ لم يتم إنشاء نسخة مكررة.','A matching account already exists; no duplicate was created.'),denied:text('لا تملك صلاحية تنفيذ هذه العملية.','You do not have permission for this operation.')}[e.message]||e.message),
+        ({rateLimited:text('طلبات كثيرة خلال وقت قصير؛ انتظر قليلاً ثم أعد المحاولة بالبيانات نفسها.','Too many requests in a short period; wait briefly, then retry with the same inputs.'),verificationUnavailable:text('حُفظ السجل، لكن تعذر تأكيد استرجاعه. أعد المحاولة دون إنشاء سجل جديد.','Record committed, but readback could not be confirmed. Retry without creating another record.'),invalidFields:text('راجع الحقول المحددة في النموذج.','Review the highlighted fields.'),duplicate:text('يوجد حساب مطابق؛ لم يتم إنشاء نسخة مكررة.','A matching account already exists; no duplicate was created.'),denied:text('لا تملك صلاحية تنفيذ هذه العملية.','You do not have permission for this operation.')}[e.message]||e.message),
     );
   }
   function panel(owner, host) {

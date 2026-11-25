@@ -154,7 +154,9 @@ export async function build(options: Options) {
     let status = e.status || e.statusCode || 422,
       code = e.code || e.message;
     const dbFault=!(e instanceof ApiError)&&databaseServiceFailure(e);
-    if (dbFault) {
+    if (status===429) {
+      code='rateLimited';
+    } else if (dbFault) {
       status=503;code="unavailable";
     } else if (code === "duplicate") {
       status = 409;

@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-25T03:10:02.111505+00:00",
+  "asOf": "2026-11-25T03:28:39.746942+00:00",
   "branch": "feature/operational-v1-independent",
   "financialPR": 115,
   "financialPREdited": false,
@@ -3671,6 +3671,15 @@
   },
   "frozenEc57Acceptance": {
     "source": "ec57c5e14cab5a933ca6aa7eddc0c4a9203d44cc",
+    "backendPassed": 981,
+    "backendFailed": 0,
+    "backendStatus": {
+      "source": "ec57c5e14cab5a933ca6aa7eddc0c4a9203d44cc",
+      "sourceUnchanged": true,
+      "code": 0,
+      "signal": null,
+      "completedAt": "2026-11-25T03:17:44.442Z"
+    },
     "uiJourneysPassed": 54,
     "uiStatus": {
       "source": "ec57c5e14cab5a933ca6aa7eddc0c4a9203d44cc",
@@ -3679,7 +3688,57 @@
       "signal": null,
       "completedAt": "2026-11-25T02:57:50.093Z"
     },
-    "backendStatus": "running",
-    "laterContinuityAndTaskScopeCovered": false
+    "laterContinuityTaskBackupAndRateFixCovered": false,
+    "evidenceSha256": {
+      "backend.log": "1fa740adbfae365037e2760b15ff7150963adf69f7512e5c8280223019c9c67b",
+      "backend-status.json": "5143fc0617ad90b8a5731648fc9df5ec69f9a7bbbc8899ec7464fb4d83edeed0",
+      "ui.log": "433d5aca06304798ba416b89fd78c0854ae6bea51b29470f28b40584c62d7279",
+      "ui-status.json": "cf16e850f529a61e755daa3bbd8a447ea2b9ad5410ea5cc2dbaa4cfd43448885"
+    }
+  },
+  "captureAvailabilitySeparateFromRestore": {
+    "state": "implemented_unpublished",
+    "backupLinkedPassed": 31,
+    "laterRateAndBackupLinkedPassed": 14,
+    "captureFormatSeparateFromTestedRestore": true,
+    "oldRestoreFormatWeakened": false,
+    "olderDrillNotAppliedToNewCapture": true,
+    "manualOwnerBrowser": "AR/EN 1440/768/390 passed with actual signer/source/API; no automatic read or archive GET",
+    "actualBackupOrRestorePerformed": false,
+    "sourceDataChanged": false,
+    "evidenceSha256": {
+      "backup-capture-linked.log": "97a4d12435035d32e2281e5334a70887a4d43ebd882430a90cd4e3cd897e4512",
+      "backup-capture-browser.log": "c7f334949cdbee7bc55df7f6b08e839391141600032d9bc4046cb2fef73f39d7",
+      "backup-ci57-native.log": "9122f40bee888ba54b3e2541925e700ceaaf3c3ab8175a46def5e257f4583a2f",
+      "backup-ci57-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "backup-ci57-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "backup-ci57-root.log": "90c0978693b647330cde122d33de7ac7cfa2fc9fcfca7475ea4088fd965295d6",
+      "ci57-credit-reproduction.log": "d029032c513b96da359a162ba0ee0225619eb81aef6dee986754269727b8990e",
+      "ci57-credit-isolated.log": "cf753f4096b232b7a0ea76d91ae84e44a9a5bff7992616f6c843a5fda427960b",
+      "ci57-credit-final.log": "cf753f4096b232b7a0ea76d91ae84e44a9a5bff7992616f6c843a5fda427960b"
+    }
+  },
+  "CI57Diagnosis": {
+    "run": 57,
+    "runId": 45525277174,
+    "source": "7a8b1f98f53a6548bf1d9b8d802df511a2f573b2",
+    "failedStep": "Original credit source uses native document tax scope and safe output",
+    "rootCause": "Three role contexts shared one synthetic server and exhausted its unchanged rate limit; actual429 locally reproduced",
+    "fix": "Fresh original synthetic database/server per role; all prior assertions retained and no429 assertion added",
+    "productionRateLimitsChanged": false,
+    "generic429NoLongerLabeledInvalid": true,
+    "ownerReaderExporterBrowser": "passed twice, AR/EN three widths",
+    "CI58AlreadyRunningNotCanceled": true,
+    "evidenceSha256": {
+      "backup-capture-linked.log": "97a4d12435035d32e2281e5334a70887a4d43ebd882430a90cd4e3cd897e4512",
+      "backup-capture-browser.log": "c7f334949cdbee7bc55df7f6b08e839391141600032d9bc4046cb2fef73f39d7",
+      "backup-ci57-native.log": "9122f40bee888ba54b3e2541925e700ceaaf3c3ab8175a46def5e257f4583a2f",
+      "backup-ci57-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "backup-ci57-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "backup-ci57-root.log": "90c0978693b647330cde122d33de7ac7cfa2fc9fcfca7475ea4088fd965295d6",
+      "ci57-credit-reproduction.log": "d029032c513b96da359a162ba0ee0225619eb81aef6dee986754269727b8990e",
+      "ci57-credit-isolated.log": "cf753f4096b232b7a0ea76d91ae84e44a9a5bff7992616f6c843a5fda427960b",
+      "ci57-credit-final.log": "cf753f4096b232b7a0ea76d91ae84e44a9a5bff7992616f6c843a5fda427960b"
+    }
   }
 }
