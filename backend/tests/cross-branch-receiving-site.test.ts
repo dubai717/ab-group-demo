@@ -140,6 +140,9 @@ test('cross-branch receiving site uses actual dated work location and separate l
     assert.equal(amount,'25.000');
     await login(worker.username,worker.password);
     assert.equal((await app.inject({url:intakePath+'/'+intakeResult.json().id,headers})).json().state,'posted');
+    await assert.rejects(transaction(f.runtime,f.org.tenant,worker.id,c=>
+      c.query('select batch_id,posted_by from ab.cross_branch_collection_posting')),
+    (error:any)=>error.code==='42501');
 
     for(const action of ['ledger_collect','customer_view','ledger_hand_over']){
       await f.req('POST','/api/users/'+worker.id+'/grants',{action,scope:{type:'company',id:f.co1},delegable:false});
@@ -153,7 +156,10 @@ test('cross-branch receiving site uses actual dated work location and separate l
     assert.equal(batch.created_by,worker.id);
     assert.deepEqual(cipher.open(batch.payload_cipher).receivingSite,{...receivingSite,receivedOn:today()});
     const receiptId=posted.receipts[0].id;
-    const custody=async(holder=worker.id)=>(await f.admin.query('select coalesce(sum(amount),0)::text amount from ab.finance_custody_moves where receipt_id=$1 and company_id=$2 and holder_id=$3',[receiptId,f.co1,holder])).rows[0].amount;
+    const custody=async(holder=worker.id,receipt=receiptId)=>(await f.admin.query(
+      'select coalesce(sum(amount),0)::text amount from ab.finance_custody_moves where receipt_id=$1 and company_id=$2 and holder_id=$3',
+      [receipt,f.co1,holder],
+    )).rows[0].amount;
     assert.equal(await custody(),'25.000');
     const allocation=(await f.admin.query('select sum(amount)::text amount from ab.vehicle_allocations where invoice_id=$1',[bill.id])).rows[0].amount;
     assert.equal(allocation,'50.000');
@@ -161,19 +167,23 @@ test('cross-branch receiving site uses actual dated work location and separate l
     assert.deepEqual(receiptJournal,[{company_id:f.co1,status:'Posted'}]);
     await f.req('POST','/api/ledger/custody/routes',{companyId:f.co1,senderId:worker.id,receiverId:f.org.user,effectiveOn:today()});
     await f.login(worker.username,worker.password);
-    const handover=await f.req('POST','/api/ledger/custody/handovers',{companyId:f.co1,receiverId:f.org.user,currency:'AED',amount:'25',receipts:[{receiptId,amount:'25'}]});
+    const handover=await f.req('POST','/api/ledger/custody/handovers',{companyId:f.co1,receiverId:f.org.user,currency:'AED',amount:'50',receipts:[{receiptId,amount:'25'},{receiptId:confirmedReceipt,amount:'25'}]});
     assert.equal(await custody(),'25.000');
+    assert.equal(await custody(worker.id,confirmedReceipt),'25.000');
     await f.login();
-    await f.req('POST','/api/ledger/custody/handovers/'+handover.id+'/receive',{actual:'25',reason:'Synthetic counted cross-branch cash'});
+    await f.req('POST','/api/ledger/custody/handovers/'+handover.id+'/receive',{actual:'50',reason:'Synthetic counted cross-branch cash'});
     assert.equal(await custody(),'0.000');
     assert.equal(await custody(f.org.user),'25.000');
+    assert.equal(await custody(worker.id,confirmedReceipt),'0.000');
+    assert.equal(await custody(f.org.user,confirmedReceipt),'25.000');
     const foreignBank=await f.bank(f.co2),legalBank=await f.bank(),proof=await f.proof();
-    const depositBody={companyId:f.co1,bankAccountId:foreignBank.id,currency:'AED',amount:'25',effectiveOn:today(),documentVersionId:proof,reference:'Synthetic cross-branch deposit'};
+    const depositBody={companyId:f.co1,bankAccountId:foreignBank.id,currency:'AED',amount:'50',effectiveOn:today(),documentVersionId:proof,reference:'Synthetic cross-branch deposit'};
     await f.req('POST','/api/ledger/deposits',depositBody,422);
     const deposit=await f.req('POST','/api/ledger/deposits',{...depositBody,bankAccountId:legalBank.id});
     assert.equal(await custody(f.org.user),'25.000');
-    await f.req('POST','/api/ledger/deposits/'+deposit.id+'/confirm',{confirmedAmount:'25',effectiveOn:today(),bankConfirmation:'Synthetic actual deposit receipt',accountAndDateVerified:true});
+    await f.req('POST','/api/ledger/deposits/'+deposit.id+'/confirm',{confirmedAmount:'50',effectiveOn:today(),bankConfirmation:'Synthetic actual deposit receipt',accountAndDateVerified:true});
     assert.equal(await custody(f.org.user),'0.000');
+    assert.equal(await custody(f.org.user,confirmedReceipt),'0.000');
 
     await advance(1, 'Inactive');
     assert.equal((await read() as any).reviewRequired, 'receiving_site_unavailable');

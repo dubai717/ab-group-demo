@@ -79,7 +79,10 @@ GRANT SELECT,INSERT ON ab.cross_branch_collection_intake TO ab_runtime;
 CREATE POLICY cross_branch_intake_read ON ab.cross_branch_collection_intake FOR SELECT TO ab_runtime
  USING(tenant_id=(SELECT ab.tenant()) AND (SELECT ab.hr_actor_allowed()) AND
        ((SELECT ab.operating_centre_owner()) OR (
-         reported_by=nullif(current_setting('ab.actor',true),'')::uuid AND EXISTS(
+         reported_by=nullif(current_setting('ab.actor',true),'')::uuid
+         AND NOT EXISTS(SELECT 1 FROM ab.settings s WHERE s.tenant_id=cross_branch_collection_intake.tenant_id
+                        AND s.key='user-denials-v1:'||cross_branch_collection_intake.reported_by::text)
+         AND EXISTS(
           SELECT 1 FROM ab.permission_grants g
           JOIN ab.users issuer ON issuer.tenant_id=g.tenant_id AND issuer.id=g.issuer_id
           WHERE g.tenant_id=cross_branch_collection_intake.tenant_id
@@ -106,7 +109,7 @@ CREATE TABLE ab.cross_branch_collection_posting (
 ALTER TABLE ab.cross_branch_collection_posting ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ab.cross_branch_collection_posting FORCE ROW LEVEL SECURITY;
 REVOKE ALL ON ab.cross_branch_collection_posting FROM PUBLIC,ab_runtime;
-GRANT SELECT,INSERT ON ab.cross_branch_collection_posting TO ab_runtime;
+GRANT SELECT(tenant_id,intake_id),INSERT ON ab.cross_branch_collection_posting TO ab_runtime;
 CREATE POLICY cross_branch_posting_read ON ab.cross_branch_collection_posting FOR SELECT TO ab_runtime
  USING(tenant_id=(SELECT ab.tenant()) AND (SELECT ab.hr_actor_allowed()) AND EXISTS(
   SELECT 1 FROM ab.cross_branch_collection_intake i WHERE i.tenant_id=cross_branch_collection_posting.tenant_id AND i.id=cross_branch_collection_posting.intake_id

@@ -39,3 +39,27 @@ test('retained slot verification reads exact bytes and reports loss without uplo
  await assert.rejects(verifyIndependentBackupCompletion(input),/synthetic destination changed/);
  assert.equal(d.uploads,1);
 });
+
+test('crossing midnight during destination verification never captures for an expired daily slot',async()=>{
+ const f=await fixture(),d=remote();
+ const previous='2026-12-01T19:59:59.000Z',midnight='2026-12-01T20:00:00.000Z';
+ let clock=previous,captures=0;
+ const input={
+  mode:'sandbox' as const,now:previous,policy,spool:f.spool,
+  destination:{...d.store,verifyBucket:async()=>{clock=midnight;}},
+  clock:()=>new Date(clock),
+  capture:async()=>{captures++;return{database:f.database,objects:f.objects};},
+ };
+ await assert.rejects(runIndependentBackupSandbox(input),/independentBackupCaptureWindowChanged/);
+ assert.equal(captures,0);
+ assert.equal(d.uploads,0);
+ const retryTime='2026-12-01T22:00:00.000Z';
+ clock=retryTime;
+ const result=await runIndependentBackupSandbox({...input,now:retryTime,destination:d.store});
+ assert.equal(captures,2);
+ assert.equal(d.uploads,2);
+ assert('artifacts' in result);
+ const periods=result.artifacts.flatMap(artifact=>artifact.logicalPeriods);
+ assert.deepEqual(periods.map(slot=>[slot.cadence,slot.period]),[['daily','2026-12-02'],['monthly','2026-12']]);
+ assert(periods.every(slot=>slot.capturedAt===retryTime));
+});

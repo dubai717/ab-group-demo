@@ -4,11 +4,24 @@ import{planBackupCadence,type BackupCadencePolicy}from'./backup-cadence-plan.js'
 export async function runIndependentBackupSandbox(input:{mode:'disabled'|'sandbox';now:string;policy:BackupCadencePolicy|null;spool:Awaited<ReturnType<typeof independentBackupSpool>>;destination:Omit<ReturnType<typeof independentBackupStore>,'verifyRetained'>;clock:()=>Date;capture:()=>Promise<{database:Buffer;objects:Map<string,Buffer>}>}){
  if(input.mode!=='sandbox')throw Error('independentBackupRunNotEnabled');const plan=planBackupCadence({now:input.now,policy:input.policy}),base={actualSchedulerInstalled:false,canDelete:false,systemRestorePerformed:false,fullRestoreReadinessVerified:false,sourceSnapshotIdentityVerified:false,captureTimestampMeaning:'capture_started_at'};if(!plan.slots.length)return{...base,state:plan.state,captured:false,retained:false,completedSlots:[]};
  if(!input.policy||input.policy.sourceProjectHash!==input.spool.sourceProjectHash||input.policy.destinationProjectHash!==input.spool.destinationProjectHash||input.destination.sourceProjectHash!==input.spool.sourceProjectHash||input.destination.destinationProjectHash!==input.spool.destinationProjectHash)throw Error('independentBackupRunIdentityMismatch');
+ const policy=input.policy;
  const observed=input.clock().getTime();if(!Number.isFinite(observed)||Math.abs(observed-Date.parse(input.now))>60000)throw Error('independentBackupCurrentClockRequired');
  const pending=[];for(const slot of plan.slots)if(!await input.spool.completion(slot.key))pending.push(slot);if(!pending.length)return{...base,state:'previous_completion_recorded',captured:false,retained:false,artifactCurrentlyReverified:false,completedSlots:plan.slots.map(s=>s.key)};
  const groups=new Map<string,typeof pending>();for(const slot of pending){const binding=await input.spool.bindSlot(slot.key,slot.captureGroupKey);const rows=groups.get(binding.group)||[];rows.push(slot);groups.set(binding.group,rows);}let captured=false;const artifacts=[];
  for(const [group,slots]of groups){let prepared=await input.spool.prepared(group);
-  if(!prepared)prepared=await input.spool.withCapture(group,async()=>{const existing=await input.spool.prepared(group);if(existing)return existing;await input.destination.verifyBucket(1);const capturedAt=input.clock().toISOString(),source=await input.capture(),retained=await input.spool.retainPrepared(group,input.policy!.version,capturedAt,source.database,source.objects);captured=true;return retained;});
+  if(!prepared)prepared=await input.spool.withCapture(group,async()=>{
+   const existing=await input.spool.prepared(group);
+   if(existing)return existing;
+   await input.destination.verifyBucket(1);
+   const capturedAt=input.clock().toISOString();
+   const currentlyDue=new Set(planBackupCadence({now:capturedAt,policy}).slots.map(slot=>slot.key));
+   if(Date.parse(capturedAt)<observed||slots.some(slot=>!currentlyDue.has(slot.key)))
+    throw Error('independentBackupCaptureWindowChanged');
+   const source=await input.capture();
+   const retained=await input.spool.retainPrepared(group,policy.version,capturedAt,source.database,source.objects);
+   captured=true;
+   return retained;
+  });
   if(prepared.metadata.policyVersion!==input.policy.version)throw Error('independentBackupPreparedPolicyReviewRequired');
   const verified=await input.destination.retainAndVerify(prepared.metadata.archivePath,prepared.bytes);if(verified.path!==prepared.metadata.archivePath||verified.sha256!==prepared.archiveSha256||verified.bytes!==prepared.archiveBytes||verified.storageLocation!=='separate_project'||verified.artifactBytesVerified!==true||verified.systemRestorePerformed!==false)throw Error('independentBackupDestinationProofRequired');
   const verifiedAt=input.clock().toISOString();for(const slot of slots)await input.spool.complete(slot.key,group,{policyVersion:prepared.metadata.policyVersion,capturedAt:prepared.metadata.createdAt,verifiedAt,archivePath:prepared.metadata.archivePath,archiveSha256:prepared.archiveSha256,archiveBytes:prepared.archiveBytes});
