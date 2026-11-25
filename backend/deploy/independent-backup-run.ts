@@ -1,7 +1,7 @@
 // Inactive sandbox driver over original archive/store and approved-cadence preparation.
 // No global fetch/env, scheduler, cloud source selection, restoration, cleanup or deletion.
 import{planBackupCadence,type BackupCadencePolicy}from'./backup-cadence-plan.js';import{independentBackupSpool}from'./independent-backup-spool.js';import{independentBackupStore}from'./independent-backup-store.js';
-export async function runIndependentBackupSandbox(input:{mode:'disabled'|'sandbox';now:string;policy:BackupCadencePolicy|null;spool:Awaited<ReturnType<typeof independentBackupSpool>>;destination:ReturnType<typeof independentBackupStore>;clock:()=>Date;capture:()=>Promise<{database:Buffer;objects:Map<string,Buffer>}>}){
+export async function runIndependentBackupSandbox(input:{mode:'disabled'|'sandbox';now:string;policy:BackupCadencePolicy|null;spool:Awaited<ReturnType<typeof independentBackupSpool>>;destination:Omit<ReturnType<typeof independentBackupStore>,'verifyRetained'>;clock:()=>Date;capture:()=>Promise<{database:Buffer;objects:Map<string,Buffer>}>}){
  if(input.mode!=='sandbox')throw Error('independentBackupRunNotEnabled');const plan=planBackupCadence({now:input.now,policy:input.policy}),base={actualSchedulerInstalled:false,canDelete:false,systemRestorePerformed:false,fullRestoreReadinessVerified:false,sourceSnapshotIdentityVerified:false,captureTimestampMeaning:'capture_started_at'};if(!plan.slots.length)return{...base,state:plan.state,captured:false,retained:false,completedSlots:[]};
  if(!input.policy||input.policy.sourceProjectHash!==input.spool.sourceProjectHash||input.policy.destinationProjectHash!==input.spool.destinationProjectHash||input.destination.sourceProjectHash!==input.spool.sourceProjectHash||input.destination.destinationProjectHash!==input.spool.destinationProjectHash)throw Error('independentBackupRunIdentityMismatch');
  const observed=input.clock().getTime();if(!Number.isFinite(observed)||Math.abs(observed-Date.parse(input.now))>60000)throw Error('independentBackupCurrentClockRequired');
@@ -15,4 +15,22 @@ export async function runIndependentBackupSandbox(input:{mode:'disabled'|'sandbo
   artifacts.push({archivePath:prepared.metadata.archivePath,archiveSha256:prepared.archiveSha256,archiveBytes:prepared.archiveBytes,logicalPeriods:slots.map(s=>({cadence:s.cadence,period:s.period,dueAt:s.dueAt,capturedAt:prepared!.metadata.createdAt}))});
  }
  return{...base,state:'artifact_retained_verified',captured,retained:true,...(artifacts.length===1?artifacts[0]:{}),artifacts,artifactCurrentlyReverified:true,completedSlots:plan.slots.map(s=>s.key)};
+}
+
+
+export async function verifyIndependentBackupCompletion(input:{
+ mode:'disabled'|'sandbox';slot:string;
+ spool:Awaited<ReturnType<typeof independentBackupSpool>>;
+ destination:Pick<ReturnType<typeof independentBackupStore>,'sourceProjectHash'|'destinationProjectHash'|'verifyRetained'>;
+}){
+ if(input.mode!=='sandbox')throw Error('independentBackupRunNotEnabled');
+ const {spool,destination}=input;
+ if(destination.sourceProjectHash!==spool.sourceProjectHash||destination.destinationProjectHash!==spool.destinationProjectHash)throw Error('independentBackupRunIdentityMismatch');
+ const artifact=await spool.completedArtifact(input.slot);
+ if(!artifact)throw Error('independentBackupCompletionRequired');
+ const proof=await destination.verifyRetained(artifact.receipt.archivePath,artifact.bytes);
+ if(proof.path!==artifact.receipt.archivePath||proof.sha256!==artifact.receipt.archiveSha256||
+    proof.bytes!==artifact.receipt.archiveBytes||proof.storageLocation!=='separate_project'||
+    proof.artifactBytesVerified!==true||proof.systemRestorePerformed!==false)throw Error('independentBackupDestinationProofRequired');
+ return{...proof,fullRestoreReadinessVerified:false};
 }

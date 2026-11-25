@@ -7,12 +7,15 @@ export function independentBackupStore(config:{mode:'disabled'|'sandbox';sourceE
  const source=endpoint(config.sourceEndpoint),destination=endpoint(config.destinationEndpoint);if(source===destination)throw Error('independentBackupSeparateProjectRequired');
  if(!config.sourceSecret?.trim()||!config.destinationSecret?.trim()||config.destinationSecret.trim()!==config.destinationSecret||config.destinationSecret===config.sourceSecret)throw Error('independentBackupCredentialReviewRequired');
  const store=privateBackupStore(destination,config.destinationSecret,fetcher);
+ const verifyRetained=async(path:string,bytes:Buffer)=>{
+  const restored=await store.downloadVerified(path,bytes);await store.verifyNotPublic(path);
+  return{path,sha256:sha(restored),bytes:restored.length,storageLocation:'separate_project' as const,artifactBytesVerified:true,systemRestorePerformed:false};
+ };
  return{sourceProjectHash:backupSourceHash(source),destinationProjectHash:backupSourceHash(destination),storageLocation:'separate_project' as const,
   // Paths and exact ciphertext must be retained by the caller across uncertain replies.
   async retainAndVerify(path:string,bytes:Buffer){
    try{await store.upload(path,bytes);}catch(e:any){if(e.message!=='BACKUP_PATH_CONFLICT')throw e;}
-   const restored=await store.downloadVerified(path,bytes);await store.verifyNotPublic(path);
-   return{path,sha256:sha(restored),bytes:restored.length,storageLocation:'separate_project' as const,artifactBytesVerified:true,systemRestorePerformed:false};
-  },verifyBucket:store.verifyBucket,
+   return verifyRetained(path,bytes);
+  },verifyRetained,verifyBucket:store.verifyBucket,
  };
 }
