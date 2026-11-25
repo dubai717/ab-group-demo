@@ -3329,8 +3329,10 @@
       "company-document-import-browser-preview.log": "2fcdda8d040449c5c845008107573b7fdad4d17bf1ecb08d097b02dac687d4ce",
       "company-document-import-browser-apply2.log": "5e503913078237e265082bfadcb2a51b6437d3d91e824b65e0a99390f92e2a76",
       "company-document-import-build4.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
-      "company-document-import-root4.log": "3584815aa8e6399dd86d073afd297936cc910fbd183ded81327f545e4cdbf38c"
-    }
+      "company-document-import-root4.log": "3584815aa8e6399dd86d073afd297936cc910fbd183ded81327f545e4cdbf38c",
+      "company-document-explicit-picker-browser.log": "5e503913078237e265082bfadcb2a51b6437d3d91e824b65e0a99390f92e2a76"
+    },
+    "explicitCompanySelection": true
   },
   "frozen706Acceptance": {
     "source": "706c32ea274ac5b3cb0e88ccce7e5f63973a94f7",
