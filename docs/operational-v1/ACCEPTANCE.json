@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-25T02:47:54.189538+00:00",
+  "asOf": "2026-11-25T03:10:02.111505+00:00",
   "data": "isolated synthetic PostgreSQL and fake external providers only",
   "releaseReady": false,
   "evidence": [
@@ -4204,5 +4204,68 @@
       "Official setup/templates",
       "Financial/document reminders and complete acceptance"
     ]
+  },
+  "prospectiveEligibleExecutionContinuation": {
+    "state": "implemented_unpublished_isolated_only",
+    "initialLinkedPassed": 8,
+    "laterTaskAndFinalPolicyReferenceLinkedPassed": 2,
+    "actualSourceAllowedDisbursementRequired": true,
+    "actualMatchedReceiptRequired": true,
+    "lateFailureRollsBackEligibilityReceipt": true,
+    "changedTermsNeedReview": true,
+    "timeBoundExceptionNotPermanentEligibility": true,
+    "registrationWorkerNotGivenLedgerAccess": true,
+    "debtSettled": false,
+    "realActivation": false,
+    "remaining": [
+      "Cash first-task start",
+      "Bank-direct source proof",
+      "Other service lifecycle and final-review/new-create exceptions",
+      "Real source scope and final acceptance"
+    ],
+    "evidenceSha256": {
+      "continuation-receipt-linked.log": "136ce60ec68d8b2378da5e9ef807085f21f98d2876ce5b26d89c52d55d90b523",
+      "continuation-receipt-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "continuation-receipt-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "continuation-receipt-root.log": "74660bc76b53da26e96e054c9648cd9dbc19cd4ea7f334058e3c7f435c2b280a"
+    },
+    "latestLinkedPassed": 12,
+    "latestLinkedScope": "continuity, actual cached receipt authority, exceptions and composed task/personnel policies",
+    "cachedReceiptRechecksCurrentActionAndOriginalOutcome": true,
+    "revokedWorkerCannotRecoverOldSuccess": true
+  },
+  "taskCompanyChildScope": {
+    "state": "uninstalled_review_candidate",
+    "focusedLinkedPassed": 2,
+    "fullCompositionAccepted": false,
+    "canApply": false,
+    "membershipOrGrantsChanged": false,
+    "sourceDataChanged": false,
+    "remaining": [
+      "Private/delegated/cross-branch task source authority",
+      "Combined compiled and API/export acceptance"
+    ],
+    "combinedLinkedPassed": 12,
+    "composedReviewCandidates": 12,
+    "readinessRepinned": false,
+    "evidenceSha256": {
+      "continuation-receipt-linked.log": "136ce60ec68d8b2378da5e9ef807085f21f98d2876ce5b26d89c52d55d90b523",
+      "continuation-receipt-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "continuation-receipt-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "continuation-receipt-root.log": "74660bc76b53da26e96e054c9648cd9dbc19cd4ea7f334058e3c7f435c2b280a"
+    }
+  },
+  "frozenEc57Acceptance": {
+    "source": "ec57c5e14cab5a933ca6aa7eddc0c4a9203d44cc",
+    "uiJourneysPassed": 54,
+    "uiStatus": {
+      "source": "ec57c5e14cab5a933ca6aa7eddc0c4a9203d44cc",
+      "sourceUnchanged": true,
+      "code": 0,
+      "signal": null,
+      "completedAt": "2026-11-25T02:57:50.093Z"
+    },
+    "backendStatus": "running",
+    "laterContinuityAndTaskScopeCovered": false
   }
 }

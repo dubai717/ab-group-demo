@@ -1,3 +1,4 @@
+import{guardVehicleExecutionReceipt}from'./service-authorized-continuation.js';
 import{assertWhatsAppReviewOperator,registerWhatsAppReviewManagement,type WhatsAppReviewConfig}from'./whatsapp-review-management.js';
 import{assertExecutionExceptionOperator,registerExecutionExceptionManagement}from'./service-execution-exceptions.js';
 import{registerCompanyDocumentImport}from'./company-document-import.js';
@@ -254,6 +255,7 @@ export async function build(options: Options) {
       const s = await session(req);
       if(req.body)req.body=normalizeContactPayload(req.body);
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
+        const guardedVehicleExecution=req.method==='POST'&&typeof options.beforeServiceExecution==='function'?/^\/api\/vehicle-requests\/([0-9a-f-]+)\/(disburse|register)$/i.exec(req.url.split('?')[0]):null;
         const whatsAppReviewMutation=req.method==='POST'&&(/^\/api\/customers\/[0-9a-f-]+\/whatsapp-consent$/i.test(req.url.split('?')[0])||/^\/api\/communications\/[0-9a-f-]+\/whatsapp-review(?:\/[0-9a-f-]+\/revoke)?$/i.test(req.url.split('?')[0]));
         const serviceExceptionMutation=req.method==='POST'&&/^\/api\/customers\/[0-9a-f-]+\/service-execution-exceptions(?:\/[0-9a-f-]+\/revoke)?$/i.test(req.url.split('?')[0]);
         const companyImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/companies/run';
@@ -264,13 +266,14 @@ export async function build(options: Options) {
         let importModel:any,originalImportReceiptGuard:((outcome:any)=>Promise<void>)|undefined;
         // Serialize permission mutations before loading their authority snapshot.
         // This also prevents a queued grant from using a pre-standard-change issuer.
-        if(!s.viewAs&&req.method!=='GET'&&(whatsAppReviewMutation||serviceExceptionMutation||originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
+        if(!s.viewAs&&req.method!=='GET'&&(guardedVehicleExecution||whatsAppReviewMutation||serviceExceptionMutation||originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':security-roles']);
         // Serialize original company mutations before reading the directory used by import preview receipts.
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/companies(?:\/|$)/.test(req.url.split('?')[0])))
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':company-directory']);
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(employeeDocumentImportRun||employeeImportRun||/^\/api\/personnel(?:\/|$)/.test(req.url.split('?')[0])))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':personnel-import-directory']);
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(centreImportRun||req.url.split('?')[0]==='/api/operating-centres/apply'))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':operating-centre-directory']);
+        if(guardedVehicleExecution)importModel=await model(c,s.user_id,cipher);
         if(whatsAppReviewMutation){importModel=await model(c,s.user_id,cipher);await assertWhatsAppReviewOperator(c,importModel,s,cipher,req.url.startsWith('/api/customers/')?'customer':'thread',req.params.id,options.whatsAppReview);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
         if(serviceExceptionMutation){importModel=await model(c,s.user_id,cipher);await assertExecutionExceptionOperator(c,importModel,s,req.params.id,options.serviceExecutionExceptionsEnabled===true);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
         if(originalImportRun){importModel=await model(c,s.user_id,cipher);const guard=originalImportRunGuards.get(originalImportRun[1].toLowerCase());requireOk(guard,503,'importGuardUnavailable');originalImportReceiptGuard=await guard(c,importModel,s,req);}
@@ -311,6 +314,7 @@ export async function build(options: Options) {
             if(req.method==='POST'&&/^\/api\/communications\/[0-9a-f-]+\/(?:task|cases(?:\/[0-9a-f-]+\/actions)?)(?:\?|$)/i.test(req.url))
               await authorizedCommunicationThread(c,await model(c,s.user_id,cipher),cipher,uuid(req.params.id));
             await originalImportReceiptGuard?.(cached.response);
+            if(guardedVehicleExecution)await guardVehicleExecutionReceipt(c,importModel,s,cipher,guardedVehicleExecution[1],guardedVehicleExecution[2].toLowerCase()as 'disburse'|'register',cached.response);
             if(!whatsAppReviewMutation)return cached.response;
             // Re-run the original idempotent proof after fresh authorization/source checks.
             // The old transport receipt never re-approves a changed phone/content or opt-out.

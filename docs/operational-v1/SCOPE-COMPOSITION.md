@@ -9,3 +9,7 @@ It proves one-company identity/file/message/receipt visibility, parent-scoped ac
 The linked six-case run passed across composition and the original identity/personnel/communication/custody cases. The focused readiness/preview run, TypeScript and actual work-scope browser journey also pass. Browser acceptance keeps unsaved permission edits, failed-read retry and target-switch protection at Arabic/English desktop/tablet/mobile widths. The Owner preview now explains whether boundaries are unconfigured, core-only reviewed, have unreviewed company sources, or need composition review; it exposes no protection hash as a product instruction. No apply control is added.
 
 Earlier fixture attempts correctly encountered original invalidUserCompany validation and an over-narrow expected notification list. Those fixture assumptions were corrected; no existing business validation or legitimate notification was removed. Current successful evidence is recorded separately in BUILD-STATE. The requirement remains partial, unpublished and unactivated.
+
+## Prospective task boundary addition
+
+The combined synthetic installation now includes the twelfth task/child candidate. Twelve linked tests passed across actual source continuation, cached receipt reauthorization, scoped exceptions, combined candidates and original personnel/return-portal paths. Original readiness remains refused and no source hash is repinned. Private/delegated/cross-branch task sources and final action/export/membership acceptance remain incomplete. See TASK-COMPANY-CHILD-SCOPE.md.
