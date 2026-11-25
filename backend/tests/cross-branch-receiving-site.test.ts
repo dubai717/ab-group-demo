@@ -29,6 +29,9 @@ async function collectThroughBrowser(
       await dashboard.waitFor();
       await dashboard.locator(':scope > p[role=status]:not([data-dashboard-base-only])').waitFor({state:'hidden'});
       await page.locator('.account-menu summary').click();
+      await page.evaluate(()=>{(window as any).render();});
+      assert.equal(await page.locator('.account-menu').getAttribute('open'),'');
+
       await page.locator('[data-cross-branch-collection]').click();
       return page;
     };
@@ -201,10 +204,13 @@ test('cross-branch receiving site uses actual dated work location and separate l
     assert.equal(noApprovalKey.statusCode,422,noApprovalKey.body);
     assert.equal(noApprovalKey.json().error,'idempotencyRequired');
     assert.equal((await approveIntake(randomUUID(),'24')).statusCode,422);
-    const confirmationKey=randomUUID();
-    const confirmed=await approveIntake(confirmationKey);
-    assert.equal(confirmed.statusCode,200,confirmed.body);
-    assert.deepEqual((await approveIntake(confirmationKey)).json(),confirmed.json());
+    const confirmationKeys=[randomUUID(),randomUUID()];
+    const simultaneous=await Promise.all(confirmationKeys.map(key=>approveIntake(key)));
+    assert.deepEqual(simultaneous.map(response=>response.statusCode).sort(),[200,409]);
+    const winner=simultaneous.findIndex(response=>response.statusCode===200);
+    const confirmed=simultaneous[winner];
+    assert.equal(simultaneous[1-winner].json().error,'crossBranchIntakeAlreadyPosted');
+    assert.deepEqual((await approveIntake(confirmationKeys[winner])).json(),confirmed.json());
     assert.equal((await approveIntake()).statusCode,409);
     const confirmedReceipt=confirmed.json().receipts[0].id;
     const postedCash=(await f.admin.query('select holder_id,created_by,company_id from ab.finance_receipts where id=$1',[confirmedReceipt])).rows[0];

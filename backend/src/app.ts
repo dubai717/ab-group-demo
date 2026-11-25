@@ -277,14 +277,6 @@ export async function build(options: Options) {
         const scopeMembershipApply=req.method==='POST'&&/^\/api\/users\/[a-f0-9-]{36}\/work-scope\/apply-memberships$/i.test(req.url.split('?')[0]);
         const crossBranchIntake=req.method==='POST'&&req.url.split('?')[0]==='/api/ledger/collections/cross-branch-intake';
         const crossBranchPosting=req.method==='POST'&&/^\/api\/ledger\/collections\/cross-branch-intake\/[a-f0-9-]{36}\/post$/i.test(req.url.split('?')[0]);
-        if(crossBranchPosting){
-          requireOk(options.crossBranchCollectionEnabled===true,503,'crossBranchCollectionNotEnabled');
-          requireOk(!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user'),403,'denied');
-          const actor=(await c.query("select current_database() db,exists(select 1 from ab.users where tenant_id=ab.tenant() and id=$1 and role_id='owner' and status='Active') allowed",[s.user_id])).rows[0];
-          requireOk(/^ab_backup_[a-f0-9]{32}$/.test(actor?.db||''),503,'crossBranchCollectionNotEnabled');
-          requireOk(actor?.allowed===true,403,'ownerOnly');
-          await requireImportWorkAccess(c);
-        }
         const crossBranchCollection=req.method==='POST'&&req.url.split('?')[0]==='/api/ledger/collections/invoices'&&
           req.body?.receivingSite!==undefined;
         const originalImportRun=req.method==='POST'?/^\/api\/data-imports\/(customers|vehicles)\/(?:upload|[0-9a-f-]{36}\/(?:run|preview))$/i.exec(req.url.split('?')[0]):null;
@@ -294,6 +286,14 @@ export async function build(options: Options) {
         // This also prevents a queued grant from using a pre-standard-change issuer.
         if(!s.viewAs&&req.method!=='GET'&&(crossBranchIntake||crossBranchPosting||crossBranchCollection||guardedVehicleExecution||guardedDirectBank||whatsAppReviewMutation||serviceExceptionMutation||originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':security-roles']);
+        if(crossBranchPosting){
+          requireOk(options.crossBranchCollectionEnabled===true,503,'crossBranchCollectionNotEnabled');
+          requireOk(!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user'),403,'denied');
+          const actor=(await c.query("select current_database() db,exists(select 1 from ab.users where tenant_id=ab.tenant() and id=$1 and role_id='owner' and status='Active') allowed",[s.user_id])).rows[0];
+          requireOk(/^ab_backup_[a-f0-9]{32}$/.test(actor?.db||''),503,'crossBranchCollectionNotEnabled');
+          requireOk(actor?.allowed===true,403,'ownerOnly');
+          await requireImportWorkAccess(c);
+        }
         // Serialize original company mutations before reading the directory used by import preview receipts.
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(scopeMembershipApply||originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/companies(?:\/|$)/.test(req.url.split('?')[0])))
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':company-directory']);

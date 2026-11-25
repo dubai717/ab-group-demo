@@ -7,7 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {financeRight} from './finance.js';
 import { requireOk } from './core.js';
-import { H, hrRight, need, employee, employeeIn, settings, auditHR, makeTask, notice, leaders, taskEvent, sourceComplete, legalEOS, profile, compensation } from './personnel-domain.js';
+import { H, hrRight, need, employee, employeeIn, scope, settings, auditHR, makeTask, notice, leaders, taskEvent, sourceComplete, legalEOS, profile, compensation } from './personnel-domain.js';
 import {createRequire} from 'node:module';
 const CustomerPolicy=createRequire(import.meta.url)('../../customer-policy.js');
 import { today,vehicleData } from './vehicle-domain.js';
@@ -121,6 +121,17 @@ export async function personnelFollowup(c: any, cipher: any, m: any, s: any, co:
             if (!t)
                 continue;
             if(meta.leaveLinkedVersion===1){const old=(await c.query("select payload_cipher from ab.hr_task_events where task_id=$1 and kind='delegated'order by created_at desc limit 2001",[t.id])).rows;requireOk(old.length<=2000,422,'delegationRangeRequired');if(old.some((r:any)=>cipher.open(r.payload_cipher).delegationId===d.id))continue;}
+            if(meta.leaveLinkedVersion!==1&&['communication','employee_document'].includes(t.source_type)){
+                const substitute=(await c.query('select * from ab.hr_employees where id=$1',[d.substitute_id])).rows[0];
+                const reason=substitute?.state==='Active'&&
+                    (await scope(c,substitute,now)).includes(co)?
+                    await delegatedTaskSourceReview(c,cipher,d.tenant_id,[t],substitute):'substituteUnavailable';
+                if(reason){
+                    for(const u of await leaders(c,co))
+                        await notice(c,s,co,u.id,d.id,'delegation_review',d.id+':source:'+reason);
+                    continue;
+                }
+            }
             if(['owner_cheque_receipt','owner_cheque_deposit'].includes(t.source_type)){await taskEvent(c,cipher,s,t.id,'financial_custody_delegation_held',{delegationId:d.id,financialAuthorityTransferred:false});continue;}
             const moved=await c.query('update ab.tasks set employee_id=$2,revision=revision+1 where id=$1 and employee_id=$3 and revision=$4', [t.id,d.substitute_id,d.original_id,t.revision]);if(!moved.rowCount)continue;
             await taskEvent(c, cipher, s, t.id, 'delegated', { delegationId: d.id, from: d.original_id, to: d.substitute_id, financialAuthorityTransferred: false });if(meta.leaveLinkedVersion===1){const sub=(await c.query('select user_id from ab.hr_employees where id=$1',[d.substitute_id])).rows[0];await notice(c,s,co,sub?.user_id,t.id,'leave_task_assigned',d.id+':assigned:'+t.id);}
@@ -152,19 +163,26 @@ export function registerPersonnelWorkflows(app: any, route: any, cipher: any) {
         created++;
     } return { created, paymentsCreated: 0, approvalRequired: true }; }));
     app.post('/api/personnel/followup/:companyId', route(async (c: any, m: any, s: any, r: any) => { z.object({ confirm: z.literal(true) }).strict().parse(r.body); return personnelFollowup(c, cipher, m, s, id.parse(r.params.companyId)); }));
-    app.post('/api/personnel/delegations', route(async (c: any, m: any, s: any, r: any) => { const d = z.object({ companyId: id, originalId: id, substituteId: id, leaveId:id.optional(), startsOn: day, endsOn: day, taskIds: z.array(id).min(1).max(1000), reason: text }).strict().parse(r.body); need(m, 'task_delegate', d.companyId); H.days(d.startsOn, d.endsOn); requireOk(d.originalId !== d.substituteId, 422, 'invalidSubstitute'); await employeeIn(c, d.originalId, d.companyId); await employeeIn(c, d.substituteId, d.companyId);const linked=await validateLeaveDelegation(c,cipher,m,s,d);if(linked?.existingId)return{id:linked.existingId,saved:true,existing:true,authorityTransferred:false}; for (const tid of d.taskIds)
-        requireOk((await c.query("select 1 from ab.tasks where id=$1 and company_id=$2 and employee_id=$3 and state not in('Completed','Closed')", [tid, d.companyId, d.originalId])).rowCount, 422, 'invalidTaskScope'); const key = randomUUID(); await c.query('insert into ab.hr_delegations(id,tenant_id,company_id,original_id,substitute_id,starts_on,ends_on,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9)', [key, s.tenant_id, d.companyId, d.originalId, d.substituteId, d.startsOn, d.endsOn, cipher.seal({...d,...(linked?{leaveLinkedVersion:1,leaveLinkedDigest:linked.digest}:{})}), s.user_id]); await auditHR(c, cipher, s, { id: d.originalId, company_id: d.companyId }, 'delegation_created', null, d); return { id: key, saved: true, authorityTransferred: false }; }));
-    app.post('/api/personnel/delegations/:id/decision', route(async (c: any, m: any, s: any, r: any) => { requireOk(m.actor.roleId === 'owner'); const d = z.object({ action: z.enum(['return', 'extend', 'transfer']), endsOn: day.optional(), reason: text }).strict().parse(r.body), row = (await c.query("select *,to_char(ends_on,'YYYY-MM-DD') end_day from ab.hr_delegations where id=$1", [id.parse(r.params.id)])).rows[0]; requireOk(row, 404, 'notFound'); requireOk(['Active', 'Extended'].includes(row.state), 409, 'invalidState'); const data = cipher.open(row.payload_cipher);if(data.leaveLinkedVersion===1){requireOk(d.action!=='transfer',409,'linkedDelegationReassignmentReviewRequired');if(d.action==='extend'){const leave=(await c.query("select * from ab.hr_leaves where id=$1 and state='Approved'",[data.leaveId])).rows[0];requireOk(leave&&d.endsOn&&d.endsOn<=leave.ends_on.toISOString().slice(0,10),409,'delegationOutsideApprovedLeave');}} if (d.action === 'extend')
+    app.post('/api/personnel/delegations', route(async (c: any, m: any, s: any, r: any) => { const d = z.object({ companyId: id, originalId: id, substituteId: id, leaveId:id.optional(), startsOn: day, endsOn: day, taskIds: z.array(id).min(1).max(1000), reason: text }).strict().parse(r.body); need(m, 'task_delegate', d.companyId); H.days(d.startsOn, d.endsOn); requireOk(d.originalId !== d.substituteId, 422, 'invalidSubstitute'); await employeeIn(c, d.originalId, d.companyId); const substitute=await employeeIn(c, d.substituteId, d.companyId);const linked=await validateLeaveDelegation(c,cipher,m,s,d);if(linked?.existingId)return{id:linked.existingId,saved:true,existing:true,authorityTransferred:false};
+        const tasks=(await c.query("select * from ab.tasks where id=any($1::uuid[]) and company_id=$2 and employee_id=$3 and state not in('Completed','Closed')",
+            [d.taskIds,d.companyId,d.originalId])).rows;
+        requireOk(tasks.length===new Set(d.taskIds).size,422,'invalidTaskScope');
+        if(!linked){
+            const review=await delegatedTaskSourceReview(c,cipher,s.tenant_id,tasks,substitute);
+            requireOk(!review,409,review||'communicationDelegateSourceReviewRequired');
+        }
+ const key = randomUUID(); await c.query('insert into ab.hr_delegations(id,tenant_id,company_id,original_id,substitute_id,starts_on,ends_on,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9)', [key, s.tenant_id, d.companyId, d.originalId, d.substituteId, d.startsOn, d.endsOn, cipher.seal({...d,...(linked?{leaveLinkedVersion:1,leaveLinkedDigest:linked.digest}:{})}), s.user_id]); await auditHR(c, cipher, s, { id: d.originalId, company_id: d.companyId }, 'delegation_created', null, d); return { id: key, saved: true, authorityTransferred: false }; }));
+    app.post('/api/personnel/delegations/:id/decision', route(async (c: any, m: any, s: any, r: any) => { requireOk(m.actor.roleId === 'owner'); const d = z.object({ action: z.enum(['return', 'extend', 'transfer']), endsOn: day.optional(), reason: text }).strict().parse(r.body), row = (await c.query("select *,to_char(ends_on,'YYYY-MM-DD') end_day from ab.hr_delegations where id=$1 for update", [id.parse(r.params.id)])).rows[0]; requireOk(row, 404, 'notFound'); requireOk(['Active', 'Extended'].includes(row.state), 409, 'invalidState'); const data = cipher.open(row.payload_cipher);if(data.leaveLinkedVersion===1){requireOk(d.action!=='transfer',409,'linkedDelegationReassignmentReviewRequired');if(d.action==='extend'){const leave=(await c.query("select * from ab.hr_leaves where id=$1 and state='Approved'",[data.leaveId])).rows[0];requireOk(leave&&d.endsOn&&d.endsOn<=leave.ends_on.toISOString().slice(0,10),409,'delegationOutsideApprovedLeave');}} if (d.action === 'extend')
         requireOk(d.endsOn && d.endsOn >= today() && d.endsOn > row.end_day, 422, 'invalidDate'); if (d.action === 'return') {
         const original=await employeeIn(c, row.original_id, row.company_id);
-        if(data.leaveLinkedVersion===1){const tasks=(await c.query("select * from ab.tasks where id=any($1::uuid[]) and company_id=$2 and employee_id=$3 and state not in('Completed','Closed') for update",[data.taskIds,row.company_id,row.substitute_id])).rows;const review=await delegatedTaskSourceReview(c,cipher,s.tenant_id,tasks,original);requireOk(!review,409,review||'communicationDelegateSourceReviewRequired');}
-        for (const tid of data.taskIds) {
-            const t = (await c.query("select * from ab.tasks where id=$1 and employee_id=$2 and state not in('Completed','Closed')", [tid, row.substitute_id])).rows[0];
-            if (t) {
+        const tasks=(await c.query("select * from ab.tasks where id=any($1::uuid[]) and company_id=$2 and employee_id=$3 and state not in('Completed','Closed') order by id for update",
+            [data.taskIds,row.company_id,row.substitute_id])).rows;
+        const review=await delegatedTaskSourceReview(c,cipher,s.tenant_id,tasks,original);
+        requireOk(!review,409,review||'communicationDelegateSourceReviewRequired');
+        for(const t of tasks){
                 requireOk(!['owner_cheque_receipt','owner_cheque_deposit'].includes(t.source_type),409,'ownerChequeReassignmentRequired');
                 await c.query('update ab.tasks set employee_id=$2,revision=revision+1 where id=$1', [t.id, row.original_id]);
                 await taskEvent(c, cipher, s, t.id, 'delegation_returned', { delegationId: row.id, ...d });
-            }
         }
     } await c.query('update ab.hr_delegations set state=$2,ends_on=coalesce($3,ends_on),payload_cipher=$4 where id=$1', [row.id, d.action === 'return' ? 'Returned' : d.action === 'extend' ? 'Extended' : 'Transferred', d.endsOn || null, cipher.seal({ ...data, lastDecision: d })]); await auditHR(c, cipher, s, { id: row.original_id, company_id: row.company_id }, 'delegation_decision', { state: row.state }, d); return { saved: true }; }));
     app.get('/api/personnel/delegations', route(async (c: any, m: any) => ({ rows: (await c.query('select * from ab.hr_delegations order by created_at desc')).rows.filter((r: any) => hrRight(m, 'task_delegate', r.company_id)).map((r: any) => ({ ...r, payload: cipher.open(r.payload_cipher), payload_cipher: undefined })) })));

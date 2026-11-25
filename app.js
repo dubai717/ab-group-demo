@@ -498,6 +498,9 @@ function render() {
   }
 
   if(globalThis.CommunicationsUI?.pendingLink?.())app.state.currentPage='notifications';
+  const accountMenuContext = [currentUser.id, globalThis.ABCentral?.authorityVersion, app.state.currentPage, getLocale()].join(':');
+  const previousAccountMenu = appEl.querySelector('.account-menu');
+  const keepAccountMenuOpen = previousAccountMenu?.open && previousAccountMenu.dataset.renderContext === accountMenuContext;
   const sidebarItems = getSidebarItems(currentUser).filter(i=>!['roles','departments'].includes(i.id));
   if(CustomerUI.canEnter())sidebarItems.push({id:'customers',label:getLocale()==='ar'?'العملاء':'Customers'});
   if(PersonnelUI.canEnter())sidebarItems.push({id:'personnel',label:getLocale()==='ar'?'شؤون الموظفين':'Personnel'});
@@ -540,7 +543,7 @@ function render() {
             <button class="lang-switch" data-action="toggle-language">
               ${getLocale() === 'ar' ? 'English' : 'العربية'}
             </button>
-            <details class="account-menu">
+            <details class="account-menu" data-render-context="${AuthFlows.escape(accountMenuContext)}" ${keepAccountMenuOpen?'open':''}>
               <summary class="user-pill" title="${AuthFlows.escape(currentUser.fullName)}">
                 <span class="avatar">${AuthFlows.escape(currentUser.fullName.slice(0,1).toUpperCase())}</span>
                 <span><span>${AuthFlows.escape(currentUser.fullName)}</span><span class="muted account-role">${getRoleName(currentUser.roleId)}</span></span>
