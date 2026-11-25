@@ -35,10 +35,22 @@ async function objectBytes(endpoint:string,key:string,name:string,remaining:numb
  const chunks:Buffer[]=[];let total=0;for await(const bytes of r.body as any){total+=bytes.length;if(total>remaining)throw Error('object size limit');chunks.push(Buffer.from(bytes));}
  return Buffer.concat(chunks);
 }
+export const backupSourceObjectLimit=10000,backupSourceNameBudget=2*1024*1024;
+export function validateBackupStorageInventory(names:Array<{name:string}>,expectedCount?:number){
+ if(!Array.isArray(names)||names.length>backupSourceObjectLimit||expectedCount!==undefined&&(!Number.isSafeInteger(expectedCount)||expectedCount<0||names.length!==expectedCount))throw Error('backupStorageInventoryReviewRequired');const seen=new Set<string>();let nameBytes=0;
+ for(const row of names){if(typeof row?.name!=='string'||!row.name||Buffer.from(row.name,'utf8').toString('utf8')!==row.name||row.name.split('/').some(s=>!s||s==='.'||s==='..')||seen.has(row.name))throw Error('backupObjectSourceReviewRequired');const bytes=Buffer.byteLength(row.name,'utf8');if(bytes>2048||nameBytes+bytes>backupSourceNameBudget)throw Error('backupStorageInventoryReviewRequired');seen.add(row.name);nameBytes+=bytes;}
+ return{objects:names.length,nameBytes,inventoryBudgetVerified:true};
+}
+export async function readBackupStorageInventory(c:any,expectedCount:number){
+ if(!Number.isSafeInteger(expectedCount)||expectedCount<0||expectedCount>backupSourceObjectLimit)throw Error('backupStorageInventoryReviewRequired');
+ const summary=(await c.query("select count(*)::text count,coalesce(sum(octet_length(name)),0)::text name_bytes from storage.objects where bucket_id='ab-private-test'")).rows[0];
+ if(!summary||!/^\d+$/.test(String(summary.count))||!/^\d+$/.test(String(summary.name_bytes))||Number(summary.count)!==expectedCount||Number(summary.name_bytes)>backupSourceNameBudget||!Number.isSafeInteger(Number(summary.name_bytes)))throw Error('backupStorageInventoryReviewRequired');
+ const names=(await c.query("select name from storage.objects where bucket_id='ab-private-test' order by name limit 10001")).rows,verified=validateBackupStorageInventory(names,expectedCount);if(verified.nameBytes!==Number(summary.name_bytes))throw Error('backupStorageInventoryReviewRequired');return names as Array<{name:string}>;
+}
 // Shared source capture seam: bounded reads only, no upload/delete/restore operations.
 export async function captureBackupStorageObjects(names:Array<{name:string}>,remainingBudget:number,read:(name:string,remaining:number)=>Promise<Buffer>){
  if(!Number.isSafeInteger(remainingBudget)||remainingBudget<0||remainingBudget>backupLimit)throw Error('backupObjectBudgetReviewRequired');
- const seen=new Set<string>();for(const row of names){if(typeof row.name!=='string'||row.name.split('/').some(s=>!s||s==='.'||s==='..')||seen.has(row.name))throw Error('backupObjectSourceReviewRequired');seen.add(row.name);}
+ validateBackupStorageInventory(names);
  const objects=new Map<string,Buffer>();let bytesRead=0,excludedRetainedBackupObjects=0;
  for(const row of names){if(isRetainedBackupPath(row.name)){excludedRetainedBackupObjects++;continue;}const bytes=await read(row.name,remainingBudget-bytesRead);if(!Buffer.isBuffer(bytes)||bytes.length>remainingBudget-bytesRead)throw Error('backupObjectBudgetExceeded');bytesRead+=bytes.length;objects.set('storage/'+row.name,bytes);}
  return{objects,bytesRead,copiedObjectCount:objects.size,excludedRetainedBackupObjects,totalSourceObjectCount:names.length};
@@ -71,9 +83,8 @@ async function run(){
    const snapshot=(await c.query('select pg_export_snapshot() id')).rows[0].id;
    if(!/^[A-Fa-f0-9-]+$/.test(snapshot))throw Error('snapshot invalid');
    const storageCoverage=await readBackupStorageCoverage(c);
+   const names=await readBackupStorageInventory(c,storageCoverage.applicationObjectCount);
    const database=await dump(cfg.pg,snapshot);
-   const names=(await c.query("select name from storage.objects where bucket_id='ab-private-test' order by name")).rows;
-   if(names.length!==storageCoverage.applicationObjectCount)throw Error('backupStorageSnapshotCoverageChanged');
    const captured=await captureBackupStorageObjects(names,backupLimit-database.length,(name,remaining)=>objectBytes(cfg.endpoint,keys.secret,name,remaining)),objects=captured.objects;
    const roles=(await c.query("select rolname,rolcanlogin,rolsuper,rolcreatedb,rolcreaterole,rolreplication,rolbypassrls from pg_roles where rolname in('ab_runtime','ab_scanner') order by rolname")).rows;
    const policies=(await c.query("select * from pg_policies where schemaname='ab' order by tablename,policyname")).rows;

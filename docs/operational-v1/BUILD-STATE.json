@@ -3344,5 +3344,34 @@
       "ui.log": "53a41fc1de7d13372ad9a148e50983960cda306c319b3ef5b3c2182a40c7470c",
       "ui-status.json": "68ae526b7fae755e00a6b66c55ef73f212c76ca99c78ed75da07c571d6cbc7ae"
     }
+  },
+  "frozenE640UIAcceptance": {
+    "source": "e64066e68b5cbaa8892001d5f88f885f4e7bb1bc",
+    "sourceUnchanged": true,
+    "journeysPassed": 52,
+    "code": 0,
+    "laterInventoryAndExplicitEmptyCompanyPickerCovered": false,
+    "evidenceSha256": {
+      "ui.log": "0e0314c641a3ca63e4d226ce4c95ba844995877b683ca212eaf139db9db55631",
+      "ui-status.json": "7199139c7bf277c2bb7f95735c3485773b6c7b1d07c06b9b099a895ab76140c7"
+    }
+  },
+  "backupSourceInventory": {
+    "status": "implemented_unpublished",
+    "linkedCasesPassed": 11,
+    "nativeReadonlySnapshotTested": true,
+    "objectCountLimit": 10000,
+    "totalKeyByteLimit": 2097152,
+    "keyByteLimit": 2048,
+    "keysReadBeforePgDump": true,
+    "sourceObjectsSilentlyOmitted": false,
+    "realSourceRead": false,
+    "evidenceSha256": {
+      "backup-inventory-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "backup-inventory-unit.log": "8cd4a668b5f9a50d37d6c64c35a2807bcacce74e073513df67abfce964c6d7f6",
+      "backup-inventory-native-linked.log": "22614d2c769ba337e501cde2b112b3fbc6fda6a0aa7a805cbb2534ee0aa07e89",
+      "backup-inventory-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "backup-inventory-root.log": "339280e2636dc77904919b53000a8ef8005cb6a88a484d9c30e404c97573c485"
+    }
   }
 }
