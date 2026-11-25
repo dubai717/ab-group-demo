@@ -1,7 +1,7 @@
 import{companyScopeRelationshipDetails}from'./company-scope-relationship-details.js';
 import{companyScopeReadiness}from'./company-scope-readiness.js';
 // Owner-only preparation using original facts/action policy; not an applied authorization boundary.
-import{z}from'zod';import{requireOk}from'./core.js';import{Areas,loadAreas,UserPolicy}from'./data.js';import{workScopeSources}from'./work-scope-sources.js';import{resolveWorkScopeSelection,workScopeSelection}from'./work-scope-selection.js';import{operatingCentreDirectory}from'./operating-centres.js';
+import{z}from'zod';import{today}from'./vehicle-domain.js';import{requireOk}from'./core.js';import{Areas,audit,loadAreas,UserPolicy}from'./data.js';import{workScopeSources}from'./work-scope-sources.js';import{resolveWorkScopeSelection,workScopeSelection}from'./work-scope-selection.js';import{operatingCentreDirectory}from'./operating-centres.js';
 const input=z.object({revision:z.number().int().positive(),asOf:z.iso.date(),selection:workScopeSelection}).strict();
 export async function previewWorkScope(c:any,m:any,s:any,cipher:any,userId:string,body:unknown){
  requireOk(m.actor.roleId==='owner',403,'ownerOnly');requireOk(!s.viewAs,403,'viewAsReadOnly');userId=z.uuid().parse(userId);const u=m.state.users.find((r:any)=>r.id===userId);requireOk(u,404,'notFound');requireOk(u.roleId!=='owner'&&u.id!==s.user_id,403,'ownerProtected');const d=input.parse(body);requireOk(u.revision===d.revision,409,'revisionConflict');requireOk(m.state.companies.length<=500,422,'workScopeRangeReviewRequired');
@@ -12,4 +12,55 @@ export async function previewWorkScope(c:any,m:any,s:any,cipher:any,userId:strin
  const databaseScopeReadiness=await companyScopeReadiness(c);
  return{databaseScopeReadiness,user:{id:u.id,nameAr:u.nameAr,nameEn:u.nameEn},asOf:d.asOf,resolution,beforeCompanies:before.map(caption),proposedCompanies:after.map(caption),addedCompanies:after.filter(id=>!before.includes(id)).map(caption),removedCompanies:before.filter(id=>!after.includes(id)).map(caption),originalPolicyImpact:resolution.state==='resolved'?{added,removed,rightsStillEffectiveOutsideSelection:outside,changes,changesTruncated:added+removed>changes.length,originalActionPolicyOnly:true,companyTargetProbeOnly:true}:null,retainedExceptions:{directGrants:grants.filter((r:any)=>r.userId===userId).length,individualDenials:denials[0]?.actions.length||0},reviewHash:cipher.digest(JSON.stringify(identity)),simulationOnly:true,canApply:false,authorityChanged:false,financialEffect:false,primaryLocationUsed:false,requiredNext:['original_scope_apply_and_exception_preservation','actual_api_and_database_bounds','compatible_rollback_and_acceptance']};
 }
-export function registerWorkScopePreview(app:any,call:any,cipher:any){app.get('/api/users/work-scope/relationships/:table',call(async(c:any,m:any,s:any,r:any)=>{requireOk(m.actor.roleId==='owner'&&m.actor.status==='Active',403,'ownerOnly');requireOk(!s.viewAs,403,'viewAsReadOnly');z.object({}).strict().parse(r.query);return companyScopeRelationshipDetails(c,r.params.table);}));app.post('/api/users/:id/work-scope/preview',call((c:any,m:any,s:any,r:any)=>previewWorkScope(c,m,s,cipher,r.params.id,r.body)));}
+const membershipApply=input.extend({confirm:z.literal(true),reviewHash:z.string().regex(/^[a-f0-9]{64}$/)}).strict();
+export async function assertWorkScopeMembershipOperator(c:any,m:any,s:any,enabled:boolean){
+ requireOk(enabled,503,'workScopeMembershipApplyNotEnabled');
+ requireOk(!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user')&&m.actor.id===s.user_id&&
+   m.actor.roleId==='owner'&&m.actor.status==='Active',403,'ownerOnly');
+ const context=(await c.query("select current_database() database, exists(select 1 from ab.users where tenant_id=ab.tenant() and id=$1 and role_id='owner' and status='Active') owner",[s.user_id])).rows[0];
+ requireOk(/^ab_backup_[a-f0-9]{32}$/.test(context?.database||''),503,'workScopeMembershipApplyNotEnabled');
+ requireOk(context.owner===true,403,'ownerOnly');
+}
+async function reviewedMembershipCompanies(c:any,m:any,s:any,userId:string,preview:Awaited<ReturnType<typeof previewWorkScope>>){
+ requireOk(preview.resolution.state==='resolved'&&preview.proposedCompanies.length>0&&
+   preview.proposedCompanies.every((company:any)=>company.state==='Active'),409,'workScopeSourceReviewRequired');
+ if((await c.query("select to_regclass('ab.user_access_scope_versions') is not null present")).rows[0].present){
+   const compiled=await c.query('select 1 from ab.user_access_scope_versions where tenant_id=$1 and user_id=$2 limit 1',[s.tenant_id,userId]);
+   requireOk(!compiled.rowCount,409,'workScopeCompiledMembershipReviewRequired');
+ }
+ requireOk(preview.originalPolicyImpact?.rightsStillEffectiveOutsideSelection===0,409,'workScopeOutsideRightsReviewRequired');
+ const u=m.state.users.find((r:any)=>r.id===userId);
+ const companyIds=preview.proposedCompanies.map((company:any)=>company.id);
+ requireOk(u.departmentIds.every((departmentId:string)=>m.state.departments.some((department:any)=>
+   department.id===departmentId&&companyIds.includes(department.companyId))),409,'workScopeDepartmentReviewRequired');
+ return companyIds;
+}
+async function applyReviewedMemberships(c:any,m:any,s:any,cipher:any,req:any,enabled:boolean){
+ await assertWorkScopeMembershipOperator(c,m,s,enabled);
+ requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');
+ const {confirm,reviewHash,...d}=membershipApply.parse(req.body);
+ requireOk(d.asOf===today(),422,'workScopeEffectiveTodayRequired');
+ const userId=z.uuid().parse(req.params.id),preview=await previewWorkScope(c,m,s,cipher,userId,d);
+ requireOk(preview.reviewHash===reviewHash,409,'workScopeReviewChanged');
+ const companyIds=await reviewedMembershipCompanies(c,m,s,userId,preview);
+ const u=m.state.users.find((r:any)=>r.id===userId);
+ const before=preview.beforeCompanies.map((company:any)=>company.id);
+ if(JSON.stringify(before)===JSON.stringify(companyIds))return{userId,revision:d.revision,companyIds,changed:false};
+ const updated=await c.query("update ab.users set revision=revision+1,updated_at=now() where id=$1 and tenant_id=$2 and role_id<>'owner' and revision=$3 returning revision",[userId,s.tenant_id,d.revision]);
+ requireOk(updated.rowCount===1,409,'revisionConflict');
+ await c.query('select ab.replace_memberships($1,$2,$3,$4)',[userId,s.tenant_id,companyIds,u.departmentIds]);
+ await audit(c,s.tenant_id,s.user_id,'work_scope_memberships_applied','user',userId,['companyIds']);
+ return{userId,revision:updated.rows[0].revision,companyIds,reviewHash,changed:true};
+}
+export function registerWorkScopePreview(app:any,call:any,cipher:any,enabled=false){app.get('/api/users/work-scope/relationships/:table',call(async(c:any,m:any,s:any,r:any)=>{requireOk(m.actor.roleId==='owner'&&m.actor.status==='Active',403,'ownerOnly');requireOk(!s.viewAs,403,'viewAsReadOnly');z.object({}).strict().parse(r.query);return companyScopeRelationshipDetails(c,r.params.table);}));app.post('/api/users/:id/work-scope/preview',call(async(c:any,m:any,s:any,r:any)=>{
+ const preview=await previewWorkScope(c,m,s,cipher,r.params.id,r.body);
+ if(!enabled||preview.asOf!==today())return preview;
+ await assertWorkScopeMembershipOperator(c,m,s,enabled);
+ try{
+   await reviewedMembershipCompanies(c,m,s,r.params.id,preview);
+   return {...preview,membershipApplication:{available:true}};
+ }catch(error:any){
+   if(error?.status!==409)throw error;
+   return {...preview,membershipApplication:{available:false,reason:error.code}};
+ }
+}));app.post('/api/users/:id/work-scope/apply-memberships',call((c:any,m:any,s:any,r:any)=>applyReviewedMemberships(c,m,s,cipher,r,enabled)));}

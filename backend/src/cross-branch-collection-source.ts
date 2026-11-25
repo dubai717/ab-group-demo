@@ -32,13 +32,14 @@ const receivingSiteReview=z.object({...receivingSiteHeader,reviewRequired:z.enum
 ])}).strict();
 const receivingSiteFacts=z.object({...receivingSiteHeader,centreId:uuid,centreSourceId:uuid,locationSourceId:uuid}).strict();
 
-export async function readCrossBranchReceivingSite(c:any,m:any,s:any,companyId:string){
+async function crossBranchReceivingSite(c:any,m:any,s:any,companyId:string,writing:boolean){
  companyId=uuid.parse(companyId);
  requireOk(!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user')&&m.actor.id===s.user_id&&
   m.actor.status==='Active'&&m.actor.roleId!=='investor'&&financeRight(m,'ledger_cross_branch_collect',companyId),403,'denied');
- const context=(await c.query("select ab.tenant()tenant_id,current_setting('ab.actor')actor_id,current_setting('transaction_isolation')isolation,current_setting('transaction_read_only')read_only")).rows[0];
+ const context=(await c.query("select ab.tenant()tenant_id,current_setting('ab.actor')actor_id,current_setting('transaction_isolation')isolation,current_setting('transaction_read_only')read_only,current_database() database")).rows[0];
  requireOk(context.tenant_id===s.tenant_id&&context.actor_id===s.user_id&&
-  context.isolation==='repeatable read'&&context.read_only==='on',409,'crossBranchCollectionSnapshotRequired');
+  (writing?context.read_only==='off':context.isolation==='repeatable read'&&context.read_only==='on'),409,'crossBranchCollectionSnapshotRequired');
+ if(writing)requireOk(/^ab_backup_[a-f0-9]{32}$/.test(context.database),503,'crossBranchCollectionNotEnabled');
  requireOk(await reviewedPrivateJsonSourceReady(c,'ab.cross_branch_receiving_site(uuid)',receivingSiteSourceHash)&&
   await workLocationSourceReady(c),503,'crossBranchReceivingSiteReviewRequired');
  const raw=(await c.query('select ab.cross_branch_receiving_site($1)packet',[companyId])).rows[0]?.packet;
@@ -47,4 +48,21 @@ export async function readCrossBranchReceivingSite(c:any,m:any,s:any,companyId:s
   source.data.companyId===companyId,409,'crossBranchReceivingSiteReviewRequired');
  const {actorId,tenantId,...site}=source.data;
  return {...site,canCollect:false,financialEffect:false};
+}
+
+
+export const crossBranchReceivingSiteSelection=z.object({
+ centreId:uuid,centreSourceId:uuid,locationSourceId:uuid,
+}).strict();
+
+export const readCrossBranchReceivingSite=(c:any,m:any,s:any,companyId:string)=>
+ crossBranchReceivingSite(c,m,s,companyId,false);
+
+export async function verifyCrossBranchReceivingSite(c:any,m:any,s:any,companyId:string,receivedOn:string,selection:unknown){
+ const expected=crossBranchReceivingSiteSelection.parse(selection);
+ const site=await crossBranchReceivingSite(c,m,s,companyId,true);
+ requireOk(!('reviewRequired' in site)&&site.asOf===receivedOn&&site.centreId===expected.centreId&&
+   site.centreSourceId===expected.centreSourceId&&site.locationSourceId===expected.locationSourceId,
+   409,'crossBranchReceivingSiteChanged');
+ return {centreId:site.centreId,centreSourceId:site.centreSourceId,locationSourceId:site.locationSourceId,receivedOn:site.asOf};
 }

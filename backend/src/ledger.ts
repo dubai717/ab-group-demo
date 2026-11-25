@@ -52,6 +52,7 @@ import { financeRight } from './finance.js';
 import { customerCan } from './customers.js';
 import { number, today } from './vehicle-domain.js';
 import {createFinancialVoucher} from './ledger-domain.js';
+import {crossBranchReceivingSiteSelection,readCrossBranchCollectionSource} from './cross-branch-collection-source.js';
 import { L, P, need, ready, company, open, event, notify, fact, config, chart, resolve, item, line, journal, post, reverse, evidence, balance, invoices, customer, invoice, linkInvoice, custody, move, moveAmount, bankPosting, allocateReceipt, postReceipt } from './ledger-domain.js';
 const id = z.uuid(), day = z.iso.date(), money = z.string().regex(/^\d{1,15}(\.\d{1,3})?$/), positive = money.refine(x => L.units(x) > 0n), currency = z.string().regex(/^[A-Z]{3}$/), text = z.string().trim().min(1).max(2000), opt = id.nullish();
 const invoiceSchema = z.object({ companyId: id, customerId: id.optional(), contractingCompanyId:id.optional(), vehicleId: opt, itemId: id, amount: positive, currency, issuedOn: day, dueOn: day, sourceKey: z.string().trim().min(1).max(160), description: z.string().max(2000).default('') }).strict().refine(exactFinancialParty,'financialPartyRequired');
@@ -263,7 +264,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         if(d.contractingCompanyId)await contractingParty(c,m,d.contractingCompanyId,d.companyId);else await customer(c, m, d.customerId, d.companyId, d.vehicleId);
         await open(c, d.companyId, d.receivedOn);
         let selected = d.items;
-        let due = (await invoices(c, d)).filter((i: any) => invoiceRows.length||i.vehicle_id === (d.vehicleId || null));
+        let due = (await invoices(c, d.receivingSite?{...d,invoiceIds:invoiceRows.map(row=>row.invoiceId)}:d)).filter((i: any) => invoiceRows.length||i.vehicle_id === (d.vehicleId || null));
         if(invoiceRows.length){requireOk(new Set(invoiceRows.map(a=>a.invoiceId)).size===invoiceRows.length,422,'duplicate');selected=invoiceRows.map(a=>{const b=due.find((i:any)=>i.id===a.invoiceId);requireOk(b&&L.units(a.amount)>0n&&L.units(a.amount)<=L.units(b.outstanding)&&L.units(b.written_off)===0n,409,'allocationChanged');return{itemId:b.item_id,amount:a.amount,invoiceId:b.id,vehicleId:b.vehicle_id};});}
         const customPolicy=!legacyPolicy&&!d.contractingCompanyId&&!d.vehicleId&&await financialApproval(c,cipher,m,d.companyId,'priority')?await priorityPolicy(c,cipher,d.companyId):null;
         if(customPolicy)due=orderDues(due,customPolicy);
@@ -349,18 +350,25 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         await event(c, cipher, s, d.companyId, batchId, 'collection_created', null, { ...d, receipts: result });
         return { id: batchId, chequeId, receipts: result };
     }
+    app.get('/api/ledger/collections/cross-branch-preview',route(async(c:any,m:any,s:any,req:any)=>{
+        requireOk(options.crossBranchCollectionEnabled===true,503,'crossBranchCollectionNotEnabled');
+        const database=(await c.query('select current_database() database')).rows[0]?.database;
+        requireOk(/^ab_backup_[a-f0-9]{32}$/.test(database),503,'crossBranchCollectionNotEnabled');
+        return readCrossBranchCollectionSource(c,m,s,cipher,req.query);
+    }));
     app.post('/api/ledger/collections/invoices',route(async(c:any,m:any,s:any,req:any)=>{
-        const d=z.object({companyId:id,customerId:id,currency:z.literal('AED'),receivedOn:day,actualCashReceived:z.literal(true),invoices:z.array(z.object({invoiceId:id,amount:money,discountAmount:money.default('0'),discountReason:z.string().trim().max(2000).default('')}).strict()).min(1).max(100)}).strict().parse(req.body);
+        const d=z.object({companyId:id,customerId:id,currency:z.literal('AED'),receivedOn:day,actualCashReceived:z.literal(true),receivingSite:crossBranchReceivingSiteSelection.optional(),invoices:z.array(z.object({invoiceId:id,amount:money,discountAmount:money.default('0'),discountReason:z.string().trim().max(2000).default('')}).strict()).min(1).max(100)}).strict().parse(req.body);
         need(m,'collect',d.companyId);await customer(c,m,d.customerId,d.companyId);requireOk(d.receivedOn<=today(),422,'invalidDate');
+        requireOk(!d.receivingSite||req.verifiedReceivingSite&&d.invoices.every(x=>L.units(x.discountAmount)===0n),422,'crossBranchCollectionRequiresCashOnly');
         await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':customer-collection:'+d.customerId]);
         // Invoices are immutable: serialize allocation without requesting UPDATE privileges.
         for(const invoiceId of d.invoices.map(x=>x.invoiceId).sort())await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':invoice-allocation:'+invoiceId]);
         requireOk(new Set(d.invoices.map(x=>x.invoiceId)).size===d.invoices.length,422,'duplicate');
         const amount=L.money(d.invoices.reduce((n,x)=>n+L.units(x.amount),0n));requireOk(L.units(amount)>0n,422,'actualCollectionRequired');
-        const available=await invoices(c,{companyId:d.companyId,customerId:d.customerId}),discounts=[];
+        const available=await invoices(c,{companyId:d.companyId,customerId:d.customerId,...(d.receivingSite?{invoiceIds:d.invoices.map(row=>row.invoiceId)}:{})}),discounts=[];
         for(const x of d.invoices){const original=available.find((i:any)=>i.id===x.invoiceId);requireOk(original&&original.customer_id===d.customerId&&!original.contracting_company_id&&original.currency==='AED'&&L.units(x.amount)+L.units(x.discountAmount)<=L.units(original.outstanding)&&L.units(x.amount)+L.units(x.discountAmount)>0n,L.units(x.discountAmount)>0n?422:409,L.units(x.discountAmount)>0n?'amountMismatch':'allocationChanged');if(L.units(x.discountAmount)>0n){requireOk(!original.contract_id,409,'contractScheduleDiscountReviewRequired');need(m,'invoice_correct',d.companyId);requireOk(x.discountReason,422,'discountReasonRequired');const it=await item(c,cipher,m,original.item_id,d.companyId,true);requireOk(it.category!=='work_amount',422,'workAmountUnchanged');requireOk(L.units(original.written_off||'0')===0n,409,'writeoffRecoveryAccountingReviewRequired');}}
         for(const x of d.invoices)if(L.units(x.discountAmount)>0n){const result=await correctInvoice(c,m,s,{params:{id:x.invoiceId},body:{amount:x.discountAmount,reason:x.discountReason,effectiveOn:d.receivedOn}});discounts.push({id:result.id,invoiceId:x.invoiceId,amount:L.money(L.units(x.discountAmount))});}
-        const result=await collect(c,m,s,{companyId:d.companyId,customerId:d.customerId,currency:d.currency,receivedOn:d.receivedOn,method:'cash',mode:'manual',amount,items:[],reason:'Explicit invoice collection; actual cash confirmed'},false,d.invoices.filter(x=>L.units(x.amount)>0n).map(x=>({invoiceId:x.invoiceId,amount:x.amount})));
+        const result=await collect(c,m,s,{companyId:d.companyId,customerId:d.customerId,currency:d.currency,receivedOn:d.receivedOn,method:'cash',mode:'manual',amount,items:[],reason:'Explicit invoice collection; actual cash confirmed',...(req.verifiedReceivingSite?{receivingSite:req.verifiedReceivingSite}:{})},false,d.invoices.filter(x=>L.units(x.amount)>0n).map(x=>({invoiceId:x.invoiceId,amount:x.amount})));
         return {...result,discounts,discountTotal:L.money(discounts.reduce((n,x)=>n+L.units(x.amount),0n)),cashTotal:amount};
     }));
     app.post('/api/ledger/collections', route(async (c: any, m: any, s: any, req: any) => collect(c, m, s, collection.parse(req.body))));
