@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-25T04:16:08.735832+00:00",
+  "asOf": "2026-11-25T04:25:26.148215+00:00",
   "branch": "feature/operational-v1-independent",
   "financialPR": 115,
   "financialPREdited": false,
@@ -3769,14 +3769,43 @@
     }
   },
   "scopedTaskPermissionWork": {
-    "state": "work_in_progress_unpublished",
+    "state": "implemented_unpublished_acceptance_incomplete",
     "backendPriorLinkedPassed": 71,
     "narrowReviewPriorLinkedPassed": 15,
     "newReviewPermissionInstalledHosted": false,
     "noParallelPermissionSystem": true,
-    "creatorBrowserFinalPending": true,
+    "creatorBrowserFinalPending": false,
     "fullSameHeadAcceptancePending": true,
     "sourceDataChanged": false,
-    "financial95Promoted": false
+    "financial95Promoted": false,
+    "status": "implemented_unpublished_full_same_head_acceptance_pending",
+    "nativeEvidence": {
+      "tests": 78,
+      "passed": 78,
+      "log": "work/evidence/task-integrated-native.log"
+    },
+    "browserEvidence": {
+      "roles": [
+        "reader",
+        "creator"
+      ],
+      "locales": [
+        "ar",
+        "en"
+      ],
+      "widths": [
+        1440,
+        768,
+        390
+      ],
+      "log": "work/evidence/individual-task-browser7.log",
+      "ownerApprovalCheckbox": "separate real catalog action; unchecked initially; unsaved choice never grants; both locales and three widths"
+    },
+    "build": "passed",
+    "rootChecks": {
+      "tests": 189,
+      "passed": 189
+    },
+    "remaining": "same-head full native and56-browser acceptance, CI; private/delegated/cross-branch task coverage and overall release remain partial"
   }
 }
