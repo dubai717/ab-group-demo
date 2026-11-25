@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-25T04:25:26.148215+00:00",
+  "asOf": "2026-11-25T04:41:29.270767+00:00",
   "branch": "feature/operational-v1-independent",
   "financialPR": 115,
   "financialPREdited": false,
@@ -3807,5 +3807,37 @@
       "passed": 189
     },
     "remaining": "same-head full native and56-browser acceptance, CI; private/delegated/cross-branch task coverage and overall release remain partial"
+  },
+  "cashRegistrationTaskEligibility": {
+    "state": "isolated_unpublished",
+    "source": "backend/src/service-cash-task-start.ts",
+    "defaultServerHookEnabled": false,
+    "operatingDatabasesRefused": true,
+    "linkedNativePassed": 63,
+    "finalActorAndImmutableHistoryCasePassed": true,
+    "reviewedFinancial95Promoted": false,
+    "sourceDataChanged": false,
+    "browserNewArrearsMessageAcceptance": "pending; failed attempt retained due Chromium Target crashed",
+    "remaining": [
+      "bank-direct first execution",
+      "creation and final-review exception lifecycle",
+      "delegation and combined source scope",
+      "full same-head acceptance and CI"
+    ]
+  },
+  "frozenE805Acceptance": {
+    "source": "e805d0f0d47ec98eb2a552dcef8c1f1692c7d0f4",
+    "backend": "running; two budget-instrumentation failures observed and corrected later, do not count as pass",
+    "ui": "failed: Chromium Target crashed during company import preview; no application assertion failure confirmed",
+    "currentLaterCashCodeCovered": false
+  },
+  "taskReadBudgetInstrumentation": {
+    "files": [
+      "backend/tests/communication-template-read-budget.test.ts",
+      "backend/tests/communications-model-budget.test.ts"
+    ],
+    "cause": "Observer matched the old exact roles query prefix; readiness projection now adds an uncorrelated catalog EXISTS in that same packet",
+    "change": "Recognize the original roles packet semantically; same packet count, recipient privacy and targeted invoice budgets unchanged",
+    "linkedPassed": 2
   }
 }

@@ -93,6 +93,7 @@ export interface Options {
   beforeNewService?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general'})=>Promise<void>;
   beforeServiceApproval?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general'})=>Promise<void>;
   beforeCustomerServiceExecution?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'residence'|'general';requestId:string})=>Promise<void>;
+  beforeRegistrationTaskStart?: (c:any,m:any,s:any,input:{taskId:string;requestId:string;companyId:string;employeeId:string})=>Promise<void>;
   beforeServiceExecution?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'vehicle';requestId:string;phase:'disburse'|'register'})=>Promise<void>;
   whatsAppReview?:WhatsAppReviewConfig;
   serviceExecutionExceptionsEnabled?:boolean;
