@@ -9,7 +9,7 @@ import{registerOpeningBalancePreview}from'./opening-balance-import-preview.js';
 import{requireImportWorkAccess}from'./import-work-access.js';
 import {registerCentreImport,assertCentreImportOperator} from './centre-import.js';
 import {assertEmployeeImportOperator} from './employee-import-preview.js';
-import{assertWorkScopeMembershipOperator,registerWorkScopePreview}from'./work-scope-preview.js';
+import{assertCompiledMembershipProfileChange,assertWorkScopeMembershipOperator,registerWorkScopePreview}from'./work-scope-preview.js';
 import{registerWorkLocations}from'./employee-work-location.js';
 import{databaseServiceFailure}from'./database-errors.js';
 import{registerBackupStatus,type BackupStatusRead}from'./backup-status.js';
@@ -807,6 +807,7 @@ export async function build(options: Options) {
     const saved = m.policy.update(s.user_id, id || null, input, [], {
       roleId: input.baseRole || "employee",
     });
+    if(previous)await assertCompiledMembershipProfileChange(c,s.tenant_id,previous,saved);
     let authId: string | undefined,ticket:any;
     if(!id){requireOk(!(await c.query('select 1 from ab.users where lower(username)=lower($1)or lower(auth_email)=lower($2)',[saved.username,saved.email])).rowCount,409,'duplicate');ticket=await enrollment.reserve(s,input,saved,employeeSource?.id);if(employeeSource)await assertEmployeeLoginHierarchy(c,cipher,employeeSource.id,ticket.record.userId);}
     if (!id) {

@@ -80,6 +80,19 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION ab.current_company_scope_ids()FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION ab.current_company_scope_ids()TO ab_runtime;
+-- A legacy profile write needs an exact decision even when the acting editor cannot read the scope roster.
+CREATE FUNCTION ab.legacy_profile_membership_edit(uuid) RETURNS jsonb
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,ab,pg_temp
+AS $$
+ SELECT jsonb_build_object('allowed',
+  ab.hr_actor_allowed() AND EXISTS(
+   SELECT 1 FROM ab.users u WHERE u.tenant_id=ab.tenant() AND u.id=$1
+  ) AND NOT EXISTS(
+   SELECT 1 FROM ab.user_access_scope_versions v WHERE v.tenant_id=ab.tenant() AND v.user_id=$1
+  ))
+$$;
+REVOKE ALL ON FUNCTION ab.legacy_profile_membership_edit(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION ab.legacy_profile_membership_edit(uuid) TO ab_runtime;
 -- Strengthen ownership handling; do not disable/drop/replace the original tenant policies.
 DO $$BEGIN IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class c WHERE c.oid='ab.companies'::regclass AND c.relkind='r'AND c.relrowsecurity AND NOT pg_has_role('ab_runtime',c.relowner,'MEMBER'))THEN RAISE EXCEPTION 'original company tenant RLS is required';END IF;END$$;
 ALTER TABLE ab.companies FORCE ROW LEVEL SECURITY;

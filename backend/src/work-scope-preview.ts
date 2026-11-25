@@ -1,3 +1,4 @@
+import{reviewedPrivateJsonSourceReady}from'./reviewed-private-json-source.js';
 import{companyScopeRelationshipDetails}from'./company-scope-relationship-details.js';
 import{companyScopeReadiness}from'./company-scope-readiness.js';
 // Owner-only preparation using original facts/action policy; not an applied authorization boundary.
@@ -11,6 +12,20 @@ async function compiledMembershipSource(c:any,tenantId:string,userId:string){
    where l.tenant_id=v.tenant_id and l.user_id=v.user_id and l.version_id=v.id order by l.company_id) "companyIds"
    from ab.user_access_scope_versions v where v.tenant_id=$1 and v.user_id=$2 order by v.revision desc limit 1`,
    [tenantId,userId])).rows[0]||null;
+}
+export async function assertCompiledMembershipProfileChange(c:any,tenantId:string,previous:any,saved:any){
+ const same=(a:string[],b:string[])=>JSON.stringify([...a].sort())===JSON.stringify([...b].sort());
+ if(same(previous.companyIds,saved.companyIds)&&same(previous.departmentIds,saved.departmentIds)&&
+   (previous.managerId||null)===(saved.managerId||null))return;
+ await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[tenantId+':user-access-scope:'+previous.id]);
+ const installed=(await c.query(`select to_regclass('ab.user_access_scope_versions') is not null
+   or to_regclass('ab.user_access_scope_companies') is not null
+   or to_regprocedure('ab.current_company_scope_ids()') is not null ready`)).rows[0].ready;
+ if(!installed)return;
+ requireOk(await reviewedPrivateJsonSourceReady(c,'ab.legacy_profile_membership_edit(uuid)',
+   '3f899899b67bffc7b871f6122a99546a51e7c95b7c0666ab80d1cdc8d6c31457'),409,'workScopeCompiledMembershipReviewRequired');
+ const decision=(await c.query('select ab.legacy_profile_membership_edit($1) decision',[previous.id])).rows[0].decision;
+ requireOk(decision?.allowed===true,409,'workScopeCompiledMembershipReviewRequired');
 }
 export async function previewWorkScope(c:any,m:any,s:any,cipher:any,userId:string,body:unknown){
  requireOk(m.actor.roleId==='owner',403,'ownerOnly');requireOk(!s.viewAs,403,'viewAsReadOnly');userId=z.uuid().parse(userId);const u=m.state.users.find((r:any)=>r.id===userId);requireOk(u,404,'notFound');requireOk(u.roleId!=='owner'&&u.id!==s.user_id,403,'ownerProtected');const d=input.parse(body);requireOk(u.revision===d.revision,409,'revisionConflict');requireOk(m.state.companies.length<=500,422,'workScopeRangeReviewRequired');

@@ -79,8 +79,19 @@ test('reviewed centre membership updates original memberships and retains indepe
    return id;
   });
   const originalCompiled=await replaceCompiled(1,null);
+  await transaction(f.runtime,f.org.tenant,worker.id,async c=>{
+   assert.equal((await c.query('select id from ab.user_access_scope_versions where user_id=$1',[compiledWorker.id])).rowCount,0);
+   assert.deepEqual((await c.query('select ab.legacy_profile_membership_edit($1) decision',[compiledWorker.id])).rows[0].decision,{allowed:false});
+   assert.deepEqual((await c.query('select ab.legacy_profile_membership_edit($1) decision',[worker.id])).rows[0].decision,{allowed:true});
+  });
+
   const compiledUser=(await f.req('GET','/api/users/'+compiledWorker.id+'/permission-summary')).user;
   const proposed={revision:compiledUser.revision,asOf:today(),selection:{kind:'centres',ids:[centreId]}};
+  const genericEdit=await app.inject({method:'PATCH',url:'/api/users/'+compiledWorker.id,
+   payload:{revision:compiledUser.revision,companyIds:[f.co2]},headers});
+  assert.equal(genericEdit.statusCode,409,genericEdit.body);
+  assert.equal(genericEdit.json().error,'workScopeCompiledMembershipReviewRequired');
+
   const compiledRequest=(action:string,payload:unknown)=>app!.inject({method:'POST',url:compiledUrl+action,payload:payload as any,headers:{...headers,'idempotency-key':randomUUID()}});
   const planBefore=await compiledRequest('preview',proposed);
   assert.equal(planBefore.json().membershipApplication.available,true,planBefore.body);
@@ -96,6 +107,10 @@ test('reviewed centre membership updates original memberships and retains indepe
   assert.equal(synced.json().changed,true);
   assert.deepEqual(synced.json().companyIds,[f.co1,f.co2].sort());
   assert.equal(latest.json().compiledMembership.id,latestCompiled);
+  const genericProfileEdit=await app.inject({method:'PATCH',url:'/api/users/'+compiledWorker.id,
+   payload:{revision:synced.json().revision,jobTitle:'Synthetic profile edit'},headers});
+  assert.equal(genericProfileEdit.statusCode,200,genericProfileEdit.body);
+
 
  }finally{
   if(app)await app.close();
