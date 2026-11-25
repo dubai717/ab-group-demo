@@ -24,6 +24,10 @@ async function collectThroughBrowser(
       await page.locator('#login-form [type=submit]').click();
       await page.locator('.account-menu summary').waitFor();
       await page.evaluate((language)=>{(window as any).setLocale(language);},locale);
+      // The initial dashboard load replaces the account menu when it finishes.
+      const dashboard = page.locator('#central-dashboard');
+      await dashboard.waitFor();
+      await dashboard.locator(':scope > p[role=status]:not([data-dashboard-base-only])').waitFor({state:'hidden'});
       await page.locator('.account-menu summary').click();
       await page.locator('[data-cross-branch-collection]').click();
       return page;
