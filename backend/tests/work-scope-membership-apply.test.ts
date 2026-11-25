@@ -61,6 +61,12 @@ test('reviewed centre membership updates original memberships and retains indepe
   const narrowPreview=await f.req('POST',scope+'preview',narrow);
   assert.equal((await apply({...narrow,confirm:true,reviewHash:narrowPreview.reviewHash},409)).error,'workScopeOutsideRightsReviewRequired');
   assert.deepEqual(await grants(),unchanged);
+  const priorGrant=(await f.req('GET','/api/users/'+worker.id+'/permission-summary')).directGrants.find((entry:any)=>entry.action==='bank_view');
+  await f.req('POST','/api/users/'+worker.id+'/revoke',{grantId:priorGrant.id});
+  const department=await f.req('POST','/api/personnel/departments',{companyId:f.co1,typeCode:'COL',scope:'company'});
+  await f.req('POST','/api/users/'+worker.id+'/grants',{action:'edit',scope:{type:'department',id:department.id},delegable:false});
+  const departmentPreview=await f.req('POST',scope+'preview',narrow);
+  assert.equal((await apply({...narrow,confirm:true,reviewHash:departmentPreview.reviewHash},409)).error,'workScopeOutsideRightsReviewRequired');
  }finally{
   if(app)await app.close();
   await f.close();

@@ -31,6 +31,15 @@ async function reviewedMembershipCompanies(c:any,m:any,s:any,userId:string,previ
  requireOk(preview.originalPolicyImpact?.rightsStillEffectiveOutsideSelection===0,409,'workScopeOutsideRightsReviewRequired');
  const u=m.state.users.find((r:any)=>r.id===userId);
  const companyIds=preview.proposedCompanies.map((company:any)=>company.id);
+ const selected=new Set(companyIds),departments=new Map(m.state.departments.map((d:any)=>[d.id,d.companyId]));
+ const allCompanies=m.state.companies.every((company:any)=>selected.has(company.id));
+ for(const grant of m.initialGrants.filter((grant:any)=>grant.userId===userId)){
+   const scope=grant.entry.scope;
+   const contained=scope.type==='company'?selected.has(scope.id):
+     scope.type==='department'?selected.has(String(departments.get(scope.id)||'')):
+     (scope.type==='group'||scope.type==='reports')&&allCompanies;
+   requireOk(contained,409,'workScopeOutsideRightsReviewRequired');
+ }
  requireOk(u.departmentIds.every((departmentId:string)=>m.state.departments.some((department:any)=>
    department.id===departmentId&&companyIds.includes(department.companyId))),409,'workScopeDepartmentReviewRequired');
  return companyIds;
