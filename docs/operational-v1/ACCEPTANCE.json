@@ -4364,5 +4364,33 @@
     "fullSameHeadAcceptancePending": true,
     "sourceDataChanged": false,
     "financial95Promoted": false
+  },
+  "delegationAndCollectionContinuity": {
+    "sourceCommit": "2af45e22ed691fe031f451183a6f162ae9b64384",
+    "baselineCommit": "a33b88a6b2589006a8a928e3be566747b683884b",
+    "priorWorkflowFailure": {
+      "run": 81,
+      "job": "https://github.com/dubai717/ab-group-demo/actions/runs/45614183047/job/139205204580",
+      "finding": "Dashboard redraw detached the open account menu during the real cross-branch browser click."
+    },
+    "syntheticOnly": true,
+    "fullSameHeadAcceptance": "pending",
+    "targeted": [
+      {
+        "suite": "Communication, leave delegation and original personnel regressions",
+        "pass": 60,
+        "sha256": "b5868dcdddcb261bce9c8a0f27653088c33c10c9d3e3afd2cc7401398d44cb79"
+      },
+      {
+        "suite": "Real cross-branch browser clicks after workspace redraw, concurrent confirmation and original PostgreSQL posting",
+        "pass": 1,
+        "sha256": "7c9313b6073fb837aeb9bd97e64673a4d31ccbe61f027629c7985496d76324c6"
+      },
+      {
+        "suite": "Root and deploy regressions",
+        "pass": 189,
+        "sha256": "45f9a15416f08cc86d24798c6c990ab8a96bd006e6ca9aa206dab76dfe2a7bf3"
+      }
+    ]
   }
 }
