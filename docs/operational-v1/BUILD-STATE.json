@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-25T01:49:24.389956+00:00",
+  "asOf": "2026-11-25T02:35:49.310415+00:00",
   "branch": "feature/operational-v1-independent",
   "financialPR": 115,
   "financialPREdited": false,
@@ -21,7 +21,7 @@
     "Financial PR115 remains draft/unmerged; no financial95 completion promoted",
     "Effective operating-centre/company mappings and geographic enforcement remain unfinished engineering; original geography facts are read-only",
     "Official WhatsApp provider, approved number, consent/templates and external evidence are unavailable; no external sending",
-    "Service controller guards, timed exceptions and limited employee messages remain unimplemented; Owner source review is simulation only",
+    "Original service guards and timed exceptions are isolated-tested; full activation, source adapters and limited employee messages remain partial",
     "Remaining source/delegation adapters, document reminders, backup automation/independent storage and import adapters remain partial",
     "Full integrated acceptance, compatible rollback and final protected publication approval are outstanding"
   ],
@@ -3569,6 +3569,31 @@
       "whatsapp-dispatch-final-native2.log": "3b82a35d2922f92090376e171e9bc8b242fb516b9a55e5b041b48c5809a0d3f3",
       "whatsapp-dispatch-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
       "whatsapp-dispatch-root2.log": "dce2940964f6fb7cee8136180773f5654924af932720ce6855189136103ca6e6"
+    }
+  },
+  "originalWhatsAppReviewManagement": {
+    "state": "implemented_unpublished_isolated_review_only",
+    "apiLinkedPassed": 3,
+    "precedingCustomerAndImportRegressionsPassed": 15,
+    "browser": "AR/EN 1440/768/390 passed; exact request recovery and acknowledged GET-only readback; source consent/review and staff denial",
+    "originalConversationPreserved": true,
+    "defaultDisabled": true,
+    "sendEndpoint": false,
+    "externalSent": false,
+    "sourceDataChanged": false,
+    "remaining": [
+      "Scoped employee authority",
+      "Verified provider delivery statuses",
+      "Official templates/provider number",
+      "Financial/document sources and full acceptance"
+    ],
+    "evidenceSha256": {
+      "whatsapp-review-ui-api-native.log": "183127648a1473001606cd56494a1c57648e0e6a87c0f9913bf332f1e8e898b3",
+      "whatsapp-review-api-linked.log": "2e72f65ddf2931f550b4e9a6ec0b832cc871b8434d7425aa338ee4b053bd3c39",
+      "whatsapp-review-ui-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "whatsapp-review-ui-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "whatsapp-review-ui-browser.log": "053eba13f6804f022a77238e2557c766228344877e066b70c79b517c4be99a10",
+      "whatsapp-review-api-root.log": "331209751efb4f78bdcffe91bb6fe8df7d63e88969d9f6d136ee8c44162d8c24"
     }
   }
 }

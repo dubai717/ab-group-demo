@@ -1,3 +1,4 @@
+import{assertWhatsAppReviewOperator,registerWhatsAppReviewManagement,type WhatsAppReviewConfig}from'./whatsapp-review-management.js';
 import{assertExecutionExceptionOperator,registerExecutionExceptionManagement}from'./service-execution-exceptions.js';
 import{registerCompanyDocumentImport}from'./company-document-import.js';
 import{encryptedUploadReadLimit,retainEncryptedUpload,verifiedEncryptedUpload,retainedUploadIdentity}from'./retained-encrypted-upload.js';
@@ -91,6 +92,7 @@ export interface Options {
   beforeServiceApproval?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general'})=>Promise<void>;
   beforeCustomerServiceExecution?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'residence'|'general';requestId:string})=>Promise<void>;
   beforeServiceExecution?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'vehicle';requestId:string;phase:'disburse'|'register'})=>Promise<void>;
+  whatsAppReview?:WhatsAppReviewConfig;
   serviceExecutionExceptionsEnabled?:boolean;
   companyImportEnabled?:boolean;
   employeeImportEnabled?:boolean;
@@ -252,6 +254,7 @@ export async function build(options: Options) {
       const s = await session(req);
       if(req.body)req.body=normalizeContactPayload(req.body);
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
+        const whatsAppReviewMutation=req.method==='POST'&&(/^\/api\/customers\/[0-9a-f-]+\/whatsapp-consent$/i.test(req.url.split('?')[0])||/^\/api\/communications\/[0-9a-f-]+\/whatsapp-review(?:\/[0-9a-f-]+\/revoke)?$/i.test(req.url.split('?')[0]));
         const serviceExceptionMutation=req.method==='POST'&&/^\/api\/customers\/[0-9a-f-]+\/service-execution-exceptions(?:\/[0-9a-f-]+\/revoke)?$/i.test(req.url.split('?')[0]);
         const companyImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/companies/run';
         const employeeDocumentImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/personnel-documents/run';const companyDocumentImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/company-documents/run';
@@ -261,13 +264,14 @@ export async function build(options: Options) {
         let importModel:any,originalImportReceiptGuard:((outcome:any)=>Promise<void>)|undefined;
         // Serialize permission mutations before loading their authority snapshot.
         // This also prevents a queued grant from using a pre-standard-change issuer.
-        if(!s.viewAs&&req.method!=='GET'&&(serviceExceptionMutation||originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
+        if(!s.viewAs&&req.method!=='GET'&&(whatsAppReviewMutation||serviceExceptionMutation||originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':security-roles']);
         // Serialize original company mutations before reading the directory used by import preview receipts.
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/companies(?:\/|$)/.test(req.url.split('?')[0])))
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':company-directory']);
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(employeeDocumentImportRun||employeeImportRun||/^\/api\/personnel(?:\/|$)/.test(req.url.split('?')[0])))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':personnel-import-directory']);
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(centreImportRun||req.url.split('?')[0]==='/api/operating-centres/apply'))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':operating-centre-directory']);
+        if(whatsAppReviewMutation){importModel=await model(c,s.user_id,cipher);await assertWhatsAppReviewOperator(c,importModel,s,cipher,req.url.startsWith('/api/customers/')?'customer':'thread',req.params.id,options.whatsAppReview);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
         if(serviceExceptionMutation){importModel=await model(c,s.user_id,cipher);await assertExecutionExceptionOperator(c,importModel,s,req.params.id,options.serviceExecutionExceptionsEnabled===true);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
         if(originalImportRun){importModel=await model(c,s.user_id,cipher);const guard=originalImportRunGuards.get(originalImportRun[1].toLowerCase());requireOk(guard,503,'importGuardUnavailable');originalImportReceiptGuard=await guard(c,importModel,s,req);}
         if(centreImportRun){importModel=await model(c,s.user_id,cipher);assertCentreImportOperator(importModel);requireOk(options.centreImportEnabled===true,503,'centreImportApplyNotEnabled');await requireImportWorkAccess(c);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
@@ -280,6 +284,7 @@ export async function build(options: Options) {
           requireOk(typeof req.headers['idempotency-key']==='string',422,'companyImportKeyRequired');
         }
         // Personnel export contains personal contact data; never cache the file in request_dedup.
+        let whatsAppReceiptRechecked=false;
         const key = s.viewAs || req.method === "GET" || isReadOnlyPost(req.url.split("?")[0]) ? undefined : req.headers["idempotency-key"];
         const fingerprint = cipher.digest(
           req.method + req.url + JSON.stringify(req.body || null),
@@ -306,7 +311,10 @@ export async function build(options: Options) {
             if(req.method==='POST'&&/^\/api\/communications\/[0-9a-f-]+\/(?:task|cases(?:\/[0-9a-f-]+\/actions)?)(?:\?|$)/i.test(req.url))
               await authorizedCommunicationThread(c,await model(c,s.user_id,cipher),cipher,uuid(req.params.id));
             await originalImportReceiptGuard?.(cached.response);
-            return cached.response;
+            if(!whatsAppReviewMutation)return cached.response;
+            // Re-run the original idempotent proof after fresh authorization/source checks.
+            // The old transport receipt never re-approves a changed phone/content or opt-out.
+            whatsAppReceiptRechecked=true;
           }
         }
         const result = await handler(
@@ -315,7 +323,7 @@ export async function build(options: Options) {
           s,
           req,
         );
-        if (key)
+        if (key&&!whatsAppReceiptRechecked)
           await c.query("insert into ab.request_dedup values($1,$2,$3,$4,$5)", [
             s.tenant_id,
             s.user_id,
@@ -324,7 +332,7 @@ export async function build(options: Options) {
             JSON.stringify(result),
           ]);
         return result;
-      },{...(s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:{}),...(req.method==='GET'&&req.url.split('?')[0]==='/api/ledger/package/document-register'?{repeatableRead:true}:{}),...(req.method==='GET'&&/^\/api\/customers\/[0-9a-f-]+\/service-eligibility-review$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&['/api/data-imports/company-documents/preview','/api/data-imports/opening-balances/preview','/api/data-imports/personnel-documents/preview','/api/data-imports/centres/preview','/api/data-imports/companies/preview','/api/data-imports/employees/preview'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&/^\/api\/users\/[0-9a-f-]+\/work-scope\/preview$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{})});
+      },{...(s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:{}),...(req.method==='GET'&&/^\/api\/communications\/[0-9a-f-]+\/whatsapp-review(?:\/plan)?$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='GET'&&req.url.split('?')[0]==='/api/ledger/package/document-register'?{repeatableRead:true}:{}),...(req.method==='GET'&&/^\/api\/customers\/[0-9a-f-]+\/service-eligibility-review$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&['/api/data-imports/company-documents/preview','/api/data-imports/opening-balances/preview','/api/data-imports/personnel-documents/preview','/api/data-imports/centres/preview','/api/data-imports/companies/preview','/api/data-imports/employees/preview'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&/^\/api\/users\/[0-9a-f-]+\/work-scope\/preview$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{})});
     };
   registerPermissionAdmin(app,call,cipher);registerSecurityRoles(app,call,cipher);registerOperatingCentres(app,call,cipher);registerOperatingCentreWriter(app,call,cipher);registerWorkLocations(app,call,cipher);registerWorkScopePreview(app,call,cipher);
   registerFinance(app,call,cipher);
@@ -349,6 +357,7 @@ export async function build(options: Options) {
   registerCentralReports(app,call,cipher);
   registerCentralDashboard(app,call,cipher);
   registerCommunications(app,call,cipher,options);
+  registerWhatsAppReviewManagement(app,call,cipher,options.whatsAppReview);
   registerVehicles(app,call,cipher,{...options,registerOriginalImportRunGuard});
   registerRequestDrafts(app,call,cipher,(options as any).requestCreators);
   registerRegisters(app,call,cipher);
@@ -1345,6 +1354,7 @@ export async function build(options: Options) {
       "dashboard-ui.js",
       "my-work-ui.js",
       "reports-ui.js",
+      "whatsapp-review-ui.js",
       "communications-ui.js",
       "record-links.js",
       "marketing-ui.js",
