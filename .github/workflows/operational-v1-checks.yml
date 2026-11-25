@@ -43,5 +43,9 @@ jobs:
           path: |
             work/operational-*.png
             work/dual-permissions-*.png
+            work/individual-task-*.png
+            work/company-document-import-*.png
+            work/backup-capture-status-*.png
+            work/original-whatsapp-media-*.png
           if-no-files-found: ignore
           retention-days: 7
