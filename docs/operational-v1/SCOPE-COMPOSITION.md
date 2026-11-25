@@ -13,3 +13,5 @@ Earlier fixture attempts correctly encountered original invalidUserCompany valid
 ## Prospective task boundary addition
 
 The combined synthetic installation now includes the twelfth task/child candidate. Twelve linked tests passed across actual source continuation, cached receipt reauthorization, scoped exceptions, combined candidates and original personnel/return-portal paths. Original readiness remains refused and no source hash is repinned. Private/delegated/cross-branch task sources and final action/export/membership acceptance remain incomplete. See TASK-COMPANY-CHILD-SCOPE.md.
+
+The isolated composition review scopes company-owned documents by the legal company and bank documents by the original account. Versions follow the visible root. The fixture verifies that a shared link cannot expose a target company outside the compiled scope or be created there through the scoped runtime. The existing application permissions still apply. User-managed files and investor-linked sources need their own approved relationship tests before full scope activation.

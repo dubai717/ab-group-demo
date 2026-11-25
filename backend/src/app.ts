@@ -384,7 +384,7 @@ export async function build(options: Options) {
             JSON.stringify(result),
           ]);
         return result;
-      },{...(s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:{}),...(req.method==='GET'&&/^\/api\/communications\/[0-9a-f-]+\/whatsapp-review(?:\/(?:plan|delivery))?$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='GET'&&req.url.split('?')[0]==='/api/ledger/package/document-register'?{repeatableRead:true}:{}),...(req.method==='GET'&&['/api/personnel/tasks/options','/api/ledger/collections/cross-branch-preview','/api/ledger/collections/cross-branch-invoice'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='GET'&&/^\/api\/customers\/[0-9a-f-]+\/service-eligibility-review$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&['/api/data-imports/company-documents/preview','/api/data-imports/opening-balances/preview','/api/data-imports/personnel-documents/preview','/api/data-imports/centres/preview','/api/data-imports/companies/preview','/api/data-imports/employees/preview'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&/^\/api\/users\/[0-9a-f-]+\/work-scope\/preview$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{})});
+      },{...(s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:{}),...(req.method==='GET'&&/^\/api\/communications\/[0-9a-f-]+\/whatsapp-review(?:\/(?:plan|delivery))?$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='GET'&&req.url.split('?')[0]==='/api/ledger/package/document-register'?{repeatableRead:true}:{}),...(req.method==='GET'&&['/api/personnel/tasks/options','/api/document-reminders/due-review','/api/ledger/collections/cross-branch-preview','/api/ledger/collections/cross-branch-invoice'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='GET'&&/^\/api\/customers\/[0-9a-f-]+\/service-eligibility-review$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&['/api/data-imports/company-documents/preview','/api/data-imports/opening-balances/preview','/api/data-imports/personnel-documents/preview','/api/data-imports/centres/preview','/api/data-imports/companies/preview','/api/data-imports/employees/preview'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&/^\/api\/users\/[0-9a-f-]+\/work-scope\/preview$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{})});
     };
   registerPermissionAdmin(app,call,cipher);registerSecurityRoles(app,call,cipher);registerOperatingCentres(app,call,cipher);registerOperatingCentreWriter(app,call,cipher);registerWorkLocations(app,call,cipher);registerWorkScopePreview(app,call,cipher,options.workScopeMembershipApplyEnabled===true);
   registerFinance(app,call,cipher);
@@ -576,7 +576,9 @@ export async function build(options: Options) {
           exists(select 1 from ab.permission_grants g join ab.users issuer
             on issuer.tenant_id=g.tenant_id and issuer.id=g.issuer_id
             where g.tenant_id=ab.tenant() and g.user_id=$1 and g.permission_id='ledger_cross_branch_collect'
-            and g.scope_type='company' and g.revoked_at is null and issuer.status='Active' and issuer.role_id='owner') granted`,[s.user_id])).rows[0];
+            and g.scope_type='company' and g.revoked_at is null and issuer.status='Active' and issuer.role_id='owner')
+          and not exists(select 1 from ab.settings where tenant_id=ab.tenant()
+            and key='user-denials-v1:'||$1::uuid::text) granted`,[s.user_id])).rows[0];
         const owner=m.actor.roleId==='owner';
         if(/^ab_backup_[a-f0-9]{32}$/.test(access.db)&&access.ready&&access.working&&
           m.actor.status==='Active'&&m.actor.roleId!=='investor'&&(owner||access.granted))
@@ -1420,6 +1422,7 @@ export async function build(options: Options) {
       "center-forms.js",
       "view-as-ui.js",
       "collection-ui.js",
+      "cross-branch-collection-ui.js",
       "dashboard-ui.js",
       "my-work-ui.js",
       "reports-ui.js",

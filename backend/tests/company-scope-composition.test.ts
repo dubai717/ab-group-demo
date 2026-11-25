@@ -29,16 +29,44 @@ test('original company scope candidates compose across personal identity, privat
   await f.admin.query("insert into ab.finance_notifications(id,tenant_id,company_id,user_id,action,event_key,entity_id)values($1,$2,$3,$4,'communication:message',$5,$6)",[notice,f.org.tenant,co,worker.id,'synthetic-composition:'+notice,thread]);await f.admin.query('insert into ab.notification_receipts(tenant_id,notification_id,user_id)values($1,$2,$3)',[f.org.tenant,notice,worker.id]);
   await f.admin.query('insert into ab.finance_handovers(id,tenant_id,company_id,sender_id,receiver_id)values($1,$2,$3,$4,$5)',[handover,f.org.tenant,co,f.org.user,worker.id]);await f.admin.query("insert into ab.finance_receipts(id,tenant_id,company_id,holder_id,amount,currency,kind,reference,created_by)values($1,$2,$3,$4,1,'AED','cash',$5,$4)",[receipt,f.org.tenant,co,f.org.user,'SYNTHETIC-COMPOSITION-'+receipt]);await f.admin.query('insert into ab.finance_handover_items values($1,$2,$3)',[f.org.tenant,handover,receipt]);
  }
- const tables=['customers','customer_files','customer_file_reviews','documents','document_versions','document_text_index','communication_threads','communication_messages','communication_participants','finance_notifications','notification_receipts','finance_handovers','finance_receipts','finance_handover_items','finance_journals','finance_entries','users','permission_grants','hr_employees','hr_library','hr_library_versions','hr_document_records'],snapshot=async()=>{const out:any={};for(const table of tables)out[table]=(await f.admin.query("select md5(coalesce(jsonb_agg(to_jsonb(r)order by to_jsonb(r)::text)::text,'[]'))h from ab."+table+' r')).rows[0].h;return out;},before=await snapshot();
+ const bankDocuments=[];
+ for(const company of [f.co1,f.co2]){
+  const bank=await f.bank(company);
+  bankDocuments.push(await f.req('POST','/api/documents',{
+   bankAccountId:bank.id,category:'other',title:'Synthetic bank evidence',description:'Synthetic only',date:'2026-01-05',
+   name:'bank.pdf',mime:'application/pdf',base64:pdfBytes.toString('base64'),
+  }));
+ }
+ const companyDocument=(await f.admin.query('select document_id from ab.document_versions where id=$1',[versions[0]])).rows[0].document_id;
+ const links=[];
+ for(const company of [f.co1,f.co2]){
+  const id=randomUUID();
+  await f.admin.query('insert into ab.document_links(id,tenant_id,document_id,company_id,created_by) values($1,$2,$3,$4,$5)',
+   [id,f.org.tenant,companyDocument,company,f.org.user]);
+  links.push(id);
+ }
+ const tables=['customers','customer_files','customer_file_reviews','documents','document_versions','document_text_index','communication_threads','communication_messages','communication_participants','finance_notifications','notification_receipts','finance_handovers','finance_receipts','finance_handover_items','finance_journals','finance_entries','users','permission_grants','hr_employees','hr_library','hr_library_versions','hr_document_records','document_links'],snapshot=async()=>{const out:any={};for(const table of tables)out[table]=(await f.admin.query("select md5(coalesce(jsonb_agg(to_jsonb(r)order by to_jsonb(r)::text)::text,'[]'))h from ab."+table+' r')).rows[0].h;return out;},before=await snapshot();
  const tx=async(actor:string,fn:any,tenant=f.org.tenant)=>{const c=await f.runtime.connect();try{await c.query('begin');await c.query("select set_config('ab.tenant',$1,true),set_config('ab.actor',$2,true)",[tenant,actor]);const r=await fn(c);await c.query('commit');return r;}catch(e){await c.query('rollback');throw e;}finally{c.release();}};
  for(const file of['operating-centres.sql','employee-work-locations.sql','company-scope-upper-bound.sql'])await f.admin.query(await readFile('backend/review/'+file,'utf8'));const core=await tx(f.org.user,(c:any)=>companyScopeFingerprint(c));assert.equal(core,'8c6114290ae45532a92137e0e4ed40762595f516a13bd25a213e708158a5a6d6');
- for(const file of['company-scope-personnel.sql','company-scope-customers.sql','company-scope-customer-files.sql','company-scope-document-children.sql','company-scope-statement-lines.sql','company-scope-card-matches.sql','company-scope-payroll-decisions.sql','company-scope-personnel-documents.sql','company-scope-personnel-library.sql','company-scope-communication-children.sql','company-scope-notification-receipts.sql','company-scope-handover-items.sql','company-scope-task-children.sql'])await f.admin.query(await readFile('backend/review/'+file,'utf8'));
+ for(const file of['company-scope-personnel.sql','company-scope-customers.sql','company-scope-customer-files.sql','company-scope-document-children.sql','company-scope-statement-lines.sql','company-scope-card-matches.sql','company-scope-payroll-decisions.sql','company-scope-personnel-documents.sql','company-scope-bank-and-company-documents.sql','company-scope-personnel-library.sql','company-scope-communication-children.sql','company-scope-notification-receipts.sql','company-scope-handover-items.sql','company-scope-task-children.sql'])await f.admin.query(await readFile('backend/review/'+file,'utf8'));
  await tx(f.org.user,async(c:any)=>{for(const user of[worker.id,empty.id]){const v=randomUUID();await c.query("insert into ab.user_access_scope_versions(id,tenant_id,user_id,revision,selection_kind,payload_cipher,created_by)values($1,$2,$3,1,'companies',$4,$5)",[v,f.org.tenant,user,cipher.seal({companyIds:user===worker.id?[f.co1]:[]}),f.org.user]);if(user===worker.id)await c.query('insert into ab.user_access_scope_companies values($1,$2,$3,$4)',[f.org.tenant,user,v,f.co1]);}});
  const ids=async(actor:string,table:string)=>(await tx(actor,(c:any)=>c.query('select id from ab.'+table+' order by id'))).rows.map((r:any)=>r.id);
  assert.deepEqual(await ids(worker.id,'customers'),[f.client]);assert.deepEqual(await ids(worker.id,'customer_files'),[files[0]]);assert.deepEqual(await ids(worker.id,'communication_threads'),[threads[0]]);assert.deepEqual(await ids(worker.id,'communication_messages'),[messages[0]]);assert.deepEqual((await ids(worker.id,'finance_notifications')).filter((id:string)=>notifications.includes(id)),[notifications[0]]);assert((await tx(worker.id,(c:any)=>c.query('select company_id from ab.finance_notifications'))).rows.every((r:any)=>r.company_id===f.co1));assert.deepEqual(await ids(worker.id,'finance_receipts'),[receipts[0]]);
  assert.deepEqual((await tx(worker.id,(c:any)=>c.query('select receipt_id from ab.finance_handover_items'))).rows.map((r:any)=>r.receipt_id),[receipts[0]]);assert.deepEqual((await tx(worker.id,(c:any)=>c.query('select notification_id from ab.notification_receipts'))).rows.map((r:any)=>r.notification_id),[notifications[0]]);
  assert.deepEqual(await ids(empty.id,'customers'),[]);assert.deepEqual(await ids(empty.id,'customer_files'),[]);assert.deepEqual(await ids(empty.id,'communication_messages'),[]);assert.deepEqual(await ids(empty.id,'finance_receipts'),[]);assert.deepEqual(await ids(empty.id,'hr_employees'),[self.id]);assert.equal((await tx(worker.id,(c:any)=>c.query('select id from ab.customer_files'),randomUUID())).rows.length,0);
  const text=(await tx(worker.id,(c:any)=>c.query('select customer_file_id,version_id,vehicle_file_id from ab.document_text_index'))).rows;assert(text.length>=2);assert(text.every((r:any)=>!r.customer_file_id||r.customer_file_id===files[0]));assert(text.every((r:any)=>!r.version_id||r.version_id===versions[0]));
+ const companyAndBankVersions=[...versions,...bankDocuments.map(d=>d.versionId)];
+ const visibleEvidence=async(actor:string)=>(await tx(actor,(c:any)=>c.query(
+  'select id from ab.document_versions where id=any($1::uuid[]) order by id',[companyAndBankVersions],
+ ))).rows.map((r:any)=>r.id);
+ assert.deepEqual(await visibleEvidence(worker.id),[versions[0],bankDocuments[0].versionId].sort());
+ assert.deepEqual(await visibleEvidence(empty.id),[]);
+ assert.deepEqual(await ids(worker.id,'document_links'),[links[0]]);
+ assert.deepEqual(await ids(f.org.user,'document_links'),[...links].sort());
+ await assert.rejects(tx(worker.id,(c:any)=>c.query(
+  'insert into ab.document_links(id,tenant_id,document_id,company_id,created_by) values($1,$2,$3,$4,$5)',
+  [randomUUID(),f.org.tenant,companyDocument,f.co2,worker.id],
+ )),(error:any)=>error.code==='42501');
  assert((await ids(worker.id,'hr_employees')).includes(foreignEmployee.id));
  const [ownDocument,foreignDocument]=employeeDocuments;
  for(const [actor,visible] of [[worker.id,[ownDocument.versionId]],[empty.id,[ownDocument.versionId]],[f.org.user,[ownDocument.versionId,foreignDocument.versionId].sort()]]){

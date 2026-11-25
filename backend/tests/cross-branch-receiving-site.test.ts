@@ -91,6 +91,11 @@ test('cross-branch receiving site uses actual dated work location and separate l
 
     const origin='http://127.0.0.1:3100';
     app=await build({pool:f.runtime,key:f.secret.key,origin,secureCookies:false,auth:f.auth,objects:f.objects,crossBranchCollectionEnabled:true});
+    const page=await app.inject({url:'/'});
+    assert.match(page.body,/src="cross-branch-collection-ui.js"/);
+    const ui=await app.inject({url:'/cross-branch-collection-ui.js'});
+    assert.equal(ui.statusCode,200);
+    assert.match(ui.headers['content-type']||'',/javascript/);
     const headers:Record<string,string>={origin,'x-ab-request':'1'};
     const login=async(username=f.username,password=f.password)=>{
       const r=await app!.inject({method:'POST',url:'/api/login',payload:{username,password},headers:{origin,'x-ab-request':'1'}});
@@ -227,6 +232,7 @@ test('cross-branch receiving site uses actual dated work location and separate l
     await assert.rejects(read(), (error: any) => error.status === 403);
     assert.equal((await app.inject({url:intakePath+'/'+intakeResult.json().id,headers})).statusCode,404);
     assert.equal((await intake(intakeBody,intakeKey)).statusCode,404);
+    assert.equal((await app.inject({url:'/api/bootstrap',headers})).json().crossBranchCollection,null);
   } finally {
     if(app)await app.close();
     await f.close();
