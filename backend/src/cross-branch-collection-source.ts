@@ -1,3 +1,4 @@
+import{workLocationSourceReady}from'./employee-work-location-readiness.js';
 // Minimal original-receivable read candidate. No server registration, Owner model,
 // profile/ledger grant, allocation, receipt, custody move or financial write.
 import{z}from'zod';import{requireOk}from'./core.js';import{financeRight}from'./finance.js';import{receivableAdjustmentFacts}from'./receivable-amount-facts.js';import{reviewedPrivateJsonSourceReady}from'./reviewed-private-json-source.js';
@@ -16,5 +17,34 @@ export function projectCrossBranchCollectionSource(raw:unknown,cipher:any,contex
 export async function readCrossBranchCollectionSource(c:any,m:any,s:any,cipher:any,input:unknown){
  const d=z.object({customerId:uuid,companyId:uuid}).strict().parse(input);requireOk(!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user')&&m.actor.id===s.user_id&&m.actor.status==='Active'&&m.actor.roleId!=='investor'&&financeRight(m,'ledger_cross_branch_collect',d.companyId),403,'denied');
  const t=(await c.query("select ab.tenant()tenant_id,current_setting('ab.actor')actor_id,current_setting('transaction_isolation')isolation,current_setting('transaction_read_only')read_only")).rows[0];requireOk(t.tenant_id===s.tenant_id&&t.actor_id===s.user_id&&t.isolation==='repeatable read'&&t.read_only==='on',409,'crossBranchCollectionSnapshotRequired');
- requireOk(await reviewedPrivateJsonSourceReady(c,'ab.cross_branch_collection_source(uuid,uuid)',crossBranchCollectionBodyHash),503,'crossBranchCollectionSourceReviewRequired');const raw=(await c.query('select ab.cross_branch_collection_source($1,$2)packet',[d.customerId,d.companyId])).rows[0]?.packet;return projectCrossBranchCollectionSource(raw,cipher,{actorId:s.user_id,tenantId:s.tenant_id,...d});
+ requireOk(await reviewedPrivateJsonSourceReady(c,'ab.cross_branch_collection_source(uuid,uuid)',crossBranchCollectionBodyHash),503,'crossBranchCollectionSourceReviewRequired');const raw=(await c.query('select ab.cross_branch_collection_source($1,$2)packet',[d.customerId,d.companyId])).rows[0]?.packet;
+ const source=projectCrossBranchCollectionSource(raw,cipher,{actorId:s.user_id,tenantId:s.tenant_id,...d});
+ if(source.state!=='reviewed_source')return source;
+ const receivingSiteAvailable=(await c.query("select to_regprocedure('ab.cross_branch_receiving_site(uuid)') is not null ok")).rows[0]?.ok;
+ if(!receivingSiteAvailable)return source;
+ return {...source,receivingSite:await readCrossBranchReceivingSite(c,m,s,d.companyId)};
+}
+
+const receivingSiteSourceHash='3701724a043d87818626dacac27e427e9970bf5c12a26e31f630e86f013b0291';
+const receivingSiteHeader={actorId:uuid,tenantId:uuid,companyId:uuid,asOf:z.iso.date()};
+const receivingSiteReview=z.object({...receivingSiteHeader,reviewRequired:z.enum([
+ 'individual_denial_source_review','receiving_site_unassigned','receiving_site_source_mismatch','receiving_site_unavailable',
+])}).strict();
+const receivingSiteFacts=z.object({...receivingSiteHeader,centreId:uuid,centreSourceId:uuid,locationSourceId:uuid}).strict();
+
+export async function readCrossBranchReceivingSite(c:any,m:any,s:any,companyId:string){
+ companyId=uuid.parse(companyId);
+ requireOk(!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user')&&m.actor.id===s.user_id&&
+  m.actor.status==='Active'&&m.actor.roleId!=='investor'&&financeRight(m,'ledger_cross_branch_collect',companyId),403,'denied');
+ const context=(await c.query("select ab.tenant()tenant_id,current_setting('ab.actor')actor_id,current_setting('transaction_isolation')isolation,current_setting('transaction_read_only')read_only")).rows[0];
+ requireOk(context.tenant_id===s.tenant_id&&context.actor_id===s.user_id&&
+  context.isolation==='repeatable read'&&context.read_only==='on',409,'crossBranchCollectionSnapshotRequired');
+ requireOk(await reviewedPrivateJsonSourceReady(c,'ab.cross_branch_receiving_site(uuid)',receivingSiteSourceHash)&&
+  await workLocationSourceReady(c),503,'crossBranchReceivingSiteReviewRequired');
+ const raw=(await c.query('select ab.cross_branch_receiving_site($1)packet',[companyId])).rows[0]?.packet;
+ const source=receivingSiteReview.or(receivingSiteFacts).safeParse(raw);
+ requireOk(source.success&&source.data.actorId===s.user_id&&source.data.tenantId===s.tenant_id&&
+  source.data.companyId===companyId,409,'crossBranchReceivingSiteReviewRequired');
+ const {actorId,tenantId,...site}=source.data;
+ return {...site,canCollect:false,financialEffect:false};
 }
