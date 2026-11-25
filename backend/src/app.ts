@@ -275,6 +275,16 @@ export async function build(options: Options) {
         const employeeImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/employees/run';
         const centreImportRun=req.method==='POST'&&req.url.split('?')[0]==='/api/data-imports/centres/run';
         const scopeMembershipApply=req.method==='POST'&&/^\/api\/users\/[a-f0-9-]{36}\/work-scope\/apply-memberships$/i.test(req.url.split('?')[0]);
+        const crossBranchIntake=req.method==='POST'&&req.url.split('?')[0]==='/api/ledger/collections/cross-branch-intake';
+        const crossBranchPosting=req.method==='POST'&&/^\/api\/ledger\/collections\/cross-branch-intake\/[a-f0-9-]{36}\/post$/i.test(req.url.split('?')[0]);
+        if(crossBranchPosting){
+          requireOk(options.crossBranchCollectionEnabled===true,503,'crossBranchCollectionNotEnabled');
+          requireOk(!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user'),403,'denied');
+          const actor=(await c.query("select current_database() db,exists(select 1 from ab.users where tenant_id=ab.tenant() and id=$1 and role_id='owner' and status='Active') allowed",[s.user_id])).rows[0];
+          requireOk(/^ab_backup_[a-f0-9]{32}$/.test(actor?.db||''),503,'crossBranchCollectionNotEnabled');
+          requireOk(actor?.allowed===true,403,'ownerOnly');
+          await requireImportWorkAccess(c);
+        }
         const crossBranchCollection=req.method==='POST'&&req.url.split('?')[0]==='/api/ledger/collections/invoices'&&
           req.body?.receivingSite!==undefined;
         const originalImportRun=req.method==='POST'?/^\/api\/data-imports\/(customers|vehicles)\/(?:upload|[0-9a-f-]{36}\/(?:run|preview))$/i.exec(req.url.split('?')[0]):null;
@@ -282,13 +292,13 @@ export async function build(options: Options) {
         if(!s.viewAs&&originalTaskMutation)await c.query('select pg_advisory_xact_lock_shared(hashtextextended($1,0))',[s.tenant_id+':security-roles']);
         // Serialize permission mutations before loading their authority snapshot.
         // This also prevents a queued grant from using a pre-standard-change issuer.
-        if(!s.viewAs&&req.method!=='GET'&&(crossBranchCollection||guardedVehicleExecution||guardedDirectBank||whatsAppReviewMutation||serviceExceptionMutation||originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
+        if(!s.viewAs&&req.method!=='GET'&&(crossBranchIntake||crossBranchPosting||crossBranchCollection||guardedVehicleExecution||guardedDirectBank||whatsAppReviewMutation||serviceExceptionMutation||originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/central-dashboard\/security-(?:plan|apply)$/.test(req.url.split('?')[0])||/^\/api\/security-roles(?:\/|$)/.test(req.url.split('?')[0])||/^\/api\/users\/[0-9a-f-]+(?:\/|$)/i.test(req.url.split('?')[0])))
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':security-roles']);
         // Serialize original company mutations before reading the directory used by import preview receipts.
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(scopeMembershipApply||originalImportRun||centreImportRun||employeeDocumentImportRun||companyDocumentImportRun||employeeImportRun||companyImportRun||/^\/api\/companies(?:\/|$)/.test(req.url.split('?')[0])))
           await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':company-directory']);
         if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(employeeDocumentImportRun||employeeImportRun||/^\/api\/personnel(?:\/|$)/.test(req.url.split('?')[0])))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':personnel-import-directory']);
-        if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(scopeMembershipApply||crossBranchCollection||centreImportRun||req.url.split('?')[0]==='/api/operating-centres/apply'))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':operating-centre-directory']);
+        if(!s.viewAs&&!['GET','HEAD'].includes(req.method)&&(scopeMembershipApply||crossBranchIntake||crossBranchCollection||centreImportRun||req.url.split('?')[0]==='/api/operating-centres/apply'))await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':operating-centre-directory']);
         if(guardedVehicleExecution||guardedDirectBank||originalTaskMutation)importModel=await model(c,s.user_id,cipher);
         if(whatsAppReviewMutation){importModel=await model(c,s.user_id,cipher);await assertWhatsAppReviewOperator(c,importModel,s,cipher,req.url.startsWith('/api/customers/')?'customer':'thread',req.params.id,options.whatsAppReview);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
         if(serviceExceptionMutation){importModel=await model(c,s.user_id,cipher);await assertExecutionExceptionOperator(c,importModel,s,req.params.id,options.serviceExecutionExceptionsEnabled===true);requireOk(typeof req.headers['idempotency-key']==='string',422,'idempotencyRequired');}
@@ -343,6 +353,12 @@ export async function build(options: Options) {
             // A receipt recovers the original outcome, never access revoked since that outcome.
             if(req.method==='POST'&&/^\/api\/communications\/[0-9a-f-]+\/(?:task|cases(?:\/[0-9a-f-]+\/actions)?)(?:\?|$)/i.test(req.url))
               await authorizedCommunicationThread(c,await model(c,s.user_id,cipher),cipher,uuid(req.params.id));
+            if(crossBranchIntake){
+              requireOk(options.crossBranchCollectionEnabled===true,503,'crossBranchCollectionNotEnabled');
+              const visible=await c.query('select 1 from ab.cross_branch_collection_intake where tenant_id=$1 and id=$2 and reported_by=$3',
+                [s.tenant_id,cached.response.id,s.user_id]);
+              requireOk(visible.rowCount===1,404,'notFound');
+            }
             await originalImportReceiptGuard?.(cached.response);
             if(originalTaskMutation)await guardOriginalTaskMutationReceipt(c,importModel,s,originalTaskMutation[1],originalTaskMutation[2],req.body,cached.response);
             if(guardedDirectBank)await guardDirectBankSettlementReplay(c,importModel,s,cipher,guardedDirectBank[1],cached.response);
@@ -368,7 +384,7 @@ export async function build(options: Options) {
             JSON.stringify(result),
           ]);
         return result;
-      },{...(s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:{}),...(req.method==='GET'&&/^\/api\/communications\/[0-9a-f-]+\/whatsapp-review(?:\/(?:plan|delivery))?$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='GET'&&req.url.split('?')[0]==='/api/ledger/package/document-register'?{repeatableRead:true}:{}),...(req.method==='GET'&&['/api/personnel/tasks/options','/api/ledger/collections/cross-branch-preview'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='GET'&&/^\/api\/customers\/[0-9a-f-]+\/service-eligibility-review$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&['/api/data-imports/company-documents/preview','/api/data-imports/opening-balances/preview','/api/data-imports/personnel-documents/preview','/api/data-imports/centres/preview','/api/data-imports/companies/preview','/api/data-imports/employees/preview'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&/^\/api\/users\/[0-9a-f-]+\/work-scope\/preview$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{})});
+      },{...(s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:{}),...(req.method==='GET'&&/^\/api\/communications\/[0-9a-f-]+\/whatsapp-review(?:\/(?:plan|delivery))?$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='GET'&&req.url.split('?')[0]==='/api/ledger/package/document-register'?{repeatableRead:true}:{}),...(req.method==='GET'&&['/api/personnel/tasks/options','/api/ledger/collections/cross-branch-preview','/api/ledger/collections/cross-branch-invoice'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='GET'&&/^\/api\/customers\/[0-9a-f-]+\/service-eligibility-review$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&['/api/data-imports/company-documents/preview','/api/data-imports/opening-balances/preview','/api/data-imports/personnel-documents/preview','/api/data-imports/centres/preview','/api/data-imports/companies/preview','/api/data-imports/employees/preview'].includes(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{}),...(req.method==='POST'&&/^\/api\/users\/[0-9a-f-]+\/work-scope\/preview$/i.test(req.url.split('?')[0])?{repeatableRead:true,readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:{})});
     };
   registerPermissionAdmin(app,call,cipher);registerSecurityRoles(app,call,cipher);registerOperatingCentres(app,call,cipher);registerOperatingCentreWriter(app,call,cipher);registerWorkLocations(app,call,cipher);registerWorkScopePreview(app,call,cipher,options.workScopeMembershipApplyEnabled===true);
   registerFinance(app,call,cipher);

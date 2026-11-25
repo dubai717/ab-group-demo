@@ -52,7 +52,8 @@ import { financeRight } from './finance.js';
 import { customerCan } from './customers.js';
 import { number, today } from './vehicle-domain.js';
 import {createFinancialVoucher} from './ledger-domain.js';
-import {crossBranchReceivingSiteSelection,readCrossBranchCollectionSource} from './cross-branch-collection-source.js';
+import {reviewedPrivateJsonSourceReady} from './reviewed-private-json-source.js';
+import {crossBranchReceivingSiteSelection,readCrossBranchCollectionSource,readCrossBranchReceivingSite,verifyCrossBranchReceivingSite} from './cross-branch-collection-source.js';
 import { L, P, need, ready, company, open, event, notify, fact, config, chart, resolve, item, line, journal, post, reverse, evidence, balance, invoices, customer, invoice, linkInvoice, custody, move, moveAmount, bankPosting, allocateReceipt, postReceipt } from './ledger-domain.js';
 const id = z.uuid(), day = z.iso.date(), money = z.string().regex(/^\d{1,15}(\.\d{1,3})?$/), positive = money.refine(x => L.units(x) > 0n), currency = z.string().regex(/^[A-Z]{3}$/), text = z.string().trim().min(1).max(2000), opt = id.nullish();
 const invoiceSchema = z.object({ companyId: id, customerId: id.optional(), contractingCompanyId:id.optional(), vehicleId: opt, itemId: id, amount: positive, currency, issuedOn: day, dueOn: day, sourceKey: z.string().trim().min(1).max(160), description: z.string().max(2000).default('') }).strict().refine(exactFinancialParty,'financialPartyRequired');
@@ -258,7 +259,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
     app.post('/api/ledger/invoices/:id/correct',route(correctInvoice));
     registerFinancialPackage(app,route,cipher,correctInvoice,createFinancialItem);
     const collection = z.object({ allocations:z.array(z.object({invoiceId:id,amount:positive}).strict()).min(1).max(100).optional(),targetInvoiceId:id.optional(),companyId: id, customerId: id.optional(), contractingCompanyId:id.optional(), vehicleId: opt, currency, receivedOn: day, method: z.enum(['cash', 'cheque', 'transfer']), mode: z.enum(['manual', 'automatic']), amount: positive, items: z.array(z.object({ itemId: id, amount: positive }).strict()).max(100).default([]), overridePriority: z.boolean().default(false), reason: z.string().max(2000).default(''), operationId: opt, cheque: z.object({ number: text, bankAccountId: id, beneficiary: text, issuedOn: day, dueOn: day }).strict().optional() }).strict().refine(exactFinancialParty,'financialPartyRequired');
-    async function collect(c: any, m: any, s: any, d: any, legacyPolicy=false, invoiceRows:any[]=[]) {
+    async function collect(c: any, m: any, s: any, d: any, legacyPolicy=false, invoiceRows:any[]=[], custodyHolder=s.user_id) {
         need(m, 'collect', d.companyId);
         company(m, d.companyId);
         if(d.contractingCompanyId)await contractingParty(c,m,d.contractingCompanyId,d.companyId);else await customer(c, m, d.customerId, d.companyId, d.vehicleId);
@@ -326,13 +327,13 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
             const it = await item(c, cipher, m, selectedItem.itemId, d.companyId);
             requireOk(it.data.receipt, 403, 'denied');
             const key = randomUUID(), n = await number(c, s.tenant_id, 'receipt'), state = d.method === 'cheque' ? 'Pending' : 'Cleared';
-            await c.query('insert into ab.finance_receipts(id,tenant_id,company_id,holder_id,amount,currency,kind,cheque_id,reference,created_by,item_id,batch_id,customer_id,vehicle_id,receipt_number,received_on,payment_state,payload_cipher'+corporateColumn+')values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18'+(d.contractingCompanyId?',$19':'')+')', [key, s.tenant_id, d.companyId, s.user_id, selectedItem.amount, d.currency, d.method, chequeId, 'RC-' + n, s.user_id, it.id, batchId, d.customerId, selectedItem.invoiceId?selectedItem.vehicleId:d.vehicleId || null, n, d.receivedOn, state, cipher.seal({ override: d.overridePriority, reason: d.reason,...((selectedItem.invoiceId||d.targetInvoiceId)?{targetInvoiceId:selectedItem.invoiceId||d.targetInvoiceId}:{}),...(d.allocations?{invoiceAllocations:d.allocations.filter((a:any)=>due.find((b:any)=>b.id===a.invoiceId)?.item_id===it.id)}:{}) }),...(d.contractingCompanyId?[d.contractingCompanyId]:[])]);
+            await c.query('insert into ab.finance_receipts(id,tenant_id,company_id,holder_id,amount,currency,kind,cheque_id,reference,created_by,item_id,batch_id,customer_id,vehicle_id,receipt_number,received_on,payment_state,payload_cipher'+corporateColumn+')values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18'+(d.contractingCompanyId?',$19':'')+')', [key, s.tenant_id, d.companyId, custodyHolder, selectedItem.amount, d.currency, d.method, chequeId, 'RC-' + n, s.user_id, it.id, batchId, d.customerId, selectedItem.invoiceId?selectedItem.vehicleId:d.vehicleId || null, n, d.receivedOn, state, cipher.seal({ override: d.overridePriority, reason: d.reason,...((selectedItem.invoiceId||d.targetInvoiceId)?{targetInvoiceId:selectedItem.invoiceId||d.targetInvoiceId}:{}),...(d.allocations?{invoiceAllocations:d.allocations.filter((a:any)=>due.find((b:any)=>b.id===a.invoiceId)?.item_id===it.id)}:{}) }),...(d.contractingCompanyId?[d.contractingCompanyId]:[])]);
             const r = (await c.query('select * from ab.finance_receipts where id=$1', [key])).rows[0];
             if (d.method === 'cheque')
-                await move(c, s, d.companyId, key, s.user_id, d.currency, L.units(r.amount), 'physical-cheque:' + key, d.receivedOn);
+                await move(c, s, d.companyId, key, custodyHolder, d.currency, L.units(r.amount), 'physical-cheque:' + key, d.receivedOn);
             if (d.method === 'cash') {
                 await postReceipt(c, cipher, m, s, r, 'cash', d.receivedOn);
-                await move(c, s, d.companyId, key, s.user_id, d.currency, L.units(r.amount), 'collect:' + key, d.receivedOn);
+                await move(c, s, d.companyId, key, custodyHolder, d.currency, L.units(r.amount), 'collect:' + key, d.receivedOn);
             }
             if (d.method === 'transfer') { // The approved bank operation already owns its ONE journal. Allocate without reposting.
                 const allocated = await allocateReceipt(c, s, r, cipher);
@@ -345,11 +346,75 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
                 }
             }
             result.push({ id: key, number: String(n), itemId: it.id, invoiceId:selectedItem.invoiceId||null, amount: selectedItem.amount, state });
-            await fact(c, cipher, s, d.companyId, s.user_id, (state === 'Cleared' ? 'collection_confirmed' : 'collection_pending'), 'receipt:' + key, r.amount, { method: d.method, receiptId: key, receivedOn: d.receivedOn, confirmed: state === 'Cleared' });
+            await fact(c, cipher, s, d.companyId, custodyHolder, (state === 'Cleared' ? 'collection_confirmed' : 'collection_pending'), 'receipt:' + key, r.amount, { method: d.method, receiptId: key, receivedOn: d.receivedOn, confirmed: state === 'Cleared' });
         }
         await event(c, cipher, s, d.companyId, batchId, 'collection_created', null, { ...d, receipts: result });
         return { id: batchId, chequeId, receipts: result };
     }
+    const intakeFields={invoiceId:id,companyId:id,receivedOn:day,receivingSite:crossBranchReceivingSiteSelection};
+    const requireIntake=async(c:any)=>{
+        requireOk(options.crossBranchCollectionEnabled===true,503,'crossBranchCollectionNotEnabled');
+        const r=(await c.query("select current_database() db,to_regclass('ab.cross_branch_collection_intake') is not null ready")).rows[0];
+        requireOk(/^ab_backup_[a-f0-9]{32}$/.test(r?.db||'')&&r.ready,503,'crossBranchCollectionNotEnabled');
+    };
+    app.get('/api/ledger/collections/cross-branch-invoice',route(async(c:any,m:any,s:any,req:any)=>{
+        await requireIntake(c);
+        const d=z.object({invoiceId:id,companyId:id}).strict().parse(req.query);
+        const site=await readCrossBranchReceivingSite(c,m,s,d.companyId);
+        requireOk(!('reviewRequired' in site),409,'crossBranchReceivingSiteChanged');
+        const values=[d.invoiceId,d.companyId,site.asOf,site.centreId,site.centreSourceId,site.locationSourceId];
+        requireOk(await reviewedPrivateJsonSourceReady(c,'ab.cross_branch_intake_invoice(uuid,uuid,date,uuid,uuid,uuid)','0e596093458c7140c249a5c9975e107d7ce2b9ac33434599ef25cab007fbf76d'),503,'crossBranchCollectionSourceReviewRequired');
+        const invoice=(await c.query('select ab.cross_branch_intake_invoice($1,$2,$3,$4,$5,$6) fact',values)).rows[0]?.fact;
+        requireOk(invoice,404,'notFound');
+        return {invoice,receivingSite:{centreId:site.centreId,centreSourceId:site.centreSourceId,locationSourceId:site.locationSourceId},receivedOn:site.asOf};
+    }));
+    app.post('/api/ledger/collections/cross-branch-intake',route(async(c:any,m:any,s:any,req:any)=>{
+        await requireIntake(c);
+        const d=z.object({...intakeFields,amount:positive,actualCashReceived:z.literal(true)}).strict().parse(req.body);
+        const site=await verifyCrossBranchReceivingSite(c,m,s,d.companyId,d.receivedOn,d.receivingSite);
+        const params=[s.tenant_id,randomUUID(),d.companyId,d.invoiceId,s.user_id,d.amount,d.receivedOn,site.centreId,site.centreSourceId,site.locationSourceId];
+        const record=(await c.query(`insert into ab.cross_branch_collection_intake
+          (tenant_id,id,company_id,invoice_id,reported_by,amount,received_on,centre_id,centre_source_id,location_source_id)
+          values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id`,params)).rows[0];
+        return {id:record.id,state:'reported',financialEffect:false};
+    }));
+    app.get('/api/ledger/collections/cross-branch-intake/:id',route(async(c:any,m:any,s:any,req:any)=>{
+        await requireIntake(c);
+        requireOk(!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user')&&m.actor.id===s.user_id&&m.actor.status==='Active',403,'denied');
+        const r=(await c.query(`select i.id,i.invoice_id "invoiceId",i.company_id "companyId",i.amount::text,
+          to_char(i.received_on,'YYYY-MM-DD') "receivedOn",i.reported_by "reportedBy",i.centre_id "centreId",
+          case when p.intake_id is null then 'reported' else 'posted' end state
+          from ab.cross_branch_collection_intake i left join ab.cross_branch_collection_posting p
+            on p.tenant_id=i.tenant_id and p.intake_id=i.id
+          where i.tenant_id=$1 and i.id=$2`,[s.tenant_id,id.parse(req.params.id)])).rows[0];
+        requireOk(r,404,'notFound');
+        return r;
+    }));
+    app.post('/api/ledger/collections/cross-branch-intake/:id/post',route(async(c:any,m:any,s:any,req:any)=>{
+        await requireIntake(c);
+        const confirmation=z.object({confirmActualCash:z.literal(true),confirmedAmount:positive}).strict().parse(req.body);
+        const intakeId=id.parse(req.params.id);
+        const intake=(await c.query(`select i.*,to_char(i.received_on,'YYYY-MM-DD') receipt_day, v.customer_id
+          from ab.cross_branch_collection_intake i join ab.vehicle_invoices v
+            on v.tenant_id=i.tenant_id and v.company_id=i.company_id and v.id=i.invoice_id
+          where i.tenant_id=$1 and i.id=$2`,[s.tenant_id,intakeId])).rows[0];
+        requireOk(intake,404,'notFound');
+        requireOk(intake.reported_by!==s.user_id,403,'independentVerifierRequired');
+        requireOk(L.units(confirmation.confirmedAmount)===L.units(intake.amount),422,'amountMismatch');
+        requireOk(!(await c.query('select 1 from ab.cross_branch_collection_posting where intake_id=$1',[intakeId])).rowCount,409,'crossBranchIntakeAlreadyPosted');
+        const collector=(await c.query("select 1 from ab.users where tenant_id=$1 and id=$2 and status='Active' and role_id<>'investor'",[s.tenant_id,intake.reported_by])).rows[0];
+        requireOk(collector,409,'crossBranchCollectorReviewRequired');
+        for(const lock of ['customer-collection:'+intake.customer_id,'invoice-allocation:'+intake.invoice_id])
+          await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':'+lock]);
+        const result=await collect(c,m,s,{
+          companyId:intake.company_id,customerId:intake.customer_id,currency:'AED',receivedOn:intake.receipt_day,
+          method:'cash',mode:'manual',amount:intake.amount,items:[],reason:'Confirmed cross-branch cash report',
+          receivingSite:{centreId:intake.centre_id,centreSourceId:intake.centre_source_id,locationSourceId:intake.location_source_id,
+            receivedOn:intake.receipt_day,intakeId,reportedBy:intake.reported_by},
+        },false,[{invoiceId:intake.invoice_id,amount:intake.amount}],intake.reported_by);
+        await c.query('insert into ab.cross_branch_collection_posting values($1,$2,$3,$4)',[s.tenant_id,intakeId,result.id,s.user_id]);
+        return result;
+    }));
     app.get('/api/ledger/collections/cross-branch-preview',route(async(c:any,m:any,s:any,req:any)=>{
         requireOk(options.crossBranchCollectionEnabled===true,503,'crossBranchCollectionNotEnabled');
         const database=(await c.query('select current_database() database')).rows[0]?.database;

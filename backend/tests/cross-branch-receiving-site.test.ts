@@ -16,7 +16,7 @@ test('cross-branch receiving site uses actual dated work location and separate l
     const worker = await f.employee();
     const cipher = security(f.secret.key);
     const bill=await f.bill('100');
-    for (const file of ['operating-centres.sql', 'employee-work-locations.sql', 'cross-branch-collection-source.sql', 'cross-branch-receiving-site.sql']) {
+    for (const file of ['operating-centres.sql', 'employee-work-locations.sql', 'cross-branch-collection-source.sql', 'cross-branch-receiving-site.sql','cross-branch-collection-intake.sql']) {
       await f.admin.query(await readFile('backend/review/' + file, 'utf8'));
     }
     const read = (companyId = f.co1, session = {}) => transaction(f.runtime, f.org.tenant, worker.id, async c =>
@@ -95,6 +95,52 @@ test('cross-branch receiving site uses actual dated work location and separate l
     assert.equal(preview.statusCode,200,preview.body);
     assert.equal(preview.json().rows[0].id,bill.id);
     assert.equal(preview.json().receivingSite.locationSourceId,receivingSite.locationSourceId);
+    const invoicePath='/api/ledger/collections/cross-branch-invoice?companyId='+f.co1+'&invoiceId='+bill.id;
+    const exact=await app.inject({url:invoicePath,headers});
+    assert.equal(exact.statusCode,200,exact.body);
+    assert.deepEqual(Object.keys(exact.json().invoice).sort(),['companyId','currency','id','number','outstanding']);
+    assert.deepEqual(exact.json().receivingSite,receivingSite);
+    const intakePath='/api/ledger/collections/cross-branch-intake';
+    const intakeBody={invoiceId:bill.id,companyId:f.co1,receivedOn:today(),receivingSite,amount:'25',actualCashReceived:true};
+    const intake=async(data:unknown,key=randomUUID())=>app!.inject({method:'POST',url:intakePath,payload:data as any,headers:{...headers,'idempotency-key':key}});
+    const tables=['finance_receipts','finance_journals','finance_custody_moves','vehicle_allocations'];
+    const financeCounts=async()=>Promise.all(tables.map(async table=>(await f.admin.query('select count(*) n from ab.'+table)).rows[0].n));
+    const beforeIntake=await financeCounts();
+    const intakeKey=randomUUID(),intakeResult=await intake(intakeBody,intakeKey);
+    assert.equal(intakeResult.statusCode,200,intakeResult.body);
+    assert.deepEqual((await intake(intakeBody,intakeKey)).json(),intakeResult.json());
+    assert.equal(intakeResult.json().financialEffect,false);
+    assert.equal((await intake({...intakeBody,amount:'101'})).statusCode,403);
+    assert.equal((await intake({...intakeBody,invoiceId:randomUUID()})).statusCode,403);
+    assert.deepEqual(await financeCounts(),beforeIntake);
+    const other=await f.employee();
+    const rows=await transaction(f.runtime,f.org.tenant,other.id,async c=>
+      (await c.query('select id from ab.cross_branch_collection_intake')).rows);
+    assert.deepEqual(rows,[]);
+    const approvePath=intakePath+'/'+intakeResult.json().id+'/post';
+    const approveIntake=(key=randomUUID(),confirmedAmount='25')=>app!.inject({
+      method:'POST',url:approvePath,payload:{confirmActualCash:true,confirmedAmount},headers:{...headers,'idempotency-key':key},
+    });
+    assert.equal((await approveIntake()).statusCode,403);
+    await login();
+    const intakeRecord=await app.inject({url:intakePath+'/'+intakeResult.json().id,headers});
+    assert.equal(intakeRecord.statusCode,200,intakeRecord.body);
+    assert.equal(intakeRecord.json().amount,'25.000');
+    assert.equal(intakeRecord.json().state,'reported');
+    assert.equal((await approveIntake(randomUUID(),'24')).statusCode,422);
+    const confirmationKey=randomUUID();
+    const confirmed=await approveIntake(confirmationKey);
+    assert.equal(confirmed.statusCode,200,confirmed.body);
+    assert.deepEqual((await approveIntake(confirmationKey)).json(),confirmed.json());
+    assert.equal((await approveIntake()).statusCode,409);
+    const confirmedReceipt=confirmed.json().receipts[0].id;
+    const postedCash=(await f.admin.query('select holder_id,created_by,company_id from ab.finance_receipts where id=$1',[confirmedReceipt])).rows[0];
+    assert.deepEqual(postedCash,{holder_id:worker.id,created_by:f.org.user,company_id:f.co1});
+    const amount=(await f.admin.query('select sum(amount)::text total from ab.vehicle_allocations where invoice_id=$1',[bill.id])).rows[0].total;
+    assert.equal(amount,'25.000');
+    await login(worker.username,worker.password);
+    assert.equal((await app.inject({url:intakePath+'/'+intakeResult.json().id,headers})).json().state,'posted');
+
     for(const action of ['ledger_collect','customer_view','ledger_hand_over']){
       await f.req('POST','/api/users/'+worker.id+'/grants',{action,scope:{type:'company',id:f.co1},delegable:false});
     }
@@ -110,7 +156,7 @@ test('cross-branch receiving site uses actual dated work location and separate l
     const custody=async(holder=worker.id)=>(await f.admin.query('select coalesce(sum(amount),0)::text amount from ab.finance_custody_moves where receipt_id=$1 and company_id=$2 and holder_id=$3',[receiptId,f.co1,holder])).rows[0].amount;
     assert.equal(await custody(),'25.000');
     const allocation=(await f.admin.query('select sum(amount)::text amount from ab.vehicle_allocations where invoice_id=$1',[bill.id])).rows[0].amount;
-    assert.equal(allocation,'25.000');
+    assert.equal(allocation,'50.000');
     const receiptJournal=(await f.admin.query('select company_id,status from ab.finance_journals where source_key=$1',['receipt:'+receiptId])).rows;
     assert.deepEqual(receiptJournal,[{company_id:f.co1,status:'Posted'}]);
     await f.req('POST','/api/ledger/custody/routes',{companyId:f.co1,senderId:worker.id,receiverId:f.org.user,effectiveOn:today()});
@@ -137,6 +183,8 @@ test('cross-branch receiving site uses actual dated work location and separate l
     assert.ok(grant);
     await f.req('POST', '/api/users/' + worker.id + '/revoke', { grantId: grant.id });
     await assert.rejects(read(), (error: any) => error.status === 403);
+    assert.equal((await app.inject({url:intakePath+'/'+intakeResult.json().id,headers})).statusCode,404);
+    assert.equal((await intake(intakeBody,intakeKey)).statusCode,404);
   } finally {
     if(app)await app.close();
     await f.close();
