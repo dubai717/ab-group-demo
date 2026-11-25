@@ -16,7 +16,7 @@ export async function originalVehicleExecutionProof(c:any,cipher:any,requestId:s
   if(e.kind==='funding_decision'&&p?.approved===true&&(p.decision===undefined||p.decision==='approve')&&at<=fundedAt)approved.push(at);
   if(e.kind==='funds_received'&&p?.state==='Held'&&p.fundsId===f.id&&p.receivedBy===f.receiver_id&&e.actor_id===f.receiver_id&&at>=receivedAt){try{if(L.units(String(p.receivedAmount))===L.units(f.amount))received.push(at);}catch{}}
  }
- if(!approved.length||!received.length)return null;const approvedAt=Math.min(...approved),startedAt=Math.min(...received),existingExecution={requestId:r.id,createdOn:dubaiDay(requestAt),approvedOn:dubaiDay(approvedAt),startedOn:dubaiDay(startedAt),sourceVerified:true as const};
+ if(!approved.length||!received.length)return null;const approvedAt=Math.min(...approved),startedAt=Math.min(...received),existingExecution={requestId:r.id,createdOn:dubaiDay(requestAt),approvedOn:dubaiDay(approvedAt),startedOn:dubaiDay(startedAt),createdAt:new Date(requestAt).toISOString(),approvedAt:new Date(approvedAt).toISOString(),startedAt:new Date(startedAt).toISOString(),sourceVerified:true as const};
  return{existingExecution,sourceVersion:sha(JSON.stringify({requestId:r.id,requestAt,approvedAt,fundId:f.id,fundedAt,receivedAt,startedAt,amount:f.amount,currency:f.currency,receiverId:f.receiver_id})),source:'original_request_approval_and_matched_actual_funds_receipt',financialEffect:false};
 }
 
@@ -36,5 +36,5 @@ export async function originalCashExecutionProof(c:any,cipher:any,requestId:stri
   if(e.kind==='start'&&p?.actorType==='user'&&p?.before?.state==='Open'&&p.after?.state==='InProgress'&&z.uuid().safeParse(p.after.employeeId).success&&p.before.employeeId===p.after.employeeId)starts.push({at,eventId:e.id,actorId:e.created_by});
  }
  if(!approved.length||!created.length)return null;const createdAt=Math.min(...created),start=starts.filter(e=>e.at>=createdAt).sort((a,b)=>a.at-b.at)[0];if(!start)return null;const approvedAt=Math.min(...approved);
- return{existingExecution:{requestId:r.id,createdOn:dubaiDay(requestAt),approvedOn:dubaiDay(approvedAt),startedOn:dubaiDay(start.at),sourceVerified:true as const},sourceVersion:sha(JSON.stringify({requestId:r.id,requestAt,approvedAt,taskId:task.id,taskAt,createdAt,start})),source:'original_cash_approval_and_actual_registration_task_start',financialEffect:false};
+ return{existingExecution:{requestId:r.id,createdOn:dubaiDay(requestAt),approvedOn:dubaiDay(approvedAt),startedOn:dubaiDay(start.at),createdAt:new Date(requestAt).toISOString(),approvedAt:new Date(approvedAt).toISOString(),startedAt:new Date(start.at).toISOString(),sourceVerified:true as const},sourceVersion:sha(JSON.stringify({requestId:r.id,requestAt,approvedAt,taskId:task.id,taskAt,createdAt,start})),source:'original_cash_approval_and_actual_registration_task_start',financialEffect:false};
 }

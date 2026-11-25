@@ -1,11 +1,12 @@
+import{serviceActivation,serviceActivationFrame}from'./service-activation-clock.js';
 // Isolated build acceptance only. No environment flag, server registration, approval or live activation.
-import{z}from'zod';import{ApiError,requireOk}from'./core.js';import{actualActorServiceEligibilityCreationCheck,actualActorServiceEligibilityApprovalCheck}from'./service-eligibility-actor-source.js';import{today}from'./vehicle-domain.js';
+import{z}from'zod';import{ApiError,requireOk}from'./core.js';import{actualActorServiceEligibilityCreationCheck,actualActorServiceEligibilityApprovalCheck}from'./service-eligibility-actor-source.js';
 function isolatedServiceGuard(cipher:any,effectiveFrom:string,phase:'create'|'approve'){
- z.iso.date().parse(effectiveFrom);
+ const activation=serviceActivation(effectiveFrom);
  return async(c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general'})=>{
   const database=(await c.query('select current_database()name')).rows[0]?.name;
   requireOk(typeof database==='string'&&/^ab_backup_[a-f0-9]{32}$/.test(database),503,'isolatedEligibilityPrototypeOnly');
-  if(today()<effectiveFrom)return;
+  if(!serviceActivationFrame(activation,new Date()).active)return;
   const result=await (phase==='approve'?actualActorServiceEligibilityApprovalCheck:actualActorServiceEligibilityCreationCheck)(c,m,s,cipher,input);
   if(result.status!=='allowed')throw new ApiError(409,result.status==='blocked'?'newServiceArrearsBlocked':'newServiceArrearsReviewRequired');
  };
@@ -18,13 +19,13 @@ export const isolatedServiceApprovalEligibilityGuard=(cipher:any,effectiveFrom:s
 // original start, not a client flag, distinguishes continuation. Owner approval itself
 // remains covered by beforeServiceApproval; neither hook is registered by server.ts.
 export function isolatedCustomerServiceExecutionEligibilityGuard(cipher:any,effectiveFrom:string){
- z.iso.date().parse(effectiveFrom);
+ const activation=serviceActivation(effectiveFrom);
  const eligibility=isolatedNewServiceEligibilityGuard(cipher,effectiveFrom);
  return async(c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'residence'|'general';requestId:string})=>{
   const d=z.object({customerId:z.uuid(),companyId:z.uuid(),type:z.enum(['residence','general']),requestId:z.uuid()}).strict().parse(input);
   const name=(await c.query('select current_database()name')).rows[0]?.name;
   requireOk(typeof name==='string'&&/^ab_backup_[a-f0-9]{32}$/.test(name),503,'isolatedEligibilityPrototypeOnly');
-  if(today()<effectiveFrom)return;
+  if(!serviceActivationFrame(activation,new Date()).active)return;
   requireOk(!s.viewAs&&(s.actor_type===undefined||s.actor_type==='user')&&m.actor.id===s.user_id&&m.actor.status==='Active'&&m.actor.roleId!=='investor',403,'denied');
   const r=(await c.query("select tenant_id,customer_id,company_id,case when octet_length(payload_cipher)<=65536 then payload_cipher else null end payload_cipher from ab.customer_events where id=$1 and kind='service_request_created'",[d.requestId])).rows[0];
   requireOk(r&&r.tenant_id===s.tenant_id&&r.customer_id===d.customerId&&r.company_id===d.companyId,404,'notFound');

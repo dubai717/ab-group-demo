@@ -19,7 +19,7 @@ Only registration can use verified prior execution: matched original approval/fu
 
 ## Incomplete / not active
 
-This uses an explicit **synthetic effective day** (midnight Dubai), not a recorded live activation timestamp. Precise prospective activation evidence, bank-direct execution and remaining nonvehicle lifecycle adapters, lifecycle restart/cancellation/delegation/return coverage, timed Owner exceptions, complete action/child/FK/dependency compilation and integrated final acceptance remain unfinished. Upstream actual financial-payment authorization is not claimed guarded merely because the original request's fund-assignment API is checked. Original financial approval/reconciliation protections remain in force. No historical balance, original immutable row/trigger, real data, grant, database connection, protected gate or deployment changed.
+The test adapter accepts a trusted explicit effective date or precise offset timestamp; see PRECISE-SERVICE-ACTIVATION.md. No live activation is recorded. Prospective eligible-start lifecycle continuity, bank-direct execution and remaining nonvehicle lifecycle adapters, lifecycle restart/cancellation/delegation/return coverage, timed Owner exceptions, complete action/child/FK/dependency compilation and integrated final acceptance remain unfinished. Upstream actual financial-payment authorization is not claimed guarded merely because the original request's fund-assignment API is checked. Original financial approval/reconciliation protections remain in force. No historical balance, original immutable row/trigger, real data, grant, database connection, protected gate or deployment changed.
 
 ## Residence/general first-start integration
 

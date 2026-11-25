@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-24",
+  "asOf": "2026-11-25",
   "scope": "Operational V1 independent of PR115; not a completed release",
   "rows": [
     {
@@ -54,9 +54,12 @@
         "backend/src/service-execution-eligibility-prototype.ts",
         "backend/tests/service-eligibility-execution-hook.test.ts",
         "docs/operational-v1/SERVICE-EXECUTION-PROTOTYPE.md",
-        "backend/tests/service-eligibility-nonvehicle-start.test.ts"
+        "backend/tests/service-eligibility-nonvehicle-start.test.ts",
+        "backend/src/service-activation-clock.ts",
+        "backend/tests/service-activation-clock.test.ts",
+        "docs/operational-v1/PRECISE-SERVICE-ACTIVATION.md"
       ],
-      "remaining": "الحساب المعتمد ومصدر القراءة المحدود للمنفذ الفعلي وحراس الإنشاء واعتماد المالك وأول تنفيذ للمركبة والإقامة والطلب العام اختبرت في محولات معزولة؛ دوال الخادم غير موصولة ولم تُفعل القاعدة. القبض والرفض والإعادة للتعديل والعمل السابق محفوظة. برمجياً: وقت السريان الدقيق والاستثناء المحدد المدة وبقية التمويل البنكي/دورة التنفيذ ودمج النطاق والقبول الكامل؛ لا تغيير للمال أو صلاحية قراءة دفتر الموظف."
+      "remaining": "الحساب المعتمد ومصدر القراءة المحدود للمنفذ الفعلي وحراس الإنشاء واعتماد المالك وأول تنفيذ للمركبة والإقامة والطلب العام اختبرت في محولات معزولة؛ دوال الخادم غير موصولة ولم تُفعل القاعدة. القبض والرفض والإعادة للتعديل والعمل السابق محفوظة. برمجياً: استمرارية التنفيذ الذي بدأ مؤهلاً بعد السريان والاستثناء المحدد المدة وبقية التمويل البنكي/دورة التنفيذ ودمج النطاق والقبول الكامل؛ لا تغيير للمال أو صلاحية قراءة دفتر الموظف."
     },
     {
       "id": "3.1",

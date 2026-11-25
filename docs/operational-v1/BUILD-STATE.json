@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-24T23:39:36.076218+00:00",
+  "asOf": "2026-11-25T00:30:08.961935+00:00",
   "branch": "feature/operational-v1-independent",
   "financialPR": 115,
   "financialPREdited": false,
@@ -3340,12 +3340,18 @@
     "uiSourceUnchanged": true,
     "uiCompletedJourneys": 1,
     "reason": "The enabled fixture received its opt-in mode, but its browser process inherited the default expected mode. Pass the explicit spec mode to the browser; retain both independent default-off and enabled assertions.",
-    "backendStatus": "running",
+    "backendStatus": "passed",
     "fullAcceptanceClaimed": false,
     "evidenceSha256": {
       "ui.log": "53a41fc1de7d13372ad9a148e50983960cda306c319b3ef5b3c2182a40c7470c",
-      "ui-status.json": "68ae526b7fae755e00a6b66c55ef73f212c76ca99c78ed75da07c571d6cbc7ae"
-    }
+      "ui-status.json": "68ae526b7fae755e00a6b66c55ef73f212c76ca99c78ed75da07c571d6cbc7ae",
+      "backend.log": "f72bcfcab0c686dc2010f598caea2453ecdd860c4e01c65f20e30b181def48e6",
+      "backend-status.json": "212cfa21fec6924baa3d7db46aae389d3132958987bf93029a0e16a99e378605"
+    },
+    "backendPassed": 950,
+    "backendFailed": 0,
+    "backendSourceUnchanged": true,
+    "backendCompletedAt": "2026-11-25T00:08:59.790Z"
   },
   "frozenE640UIAcceptance": {
     "source": "e64066e68b5cbaa8892001d5f88f885f4e7bb1bc",
@@ -3374,6 +3380,30 @@
       "backup-inventory-native-linked.log": "22614d2c769ba337e501cde2b112b3fbc6fda6a0aa7a805cbb2534ee0aa07e89",
       "backup-inventory-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
       "backup-inventory-root.log": "339280e2636dc77904919b53000a8ef8005cb6a88a484d9c30e404c97573c485"
+    }
+  },
+  "preciseServiceActivation": {
+    "status": "implemented_unpublished_test_only",
+    "unitCasesPassed": 12,
+    "linkedNativeCasesPassed": 16,
+    "originalUTCExecutionEvidence": true,
+    "sameDayBoundaryTested": true,
+    "legacyDateSemanticsPreserved": true,
+    "nonzeroSubMillisecondTruncationRefused": true,
+    "sourceDataChanged": false,
+    "policyActivated": false,
+    "remaining": [
+      "Prospective eligible-start lifecycle continuity",
+      "Bank direct and original Cash first-task integration",
+      "Timed reviewed exceptions",
+      "Source/scope compilation and final acceptance"
+    ],
+    "evidenceSha256": {
+      "service-activation-types4.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "service-activation-final-unit.log": "c9bdf9df085b5be7cafbe3c2e1ae78b6c002e199467acf8dc527706d91873b38",
+      "service-activation-native.log": "e547fcc71339f50b7f03624061a27d153c1ace3eeec1ed4c9128ab7d56146ea4",
+      "service-activation-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "service-activation-root.log": "75c251223c04cffcbeab21282b68d6aea5d2abc06cab1aee197bccab62e0e4af"
     }
   }
 }

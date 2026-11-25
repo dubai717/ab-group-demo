@@ -1,0 +1,6 @@
+// Trusted server configuration/clock only; no request-body activation, persistence or live enabling.
+import{z}from'zod';
+export const serviceInstant=z.iso.datetime({offset:true}).refine(value=>{const digits=value.match(/\.(\d+)(?:Z|[+-]\d{2}:\d{2})$/)?.[1];return !digits||digits.length<=3||/^0+$/.test(digits.slice(3));},'subMillisecondActivationNeedsReview');
+export const serviceDubaiDay=(time:number)=>{if(!Number.isFinite(time))throw Error('serviceActivationClockRequired');return new Date(time+4*3600000).toISOString().slice(0,10);};
+export function serviceActivation(raw:string){const day=z.iso.date().safeParse(raw);if(day.success)return{effectiveFrom:day.data,effectiveAt:null};const iso=serviceInstant.parse(raw),at=Date.parse(iso);if(!Number.isFinite(at))throw Error('serviceActivationClockRequired');return{effectiveFrom:serviceDubaiDay(at),effectiveAt:new Date(at).toISOString()};}
+export function serviceActivationFrame(activation:ReturnType<typeof serviceActivation>,now:Date){const at=now.getTime(),asOf=serviceDubaiDay(at);return{asOf,active:activation.effectiveAt!==null?at>=Date.parse(activation.effectiveAt):asOf>=activation.effectiveFrom,...(activation.effectiveAt?{asOfAt:now.toISOString()}:{})};}
