@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { personnelFixture } from './personnel-fixture.js';
 import { security } from '../src/core.js';
+import { today } from '../src/vehicle-domain.js';
 import { legalEOS, payrollPreview } from '../src/personnel-domain.js';
 
 test('payroll cutoff and gratuity anniversary use the recorded hire calendar day', async () => {
@@ -23,6 +24,12 @@ test('payroll cutoff and gratuity anniversary use the recorded hire calendar day
   assert.equal(before.available,true);
   assert.equal(before.gross,'0.000');
   assert.equal(anniversary.gross,'210.000');
+  const nextMonth=new Date(today().slice(0,7)+'-01T00:00:00Z');
+  nextMonth.setUTCMonth(nextMonth.getUTCMonth()+1);
+  const pending=await f.req('POST','/api/personnel/employees/'+employee.id+'/payroll',{month:nextMonth.toISOString().slice(0,10)});
+  const refused=await f.req('POST','/api/personnel/payroll/'+pending.id+'/approve',{confirm:true},409);
+  assert.equal(refused.error,'payrollPeriodNotStarted');
+  assert.equal((await f.admin.query('select voucher_id from ab.hr_payroll where id=$1',[pending.id])).rows[0].voucher_id,null);
  } finally {
   await f.close();
  }
