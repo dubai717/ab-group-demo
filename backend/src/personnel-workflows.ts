@@ -163,11 +163,19 @@ export function registerPersonnelWorkflows(app: any, route: any, cipher: any) {
         created++;
     } return { created, paymentsCreated: 0, approvalRequired: true }; }));
     app.post('/api/personnel/followup/:companyId', route(async (c: any, m: any, s: any, r: any) => { z.object({ confirm: z.literal(true) }).strict().parse(r.body); return personnelFollowup(c, cipher, m, s, id.parse(r.params.companyId)); }));
-    app.post('/api/personnel/delegations', route(async (c: any, m: any, s: any, r: any) => { const d = z.object({ companyId: id, originalId: id, substituteId: id, leaveId:id.optional(), startsOn: day, endsOn: day, taskIds: z.array(id).min(1).max(1000), reason: text }).strict().parse(r.body); need(m, 'task_delegate', d.companyId); H.days(d.startsOn, d.endsOn); requireOk(d.originalId !== d.substituteId, 422, 'invalidSubstitute'); await employeeIn(c, d.originalId, d.companyId); const substitute=await employeeIn(c, d.substituteId, d.companyId);const linked=await validateLeaveDelegation(c,cipher,m,s,d);if(linked?.existingId)return{id:linked.existingId,saved:true,existing:true,authorityTransferred:false};
+    app.post('/api/personnel/delegations', route(async (c: any, m: any, s: any, r: any) => { const d = z.object({ companyId: id, originalId: id, substituteId: id, leaveId:id.optional(), startsOn: day, endsOn: day, taskIds: z.array(id).min(1).max(1000), reason: text }).strict().parse(r.body); need(m, 'task_delegate', d.companyId); H.days(d.startsOn, d.endsOn); requireOk(d.originalId !== d.substituteId, 422, 'invalidSubstitute'); await employeeIn(c, d.originalId, d.companyId); const substitute=await employeeIn(c, d.substituteId, d.companyId);
+        await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':delegation-origin:'+d.companyId+':'+d.originalId]);
+        const chosen=new Set(d.taskIds);
+        requireOk(chosen.size===d.taskIds.length,422,'duplicateTask');
+        const linked=await validateLeaveDelegation(c,cipher,m,s,d);if(linked?.existingId)return{id:linked.existingId,saved:true,existing:true,authorityTransferred:false};
         const tasks=(await c.query("select * from ab.tasks where id=any($1::uuid[]) and company_id=$2 and employee_id=$3 and state not in('Completed','Closed')",
             [d.taskIds,d.companyId,d.originalId])).rows;
         requireOk(tasks.length===new Set(d.taskIds).size,422,'invalidTaskScope');
         if(!linked){
+            const overlap=(await c.query("select payload_cipher from ab.hr_delegations where tenant_id=$1 and company_id=$2 and original_id=$3 and state in('Active','Extended') and starts_on<=$4 and ends_on>=$5 limit 2001",
+                [s.tenant_id,d.companyId,d.originalId,d.endsOn,d.startsOn])).rows;
+            requireOk(overlap.length<=2000,422,'delegationRangeRequired');
+            requireOk(!overlap.some((row:any)=>(cipher.open(row.payload_cipher).taskIds||[]).some((taskId:string)=>chosen.has(taskId))),409,'taskDelegationOverlap');
             const review=await delegatedTaskSourceReview(c,cipher,s.tenant_id,tasks,substitute);
             requireOk(!review,409,review||'communicationDelegateSourceReviewRequired');
         }
