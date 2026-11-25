@@ -92,7 +92,7 @@ import {registerFinance,bankNotice} from "./finance.js";
 export interface Options {
   // Trusted server seam; unset in server.ts. No public flag or live policy activation.
   beforeNewService?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general'})=>Promise<void>;
-  beforeServiceApproval?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'vehicle'|'residence'|'general'})=>Promise<void>;
+  beforeServiceApproval?: (c:any,m:any,s:any,input:{requestId:string;customerId:string;companyId:string;type:'vehicle'|'residence'|'general'})=>Promise<void>;
   beforeCustomerServiceExecution?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;type:'residence'|'general';requestId:string})=>Promise<void>;
   beforeRegistrationTaskStart?: (c:any,m:any,s:any,input:{taskId:string;requestId:string;companyId:string;employeeId:string})=>Promise<void>;
   confirmDirectBankEligibility?: (c:any,m:any,s:any,input:{customerId:string;companyId:string;requestId:string;eventId:string})=>Promise<void>;
