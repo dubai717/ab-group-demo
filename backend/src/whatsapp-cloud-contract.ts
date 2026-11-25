@@ -45,15 +45,16 @@ async function boundedProviderReply(response:Response){
  try{for(;;){const part=await reader.read();if(part.done)break;size+=part.value.byteLength;if(size>limit)throw Error('whatsappProviderReplyLimit');chunks.push(part.value);}return JSON.parse(Buffer.concat(chunks).toString('utf8'));}
  catch(error){await reader.cancel().catch(()=>{});throw error;}finally{reader.releaseLock();}
 }
+export const whatsappDispatchDigest=(plan:{phoneNumberId:string;companyId:string|null;payload:unknown})=>hash(JSON.stringify({phoneNumberId:plan.phoneNumberId,companyId:plan.companyId,payload:plan.payload}));
 export async function dispatchWhatsAppOnce(plan:ReturnType<typeof prepareWhatsAppOutbound>,config:{mode:'disabled'|'sandbox';graphVersion:string;phoneNumberId:string;token:string;allowedTestRecipients:string[]},store:OriginalMessageDispatchStore,fetcher:typeof fetch){
  if(!['disabled','sandbox'].includes(config.mode))throw Error('liveWhatsAppActivationNotApproved');
  if(config.mode==='disabled'||!plan.ready||!plan.payload)return{status:'suppressed',externalSent:false};
  if(!/^v\d{1,3}\.\d{1,2}$/.test(config.graphVersion)||!/^\d{1,30}$/.test(config.phoneNumberId)||config.phoneNumberId!==plan.phoneNumberId||!config.token||!config.allowedTestRecipients.includes(plan.payload.to))throw Error('sandboxWhatsAppConfigurationRequired');
- const digest=hash(JSON.stringify({phoneNumberId:plan.phoneNumberId,companyId:plan.companyId,payload:plan.payload})),lease=await store.lease(plan.messageId,digest);if(!lease.acquired)return{status:lease.status,externalId:lease.externalId,existing:true,financialEffect:false,externalSent:lease.status==='sent'?true:['unknown','leased'].includes(lease.status)?null:false};
+ const digest=whatsappDispatchDigest(plan),lease=await store.lease(plan.messageId,digest);if(!lease.acquired)return{status:lease.status,externalId:lease.externalId,existing:true,financialEffect:false,externalSent:lease.status==='sent'?true:['unknown','leased'].includes(lease.status)?null:false};
  let result:{status:'unknown'|'sent'|'failed';externalId?:string;providerCode?:number}={status:'unknown'};
  try{const response=await fetcher('https://graph.facebook.com/'+config.graphVersion+'/'+config.phoneNumberId+'/messages',{method:'POST',headers:{Authorization:'Bearer '+config.token,'Content-Type':'application/json'},body:JSON.stringify(plan.payload),redirect:'error',signal:AbortSignal.timeout(15000)}),body=await boundedProviderReply(response);
   if(response.ok&&typeof body?.messages?.[0]?.id==='string'&&/^[A-Za-z0-9._:+/=-]{1,256}$/.test(body.messages[0].id))result={status:'sent',externalId:body.messages[0].id};
-  else if([400,401,403].includes(response.status)&&typeof body?.error?.code==='number')result={status:'failed',providerCode:body.error.code};
+  else if([400,401,403].includes(response.status)&&Number.isSafeInteger(body?.error?.code)&&body.error.code>=0)result={status:'failed',providerCode:body.error.code};
  }catch{/* Delivery may already have happened. Preserve unknown; never random-retry. */}
  await store.finish(plan.messageId,result);return{...result,externalSent:result.status==='sent'?true:result.status==='unknown'?null:false,financialEffect:false};
 }

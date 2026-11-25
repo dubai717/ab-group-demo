@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-25T01:35:11.650158+00:00",
+  "asOf": "2026-11-25T01:49:24.389956+00:00",
   "branch": "feature/operational-v1-independent",
   "financialPR": 115,
   "financialPREdited": false,
@@ -3431,9 +3431,9 @@
     }
   },
   "latestVerifiedIndependentCI": {
-    "number": 54,
-    "runId": 45508732138,
-    "source": "46d5e308f3ee805b356754ee0223b4c2a43a725b",
+    "number": 55,
+    "runId": 45514275240,
+    "source": "e64066e68b5cbaa8892001d5f88f885f4e7bb1bc",
     "status": "completed",
     "conclusion": "success",
     "deployment": false
@@ -3539,6 +3539,36 @@
       "whatsapp-reply-types3.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "whatsapp-reply-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
       "whatsapp-reply-root.log": "393c01bb8a4501db6b1cc7826255afc42c08ac45d022ed54191aed19deed8fdb"
+    }
+  },
+  "originalWhatsAppDurableDispatch": {
+    "state": "implemented_unpublished_sandbox_only",
+    "linkedCasesPassed": 19,
+    "originalSettingsAndImmutableCustomerHistoryReused": true,
+    "freshSourceBeforeNewLease": true,
+    "actualOwnerBeforeModelAndSource": true,
+    "sourceAndConsentLocks": true,
+    "stalePlanCannotBypassConsentOrReview": true,
+    "concurrentTransportCalls": 1,
+    "unknownAndAbandonedNeverAutomaticallyRetried": true,
+    "acknowledgedOutcomeCannotDowngrade": true,
+    "recoveryNoncePrivate": true,
+    "orphanImmutableAttemptRefusesRecreation": true,
+    "syntheticDumpRestoreReceiptParity": true,
+    "realProviderCall": false,
+    "moneyGrantsOrTasksChanged": false,
+    "remaining": [
+      "Human status/review UI",
+      "Verified provider delivery statuses",
+      "Scoped employee and technical acknowledgement sources",
+      "Official provider/template/number setup",
+      "Original financial/document reminders and complete acceptance"
+    ],
+    "evidenceSha256": {
+      "whatsapp-dispatch-final-types2.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "whatsapp-dispatch-final-native2.log": "3b82a35d2922f92090376e171e9bc8b242fb516b9a55e5b041b48c5809a0d3f3",
+      "whatsapp-dispatch-build.log": "1a4cb1dee3a116ef654ae3857c0f7b38527cb697a8acdfd60a2f3350e1d7e030",
+      "whatsapp-dispatch-root2.log": "dce2940964f6fb7cee8136180773f5654924af932720ce6855189136103ca6e6"
     }
   }
 }
