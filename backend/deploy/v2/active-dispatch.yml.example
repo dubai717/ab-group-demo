@@ -164,8 +164,8 @@ jobs:
           BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
         run: |
           set -euo pipefail
-          node --import tsx backend/deploy/diagnose-source-drift.ts
           node --import tsx backend/deploy/backup-restore-drill.ts
+          node --import tsx backend/deploy/diagnose-source-drift.ts
           node --import tsx backend/deploy/apply-business-centers-release.ts
         if: steps.current-schema.outputs.pending != '0'
       - name: Remove only isolated runner copies
