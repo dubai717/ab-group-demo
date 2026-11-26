@@ -3,7 +3,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
     const f = JSON.parse(fs.readFileSync('work/financial-package-fixture.json')), browser = await chromium.launch({ executablePath: process.env.AB_BROWSER_EXECUTABLE || '/usr/bin/chromium', headless: true, args: ['--no-sandbox'] }), p = await browser.newPage({ viewport: { width: 1440, height: 1000 } }), errors = [];
     p.on('pageerror', e => errors.push(e.message));
     p.on('dialog', d => d.accept());
-    const tab = async (id) => { await p.locator('[data-ld=tab][data-id="' + id + '"]').click(); await p.locator('.ld-section').waitFor(); const ready = { setup: '[data-fp=new-item]', priorities: '#fp-priority', compliance: '[data-fp=fee-new]', documents: '#fp-document-type' }[id]; if (ready)
+    const tab = async (id) => { await p.locator('.ld-navigation [data-ld=tab][data-id="' + id + '"]').click(); await p.locator('.ld-section').waitFor(); const ready = { setup: '[data-fp=new-item]', priorities: '#fp-priority', compliance: '[data-fp=fee-new]', documents: '#fp-document-type' }[id]; if (ready)
         await p.locator(ready).waitFor(); };
     try {
         await p.goto('http://127.0.0.1:3646');
@@ -131,11 +131,63 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
             assert.equal(await dialog.getByRole('button', { name: /^Cancel$|^إلغاء$/ }).count(), 0);
             await dialog.locator('[data-close]').click();
         }
+        const navigation = p.locator('.ld-navigation');
+        const company = p.locator('#ld-company');
+        const alternate = await company.locator('option').evaluateAll((options, current) =>
+            options.find(option => option.value && option.value !== current)?.value, f.companyId);
+        assert(alternate, 'fixture offers another authorized company');
+        await company.selectOption(alternate);
+        await p.waitForFunction(id => document.querySelector('#ld-company')?.value === id, alternate);
+        await tab('documents');
+        assert.equal(await company.inputValue(), alternate);
+        await company.selectOption(f.companyId);
+        await p.waitForFunction(id => document.querySelector('#ld-company')?.value === id, f.companyId);
+        const refresh = p.waitForResponse(response =>
+            new URL(response.url()).pathname === '/api/ledger/workbench' && response.ok());
+        await p.locator('[data-ld=reload]').click();
+        await refresh;
+        await navigation.waitFor();
+        const expectedGroups = [
+            'invoices collect vouchers custody deposits work intercompany',
+            'dashboard funds cards reconciliation closing',
+            'reports receivables cost-centres documents',
+            'setup journals taxes priorities compliance entitlements import',
+        ];
+        for (const id of expectedGroups.flatMap(group => group.split(' '))) {
+            await tab(id);
+            await navigation.locator('[aria-current=true][data-id="' + id + '"]').waitFor();
+            await p.locator('#ld-body').waitFor();
+        }
+        const headings = {
+            ar: ['الفوترة', 'الرقابة', 'التقارير', 'الإعدادات المحاسبية'],
+            en: ['Billing', 'Control', 'Reports', 'Accounting settings'],
+        };
+        if (process.env.AB_FINANCE_SCREENSHOTS) fs.mkdirSync(process.env.AB_FINANCE_SCREENSHOTS, { recursive: true });
         for (const locale of ['ar', 'en']) {
             await p.evaluate(l => setLocale(l), locale);
             for (const width of [1440, 768, 390]) {
                 await p.setViewportSize({ width, height: 950 });
+                await navigation.getByRole('heading', { name: headings[locale][0], exact: true }).waitFor();
+                assert.deepEqual(await navigation.locator('h3').allTextContents(), headings[locale]);
+                const layout = await navigation.locator('.ld-navigation-group').evaluateAll(groups => groups.map(group => {
+                    const { x, y } = group.getBoundingClientRect();
+                    return { x, y, tabs: [...group.querySelectorAll('button')].map(button => button.dataset.id).join(' ') };
+                }));
+                assert.deepEqual(layout.map(group => group.tabs), expectedGroups);
+                if (width === 1440) {
+                    assert(layout.every(group => group.y === layout[0].y));
+                    assert(locale === 'ar' ? layout[0].x > layout[3].x : layout[0].x < layout[3].x);
+                }
+                if (width === 390) assert(layout.every((group, index) => index === 0 || group.y > layout[index - 1].y));
                 await tab('compliance');
+                assert.equal(await navigation.locator('[aria-current=true]').getAttribute('data-id'), 'compliance');
+                if (process.env.AB_FINANCE_SCREENSHOTS && width !== 768) {
+                    const file = process.env.AB_FINANCE_SCREENSHOTS + '/finance-' + locale + '-' + width + '.png';
+                    if (width === 1440) {
+                        await p.evaluate(() => scrollTo(0, 0));
+                        await p.screenshot({ path: file, animations: 'disabled' });
+                    } else await navigation.screenshot({ path: file, animations: 'disabled' });
+                }
                 assert(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), locale + ' ' + width);
                 await tab('priorities');
                 assert(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), locale + ' priorities ' + width);

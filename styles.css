@@ -885,7 +885,34 @@ th {
 @media print{.ve-page:has(#ve-key-print)>*:not(#ve-key-print){display:none!important}#ve-key-print{display:block!important;width:90mm;padding:6mm;border:1px solid #000}}
 .ve-choice{border:1px solid var(--line);border-radius:10px;padding:10px;max-height:320px;overflow:auto}.ve-choice label{display:flex;align-items:center;gap:8px;padding:5px}.ve-choice [hidden]{display:none!important}
 /* Phase 5: reuse current palette, responsive financial workbench. */
-.ld-section{min-width:0}.ld-section .workspace-toolbar{flex-wrap:wrap;gap:.4rem}.ld-form-section{margin-block:1rem;padding:.8rem;border:1px solid var(--border-color,#d6dbe4);border-radius:10px}.ld-form-section summary{cursor:pointer;font-weight:600;margin-block-end:.6rem}.ld-form label{display:flex;flex-direction:column;gap:.3rem;min-width:0}.ld-form .full{grid-column:1/-1}.ld-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.7rem;margin-block:.6rem}.ld-item{display:grid!important;grid-template-columns:auto 1fr minmax(90px,160px);align-items:center}.ld-confirm{border:2px solid currentColor;padding:1rem;margin-block:1rem}.ld-section .table-wrap{max-width:100%;overflow:auto}.ld-section td{max-width:330px;overflow-wrap:anywhere}@media(max-width:600px){.ld-row{grid-template-columns:1fr}.ld-section .form-grid{grid-template-columns:1fr}.ld-section .workspace-toolbar{max-height:180px;overflow:auto}}@media print{body.ld-print .sidebar,body.ld-print .topbar,body.ld-print .workspace-toolbar,body.ld-print .ld-form-section,body.ld-print .fw-actions,body.ld-print button{display:none!important}body.ld-print .table-wrap{overflow:visible}}
+.ld-section{min-width:0}.ld-form-section{margin-block:1rem;padding:.8rem;border:1px solid var(--border-color,#d6dbe4);border-radius:10px}.ld-form-section summary{cursor:pointer;font-weight:600;margin-block-end:.6rem}.ld-form label{display:flex;flex-direction:column;gap:.3rem;min-width:0}.ld-form .full{grid-column:1/-1}.ld-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.7rem;margin-block:.6rem}.ld-item{display:grid!important;grid-template-columns:auto 1fr minmax(90px,160px);align-items:center}.ld-confirm{border:2px solid currentColor;padding:1rem;margin-block:1rem}.ld-section .table-wrap{max-width:100%;overflow:auto}.ld-section td{max-width:330px;overflow-wrap:anywhere}@media(max-width:600px){.ld-row{grid-template-columns:1fr}.ld-section .form-grid{grid-template-columns:1fr}}@media print{body.ld-print .sidebar,body.ld-print .topbar,body.ld-print .ld-navigation,body.ld-print .ld-form-section,body.ld-print .fw-actions,body.ld-print button{display:none!important}body.ld-print .table-wrap{overflow:visible}}
+
+.ld-navigation {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .7rem;
+    margin-block: .9rem 1rem;
+}
+.ld-navigation-group {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    min-width: 0;
+    padding: .65rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel-alt);
+}
+.ld-navigation-group h3 { font-size: 1rem; margin: 0 0 .3rem; padding-inline: .35rem; }
+.ld-navigation-group button { width: 100%; padding: .35rem .5rem; text-align: start; }
+.ld-navigation-group button[aria-current] {
+    background: var(--panel);
+    border-color: var(--primary);
+    font-weight: 700;
+}
+@media (max-width: 1050px) { .ld-navigation { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .ld-navigation { grid-template-columns: minmax(0, 1fr); } }
+@media print { .ld-navigation { display: none !important; } }
 
 /* Personnel workspace uses the existing palette and responsive form components. */
 .hr-toolbar {display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-block:12px;}
