@@ -8,7 +8,13 @@ test('Dashboard counts match original registers, distinguish denied/empty, and b
  const all=await f.req('GET','/api/central-dashboard');assert.equal(all.counts.banks,2);assert(all.counts.customers>0);assert.equal(all.counts.companies,2);
  for(const [source,register]of [['companies','companies'],['banks','banks'],['customers','customers']]){const r=await f.req('GET','/api/central-dashboard?source='+source);assert.equal(r.sources[source].length,r.counts[source]);const original=await f.req('GET','/api/registers/'+register+'?limit=100');assert.equal(original.total,r.counts[source]);}
  const filtered=await f.req('GET','/api/central-dashboard?companyId='+f.co2+'&source=banks');assert.equal(filtered.counts.banks,1);assert.equal(filtered.sources.banks[0].id,b2.id);assert.equal(filtered.postedFinancial.banks.length,1);assert.equal(filtered.postedFinancial.banks[0].balance,'0.000');
- const employee=await f.employee();await f.login(employee.username,employee.password);let own=await f.req('GET','/api/central-dashboard');assert.equal(own.counts.banks,null);assert.equal(own.counts.customers,null);assert.equal(own.counts.companies,null);await f.req('GET','/api/central-dashboard?source=banks',undefined,403);await f.login();
+ const employee=await f.employee();await f.login(employee.username,employee.password);let own=await f.req('GET','/api/central-dashboard');assert.equal(own.counts.banks,null);assert.equal(own.counts.customers,null);assert.equal(own.counts.companies,null);await f.req('GET','/api/central-dashboard?source=banks',undefined,403);
+ await f.req('GET','/api/central-dashboard?asUserId='+f.org.user,undefined,403);
+ await f.req('GET','/api/central-dashboard/vehicle-movements?asUserId='+f.org.user,undefined,403);
+ await f.login();
+ const preview=await f.req('GET','/api/central-dashboard?asUserId='+employee.id);
+ assert.equal(preview.viewAs.readOnly,true);assert.equal(preview.actor.id,employee.id);
+ assert.deepEqual(preview.postedFinancial.banks,[]);assert.equal(preview.counts.banks,null);
  await f.req('POST','/api/users/'+employee.id+'/grants',{action:'bank_view',scope:{type:'company',id:f.co1},delegable:false});await f.req('POST','/api/users/'+employee.id+'/grants',{action:'customer_view',scope:{type:'company',id:f.co1},delegable:false});await f.login(employee.username,employee.password);own=await f.req('GET','/api/central-dashboard?source=banks');assert.equal(own.counts.banks,1);assert.equal(own.sources.banks[0].id,b1.id);assert(!own.sources.banks.some((r:any)=>r.id===b2.id));await f.req('GET','/api/central-dashboard?companyId='+f.co2+'&source=banks',undefined,403);await f.login();
  const empty=await f.req('GET','/api/central-dashboard?companyId='+f.co2+'&source=vehicles');assert.equal(empty.counts.vehicles,0);assert.deepEqual(empty.sources.vehicles,[]);
  assert.equal(before.length,0); // All changes above are explicit operations in this isolated fixture only.

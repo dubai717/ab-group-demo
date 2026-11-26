@@ -4,6 +4,7 @@ import {build} from '../src/app.js';
 import {writeFile} from 'node:fs/promises';
 import {security} from '../src/core.js';
 const f=await businessCentersFixture(),manager=await f.employee('general_manager');
+await f.bank();
 for(const action of ['customer_view','vehicle_view'])await f.req('POST','/api/users/'+manager.id+'/grants',{action,scope:{type:'company',id:f.co1},delegable:false});
 const department=await f.req('POST','/api/departments',{companyId:f.co1,name:'Synthetic Preview Department'});
 await f.req('PATCH','/api/users/'+manager.id,{revision:1,nameAr:'علي معاينة جزئية مسؤول العلاقات العامة وإدارة العمليات والنقل للمجموعة',nameEn:'Ali Partial Preview — Senior Public Relations and Transport Operations Coordinator for AB Group',departmentIds:[department.id]});
