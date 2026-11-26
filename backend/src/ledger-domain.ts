@@ -114,6 +114,7 @@ export async function custody(c: any, co: string, holder: string, currency: stri
 export async function move(c: any, s: any, co: string, receipt: string, holder: string, currency: string, amount: bigint, key: string, date = today()) { await c.query('insert into ab.finance_custody_moves(id,tenant_id,company_id,receipt_id,holder_id,currency,amount,source_key,created_by,effective_on)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [randomUUID(), s.tenant_id, co, receipt, holder, currency, L.money(amount), key, s.user_id, date]); }
 export async function moveAmount(c: any, s: any, co: string, holder: string, currency: string, amount: bigint, key: string, to?: string, date = today(), kind = 'cash') {
     let remaining = amount;
+    const moved:{id:string;amount:bigint}[]=[];
     for (const r of await custody(c, co, holder, currency, undefined, kind)) {
         if (!remaining)
             break;
@@ -121,9 +122,11 @@ export async function moveAmount(c: any, s: any, co: string, holder: string, cur
         await move(c, s, co, r.id, holder, currency, -taken, key + ':out:' + r.id, date);
         if (to)
             await move(c, s, co, r.id, to, currency, taken, key + ':in:' + r.id, date);
+        moved.push({id:r.id,amount:taken});
         remaining -= taken;
     }
     requireOk(remaining === 0n, 409, 'insufficientCustody');
+    return moved;
 }
 export async function bankPosting(c: any, cipher: any, m: any, s: any, d: any) {
     const b = m.bank.list().find((b: any) => b.id === d.bankAccountId);

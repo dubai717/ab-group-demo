@@ -27,9 +27,11 @@
     function table(key, rows, cols, actions = () => '', open) { return FinancialTables.table(ctx.scope, [...cols.map(([, title]) => title), t('الإجراءات', 'Actions')], rows.map(r => [...cols.map(([name]) => e(WorkspaceUI.dateTime(r[name]))), (open ? `<button hidden type="button" data-fp-open="${e(r.id)}" data-kind="${key}">${t('تفاصيل', 'Details')}</button>` : '') + actions(r)]), { key: 'package:' + key, columns: [...cols.map(([name]) => name), null], rawRows: rows, companyId: ctx.co }); }
     function detail(title, pairs) { const d = document.createElement('dialog'); d.className = 'record-form-dialog'; d.dataset.centerOwned = '1'; d.innerHTML = '<h2>' + e(title) + '</h2>' + RecordLayout.values(pairs) + `<button class="secondary-btn" data-close>${t('إغلاق', 'Close')}</button>`; document.body.append(d); d.querySelector('[data-close]').onclick = () => { d.close(); d.remove(); }; FloatingRecords.open(d); return d; }
     function itemEditor(existing) {
-        const d = existing?.details || {}, fields = [f('nameAr', 'الاسم العربي', 'Arabic name', 'text', existing?.name_ar || ''), f('nameEn', 'الاسم الإنجليزي', 'English name', 'text', existing?.name_en || ''), f('category', 'التصنيف المالي', 'Financial classification', 'text', existing?.category || 'general', choices({ ...categories, ...Object.fromEntries(ctx.book.finance_items.filter(r => !categories[r.category]).map(r => [r.category, [r.category, r.category]])) })), f('templateItemId', 'استخدام الربط المعتمد من بند مماثل (اختياري)', 'Use approved mapping from a similar item (optional)', 'text', '', options(), false), f('recurrence', 'دورية الاستحقاق', 'Recurrence', 'text', d.recurrence || 'none', choices(recurrence)), f('recurringAmount', 'المبلغ الافتراضي', 'Default amount', 'text', d.recurringAmount || '0'), f('invoice', 'السماح بالفوترة', 'Allow invoicing', 'checkbox', d.invoice ?? true), f('receipt', 'السماح بالقبض', 'Allow receipts', 'checkbox', d.receipt ?? true), f('payment', 'السماح بالصرف', 'Allow payment', 'checkbox', d.payment ?? false), f('annualMonth', 'أساس شهر الاستحقاق السنوي', 'Annual due month basis', 'text', String(d.annualMonth || 0), [{ id: '0', name: t('شهر تسجيل المركبة — اليوم الأول من الشهر', 'Vehicle registration month — first day of month') }, ...Array.from({ length: 12 }, (_, i) => ({ id: String(i + 1), name: new Intl.DateTimeFormat(getLocale() === 'ar' ? 'ar-AE' : 'en', { month: 'long' }).format(new Date(2026, i, 1)) }))]), ...['receivableId', 'revenueId', 'expenseId', 'payableId'].map((key, i) => ({ ...f(key, ['حساب المستحقات', 'حساب الإيرادات أو أمانات العميل', 'حساب المصروف', 'حساب الدائنين'][i], ['Receivables account', 'Income / customer liability account', 'Expense account', 'Payables account'][i], 'text', d[key] || '', accounts(), false), group: 'accounting', groupTitle: ['الربط المحاسبي — إعدادات متقدمة', 'Accounting mapping — advanced settings'] })), { ...f('taxRate', 'نسبة الضريبة المعتمدة', 'Approved tax rate', 'text', d.taxRate || '0'), group: 'accounting', groupTitle: ['الربط المحاسبي — إعدادات متقدمة', 'Accounting mapping — advanced settings'] }, { ...f('taxAccountId', 'حساب الضريبة', 'Tax account', 'text', d.taxAccountId || '', accounts(), false), group: 'accounting', groupTitle: ['الربط المحاسبي — إعدادات متقدمة', 'Accounting mapping — advanced settings'] }];
+        const d = existing?.details || {}, fields = [f('nameAr', 'الاسم العربي', 'Arabic name', 'text', existing?.name_ar || ''), f('nameEn', 'الاسم الإنجليزي', 'English name', 'text', existing?.name_en || ''), f('category', 'التصنيف المالي', 'Financial classification', 'text', existing?.category || 'general', choices({ ...categories, ...Object.fromEntries(ctx.book.finance_items.filter(r => !categories[r.category]).map(r => [r.category, [r.category, r.category]])) })), f('templateItemId', 'استخدام الربط المعتمد من بند مماثل (اختياري)', 'Use approved mapping from a similar item (optional)', 'text', '', options(), false), f('recurrence', 'دورية الاستحقاق', 'Recurrence', 'text', d.recurrence || 'none', choices(recurrence)), f('recurringAmount', 'المبلغ الافتراضي', 'Default amount', 'text', d.recurringAmount || '0'), f('recurrenceStart','تاريخ بدء الدورية','Recurrence start date','date',d.recurrenceStart||'',null,false), f('invoice', 'السماح بالفوترة', 'Allow invoicing', 'checkbox', d.invoice ?? true), f('receipt', 'السماح بالقبض', 'Allow receipts', 'checkbox', d.receipt ?? true), f('payment', 'السماح بالصرف', 'Allow payment', 'checkbox', d.payment ?? false), f('annualMonth', 'أساس شهر الاستحقاق السنوي', 'Annual due month basis', 'text', String(d.annualMonth || 0), [{ id: '0', name: t('شهر تسجيل المركبة — اليوم الأول من الشهر', 'Vehicle registration month — first day of month') }, ...Array.from({ length: 12 }, (_, i) => ({ id: String(i + 1), name: new Intl.DateTimeFormat(getLocale() === 'ar' ? 'ar-AE' : 'en', { month: 'long' }).format(new Date(2026, i, 1)) }))]), ...['receivableId', 'revenueId', 'expenseId', 'payableId'].map((key, i) => ({ ...f(key, ['حساب المستحقات', 'حساب الإيرادات أو أمانات العميل', 'حساب المصروف', 'حساب الدائنين'][i], ['Receivables account', 'Income / customer liability account', 'Expense account', 'Payables account'][i], 'text', d[key] || '', accounts(), false), group: 'accounting', groupTitle: ['الربط المحاسبي — إعدادات متقدمة', 'Accounting mapping — advanced settings'] })), { ...f('taxRate', 'نسبة الضريبة المعتمدة', 'Approved tax rate', 'text', d.taxRate || '0'), group: 'accounting', groupTitle: ['الربط المحاسبي — إعدادات متقدمة', 'Accounting mapping — advanced settings'] }, { ...f('taxAccountId', 'حساب الضريبة', 'Tax account', 'text', d.taxAccountId || '', accounts(), false), group: 'accounting', groupTitle: ['الربط المحاسبي — إعدادات متقدمة', 'Accounting mapping — advanced settings'] }];
         const dialog = scopedForm(t(existing ? 'تعديل البند — الرمز ثابت' : 'تعريف بند مالي — الرمز يولد تلقائياً', existing ? 'Edit item — fixed internal code' : 'Define financial item — code generated automatically'), fields, async (values, key) => safely(async () => { const payload = { ...d, ...values, annualMonth: Number(values.annualMonth), priority: existing?.priority ?? 100, companyIds: d.companyIds || [ctx.co], active: existing?.active ?? true, methods: d.methods || ['manual', 'automatic', 'bulk'] }; if (existing)
-            payload.code = existing.code; for (const k of Object.keys(payload))
+            payload.code = existing.code;
+            if(!payload.recurrenceStart)delete payload.recurrenceStart;
+            for (const k of Object.keys(payload))
             if (k.endsWith('Id') && !payload[k])
                 delete payload[k]; await ctx.api(existing ? 'items/' + existing.id : 'items', existing ? 'PATCH' : 'POST', payload, key); await ctx.refresh(); }));
         const group = dialog.querySelector('.record-field-group');
@@ -74,11 +76,16 @@
         }
         if (tab === 'priorities') {
             const ids = state.priority?.itemIds || ctx.book.finance_items.slice().sort((a, b) => a.priority - b.priority).map(r => r.id), ordered = [...ids, ...ctx.book.finance_items.map(r => r.id).filter(id => !ids.includes(id))];
-            return intro + `<form id="fp-priority"><label><input type="checkbox" name="enabled" ${state.priority?.requestedEnabled ? 'checked' : ''}>${t('تفعيل الأولوية للدفعات غير المخصصة', 'Enable priority for unspecified payments')}</label><ol data-priority-list>${ordered.map(id => { const r = ctx.book.finance_items.find(r => r.id === id); return r ? `<li data-item="${e(id)}"><span>${e(itemName(r))}</span>${can('configure') ? button('up', t('للأعلى', 'Move up'), id) + button('down', t('للأسفل', 'Move down'), id) : ''}</li>` : ''; }).join('')}</ol><p>${t('الحالة المالية الفعلية', 'Actual financial state')}: ${!state.approved.priority || !state.priority ? t('الأولوية الرقمية السابقة محفوظة؛ الترتيب الجديد لم يفعّل مالياً.', 'Existing numeric priorities are preserved; the new order is not financially activated.') : state.priority.enabled ? t('الترتيب الجديد مفعل للمستحقات العامة غير المخصصة. قواعد العقود محفوظة.', 'New order active for unallocated general receivables. Contract rules are preserved.') : t('التوزيع بالأولوية معطل للمستحقات العامة؛ يلزم تخصيص فواتير صراحة.', 'Priority allocation disabled for general receivables; select invoices explicitly.')}</p>${can('configure') ? '<button type="submit" class="primary-btn">' + t('معاينة وحفظ الترتيب', 'Review and save order') + '</button>' : ''}<p role="alert"></p></form>`;
+            return intro + `<form id="fp-priority"><label><input type="checkbox" name="enabled" ${state.priority?.requestedEnabled ? 'checked' : ''}>${t('تفعيل الأولوية للدفعات غير المخصصة', 'Enable priority for unspecified payments')}</label><ol data-priority-list>${ordered.map(id => { const r = ctx.book.finance_items.find(r => r.id === id); return r ? `<li data-item="${e(id)}"><label><input type="checkbox" name="included" ${ids.includes(id)?'checked':''}>${e(itemName(r))}</label>${can('configure') ? button('up', t('للأعلى', 'Move up'), id) + button('down', t('للأسفل', 'Move down'), id) : ''}</li>` : ''; }).join('')}</ol><p>${t('الحالة المالية الفعلية', 'Actual financial state')}: ${!state.approved.priority || !state.priority ? t('الأولوية الرقمية السابقة محفوظة؛ الترتيب الجديد لم يفعّل مالياً.', 'Existing numeric priorities are preserved; the new order is not financially activated.') : state.priority.enabled ? t('الترتيب الجديد مفعل للمستحقات العامة غير المخصصة. قواعد العقود محفوظة.', 'New order active for unallocated general receivables. Contract rules are preserved.') : t('التوزيع بالأولوية معطل للمستحقات العامة؛ يلزم تخصيص فواتير صراحة.', 'Priority allocation disabled for general receivables; select invoices explicitly.')}</p>${can('configure') ? '<button type="submit" class="primary-btn">' + t('معاينة وحفظ الترتيب', 'Review and save order') + '</button>' : ''}<p role="alert"></p></form>`;
         }
         if (tab === 'compliance') {
             const rows = state.feeRules.map(r => ({ ...r, companyName: getLocale() === 'ar' ? ctx.company?.arabicName : ctx.company?.englishName, displayName: ctx.book.finance_items.find(x => x.id === r.itemId) ? itemName(ctx.book.finance_items.find(x => x.id === r.itemId)) : t('بند غير متاح', 'Unavailable item'), repeatName: r.repeat === 'once' ? t('مرة واحدة', 'One time') : t('شهري', 'Monthly'), unitName: r.unit === 'vehicle_category' ? t('كل مركبة وفئة — أكثر من 60 يوماً، أول الشهر', 'Vehicle/category — over 60 days, month start') : r.unit === 'customer_item' ? t('رصيد البند للعميل', 'Customer item balance') : t('كل مستحق مستقل', 'Each receivable'), state: r.enabled ? t('مفعل', 'Enabled') : t('معطل', 'Disabled') }));
-            return intro + (can('configure') ? button('fee-new', t('إضافة قاعدة رسوم', 'Add fee rule')) : '') + table('fees', rows, [['displayName', t('البند', 'Item')], ['companyName', t('الشركة', 'Company')], ['delayMonths', t('مدة التأخر بالأشهر', 'Delay months')], ['amount', t('الرسوم AED', 'Fee AED')], ['unitName', t('وحدة الاحتساب', 'Calculation unit')], ['repeatName', t('التكرار', 'Recurrence')], ['effectiveOn', t('السريان', 'Effective date')], ['state', t('الحالة', 'State')]], r => can('configure') ? button('fee-status', r.enabled ? t('تعطيل', 'Disable') : t('تفعيل', 'Enable'), r.id) : '', true);
+            return intro + button('monthly-review',t('معاينة إقفال الشهر','Preview month close')) +
+                (can('configure')&&ABCentral.actor.roleId==='owner'?button('monthly-new',t('إعداد متابعة شهرية','Configure monthly follow-up')):'') +
+                table('monthly-followup',(state.monthlyFollowups||[]).map(r=>({...r,displayName:itemName(ctx.book.finance_items.find(x=>x.id===r.itemId)||{})})),
+                  [['displayName',t('البند الأساسي','Base item')],['amount',t('الرسم','Fee')],['effectiveOn',t('السريان','Effective date')]],
+                  r=>can('configure')&&ABCentral.actor.roleId==='owner'?button('monthly-edit',t('تعديل','Edit'),r.itemId):'') +
+                (can('configure') ? button('fee-new', t('إضافة قاعدة رسوم', 'Add fee rule')) : '') + table('fees', rows, [['displayName', t('البند', 'Item')], ['companyName', t('الشركة', 'Company')], ['delayMonths', t('مدة التأخر بالأشهر', 'Delay months')], ['amount', t('الرسوم AED', 'Fee AED')], ['unitName', t('وحدة الاحتساب', 'Calculation unit')], ['repeatName', t('التكرار', 'Recurrence')], ['effectiveOn', t('السريان', 'Effective date')], ['state', t('الحالة', 'State')]], r => can('configure') ? button('fee-status', r.enabled ? t('تعطيل', 'Disable') : t('تفعيل', 'Enable'), r.id) : '', true);
         }
         if (tab === 'entitlements')
             return intro + (can('configure') ? button('relation-new', t('ربط استحقاق فعلي', 'Link actual entitlement')) : '') + button('relation-preview', t('معاينة الاستحقاقات', 'Preview entitlements')) + table('relations', state.relations.map(r => ({ ...r, customerName: ctx.customers.find(c => c.id === r.customerId)?.name || t('غير متاح في نطاق العرض', 'Unavailable in scope'), itemName: ctx.book.finance_items.find(x => x.id === r.itemId) ? itemName(ctx.book.finance_items.find(x => x.id === r.itemId)) : t('غير متاح', 'Unavailable'), state: r.enabled ? t('مفعل', 'Enabled') : t('معطل', 'Disabled') })), [['itemName', t('البند', 'Item')], ['customerName', t('العميل', 'Customer')], ['amount', t('المبلغ', 'Amount')], ['anchorOn', t('بداية الاستحقاق', 'First due date')], ['untilOn', t('نهاية العلاقة', 'Relationship end')], ['state', t('الحالة', 'State')]], r => can('configure') ? button('relation-status', r.enabled ? t('تعطيل', 'Disable') : t('تفعيل', 'Enable'), r.id) : '', true);
@@ -139,6 +146,59 @@
             if(action==='tax-bridge'){taxBridgeEditor();return;}
             if (action === 'new-item') {
                 itemEditor();
+                return;
+            }
+            if(action==='monthly-new'||action==='monthly-edit'){
+                const old=ctx.book.package.monthlyFollowups?.find(r=>r.itemId===key);
+                const baseItems=ctx.book.finance_items.filter(r=>r.category!=='monthly_followup'&&(!old||r.id===old.itemId))
+                    .map(r=>({id:r.id,name:itemName(r)}));
+                const income=ctx.book.finance_accounts.filter(r=>r.active&&r.kind==='income'&&(!old||r.id===old.incomeAccountId))
+                    .map(r=>({id:r.id,name:itemName(r)}));
+                scopedForm(t('مصاريف المتابعة الشهرية','Monthly follow-up expenses'),[
+                    f('itemId','البند الأساسي','Base item','text',old?.itemId||'',baseItems),
+                    f('incomeAccountId','حساب الإيراد','Income account','text',old?.incomeAccountId||'',income),
+                    f('amount','الرسم بالدرهم','Fee in AED','text',old?.amount||''),
+                    f('effectiveOn','تاريخ السريان','Effective date','date',date()),
+                    f('condition','شرط الاحتساب','Charge condition','text',old?.condition||'any_unpaid',[
+                        {id:'any_unpaid',name:t('أي رصيد مستحق عند الإقفال','Any unpaid balance at close')},
+                        {id:'double_fee',name:t('الرصيد لا يقل عن ضعفي الرسم','Balance at least twice the fee')},
+                    ]),
+                    f('enabled','تفعيل القاعدة المعتمدة','Enable approved rule','checkbox',old?.enabled||false),
+                ],(d,requestKey)=>safely(async()=>{
+                    await call('monthly-followup','POST',{...d,companyId:ctx.co,revision:old?.revision||0,confirm:true},requestKey);
+                    await ctx.refresh();
+                }));
+                return;
+            }
+            if(action==='monthly-review'){
+                const requestCompany=ctx.co,actor=ABCentral.actor.id;
+                const plan=await call('monthly-followup/preview?'+new URLSearchParams({companyId:requestCompany}));
+                if(ctx.co!==requestCompany||ABCentral.actor.id!==actor)return;
+                const dialog=detail(t('معاينة إقفال الشهر','Month close preview'),[
+                    [t('تاريخ الإقفال','Close date'),plan.closeOn],
+                    ...plan.rows.map(row=>[itemName(ctx.book.finance_items.find(i=>i.id===row.itemId)||{}),
+                        row.customerId+' · '+row.amount+' AED']),
+                ]);
+                if(can('invoice_create')&&ABCentral.actor.roleId==='owner'&&ctx.book.package.approved['monthly-followup']&&plan.rows.length){
+                    const apply=document.createElement('button');
+                    apply.type='button';
+                    apply.className='primary-btn';
+                    apply.textContent=t('تأكيد إصدار الفواتير','Confirm issuing invoices');
+                    const error=document.createElement('p');
+                    error.setAttribute('role','alert');
+                    dialog.append(apply,error);
+                    const requestKey=crypto.randomUUID();
+                    apply.onclick=async()=>{
+                        if(ctx.co!==requestCompany||ABCentral.actor.id!==actor||!confirmChange())return;
+                        apply.disabled=true;
+                        try{
+                            await call('monthly-followup/close','POST',{companyId:requestCompany,digest:plan.digest,confirm:true},requestKey);
+                            dialog.close();
+                            dialog.remove();
+                            await ctx.refresh();
+                        }catch(err){error.textContent=msg(err);apply.disabled=false;}
+                    };
+                }
                 return;
             }
             if (action === 'fee-new') {
@@ -206,7 +266,7 @@
         if (priority)
             priority.onsubmit = async (ev) => { ev.preventDefault(); if (priority.dataset.busy || !confirmChange())
                 return; priority.dataset.busy = '1'; const b = priority.querySelector('[type=submit]'); b.disabled = true; try {
-                await call('priority', 'POST', { companyId: ctx.co, enabled: priority.elements.enabled.checked, itemIds: [...priority.querySelectorAll('[data-item]')].map(li => li.dataset.item), revision: ctx.book.package.priority?.revision || 0, confirm: true }, crypto.randomUUID());
+                await call('priority', 'POST', { companyId: ctx.co, enabled: priority.elements.enabled.checked, itemIds: [...priority.querySelectorAll('[data-item]')].filter(li=>li.querySelector('[name=included]').checked).map(li => li.dataset.item), revision: ctx.book.package.priority?.revision || 0, confirm: true }, crypto.randomUUID());
                 await ctx.refresh();
             }
             catch (err) {

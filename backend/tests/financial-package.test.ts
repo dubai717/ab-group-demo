@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { businessCentersFixture } from './business-centers-fixture.js';
 import { planAdministrativeFees, planRecurring, addCalendarMonths } from '../src/financial-package.js';
-import { security } from '../src/core.js';
+import { security, transaction } from '../src/core.js';
+import { model } from '../src/data.js';
+import {runAdministrativeFees} from '../src/financial-package.js';
+import {latestClosedDubaiMonth,planMonthlyFollowup} from '../src/monthly-followup.js';
 import { today } from '../src/vehicle-domain.js';
 const bill = (patch: any = {}) => ({ id: 'invoice-a', company_id: 'co', customer_id: 'customer', item_id: 'salik', vehicle_id: null, dueOn: '2027-01-01', outstanding: '200', written_off: '0', currency: 'AED', ...patch });
 const rule = (patch: any = {}) => ({ id: 'rule', companyId: 'co', itemId: 'salik', feeItemId: 'fees', enabled: true, effectiveOn: '2027-01-01', delayMonths: 2, amount: '10', repeat: 'once', unit: 'customer_item', revision: 1, ...patch });
@@ -192,3 +195,161 @@ finally {
 } });
 
 test('cash and standalone bank payment documents reuse their original journals/operations and never create a second expense',async()=>{const f=await businessCentersFixture();try{const cash=await f.req('POST','/api/ledger/funds',{companyId:f.co1,name:'Synthetic document cash',kind:'cash',holderId:f.org.user,chartId:f.accounts.cash.charts[f.co1],currency:'AED',ceiling:'100',threshold:'10',openingBalance:'100',openingEquityId:f.accounts.equity.charts[f.co1],effectiveOn:today()}),spent=await f.req('POST','/api/ledger/funds/'+cash.id+'/spend',{itemId:f.items.expense,amount:'20',reason:'Synthetic paid cash expense',effectiveOn:today()}),bank=await f.bank(),payment=await f.req('POST','/api/finance/operations',{companyId:f.co1,kind:'payment',bankAccountId:bank.id,amount:'5',currency:'AED',direction:'debit',effectiveOn:today(),beneficiary:'Synthetic bank beneficiary',reason:'Synthetic bank draft',reference:'ISOLATED-PAYMENT-DOCUMENT',counterpartId:f.accounts.expense.charts[f.co1]}),before=(await f.admin.query('select count(*)::int n from ab.finance_entries')).rows[0].n,list=await f.req('GET','/api/ledger/package/documents?companyId='+f.co1+'&type=PV');assert.equal(list.count,2);const cpv=list.rows.find((r:any)=>r.id===spent.id),bpv=list.rows.find((r:any)=>r.id===payment.id);assert.equal(cpv.amount,'20.000');assert.equal(cpv.status,'Posted');assert.equal(cpv.paymentMethod,'cash');assert.match(cpv.number,/^CPV-/);assert.equal(bpv.status,'Draft');assert.equal(bpv.amount,'5.000');await f.req('POST','/api/ledger/package/documents/notes',{companyId:f.co1,type:'PV',documentId:spent.id,sourceKind:'cash_journal',notes:'Synthetic documented cash correction note',revision:1,confirm:true});assert.equal((await f.admin.query('select count(*)::int n from ab.finance_entries')).rows[0].n,before);assert.equal((await f.req('GET','/api/ledger/workbench?companyId='+f.co1)).finance_funds.find((r:any)=>r.id===cash.id).balance,'80.000');await f.req('POST','/api/ledger/package/documents/notes',{companyId:f.co1,type:'PV',documentId:payment.id,sourceKind:'bank_operation',notes:'Synthetic note before original approval',revision:0,confirm:true});await f.req('POST','/api/finance/operations/'+payment.id+'/approve',{revision:1});const approved=(await f.req('GET','/api/ledger/package/documents?companyId='+f.co1+'&type=PV')).rows.find((r:any)=>r.id===payment.id),latest=(await f.admin.query('select created_at from ab.finance_events where entity_id=$1 order by created_at desc limit 1',[payment.id])).rows[0];assert.equal(approved.status,'Approved');assert.equal(new Date(approved.lastModifiedAt).toISOString(),latest.created_at.toISOString(),'a later native approval supersedes older presentation metadata');}finally{await f.close();}});
+
+test('cash selection remains in custody until the original bank deposit confirms it exactly once', async()=>{
+ const f=await businessCentersFixture();
+ try{
+  const bill=await f.bill('300',f.items.salik),bank=await f.bank(),wrong=await f.bank(f.co2),proof=await f.proof();
+  await approve(f,['priority','deposit-allocation']);
+  await f.req('POST','/api/ledger/package/priority',{companyId:f.co1,enabled:true,itemIds:[f.items.loan],revision:0,confirm:true});
+  const input={companyId:f.co1,customerId:f.client!,currency:'AED',receivedOn:today(),amount:'200',mode:'manual',itemId:f.items.salik};
+  const preview=async(body:Record<string,string>)=>f.req('GET','/api/ledger/collections/deposit-preview?'+new URLSearchParams(body));
+  const {itemId,...automatic}=input;
+  assert.equal((await preview({...automatic,mode:'automatic'})).unallocated,'200.000');
+  const planned=await preview(input);
+  assert.deepEqual(planned.receipts.map((r:any)=>[r.invoiceId,r.amount]),[[bill.id,'200.000']]);
+  const saved=await f.req('POST','/api/ledger/collections/deposit-pending',{...input,digest:planned.digest,actualCashReceived:true});
+  assert.equal(saved.receipts[0].state,'Pending');
+  const paid=async()=>(await f.admin.query('select ab.financial_allocation_total($1)::text paid',[bill.id])).rows[0].paid;
+  assert.equal(Number(await paid()),0);
+  const held=await f.req('GET','/api/ledger/deposits/held-summary');
+  assert.equal(held.rows[0].bankAccountId,bank.id);
+  assert.equal(held.rows[0].amount,'200.000');
+  const deposit={companyId:f.co1,bankAccountId:wrong.id,amount:'200',currency:'AED',effectiveOn:today(),documentVersionId:proof,reference:'Synthetic deferred deposit'};
+  await f.req('POST','/api/ledger/deposits',deposit,422);
+  const correct=await f.req('POST','/api/ledger/deposits',{...deposit,bankAccountId:bank.id});
+  assert.equal(Number(await paid()),0);
+  const confirmation={confirmedAmount:'200',bankConfirmation:'Verified synthetic custody closure',effectiveOn:today(),accountAndDateVerified:true};
+  await f.req('POST','/api/ledger/deposits/'+correct.id+'/confirm',confirmation);
+  await f.req('POST','/api/ledger/deposits/'+correct.id+'/confirm',confirmation,409);
+  assert.equal((await f.admin.query('select coalesce(sum(amount),0)::text total from ab.vehicle_allocations where invoice_id=$1',[bill.id])).rows[0].total,'200.000');
+  assert.equal((await f.req('GET','/api/ledger/deposits/held-summary')).rows.length,0);
+ }finally{await f.close();}
+});
+
+test('Dubai month close preserves amounts, ignores next-month installments and creates one document per base item', async()=>{
+ const f=await businessCentersFixture();
+ try{
+  await approve(f,['monthly-followup']);
+  const now=today(),[year,month]=now.split('-').map(Number);
+  const next=new Date(Date.UTC(year,month,1)).toISOString().slice(0,10);
+  const following=new Date(Date.UTC(year,month+1,1)).toISOString().slice(0,10);
+  const monthly={companyId:f.co1,itemId:f.items.salik,incomeAccountId:f.accounts.income.id,
+   effectiveOn:now,amount:'20',condition:'double_fee',enabled:true,revision:0,confirm:true};
+  const save=await f.req('POST','/api/ledger/package/monthly-followup',monthly);
+  const other=await f.req('POST','/api/ledger/package/monthly-followup',
+   {...monthly,itemId:f.items.expense,amount:'10',condition:'any_unpaid'});
+  assert.notEqual(save.feeItemId,other.feeItemId);
+  const zero=await f.req('POST','/api/ledger/package/monthly-followup',
+   {...monthly,itemId:f.items.loan,condition:'any_unpaid'});
+  const transition=await f.req('POST','/api/ledger/package/monthly-followup',
+   {...monthly,itemId:f.items.commission,condition:'any_unpaid'});
+  await f.bill('42',f.items.loan);
+  await f.collection('42',{receivedOn:now});
+  await f.bill('50',f.items.commission);
+  await f.bill('15',f.items.card,{issuedOn:now,dueOn:now,
+   sourceKey:'admin-fee:vehicle60:'+f.co1+':'+randomUUID()+':'+f.items.commission+':'+now.slice(0,7)});
+  await f.bill('50',f.items.salik);
+  await f.bill('5',f.items.expense);
+  await f.bill('999',f.items.salik,{dueOn:next});
+  await f.req('POST','/api/ledger/package/monthly-followup',
+   {...monthly,revision:save.revision,effectiveOn:next,amount:'30'});
+  const cipher=security(f.secret.key);
+  const close=(when:string)=>transaction(f.runtime,f.org.tenant,f.org.user,async c=>
+   runAdministrativeFees(c,cipher,await model(c,f.org.user,cipher),{tenant_id:f.org.tenant,user_id:f.org.user},f.co1,when));
+  assert.equal((await close(next)).issued,2);
+  assert.equal((await close(next)).issued,0);
+  assert.equal((await close(following)).issued,3);
+  const rows=(await f.admin.query(`select l.item_id,i.amount::text,l.source_key,i.invoice_number
+    from ab.finance_invoice_links l join ab.vehicle_invoices i on i.id=l.invoice_id
+    where l.company_id=$1 and l.source_key like 'monthly-followup:%' order by i.invoice_number`,[f.co1])).rows;
+  assert.deepEqual(rows.filter(r=>r.item_id===save.feeItemId).map(r=>r.amount),['20.000','30.000']);
+  assert.equal(new Set(rows.map(r=>r.invoice_number)).size,5);
+  assert.equal(rows.filter(r=>r.item_id===zero.feeItemId).length,0);
+  assert.equal(rows.filter(r=>r.item_id===transition.feeItemId).length,1);
+  assert.equal(rows.filter(r=>r.source_key.endsWith(latestClosedDubaiMonth(next).month)).length,2);
+ }finally{await f.close();}
+});
+
+test('monthly thresholds, zero balance and legacy transition do not double charge',()=>{
+ const rule={companyId:'dubai',itemId:'salik',feeItemId:'salik-fee',effectiveOn:'2026-01-01',
+  enabled:true,amount:'20',condition:'double_fee' as const};
+ assert.equal(latestClosedDubaiMonth('2028-03-01').closeOn,'2028-02-29');
+ assert.equal(planMonthlyFollowup(rule,'2026-01-31',[{customerId:'one',outstanding:'39.999'}],new Set(),new Set()).length,0);
+ assert.equal(planMonthlyFollowup(rule,'2026-01-31',[{customerId:'one',outstanding:'40'}],new Set(),new Set()).length,1);
+ assert.equal(planMonthlyFollowup(rule,'2026-02-28',[{customerId:'one',outstanding:'40'}],new Set(['one']),new Set()).length,0);
+ assert.equal(planMonthlyFollowup({...rule,condition:'any_unpaid'},'2026-03-31',[{customerId:'one',outstanding:'0'}],new Set(),new Set()).length,0);
+});
+
+test('Sharjah workers with only workflow grants can deposit Dubai company cash without acquiring bank screen access',async()=>{
+ const f=await businessCentersFixture();
+ try{
+  const collector=await f.employee(),depositor=await f.employee(),bank=await f.bank(),otherBank=await f.bank(f.co2);
+  const issued=await f.bill('300',f.items.salik);
+  await approve(f,['deposit-allocation']);
+  for(const person of [collector,depositor]){
+   const revision=(await f.admin.query('select revision from ab.users where id=$1',[person.id])).rows[0].revision;
+   await f.req('PATCH','/api/users/'+person.id,{revision,companyIds:[f.co2]});
+  }
+  for(const [person,actions] of [[collector,['ledger_collect','ledger_hand_over']],[depositor,['ledger_receive','ledger_deposit','ledger_deposit_verify']]] as const){
+   for(const action of actions)await f.req('POST','/api/users/'+person.id+'/grants',{
+    action,scope:{type:'company',id:f.co1},delegable:false,
+   });
+  }
+  await f.req('POST','/api/ledger/custody/routes',{
+   companyId:f.co1,senderId:collector.id,receiverId:depositor.id,effectiveOn:today(),
+  });
+  const {PDFDocument}=await import('pdf-lib'),pdf=await PDFDocument.create(),page=pdf.addPage();
+  const reference='DUBAI-DEPOSIT-200';
+  for(const [index,line] of ['Bank: Synthetic Bank','IBAN: AE070331234567890123456','Amount: 200.000','Date: '+today(),'Reference: '+reference].entries()){
+   page.drawText(line,{x:30,y:720-index*32,size:13});
+  }
+  const evidence=await f.req('POST','/api/documents',{bankAccountId:bank.id,category:'other',title:'Synthetic Dubai deposit',
+   date:today(),name:'dubai-proof.pdf',mime:'application/pdf',base64:Buffer.from(await pdf.save()).toString('base64')});
+  await f.login(collector.username,collector.password);
+  const body={companyId:f.co1,customerId:f.client!,currency:'AED',receivedOn:today(),amount:'200',mode:'manual',invoiceId:issued.id};
+  const plan=await f.req('GET','/api/ledger/collections/deposit-preview?'+new URLSearchParams(body));
+  const cash=await f.req('POST','/api/ledger/collections/deposit-pending',{...body,digest:plan.digest,actualCashReceived:true});
+  const outgoing=await f.req('GET','/api/ledger/custody/deposit-handover');
+  assert.deepEqual(outgoing.outgoing.map((r:any)=>[r.company_id,r.receiver_id,r.amount]),[[f.co1,depositor.id,'200.000']]);
+  const handover=await f.req('POST','/api/ledger/custody/handovers',{companyId:f.co1,receiverId:depositor.id,currency:'AED',
+   amount:'200',receipts:[{receiptId:cash.receipts[0].id,amount:'200'}]});
+  await f.login(depositor.username,depositor.password);
+  const incoming=await f.req('GET','/api/ledger/custody/deposit-handover');
+  assert.deepEqual(incoming.incoming.map((r:any)=>r.id),[handover.id]);
+  await f.req('POST','/api/ledger/custody/handovers/'+handover.id+'/receive',{actual:'200',reason:'Synthetic Sharjah handover'});
+  const summary=await f.req('GET','/api/ledger/deposits/held-summary');
+  assert.deepEqual(summary.rows.map((r:any)=>[r.companyId,r.amount,r.bankAccountId]),[[f.co1,'200.000',bank.id]]);
+  await f.req('GET','/api/ledger/workbench?companyId='+f.co1,undefined,403);
+  const deposit={companyId:f.co1,bankAccountId:bank.id,documentVersionId:evidence.versionId,currency:'AED',
+   amount:'200',effectiveOn:today(),reference};
+  await f.req('POST','/api/ledger/deposits',{...deposit,bankAccountId:otherBank.id},422);
+  const filed=await f.req('POST','/api/ledger/deposits',deposit);
+  const confirmation={confirmedAmount:'200',effectiveOn:today(),bankConfirmation:'Synthetic matching receipt',accountAndDateVerified:true};
+  await f.req('POST','/api/ledger/deposits/'+filed.id+'/confirm',confirmation);
+  await f.req('POST','/api/ledger/deposits/'+filed.id+'/confirm',confirmation,409);
+  const debt=(await f.admin.query(`select (i.amount-coalesce(sum(a.amount),0))::text outstanding
+   from ab.vehicle_invoices i left join ab.vehicle_allocations a on a.invoice_id=i.id where i.id=$1 group by i.id`,[issued.id])).rows[0];
+  assert.equal(debt.outstanding,'100.000');
+  assert.equal((await f.req('GET','/api/ledger/deposits/held-summary')).rows.length,0);
+ }finally{await f.close();}
+});
+
+test('configured automatic allocation exhausts the first item by oldest due and excludes future or disabled items',async()=>{
+ const f=await businessCentersFixture();
+ try{
+  await approve(f,['priority','deposit-allocation']);
+  await f.req('POST','/api/ledger/package/priority',{companyId:f.co1,enabled:true,itemIds:[f.items.salik,f.items.loan],revision:0,confirm:true});
+  const newer=await f.bill('30',f.items.salik,{dueOn:'2026-01-20'});
+  const older=await f.bill('20',f.items.salik,{dueOn:'2026-01-10'});
+  const next=await f.bill('70',f.items.loan,{dueOn:'2026-01-01'});
+  await f.bill('500',f.items.expense);
+  await f.bill('999',f.items.salik,{dueOn:'2099-01-01'});
+  const d={companyId:f.co1,customerId:f.client!,currency:'AED',receivedOn:today(),amount:'75',mode:'automatic'};
+  const response=await f.req('GET','/api/ledger/collections/deposit-preview?'+new URLSearchParams(d));
+  assert.deepEqual(response.receipts.map((r:any)=>[r.invoiceId,r.amount]),
+   [[older.id,'20.000'],[newer.id,'30.000'],[next.id,'25.000']]);
+  assert.equal(response.unallocated,'0.000');
+  assert.equal((await f.admin.query('select count(*)::int n from ab.finance_receipts')).rows[0].n,0);
+ }finally{await f.close();}
+});

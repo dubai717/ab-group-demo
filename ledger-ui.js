@@ -110,7 +110,7 @@
                 grouped.get(k).amount += L.units(bill.outstanding);
             }
             const rows = [...grouped.values()];
-            return btn('credit-apply', t('تطبيق رصيد دائن سابق', 'Apply existing credit')) + form('collection-filter', t('عرض المستحقات', 'Load dues'), [...refFields(), f('currency', 'العملة', 'Currency', 'text', context?.currency||'AED')], t('عرض', 'Show')) + form('collect', t('تحديد البنود وطريقة واحدة للعملية', 'Select items and one payment method'), [...refFields(), f('currency', 'العملة', 'Currency', 'text', context?.currency||'AED'), f('receivedOn', 'تاريخ القبض', 'Receipt date', 'date', now()), f('method', 'وسيلة الدفع', 'Payment method', 'select', 'cash', choice(['cash', 'cheque', 'transfer'])), f('mode', 'التوزيع', 'Allocation', 'select', 'manual', choice(context?.targetInvoiceId?['manual']:['manual', 'automatic'])), f('amount', 'إجمالي العملية', 'Batch total'), f('operationId', 'التحويل المصرفي المعتمد (للتحويل فقط)', 'Approved bank receipt (transfer only)', 'text', '', null, false), f('overridePriority', 'تجاوز الأولوية بتفويض', 'Delegated priority override', 'checkbox', false), f('reason', 'سبب التجاوز', 'Override reason', 'text', '', null, false), f('chequeNumber', 'رقم الشيك (للشيك فقط)', 'Cheque number (cheque only)', 'text', '', null, false), f('bankAccountId', 'حساب إيداع الشيك', 'Cheque deposit account', 'select', '', book.banks, false), f('beneficiary', 'اسم مقدم الشيك', 'Cheque payer', 'text', '', null, false), ...dateFields()], t('تنظيم سند مستقل لكل بند', 'Create separate receipt per item'), 'collect', `<div class="full">${rows.map(r => `<label class="ld-item"><input type="checkbox" name="selectedItem" value="${e(r.id)}"/>${e(r.name)} — ${L.money(r.amount)}<input class="input" name="take-${e(r.id)}" value="${L.money(r.amount)}" aria-label="${t('المبلغ المطلوب', 'Requested amount')}" /></label>`).join('') || '<p>' + t('لا توجد فواتير مصنفة. صنّف فواتير المركبة أولاً؛ لا تُنشأ مستحقات افتراضية.', 'No classified invoices. Classify vehicle invoices first; no fabricated dues.') + '</p>'}${book.package?.approved.priority?`<fieldset><legend>${t('تخصيص صريح لكل فاتورة','Explicit invoice allocation')}</legend><label><input type="checkbox" name="useInvoiceAllocations">${t('استخدام مبالغ الفواتير المحددة أدناه','Use selected invoice amounts below')}</label>${bills.filter(r=>L.units(r.outstanding)>0n).map(r=>`<label><input type="checkbox" name="selectedInvoice" value="${e(r.id)}">#${e(r.invoiceNumber)} — ${e(r.name_en)}<input class="input" name="invoice-take-${e(r.id)}" value="${e(r.outstanding)}" aria-label="${t('مبلغ الفاتورة','Invoice amount')}"></label>`).join('')}</fieldset>`:''}</div>`) + table(book.receipts, ['receipt_number', 'kind', 'amount', 'currency', 'payment_state'], r => r.payment_state === 'Pending' ? btn('cheque-resolve', t('تأكيد التحصيل / الارتجاع', 'Confirm clearing / return'), r.id) : '');
+            return btn('credit-apply', t('تطبيق رصيد دائن سابق', 'Apply existing credit')) + form('collection-filter', t('عرض المستحقات', 'Load dues'), [...refFields(), f('currency', 'العملة', 'Currency', 'text', context?.currency||'AED')], t('عرض', 'Show')) + form('collect', t('تحديد البنود وطريقة واحدة للعملية', 'Select items and one payment method'), [...refFields(), f('currency', 'العملة', 'Currency', 'text', context?.currency||'AED'), f('receivedOn', 'تاريخ القبض', 'Receipt date', 'date', now()), f('method', 'وسيلة الدفع', 'Payment method', 'select', 'cash', choice(['cash', 'cheque', 'transfer'])), f('mode', 'التوزيع', 'Allocation', 'select', 'manual', choice(context?.targetInvoiceId?['manual']:['manual', 'automatic'])), f('amount', 'إجمالي العملية', 'Batch total'), f('operationId', 'التحويل المصرفي المعتمد (للتحويل فقط)', 'Approved bank receipt (transfer only)', 'text', '', null, false), f('overridePriority', 'تجاوز الأولوية بتفويض', 'Delegated priority override', 'checkbox', false), f('reason', 'سبب التجاوز', 'Override reason', 'text', '', null, false), f('chequeNumber', 'رقم الشيك (للشيك فقط)', 'Cheque number (cheque only)', 'text', '', null, false), f('bankAccountId', 'حساب إيداع الشيك', 'Cheque deposit account', 'select', '', book.banks, false), f('beneficiary', 'اسم مقدم الشيك', 'Cheque payer', 'text', '', null, false), ...dateFields()], t('تنظيم سند مستقل لكل بند', 'Create separate receipt per item'), 'collect', `<div class="full">${rows.map(r => `<label class="ld-item"><input type="checkbox" name="selectedItem" value="${e(r.id)}"/>${e(r.name)} — ${L.money(r.amount)}<input class="input" name="take-${e(r.id)}" value="${L.money(r.amount)}" aria-label="${t('المبلغ المطلوب', 'Requested amount')}" /></label>`).join('') || '<p>' + t('لا توجد فواتير مصنفة. صنّف فواتير المركبة أولاً؛ لا تُنشأ مستحقات افتراضية.', 'No classified invoices. Classify vehicle invoices first; no fabricated dues.') + '</p>'}${book.package?.approved.priority?`<fieldset><legend>${t('تخصيص صريح لكل فاتورة','Explicit invoice allocation')}</legend><label><input type="checkbox" name="useInvoiceAllocations">${t('استخدام مبالغ الفواتير المحددة أدناه','Use selected invoice amounts below')}</label>${bills.filter(r=>L.units(r.outstanding)>0n).map(r=>`<label><input type="checkbox" name="selectedInvoice" value="${e(r.id)}">#${e(r.invoiceNumber)} — ${e(r.name_en)}<input class="input" name="invoice-take-${e(r.id)}" value="${e(r.outstanding)}" aria-label="${t('مبلغ الفاتورة','Invoice amount')}"></label>`).join('')}</fieldset>`:''}</div>`) + table(book.receipts, ['receipt_number', 'kind', 'amount', 'currency', 'payment_state'], r => r.payment_state === 'Pending' && r.kind==='cheque' ? btn('cheque-resolve', t('تأكيد التحصيل / الارتجاع', 'Confirm clearing / return'), r.id) : '');
         }
         if (tab === 'custody')
             return table(book.custody, ['holder_id', 'kind', 'amount', 'currency']) + form('route', t('مسار التسليم والبديل المؤقت', 'Handover route / temporary substitute'), [f('senderId', 'المسلّم', 'Sender', 'select', '', users()), f('receiverId', 'المستلم', 'Receiver', 'select', '', users()), f('effectiveOn', 'سريان المسار', 'Effective date', 'date', now()), f('untilOn', 'انتهاء البديل (اختياري)', 'Substitute end (optional)', 'date', '', null, false)], undefined, 'configure') + form('handover', t('طلب تسليم من عهدتي', 'Request handover from my custody'), [f('receiverId', 'المستلم المخول', 'Authorized recipient', 'select', '', (book.custodyRecipients||[]).map(u=>({id:u.id,name:getLocale()==='ar'?u.nameAr:u.nameEn}))), f('kind', 'وسيلة العهدة', 'Custody method', 'select', 'cash', choice(['cash', 'cheque'])), f('amount', 'المبلغ', 'Amount'), f('currency', 'العملة', 'Currency', 'text', 'AED')], undefined, 'hand_over', `<fieldset class="full"><legend>${t('سندات من عهدتي — اختياري، وإلا يطبق الترتيب الأصلي','Receipts in my custody — optional, otherwise original order applies')}</legend>${(book.custodyDetails?.receipts||[]).map(r=>`<label class="rb-invoice"><input type="checkbox" name="handoverReceipt" value="${e(r.receiptId)}">${e(label(r.kind))} · RV-${e(r.receiptNumber)} · ${e(r.amount)} ${e(r.currency)}<input class="input" name="handover-amount-${e(r.receiptId)}" value="${e(r.amount)}" aria-label="${t('مبلغ التسليم','Handover amount')}"></label>`).join('')}</fieldset>`) + table(book.finance_custody_transfers, ['id', 'amount', 'actual', 'currency', 'status'], r => r.status === 'Pending' ? btn('receive', t('تأكيد المستلم الفعلي', 'Acknowledge actual receipt'), r.id) : '');
@@ -141,7 +141,7 @@
         return '';
     }
     function journalRows() { return '<div class="full ld-lines">' + [0, 1, 2, 3].map(i => `<div class="ld-row">${field(f('chart' + i, 'الحساب', 'Account', 'select', '', accountOptions(), i < 2), 'journal')}${field(f('debit' + i, 'مدين', 'Debit', 'text', '0', null, i < 2), 'journal')}${field(f('credit' + i, 'دائن', 'Credit', 'text', '0', null, i < 2), 'journal')}</div>`).join('') + '</div>'; }
-    function setup() { const a = defs(), charts = accountOptions(); return form('account', t('حساب موحد — مرتبط بالشركات المختارة', 'Shared account — mapped to selected companies'), [f('code', 'الرمز', 'Code'), f('nameAr', 'الاسم العربي', 'Arabic name'), f('nameEn', 'الاسم الإنجليزي', 'English name'), f('kind', 'الطبيعة', 'Nature', 'select', 'asset', choice(['asset', 'liability', 'equity', 'income', 'expense'])), f('parentId', 'حساب رئيسي (اختياري)', 'Parent (optional)', 'select', '', a, false), f('currency', 'العملة', 'Currency', 'text', 'AED'), f('bankAccountId', 'ربط حساب بنكي (اختياري)', 'Map existing bank (optional)', 'select', '', book.banks, false), f('eliminate', 'حساب متبادل بين الشركات', 'Intercompany elimination account', 'checkbox', false)], undefined, 'account_manage') + form('config', t('ربط عهدة الشركة والتقويم', 'Company custody mappings and calendar'), [f('currency', 'العملة', 'Currency', 'text', 'AED'), f('custodyAccountId', 'حساب عهدة النقد', 'Cash custody account', 'select', book.config.custodyAccountId || '', charts), f('chequeTransitAccountId', 'حساب الشيكات قيد التحصيل', 'Cheque transit account', 'select', book.config.chequeTransitAccountId || '', charts), f('customerCreditAccountId', 'أمانات وأرصدة العملاء الدائنة', 'Customer credit/liability', 'select', book.config.customerCreditAccountId || '', charts), f('automaticFinanceJobs', 'تمكين الجدولة للشركة بعد تفعيل عامل الخادم', 'Enable company scheduling after server worker activation', 'checkbox', book.config.automaticFinanceJobs || false), f('depositDays', 'مهلة الإيداع بأيام العمل', 'Deposit working days', 'number', book.config.depositDays || 1), f('holidays', 'العطلات: تاريخ واحد في كل سطر', 'Holidays: one date per line', 'textarea', (book.config.holidays || []).join('\n'), null, false)], undefined, 'configure'); }
+    function setup() { const a = defs(), charts = accountOptions(); return form('account', t('حساب موحد — مرتبط بالشركات المختارة', 'Shared account — mapped to selected companies'), [f('code', 'الرمز', 'Code'), f('nameAr', 'الاسم العربي', 'Arabic name'), f('nameEn', 'الاسم الإنجليزي', 'English name'), f('kind', 'الطبيعة', 'Nature', 'select', 'asset', choice(['asset', 'liability', 'equity', 'income', 'expense'])), f('parentId', 'حساب رئيسي (اختياري)', 'Parent (optional)', 'select', '', a, false), f('currency', 'العملة', 'Currency', 'text', 'AED'), f('bankAccountId', 'ربط حساب بنكي (اختياري)', 'Map existing bank (optional)', 'select', '', book.banks, false), f('eliminate', 'حساب متبادل بين الشركات', 'Intercompany elimination account', 'checkbox', false)], undefined, 'account_manage') + form('config', t('ربط عهدة الشركة والتقويم', 'Company custody mappings and calendar'), [f('currency', 'العملة', 'Currency', 'text', 'AED'), f('custodyAccountId', 'حساب عهدة النقد', 'Cash custody account', 'select', book.config.custodyAccountId || '', charts), f('chequeTransitAccountId', 'حساب الشيكات قيد التحصيل', 'Cheque transit account', 'select', book.config.chequeTransitAccountId || '', charts), f('depositBankAccountId','حساب الإيداع المعتمد (اختياري)','Approved deposit account (optional)','select',book.config.depositBankAccountId||'',book.banks,false), f('customerCreditAccountId', 'أمانات وأرصدة العملاء الدائنة', 'Customer credit/liability', 'select', book.config.customerCreditAccountId || '', charts), f('automaticFinanceJobs', 'تمكين الجدولة للشركة بعد تفعيل عامل الخادم', 'Enable company scheduling after server worker activation', 'checkbox', book.config.automaticFinanceJobs || false), f('depositDays', 'مهلة الإيداع بأيام العمل', 'Deposit working days', 'number', book.config.depositDays || 1), f('holidays', 'العطلات: تاريخ واحد في كل سطر', 'Holidays: one date per line', 'textarea', (book.config.holidays || []).join('\n'), null, false)], undefined, 'configure'); }
     function renderPage() {
         FinancialTables.begin(registerScope());
         const who = ABCentral?.actor?.id;
@@ -242,7 +242,22 @@
             payload = { companyId: co, customerId: d.customerId, vehicleId: d.vehicleId || null, currency: d.currency, receivedOn: d.receivedOn, method: d.method, mode: d.mode, amount: d.amount, items: fd.getAll('selectedItem').map(id => ({ itemId: id, amount: fd.get('take-' + id) })), overridePriority: d.overridePriority, reason: d.reason || '' };
             if(context.targetInvoiceId)payload.targetInvoiceId=context.targetInvoiceId;
             if(d.useInvoiceAllocations){payload.allocations=fd.getAll('selectedInvoice').map(id=>({invoiceId:id,amount:fd.get('invoice-take-'+id)}));payload.mode='manual';delete payload.targetInvoiceId;}
-            if (d.method === 'transfer')
+            if(book.package?.approved['deposit-allocation']&&d.method==='cash'){
+                const directInvoices=fd.getAll('selectedInvoice');
+                const directItems=fd.getAll('selectedItem');
+                const invoiceId=context.targetInvoiceId||(d.useInvoiceAllocations&&directInvoices.length===1?directInvoices[0]:null);
+                const itemId=!invoiceId&&directItems.length===1?directItems[0]:null;
+                const mode=invoiceId?'manual':d.mode;
+                if(mode==='manual'&&!invoiceId&&!itemId)throw Error('explicitAllocationRequired');
+                const requestData={companyId:co,customerId:d.customerId,currency:d.currency,receivedOn:d.receivedOn,amount:d.amount,mode,
+                    ...(mode==='manual'&&invoiceId?{invoiceId}:mode==='manual'?{itemId}:{})};
+                const plan=await api('collections/deposit-preview?'+new URLSearchParams(requestData));
+                if(L.units(plan.unallocated)>0n)throw Error(t('جزء من المبلغ لا يطابق المستحقات المختارة','Some cash does not match the selected dues')+' '+plan.unallocated);
+                if(!confirm(t('راجع التوزيع الذي سيطبق بعد تأكيد الإيداع. هل استلمت النقد فعلياً؟','Review the allocation for the verified deposit. Did you receive the cash?')+
+                    '\n'+plan.receipts.map(row=>'#'+row.invoiceNumber+' · '+row.amount+' AED').join('\n')))return;
+                endpoint='collections/deposit-pending';
+                payload={...requestData,digest:plan.digest,actualCashReceived:true};
+            } else if (d.method === 'transfer')
                 payload.operationId = d.operationId;
             if (d.method === 'cheque')
                 payload.cheque = { bankAccountId: d.bankAccountId, number: d.chequeNumber, beneficiary: d.beneficiary, issuedOn: d.issuedOn, dueOn: d.dueOn };
@@ -374,7 +389,7 @@
         }
         if (key === 'config') {
             endpoint = 'configuration';
-            payload = { ...d, companyId: co, depositDays: Number(d.depositDays), workdays: book.config.workdays || [1, 2, 3, 4, 5], holidays: d.holidays.split(/\r?\n/).map(x => x.trim()).filter(Boolean) };
+            payload = { ...d, companyId: co, depositBankAccountId:d.depositBankAccountId||null, depositDays: Number(d.depositDays), workdays: book.config.workdays || [1, 2, 3, 4, 5], holidays: d.holidays.split(/\r?\n/).map(x => x.trim()).filter(Boolean) };
         }
         if (key === 'report') {
             drafts.report = { ...d, companies: fd.getAll('reportCompany').join(',') || co };
@@ -612,5 +627,100 @@
         }
         await load();
     }
-    root.LedgerUI = {openReceivables:async(customerId,sourceScroll=0)=>{if(actor!==ABCentral.actor?.id){reset();actor=ABCentral.actor?.id;}context=null;ReceivablesUI.prepare(customerId,sourceScroll);tab='receivables';app.state.currentPage='financialManagement';await load(true);},openVouchers:async(companyId)=>{if(actor!==ABCentral.actor?.id){reset();actor=ABCentral.actor?.id;}context={companyId};co=companyId;tab='vouchers';app.state.currentPage='financialManagement';await load();context=null;}, openNotification: async (companyId) => { if(actor!==ABCentral.actor?.id){reset();actor=ABCentral.actor?.id;}context={companyId};co = companyId; tab = 'dashboard'; app.state.currentPage = 'financialManagement'; await load();context=null; }, render: renderPage, bind, reset, openCollection, canEnter: () => ABCentral?.enabled && (getCurrentUser()?.roleId === 'owner' || (ABCentral.grants || []).some(g => g.userId === ABCentral.actor?.id && g.entry?.action?.startsWith('ledger_'))) };
+    function collectionMenu(){
+        if(!ABCentral?.enabled||!ABCentral.actor||ABCentral.viewAs)return '';
+        if(ABCentral.actor.roleId!=='owner'&&!(ABCentral.grants||[]).some(grant=>
+            grant.userId===ABCentral.actor.id&&grant.entry?.action==='ledger_collect'))return '';
+        return `<button class="ghost-btn" type="button" data-pending-cash-menu>${t('قبض نقد للإيداع','Collect cash for deposit')}</button>`;
+    }
+    function openPendingCash(){
+        const actor=ABCentral.actor.id;
+        const editor=CenterForms.form(t('قبض نقد للإيداع','Collect cash for deposit'),[
+            {name:'companyId',ar:'معرّف شركة الدين',en:'Debt company ID'},
+            {name:'customerId',ar:'معرّف العميل',en:'Customer ID'},
+            {name:'invoiceId',ar:'معرّف الفاتورة',en:'Invoice ID',required:false},
+            {name:'itemId',ar:'معرّف البند',en:'Item ID',required:false},
+            {name:'mode',ar:'طريقة التوزيع',en:'Allocation mode',value:'manual',options:[
+                {id:'manual',name:t('اختيار مباشر','Direct selection')},{id:'automatic',name:t('تلقائي حسب الأولوية','Automatic by priority')}]},
+            {name:'amount',ar:'المبلغ بالدرهم',en:'Amount AED'},
+        ],async(d,key)=>{
+            if(actor!==ABCentral.actor?.id)throw Error('staleSession');
+            const input={...d,currency:'AED',receivedOn:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dubai'}).format(new Date())};
+            for(const k of ['invoiceId','itemId'])if(!input[k])delete input[k];
+            const plan=await ABCentral.api('ledger/collections/deposit-preview?'+new URLSearchParams(input));
+            if(L.units(plan.unallocated)>0n)throw Error(t('لم يمكن تخصيص كامل المبلغ','The full amount could not be allocated'));
+            if(!confirm(t('هل استلمت النقد؟ راجع اختيارك قبل تسجيله في العهدة.','Did you receive the cash? Review the allocation before recording custody.')+
+                '\n'+plan.receipts.map(row=>'#'+row.invoiceNumber+' · '+row.amount+' AED').join('\n')))throw Error(t('لم يُسجل القبض','Cash was not recorded'));
+            await ABCentral.api('ledger/collections/deposit-pending','POST',{...input,digest:plan.digest,actualCashReceived:true},key);
+        });
+        const more=document.createElement('button');
+        more.className='secondary-btn';more.type='button';
+        more.textContent=t('تسليم أو استلام العهدة','Hand over or receive custody');
+        more.onclick=async()=>{editor.remove();await openHeldDeposits();};
+        editor.append(more);
+    }
+    function depositMenu(){
+        if(!ABCentral?.enabled||!ABCentral.actor||ABCentral.viewAs)return '';
+        if(ABCentral.actor.roleId!=='owner'&&!(ABCentral.grants||[]).some(grant=>
+            grant.userId===ABCentral.actor.id&&grant.entry?.action==='ledger_deposit'))return '';
+        return `<button class="ghost-btn" type="button" data-held-deposit-menu>${t('العهدة للإيداع','Cash held for deposit')}</button>`;
+    }
+    async function openHeldDeposits(){
+        const actor=ABCentral.actor.id,authority=ABCentral.authorityVersion;
+        const guard=()=>{if(actor!==ABCentral.actor?.id||authority!==ABCentral.authorityVersion)throw Error('staleSession');};
+        const [data,handovers]=await Promise.all([ABCentral.api('ledger/deposits/held-summary'),ABCentral.api('ledger/custody/deposit-handover')]);guard();
+        const dialog=document.createElement('dialog');dialog.className='record-form-dialog';dialog.dataset.centerOwned='1';
+        const names=new Map((app.state.companies||[]).map(company=>[company.id,
+            (getLocale()==='ar'?company.arabicName:company.englishName)||company.englishName]));
+        dialog.innerHTML=`<h2>${t('عهدتي للإيداع','My cash held for deposit')}</h2>
+            ${data.rows.map((row,index)=>`<section class="record-section"><h3>${e((getLocale()==='ar'?row.nameAr:row.nameEn)||names.get(row.companyId)||row.companyId)}</h3>
+              <p>${e(row.amount)} ${e(row.currency)}</p><ul>${row.accounts.map(account=>`<li>${e(account.name)} · ${e(account.lastFour)}</li>`).join('')}</ul>
+              ${row.accounts.length?`<button class="secondary-btn" data-hold="${index}">${t('إيداع','Enter deposit')}</button>`:''}</section>`).join('')}
+            ${data.pending.map((row,index)=>`<p>${e(names.get(row.company_id)||row.company_id)} · ${e(row.amount)} ${e(row.currency)}
+                <button class="secondary-btn" data-pending-hold="${index}">${t('تحقق وأغلق الإيداع','Verify and close deposit')}</button></p>`).join('')}
+            ${handovers.outgoing.map((row,index)=>`<p>${e(names.get(row.company_id)||row.company_id)} · ${e(row.amount)} AED
+                <button class="secondary-btn" data-handover="${index}">${t('طلب تسليم العهدة','Request handover')}</button></p>`).join('')}
+            ${handovers.incoming.map((row,index)=>`<p>${e(names.get(row.company_id)||row.company_id)} · ${e(row.amount)} ${e(row.currency)}
+                <button class="secondary-btn" data-receive-hold="${index}">${t('تأكيد الاستلام','Confirm receipt')}</button></p>`).join('')}
+            <button type="button" class="secondary-btn" data-close>${t('إغلاق','Close')}</button>`;
+        dialog.querySelector('[data-close]').onclick=()=>dialog.remove();
+        for(const control of dialog.querySelectorAll('[data-handover]'))control.onclick=()=>{
+            const row=handovers.outgoing[Number(control.dataset.handover)];
+            CenterForms.form(t('تسليم العهدة','Hand over custody'),[{name:'amount',ar:'المبلغ',en:'Amount',value:row.amount}],
+                async(d,key)=>{guard();await ABCentral.api('ledger/custody/handovers','POST',{
+                    companyId:row.company_id,receiverId:row.receiver_id,currency:'AED',amount:d.amount,
+                },key);guard();dialog.remove();await openHeldDeposits();});
+        };
+        for(const control of dialog.querySelectorAll('[data-receive-hold]'))control.onclick=()=>{
+            const row=handovers.incoming[Number(control.dataset.receiveHold)];
+            CenterForms.form(t('استلام العهدة','Receive custody'),[
+                {name:'actual',ar:'المستلم فعلياً',en:'Actually received',value:row.amount},
+                {name:'reason',ar:'بيان الاستلام',en:'Receipt note'},
+            ],async(d,key)=>{guard();await ABCentral.api('ledger/custody/handovers/'+row.id+'/receive','POST',d,key);
+                guard();dialog.remove();await openHeldDeposits();});
+        };
+        for(const control of dialog.querySelectorAll('[data-hold]'))control.onclick=()=>{
+            const row=data.rows[Number(control.dataset.hold)];
+            CenterForms.form(t('إيداع نقد','Cash deposit'),[
+                {name:'bankAccountId',ar:'حساب الإيداع',en:'Deposit account',value:row.bankAccountId||'',options:row.accounts},
+                {name:'amount',ar:'المبلغ',en:'Amount',value:row.amount},
+                {name:'effectiveOn',ar:'تاريخ الإيداع',en:'Deposit date',type:'date',value:now()},
+                {name:'documentVersionId',ar:'معرّف نسخة إثبات الإيداع',en:'Deposit evidence version ID'},
+                {name:'reference',ar:'مرجع الإيداع',en:'Deposit reference'},
+            ],async(d,key)=>{guard();await ABCentral.api('ledger/deposits','POST',{...d,companyId:row.companyId,currency:row.currency},key);
+                guard();dialog.remove();await openHeldDeposits();});
+        };
+        for(const control of dialog.querySelectorAll('[data-pending-hold]'))control.onclick=()=>{
+            const row=data.pending[Number(control.dataset.pendingHold)];
+            CenterForms.form(t('التحقق من الإيداع','Verify deposit'),[
+                {name:'confirmedAmount',ar:'المبلغ المؤكد',en:'Confirmed amount',value:row.amount},
+                {name:'effectiveOn',ar:'تاريخ الإيداع',en:'Deposit date',type:'date',value:now()},
+                {name:'bankConfirmation',ar:'بيان إثبات البنك',en:'Bank proof details'},
+                {name:'accountAndDateVerified',ar:'تحققت من الحساب والتاريخ',en:'I verified the account and date',type:'checkbox'},
+            ],async(d,key)=>{guard();await ABCentral.api('ledger/deposits/'+row.id+'/confirm','POST',d,key);
+                guard();dialog.remove();await openHeldDeposits();});
+        };
+        document.body.append(dialog);FloatingRecords.open(dialog);
+    }
+    root.LedgerUI = {depositMenu,openHeldDeposits,collectionMenu,openPendingCash,openReceivables:async(customerId,sourceScroll=0)=>{if(actor!==ABCentral.actor?.id){reset();actor=ABCentral.actor?.id;}context=null;ReceivablesUI.prepare(customerId,sourceScroll);tab='receivables';app.state.currentPage='financialManagement';await load(true);},openVouchers:async(companyId)=>{if(actor!==ABCentral.actor?.id){reset();actor=ABCentral.actor?.id;}context={companyId};co=companyId;tab='vouchers';app.state.currentPage='financialManagement';await load();context=null;}, openNotification: async (companyId) => { if(actor!==ABCentral.actor?.id){reset();actor=ABCentral.actor?.id;}context={companyId};co = companyId; tab = 'dashboard'; app.state.currentPage = 'financialManagement'; await load();context=null; }, render: renderPage, bind, reset, openCollection, canEnter: () => ABCentral?.enabled && (getCurrentUser()?.roleId === 'owner' || (ABCentral.grants || []).some(g => g.userId === ABCentral.actor?.id && g.entry?.action?.startsWith('ledger_'))) };
 })(globalThis);

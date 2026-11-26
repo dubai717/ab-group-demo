@@ -488,6 +488,9 @@ function render() {
   document.body.setAttribute('data-locale', getLocale());
 
   const appEl = document.getElementById('app');
+  const menuContext=[currentUser?.id,globalThis.ABCentral?.authorityVersion,app.state.currentPage,getLocale()].join(':');
+  const previousMenu=appEl.querySelector('.account-menu');
+  const keepMenu=previousMenu?.open&&previousMenu.dataset.context===menuContext;
 
   if (!currentUser) {
     renderLogin();
@@ -536,12 +539,12 @@ function render() {
             <button class="lang-switch" data-action="toggle-language">
               ${getLocale() === 'ar' ? 'English' : 'العربية'}
             </button>
-            <details class="account-menu">
+            <details class="account-menu" data-context="${AuthFlows.escape(menuContext)}" ${keepMenu?'open':''}>
               <summary class="user-pill" title="${AuthFlows.escape(currentUser.fullName)}">
                 <span class="avatar">${AuthFlows.escape(currentUser.fullName.slice(0,1).toUpperCase())}</span>
                 <span><span>${AuthFlows.escape(currentUser.fullName)}</span><span class="muted account-role">${getRoleName(currentUser.roleId)}</span></span>
               </summary>
-              <div class="account-popover"><button class="ghost-btn" type="button" data-auth="settings">${AuthFlows.text('accountSettings')}</button></div>
+              <div class="account-popover">${globalThis.LedgerUI?.depositMenu?.()||''}${globalThis.LedgerUI?.collectionMenu?.()||''}<button class="ghost-btn" type="button" data-auth="settings">${AuthFlows.text('accountSettings')}</button></div>
             </details>
           </div>
         </header>
@@ -1093,6 +1096,14 @@ async function handleLogin(event) {
 }
 
 function bindGlobalEvents() {
+  document.querySelector('[data-pending-cash-menu]')?.addEventListener('click',()=>LedgerUI.openPendingCash());
+  document.querySelector('[data-held-deposit-menu]')?.addEventListener('click',async event=>{
+    const button=event.currentTarget;
+    button.disabled=true;
+    try{await LedgerUI.openHeldDeposits();}
+    catch(error){if(error.message!=='staleSession')alert(error.message);}
+    finally{button.disabled=false;}
+  });
   ViewAsUI.bind();
   BusinessCenters.bind();
   CommunicationsUI.bind();
