@@ -450,8 +450,13 @@ test('accounting imports retain legacy invoice mapping and use the original rece
     assert.equal((await f.admin.query('select count(*)::int n from ab.finance_receipts where customer_id=$1',[f.client])).rows[0].n,0);
     await commit(receipt.id,f.co2,404);
     const importer=await f.employee();
-    await f.req('POST','/api/users/'+importer.id+'/grants',{action:'ledger_invoice_import',scope:{type:'company',id:f.co1},delegable:false});
+    for(const action of ['ledger_invoice_import','customer_view']){
+        await f.req('POST','/api/users/'+importer.id+'/grants',{action,scope:{type:'company',id:f.co1},delegable:false});
+    }
     await f.login(importer.username,importer.password);
+    const prepared=await upload('receipt',receipts+'\n');
+    assert.notEqual(prepared.id,receipt.id);
+    assert.equal(prepared.rows[0].error,undefined);
     await commit(receipt.id,f.co1,403);
     await f.login(f.username,f.password);
     const imported=await commit(receipt.id);
@@ -472,6 +477,22 @@ test('accounting imports retain legacy invoice mapping and use the original rece
     const pending=(await commit(payment.id)).created[0];
     assert.equal(pending.status,'Pending');
     assert.equal((await f.admin.query('select status from ab.finance_vouchers where id=$1',[pending.ids[0]])).rows[0].status,'Pending');
+    const approvalRequest={ids:pending.ids,signedEvidence:true};
+    await f.req('POST','/api/ledger/vouchers/approval-preview',approvalRequest,409);
+    await f.req('POST','/api/ledger/vouchers/'+pending.ids[0]+'/prepare',{
+        bankAccountId:bank.id,chequeNumber:'SYN-IMPORTED-VOUCHER',issuedOn:now,dueOn:now,documentVersionId:proof,
+    });
+    await f.login(importer.username,importer.password);
+    await f.req('POST','/api/ledger/vouchers/approval-preview',approvalRequest,403);
+    await f.login(f.username,f.password);
+    const outside=await f.employee();
+    await f.req('POST','/api/users/'+outside.id+'/grants',{action:'ledger_voucher_approve',scope:{type:'company',id:f.co2},delegable:false});
+    await f.login(outside.username,outside.password);
+    await f.req('POST','/api/ledger/vouchers/approval-preview',approvalRequest,403);
+    await f.login(f.username,f.password);
+    const approval=await f.req('POST','/api/ledger/vouchers/approval-preview',approvalRequest);
+    await f.req('POST','/api/ledger/vouchers/approval-confirm',{batchId:approval.id,digest:approval.digest,confirm:true});
+    assert.equal((await f.admin.query('select status from ab.finance_vouchers where id=$1',[pending.ids[0]])).rows[0].status,'Approved');
 
     const wrong='BAD-DEPOSIT,'+otherBank.id+',RC-ORIGINAL,'+proof+',200,AED,'+now;
     const good='DEP-ORIGINAL,'+bank.id+',RC-ORIGINAL,'+proof+',200,AED,'+now;

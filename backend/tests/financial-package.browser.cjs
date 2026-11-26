@@ -26,6 +26,13 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
                     await scoped.locator('.fp-item-detail').waitFor();
                     assert.equal(await scoped.locator('[data-fp=item-edit]').count(),actor.permission==='ledger_item_edit'?1:0);
                     assert.equal(await scoped.locator('[data-fp=item-remove]').count(),actor.permission==='ledger_item_edit'?1:0);
+                    for(const [tab,control] of [['import','[data-ld-form=import-preview]'],
+                        ['vouchers','[name=signedEvidence]'],['deposits','[data-ld=deposit-confirm]']]){
+                        const link=scoped.locator('.ld-navigation [data-id='+tab+']');
+                        await link.click();
+                        await scoped.locator('.ld-navigation [data-id='+tab+'][aria-current=true]').waitFor();
+                        assert.equal(await scoped.locator(control).count(),0);
+                    }
                 }finally{await scoped.close();}
             }
             assert.deepEqual(errors, []);

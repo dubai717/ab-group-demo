@@ -16,7 +16,7 @@ const { spawn, execFileSync } = require('node:child_process'), fs = require('nod
     }
     if (!ready)
         throw Error('SYNTHETIC_FINANCIAL_FIXTURE_NOT_READY');
-    execFileSync(process.execPath, ['backend/tests/financial-package.browser.cjs'], { stdio: 'inherit' });
+    execFileSync(process.execPath, [process.env.AB_FINANCE_ACCEPTANCE==='1'?'backend/tests/finance-acceptance.browser.cjs':'backend/tests/financial-package.browser.cjs'], { stdio: 'inherit' });
 }
 finally {
     child.kill('SIGTERM');
