@@ -10,10 +10,14 @@ import {databaseOptions,assertVerifiedDatabaseTls} from '../src/database.js';
 import {archive,restoreArchive} from '../src/backup.js';
 import {supabaseKeys} from '../src/core.js';
 export const backupLimit=64*1024*1024;
-export function backupConnection(e:NodeJS.ProcessEnv){
+export function backupDatabaseTarget(e:NodeJS.ProcessEnv){
  const endpoint=new URL(e.SUPABASE_URL||''),db=new URL(e.MIGRATION_DATABASE_URL||'');
  if(!/^https:\/\/[a-z0-9]{20}\.supabase\.co\/?$/.test(endpoint.href)||!['postgres:','postgresql:'].includes(db.protocol)||!db.hostname.endsWith('.pooler.supabase.com')||(db.port||'5432')!=='5432'||db.pathname!=='/postgres'||decodeURIComponent(db.username)!=='postgres.'+endpoint.hostname.split('.')[0])throw Error('test backup target required');
  if([...db.searchParams.keys()].some(k=>k!=='sslmode')||(db.searchParams.has('sslmode')&&db.searchParams.get('sslmode')!=='verify-full'))throw Error('connection overrides rejected');
+ return {endpoint,db};
+}
+export function backupConnection(e:NodeJS.ProcessEnv){
+ const {endpoint,db}=backupDatabaseTarget(e);
  const key=e.BACKUP_ENCRYPTION_KEY||'';
  if(Buffer.from(key,'base64').length!==32||Buffer.from(key,'base64').toString('base64')!==key||key===e.DATA_ENCRYPTION_KEY)throw Error('independent backup key required');
  return {uri:db.href,key,endpoint:endpoint.origin,pg:{PATH:e.PATH,PGHOST:db.hostname,PGPORT:'5432',PGDATABASE:'postgres',PGUSER:decodeURIComponent(db.username),PGPASSWORD:decodeURIComponent(db.password),PGSSLMODE:'verify-full',PGSSLROOTCERT:resolve('backend/certificates/supabase-prod-ca-2021.crt'),PGOPTIONS:'-c default_transaction_read_only=on',PGCONNECT_TIMEOUT:'15'}};

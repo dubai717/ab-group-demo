@@ -46,6 +46,7 @@ jobs:
       hook_hash: ${{ steps.policy.outputs.hook_hash }}
       previous_sha: ${{ steps.policy.outputs.previous_sha }}
       requires_owner: ${{ steps.policy.outputs.requires_owner }}
+      catalogue_selected: ${{ steps.policy.outputs.catalogue_selected }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -129,6 +130,7 @@ jobs:
       - id: current-schema
         name: Recheck current ledger; ordinary releases never run migrations or backup restore
         env:
+          AB_CATALOGUE_SELECTED: ${{ needs.policy.outputs.catalogue_selected }}
           NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
@@ -150,6 +152,7 @@ jobs:
         env:
           NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
           AB_STAGING_AUTOMATION: controlled-test-only
+          AB_CATALOGUE_OWNER_APPROVAL: ${{ needs.owner-approval.result }}
           AB_BACKUP_DRILL_APPROVED: read-only-source-isolated-restore
           AB_BACKUP_RETAIN_APPROVED: private-bucket-no-overwrite
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -170,7 +173,7 @@ jobs:
         run: |
           docker rm --force --volumes ab-backup-drill-postgres > /dev/null 2>&1 || true
           rm -rf -- work/backups
-    if: always() && needs.policy.result == 'success' && (needs.owner-approval.result == 'success' || needs.owner-approval.result == 'skipped') && needs.schema-readiness.result == 'success' && needs.supersede.result == 'success'
+    if: always() && needs.policy.result == 'success' && (needs.owner-approval.result == 'success' || (needs.owner-approval.result == 'skipped' && needs.policy.outputs.catalogue_selected != 'true')) && needs.schema-readiness.result == 'success' && needs.supersede.result == 'success'
     env:
       AB_STAGING_SOURCE_SHA: ${{ needs.source.outputs.sha }}
       AB_SOURCE_RUN_ID: ${{ needs.source.outputs.run }}
@@ -354,6 +357,7 @@ jobs:
       - id: readiness
         name: Read-only ledger and actual runtime identity; no role impersonation
         env:
+          AB_CATALOGUE_SELECTED: ${{ needs.policy.outputs.catalogue_selected }}
           NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}

@@ -1,4 +1,6 @@
-import {businessCatalog,validateBusinessLedger} from './business-centers-catalog.mjs';
+import {accessWitness} from './access-continuity.js';
+import {sourceTableFingerprints} from './source-fingerprint.js';
+import {validateBusinessLedger,verifyBusinessCandidate} from './business-centers-catalog.mjs';
 import {approvedCatalog} from './safe-staging-additives.js';
 import {controllerContext} from './v2/context.mjs';
 import {approvedChain} from '../reset/schema.js';
@@ -42,15 +44,11 @@ export function drillGuard(e:NodeJS.ProcessEnv){
 }
 export async function manifest(c:PoolClient){
  const tables=(await c.query("select n.nspname s,c.relname t,c.relrowsecurity r,c.relforcerowsecurity f from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname=any($1::text[]) and c.relkind in('r','p') order by 1,2",[schemas])).rows;
- const rows=[];
- for(const t of tables){
-  const r=(await c.query(`select count(*)::text n,md5(coalesce(string_agg(md5(row_to_json(x)::text),'' order by md5(row_to_json(x)::text)),'')) h from ${qi(t.s)}.${qi(t.t)} x`)).rows[0];
-  rows.push({...t,...r});
- }
+ const fingerprints=await sourceTableFingerprints(c,tables),rows=tables.map(t=>({...t,...fingerprints.find(r=>r.s===t.s&&r.t===t.t)}));
  const constraints=(await c.query("select n.nspname s,t.relname t,c.conname n,c.contype y,c.convalidated v,pg_get_constraintdef(c.oid) d from pg_constraint c join pg_class t on t.oid=c.conrelid join pg_namespace n on n.oid=t.relnamespace where n.nspname=any($1::text[]) order by 1,2,3",[schemas])).rows;
  const policies=(await c.query('select * from pg_policies where schemaname=any($1::text[]) order by schemaname,tablename,policyname',[schemas])).rows;
  const triggers=(await c.query("select n.nspname s,t.relname t,g.tgname n,g.tgenabled e,pg_get_triggerdef(g.oid) d from pg_trigger g join pg_class t on t.oid=g.tgrelid join pg_namespace n on n.oid=t.relnamespace where n.nspname=any($1::text[]) and not g.tgisinternal order by 1,2,3",[schemas])).rows;
- return {rows,constraints,policies,triggers};
+ return {rows,constraints,policies,triggers,access:await accessWitness(c)};
 }
 export async function main(){
  let source:Pool|undefined,target:Pool|undefined,stage='GUARD';let retainedPath:string|undefined;
@@ -71,10 +69,11 @@ export async function main(){
    check(Math.floor(Number((await c.query('show server_version_num')).rows[0].server_version_num)/10000)===17,'SOURCE_VERSION');
    const expected=JSON.parse(await readFile('backend/actions/approved-migrations.json','utf8')).migrations;
    const ledger=(await c.query('select name,sha256 from public.ab_schema_migrations order by name')).rows;
+   const protectedPlan=controllerContext(process.env)?verifyBusinessCandidate():null;
    if(process.env.AB_STAGING_AUTOMATION==='controlled-test-only'){
-    if(trustedResetContext(process.env)){const chain=await approvedChain();check(ledger.length===chain.length&&chain.every((m:any)=>ledger.some((r:any)=>r.name===m.name&&r.sha256===m.sha256)),'RESET_APPROVED_LEDGER');}else if(controllerContext(process.env))validateBusinessLedger(ledger,await approvedCatalog());else await validateStagingLedger(ledger);
+    if(trustedResetContext(process.env)){const chain=await approvedChain();check(ledger.length===chain.length&&chain.every((m:any)=>ledger.some((r:any)=>r.name===m.name&&r.sha256===m.sha256)),'RESET_APPROVED_LEDGER');}else if(protectedPlan)validateBusinessLedger(ledger,await approvedCatalog(),protectedPlan);else await validateStagingLedger(ledger);
     const plan=JSON.parse(await readFile('backend/deploy/personnel-release-plan.json','utf8')).migrations,knownTables=new Set<string>();
-    for(const m of [...expected,...plan,...(controllerContext(process.env)?businessCatalog().filter(m=>ledger.some((r:any)=>r.name===m.name)):[])]){const sql=await readFile(m.path||'supabase/migrations/'+m.name,'utf8');for(const match of sql.matchAll(/\bCREATE TABLE ab\.([a-z_]+)/g))knownTables.add(match[1]);}
+    for(const m of [...expected,...plan,...(protectedPlan||[]).filter(m=>ledger.some((r:any)=>r.name===m.name))]){const sql=await readFile(m.path||'supabase/migrations/'+m.name,'utf8');for(const match of sql.matchAll(/\bCREATE TABLE ab\.([a-z_]+)/g))knownTables.add(match[1]);}
     const actual=(await c.query("select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='ab'and c.relkind in('r','p')")).rows;
     if(!trustedResetContext(process.env))check(actual.length===knownTables.size&&actual.every(r=>knownTables.has(r.relname)),'UNREGISTERED_APPLICATION_TABLE'); // Reset additionally replays the complete canonical chain on this isolated restored copy before exposing an executable plan.
     const production=(await c.query("select count(*)n from ab.settings where key~*'(production|live.payments|bank.feed|whatsapp|sms|smtp|gps.live)'and(value->>'enabled'='true'or value->>'environment'='production'or value->>'mode'='live')")).rows[0].n;check(Number(production)===0,'KNOWN_PRODUCTION_INTEGRATION');

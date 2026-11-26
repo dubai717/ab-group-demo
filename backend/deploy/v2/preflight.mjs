@@ -29,12 +29,12 @@ export async function preflight(e,api,request=fetch){
  const catalog=[...JSON.parse(readFileSync('backend/actions/approved-migrations.json','utf8')).migrations,...JSON.parse(readFileSync('backend/deploy/personnel-release-plan.json','utf8')).migrations];
  const raw=git('ls-tree','-r','--name-only',sha,'supabase').trim().split('\n').filter(p=>p.endsWith('.sql'));
  const business=verifyBusinessCandidate();
- need(raw.length===13+business.length&&catalog.every(m=>{const p=m.path||'supabase/migrations/'+m.name;return raw.includes(p)&&hash(readFileSync('candidate/'+p,'utf8'))===m.sha256;}),'IMMUTABLE_APPROVED_SQL_REQUIRED');
+ need(raw.length===13+business.length&&business.every(m=>raw.includes(m.path))&&catalog.every(m=>{const p=m.path||'supabase/migrations/'+m.name;return raw.includes(p)&&hash(readFileSync('candidate/'+p,'utf8'))===m.sha256;}),'IMMUTABLE_APPROVED_SQL_REQUIRED');
  // Declared schema additions are deferred until a controller review supports their exact plan.
  // Any added/revised SQL remains sensitive; only reviewed exact catalog bytes are accepted.
- if(changes.some(c=>business.some(m=>m.path===c.path))){result.risk='sensitive';result.requiresOwner=true;}
+ if(business.some(m=>m.name==='030_accounting_item_catalogue.sql')||changes.some(c=>business.some(m=>m.path===c.path))){result.risk='sensitive';result.requiresOwner=true;}
  const record={...result,sourceSha:sha,sourceTree:tree,controller:e.AB_CONTROLLER_REF,sourceRun:e.AB_SOURCE_RUN_ID,previousSha:previous.sha};writeFileSync('classification.json',JSON.stringify(record,null,2));
- for(const [k,value]of Object.entries({requires_owner:String(result.requiresOwner),app_sha:hash(readFileSync('candidate/app.js')),hook_hash:cfg.deployHookPathSha256,previous_sha:previous.sha}))appendFileSync(e.GITHUB_OUTPUT,k+'='+value+'\n');
+ for(const [k,value]of Object.entries({catalogue_selected:String(business.some(m=>m.name==='030_accounting_item_catalogue.sql')),requires_owner:String(result.requiresOwner),app_sha:hash(readFileSync('candidate/app.js')),hook_hash:cfg.deployHookPathSha256,previous_sha:previous.sha}))appendFileSync(e.GITHUB_OUTPUT,k+'='+value+'\n');
  console.log('RESULT: CLASSIFICATION_'+result.risk.toUpperCase().replaceAll('-','_')+'; VALUES_WITHHELD; SOURCE_TESTS_VERIFIED');return record;
 }
 if(process.argv[1]?.endsWith('/preflight.mjs')){try{const e=process.env,api=async path=>{const r=await fetch('https://api.github.com/repos/'+repo+path,{headers:{authorization:'Bearer '+e.GH_TOKEN,accept:'application/vnd.github+json'},redirect:'error',signal:AbortSignal.timeout(20000)});need(r.ok,'GITHUB_PROTECTION_OR_HISTORY_UNAVAILABLE');return r.json();};await preflight(e,api);}catch(error){console.log('RESULT: DELIVERY_BLOCKED; CODE='+(/^[A-Z_]+$/.test(error.message||'')?error.message:'WITHHELD'));process.exitCode=1;}}

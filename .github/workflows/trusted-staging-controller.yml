@@ -16,6 +16,7 @@ jobs:
       hook_hash: ${{ steps.policy.outputs.hook_hash }}
       previous_sha: ${{ steps.policy.outputs.previous_sha }}
       requires_owner: ${{ steps.policy.outputs.requires_owner }}
+      catalogue_selected: ${{ steps.policy.outputs.catalogue_selected }}
     steps:
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       with:
@@ -88,6 +89,7 @@ jobs:
       env:
         NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
         AB_STAGING_AUTOMATION: controlled-test-only
+        AB_CATALOGUE_OWNER_APPROVAL: ${{ needs.owner-approval.result }}
         AB_BACKUP_DRILL_APPROVED: read-only-source-isolated-restore
         AB_BACKUP_RETAIN_APPROVED: private-bucket-no-overwrite
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -105,7 +107,7 @@ jobs:
       run: |
         docker rm --force --volumes ab-backup-drill-postgres > /dev/null 2>&1 || true
         rm -rf -- work/backups
-    if: always() && needs.policy.result == 'success' && (needs.owner-approval.result == 'success' || needs.owner-approval.result == 'skipped')
+    if: always() && needs.policy.result == 'success' && (needs.owner-approval.result == 'success' || (needs.owner-approval.result == 'skipped' && needs.policy.outputs.catalogue_selected != 'true'))
   release:
     needs:
     - policy

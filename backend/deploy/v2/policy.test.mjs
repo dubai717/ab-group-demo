@@ -31,11 +31,19 @@ test('isolated complete preflight: ordinary auto, unknown owner gate, failed che
   const commit=()=>{git('add','.');git('commit','-m','synthetic candidate');return git('rev-parse','HEAD');};put('candidate/styles.css','a{width:2rem;white-space:nowrap}');let source=commit();let conclusion='success';
   const api=async p=>{if(/^\/environments\/[^/]+$/.test(p)){const name=p.split('/')[2];return {name,can_admins_bypass:false,deployment_branch_policy:{custom_branch_policies:true,protected_branches:false},protection_rules:[{type:'required_reviewers',reviewers:[{type:'User',reviewer:{login:'dubai717'}}]}]};}if(p.endsWith('/deployment-branch-policies'))return {branch_policies:[{name:'main',type:'branch'}]};if(p==='/rules/branches/main')return ['update','deletion','non_fast_forward'].map(type=>({type,ruleset_id:1}));if(p==='/rulesets/1')return {id:1,enforcement:'active',bypass_actors:[]};if(p.startsWith('/git/ref/'))return {object:{sha:source}};if(p.startsWith('/actions/runs/'))return {head_sha:source,head_branch:'staging/ab-group-test',event:'push',conclusion,path:'.github/workflows/staging-ci.yml',repository:{full_name:base.GITHUB_REPOSITORY}};if(p.startsWith('/deployments?'))return [{id:1,sha:previous,production_environment:false,payload:{abGroupStaging:true}}];if(p==='/deployments/1/statuses')return [{state:'success'}];throw Error('UNEXPECTED_API');};
   const request=async()=>({ok:true,json:async()=>({environment:'staging',commit:previous,projectOriginSha256:'9ea1a5dcb06a135b7c29d99699651b34d11f795d525b7861865c0c842fff954f'})});
+  const path030='supabase/proposed/030_accounting_item_catalogue.sql',sql030=readFileSync(path030,'utf8');
   process.chdir(dir);const env=()=>({...base,AB_STAGING_SOURCE_SHA:source,AB_SOURCE_RUN_ID:'1',GITHUB_OUTPUT:join(dir,'outputs')});
   assert.equal((await preflight(env(),api,request)).requiresOwner,false);
   put('candidate/unknown-runtime.js','const example=1');source=commit();assert.equal((await preflight(env(),api,request)).requiresOwner,true);
   conclusion='failure';await assert.rejects(preflight(env(),api,request),/SUCCESSFUL_SOURCE_CHECKS_REQUIRED/);
-  conclusion='success';put('candidate/supabase/additive/014_fixture.sql','-- unexpected SQL');source=commit();await assert.rejects(preflight(env(),api,request),/BUSINESS_SQL_HASH/);put('candidate/supabase/additive/014_fixture.sql','-- synthetic reviewed business schema 14');
+  conclusion='success';
+  put(path030,sql030);put('candidate/'+path030,sql030);source=commit();
+  assert.equal((await preflight(env(),api,request)).requiresOwner,true);
+  assert.match(readFileSync(join(dir,'outputs'),'utf8'),/catalogue_selected=true/);
+  put('candidate/'+path030,sql030+'-- unexpected');source=commit();
+  await assert.rejects(preflight(env(),api,request),/CATALOGUE_SQL_HASH/);
+  put('candidate/'+path030,sql030);
+  put('candidate/supabase/additive/014_fixture.sql','-- unexpected SQL');source=commit();await assert.rejects(preflight(env(),api,request),/BUSINESS_SQL_HASH/);put('candidate/supabase/additive/014_fixture.sql','-- synthetic reviewed business schema 14');
   put('candidate/supabase/migrations/001_fixture.sql','-- changed');source=commit();await assert.rejects(preflight(env(),api,request),/IMMUTABLE_APPROVED_SQL_REQUIRED/);
  }finally{process.chdir(original);rmSync(dir,{recursive:true,force:true});}
 });

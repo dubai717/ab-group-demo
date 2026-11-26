@@ -2,3 +2,4 @@ export type BusinessMigration={name:string;path:string;sha256:string;tables:stri
 export function businessCatalog(root?:string):BusinessMigration[];
 export function validateBusinessLedger(rows:any[],base:any[],plan?:BusinessMigration[]):BusinessMigration[];
 export function verifyBusinessCandidate():BusinessMigration[];
+export function catalogueMigration(root?:string):BusinessMigration;
