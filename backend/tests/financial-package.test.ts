@@ -421,3 +421,88 @@ test('catalogue fee thresholds are independent of fees and use month-end allocat
   assert.equal(invoices.filter(r=>r.source_key.includes(over.id)).length,2);
  }finally{await f.close();}
 });
+
+test('accounting imports retain legacy invoice mapping and use the original receipt, voucher and deposit workflows',async()=>{
+ const f=await businessCentersFixture();
+ try{
+    const {unzipSync,zipSync,strFromU8,strToU8}=await import('fflate');
+    const now=today(),bank=await f.bank(),proof=await f.proof(),otherBank=await f.bank(f.co2);
+    const customer=(await f.admin.query('select file_number from ab.customers where id=$1',[f.client])).rows[0].file_number;
+    const payload=(csv:string)=>({companyId:f.co1,format:'csv',name:'synthetic.csv',base64:Buffer.from(csv).toString('base64')});
+    const upload=(type:string,csv:string)=>f.req('POST','/api/ledger/accounting-imports',{type,...payload(csv)});
+    const commit=(id:string,companyId=f.co1,status=200)=>f.req('POST','/api/ledger/accounting-imports/'+id+'/commit',{companyId},status);
+    const template=(type:string,format:string)=>f.req('GET','/api/ledger/accounting-imports/template?companyId='+f.co1+'&type='+type+'&format='+format);
+    const columns:Record<string,string>={};
+    for(const type of ['invoice','receipt','voucher','deposit']){
+        const csv=await template(type,'csv'),xlsx=await template(type,'xlsx');
+        columns[type]=Buffer.from(csv.base64,'base64').toString().trim();
+        assert.match(columns[type],/^sourceKey,/);
+        const archive=unzipSync(Buffer.from(xlsx.base64,'base64'));
+        assert.match(strFromU8(archive['xl/worksheets/sheet1.xml']),/sourceKey/);
+    }
+    const existing=await f.req('POST','/api/ledger/invoice-imports',{...payload('ref,file,code,total,ccy,due\nINV-300,'+customer+',salik,300,AED,'+now),
+        mapping:{sourceKey:'ref',customerNumber:'file',itemCode:'code',amount:'total',currency:'ccy',dueOn:'due'}});
+    assert.equal(existing.rows[0].error,'');
+    const invoice=(await f.req('POST','/api/ledger/invoice-imports/'+existing.id+'/commit',{})).created[0];
+    const receipts=columns.receipt+'\nRC-ORIGINAL,'+customer+',INV-300,salik,200,AED,'+now;
+    const receipt=await upload('receipt',receipts+'\n'+receipts.split('\n')[1]+'\nBAD,'+customer+',INVALID,salik,2,AED,'+now);
+    assert.deepEqual(receipt.rows.map((r:any)=>r.error),[undefined,'duplicate','unmatchedInvoice']);
+    assert.equal((await f.admin.query('select count(*)::int n from ab.finance_receipts where customer_id=$1',[f.client])).rows[0].n,0);
+    await commit(receipt.id,f.co2,404);
+    const importer=await f.employee();
+    await f.req('POST','/api/users/'+importer.id+'/grants',{action:'ledger_invoice_import',scope:{type:'company',id:f.co1},delegable:false});
+    await f.login(importer.username,importer.password);
+    await commit(receipt.id,f.co1,403);
+    await f.login(f.username,f.password);
+    const imported=await commit(receipt.id);
+    assert.equal(imported.created.length,1);
+    assert.deepEqual(await commit(receipt.id),imported);
+    const reupload=await upload('receipt',receipts+'\n'+receipts.split('\n')[1]+'\nBAD,'+customer+',INVALID,salik,2,AED,'+now);
+    assert.equal(reupload.completed,true);
+    assert.equal(reupload.rows[0].error,'duplicate');
+
+    const voucher=await template('voucher','xlsx');
+    const archive=unzipSync(Buffer.from(voucher.base64,'base64'));
+    const row=['PV-ORIGINAL','Synthetic beneficiary','','expense','25','AED',now,'Synthetic payable'];
+    const cells=row.map((value,index)=>'<c r="'+String.fromCharCode(65+index)+'2" t="inlineStr"><is><t>'+value+'</t></is></c>').join('');
+    archive['xl/worksheets/sheet1.xml']=strToU8(strFromU8(archive['xl/worksheets/sheet1.xml']).replace('</sheetData>','<row r="2">'+cells+'</row></sheetData>'));
+    const payment=await f.req('POST','/api/ledger/accounting-imports',{companyId:f.co1,type:'voucher',
+        name:'synthetic.xlsx',format:'xlsx',base64:Buffer.from(zipSync(archive)).toString('base64')});
+    assert.equal(payment.rows[0].error,undefined);
+    const pending=(await commit(payment.id)).created[0];
+    assert.equal(pending.status,'Pending');
+    assert.equal((await f.admin.query('select status from ab.finance_vouchers where id=$1',[pending.ids[0]])).rows[0].status,'Pending');
+
+    const wrong='BAD-DEPOSIT,'+otherBank.id+',RC-ORIGINAL,'+proof+',200,AED,'+now;
+    const good='DEP-ORIGINAL,'+bank.id+',RC-ORIGINAL,'+proof+',200,AED,'+now;
+    const deposits=await upload('deposit',columns.deposit+'\n'+wrong+'\n'+good);
+    assert.deepEqual(deposits.rows.map((r:any)=>r.error),['inactiveBank',undefined]);
+    const deposit=(await commit(deposits.id)).created[0];
+    assert.equal(deposit.status,'Review');
+    const confirmation={confirmedAmount:'200',bankConfirmation:'Synthetic verified deposit',effectiveOn:now,accountAndDateVerified:true};
+    await f.req('POST','/api/ledger/deposits/'+deposit.ids[0]+'/confirm',confirmation);
+    await f.req('POST','/api/ledger/deposits/'+deposit.ids[0]+'/confirm',confirmation,409);
+    const totals=(await f.admin.query(`select
+        (select sum(amount)::text from ab.vehicle_allocations where invoice_id=$1) allocated,
+        (select sum(amount)::text from ab.finance_receipts where customer_id=$2 and payment_state='Cleared') collected,
+        (select sum(amount)::text from ab.finance_custody_moves where receipt_id=$3) held`,[invoice.id,f.client,imported.created[0].ids[0]])).rows[0];
+    assert.deepEqual(totals,{allocated:'200.000',collected:'200.000',held:'0.000'});
+    assert.equal(300-Number(totals.allocated),100);
+    const report=await f.req('GET','/api/ledger/reports?companies='+f.co1+'&from='+now+'&to='+now+'&kind=collections');
+    assert.deepEqual(report.rows.map((row:any)=>row.amount),['200.000']);
+
+    const cash=()=>f.collection('30',{receivedOn:now,targetInvoiceId:invoice.id,items:[{itemId:f.items.salik,amount:'30'}]});
+    const first=(await cash()).receipts[0],second=(await cash()).receipts[0];
+    const ordinary=await f.req('POST','/api/ledger/deposits',{companyId:f.co1,bankAccountId:bank.id,
+        currency:'AED',amount:'30',effectiveOn:now,documentVersionId:proof,reference:'DEP-ORDINARY'});
+    const reserved=await upload('deposit',columns.deposit+'\nDEP-LINKED,'+bank.id+','+first.id+','+proof+',30,AED,'+now);
+    assert.equal(reserved.rows[0].error,undefined);
+    const linked=(await commit(reserved.id)).created[0];
+    await f.req('POST','/api/ledger/deposits/'+ordinary.id+'/confirm',{...confirmation,confirmedAmount:'30'});
+    await f.req('POST','/api/ledger/deposits/'+linked.ids[0]+'/confirm',{...confirmation,confirmedAmount:'30'});
+    const moved=async(depositId:string)=>(await f.admin.query('select receipt_id from ab.finance_custody_moves where source_key like $1',
+        ['deposit:'+depositId+':out:%'])).rows.map(r=>r.receipt_id);
+    assert.deepEqual(await moved(ordinary.id),[second.id]);
+    assert.deepEqual(await moved(linked.ids[0]),[first.id]);
+ }finally{await f.close();}
+});

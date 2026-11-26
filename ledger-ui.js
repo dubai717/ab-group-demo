@@ -2,9 +2,9 @@
 (function (root) {
     'use strict';
     let preferencesLoaded = false;
-    let cap = null, book = null, co = '', tab = 'dashboard', actor = '', epoch = 0, busy = false, notice = '', customers = [], vehicles = [], docs = [], bills = [], report = null, preview = null, selected = '', drafts = {}, context = null, importJob = null;
+    let cap = null, book = null, co = '', tab = 'dashboard', actor = '', epoch = 0, busy = false, notice = '', customers = [], vehicles = [], docs = [], bills = [], report = null, preview = null, selected = '', drafts = {}, context = null, importJob = null, importType = 'invoice';
     const t = (a, b) => getLocale() === 'ar' ? a : b, e = x => WorkspaceUI.esc(x ?? ''), now = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dubai' }).format(new Date()), L = LedgerPolicy;
-    const labels = { receivables:['مستحقات العملاء','Customer receivables'], dashboard: ['الرقابة المالية', 'Financial control'], invoices: ['الفواتير', 'Invoices'], collect: ['تنظيم التحصيل', 'Organize collection'], custody: ['العهد والتسليم', 'Custody & handover'], deposits: ['الإيداعات', 'Deposits'], vouchers: ['سندات الصرف المعلقة', 'Pending payment vouchers'], funds: ['الصناديق والنثريات', 'Funds & petty cash'], cards: ['بطاقات الائتمان', 'Credit cards'], journals: ['القيود', 'Journals'], reports: ['القوائم والتقارير', 'Statements & reports'], work: ['Work Amount', 'Work Amount'], intercompany: ['التحويلات بين الشركات', 'Intercompany transfers'], reconciliation: ['المطابقة البنكية والبطاقات', 'Bank/card reconciliation'], setup: ['دليل الحسابات والبنود', 'Accounts & financial items'], import: ['استيراد الفواتير', 'Invoice import'], closing: ['الإغلاق المالي', 'Financial closing'] };
+    const labels = { receivables:['مستحقات العملاء','Customer receivables'], dashboard: ['الرقابة المالية', 'Financial control'], invoices: ['الفواتير', 'Invoices'], collect: ['تنظيم التحصيل', 'Organize collection'], custody: ['العهد والتسليم', 'Custody & handover'], deposits: ['الإيداعات', 'Deposits'], vouchers: ['سندات الصرف المعلقة', 'Pending payment vouchers'], funds: ['الصناديق والنثريات', 'Funds & petty cash'], cards: ['بطاقات الائتمان', 'Credit cards'], journals: ['القيود', 'Journals'], reports: ['القوائم والتقارير', 'Statements & reports'], work: ['Work Amount', 'Work Amount'], intercompany: ['التحويلات بين الشركات', 'Intercompany transfers'], reconciliation: ['المطابقة البنكية والبطاقات', 'Bank/card reconciliation'], setup: ['دليل الحسابات والبنود', 'Accounts & financial items'], import: ['استيراد المستندات المحاسبية', 'Accounting document import'], closing: ['الإغلاق المالي', 'Financial closing'] };
     Object.assign(labels,FinancialPackageUI.names);
     const navigationGroups = [
         { titles: ['الفوترة', 'Billing'], tabs: ['invoices', 'collect', 'vouchers', 'custody', 'deposits', 'work', 'intercompany'] },
@@ -13,7 +13,7 @@
         { titles: ['الإعدادات المحاسبية', 'Accounting settings'], tabs: ['setup', 'journals', 'taxes', 'priorities', 'import'] },
     ];
 
-    const words = {cost_centre_id:['مرجع مركز التكلفة','Cost centre reference'],cost_centre_name_ar:['مركز التكلفة بالعربية','Arabic cost centre'],cost_centre_name_en:['مركز التكلفة بالإنجليزية','English cost centre'],income:['الإيرادات','Income'],expense:['المصروفات','Expenses'],net:['الصافي','Net'],company_id:['الشركة','Company'], id: ['المرجع', 'Reference'], invoiceNumber: ['رقم الفاتورة', 'Invoice number'], receipt_number: ['رقم السند', 'Receipt number'], number: ['الرقم', 'Number'], amount: ['المبلغ', 'Amount'], paid: ['المحصل', 'Paid'], outstanding: ['المستحق', 'Outstanding'], status: ['الحالة', 'Status'], currency: ['العملة', 'Currency'], kind: ['النوع', 'Type'], name: ['الاسم', 'Name'], name_ar: ['الاسم العربي', 'Arabic name'], name_en: ['الاسم الإنجليزي', 'English name'], code: ['الرمز', 'Code'], balance: ['الرصيد', 'Balance'], refill: ['التغذية المطلوبة', 'Refill required'], actual: ['المستلم فعلياً', 'Actually received'], debit: ['مدين', 'Debit'], credit: ['دائن', 'Credit'], net: ['الصافي', 'Net'], company_id: ['الشركة', 'Company'], holder_id: ['الموظف', 'Employee'], dueOn: ['الاستحقاق', 'Due date'], last_four: ['آخر أربعة أرقام', 'Last four'], payment_state: ['حالة التحصيل', 'Collection state'], Active: ['نشط', 'Active'], Pending: ['معلق', 'Pending'], Approved: ['معتمد', 'Approved'], Paid: ['مسدد', 'Paid'], Review: ['للمراجعة', 'Review'], Cleared: ['محصل فعلياً', 'Cleared'], Returned: ['مرتجع', 'Returned'], Partial: ['مسدد جزئياً', 'Partial'], Unpaid: ['غير مسدد', 'Unpaid'], Posted: ['مرحل', 'Posted'], Draft: ['مسودة', 'Draft'], Cancelled: ['ملغى', 'Cancelled'], Corrected: ['مصحح', 'Corrected'] };
+    const words = {line:['السطر','Row'], reference:['المرجع الأصلي','Original reference'], reason:['السبب','Reason'],cost_centre_id:['مرجع مركز التكلفة','Cost centre reference'],cost_centre_name_ar:['مركز التكلفة بالعربية','Arabic cost centre'],cost_centre_name_en:['مركز التكلفة بالإنجليزية','English cost centre'],income:['الإيرادات','Income'],expense:['المصروفات','Expenses'],net:['الصافي','Net'],company_id:['الشركة','Company'], id: ['المرجع', 'Reference'], invoiceNumber: ['رقم الفاتورة', 'Invoice number'], receipt_number: ['رقم السند', 'Receipt number'], number: ['الرقم', 'Number'], amount: ['المبلغ', 'Amount'], paid: ['المحصل', 'Paid'], outstanding: ['المستحق', 'Outstanding'], status: ['الحالة', 'Status'], currency: ['العملة', 'Currency'], kind: ['النوع', 'Type'], name: ['الاسم', 'Name'], name_ar: ['الاسم العربي', 'Arabic name'], name_en: ['الاسم الإنجليزي', 'English name'], code: ['الرمز', 'Code'], balance: ['الرصيد', 'Balance'], refill: ['التغذية المطلوبة', 'Refill required'], actual: ['المستلم فعلياً', 'Actually received'], debit: ['مدين', 'Debit'], credit: ['دائن', 'Credit'], net: ['الصافي', 'Net'], company_id: ['الشركة', 'Company'], holder_id: ['الموظف', 'Employee'], dueOn: ['الاستحقاق', 'Due date'], last_four: ['آخر أربعة أرقام', 'Last four'], payment_state: ['حالة التحصيل', 'Collection state'], Active: ['نشط', 'Active'], Pending: ['معلق', 'Pending'], Approved: ['معتمد', 'Approved'], Paid: ['مسدد', 'Paid'], Review: ['للمراجعة', 'Review'], Cleared: ['محصل فعلياً', 'Cleared'], Returned: ['مرتجع', 'Returned'], Partial: ['مسدد جزئياً', 'Partial'], Unpaid: ['غير مسدد', 'Unpaid'], Posted: ['مرحل', 'Posted'], Draft: ['مسودة', 'Draft'], Cancelled: ['ملغى', 'Cancelled'], Corrected: ['مصحح', 'Corrected'] };
     const label = k => labels[k] ? t(...labels[k]) : words[k] ? t(...words[k]) : k;
     Object.assign(words, { cash: ['نقد', 'Cash'], cheque: ['شيك', 'Cheque'], transfer: ['تحويل بنكي', 'Bank transfer'], manual: ['يدوي', 'Manual'], automatic: ['تلقائي بالأولوية', 'Automatic by priority'], monthly: ['شهري', 'Monthly'], annual: ['سنوي', 'Annual'], none: ['بدون تكرار', 'No recurrence'], trial: ['ميزان المراجعة', 'Trial balance'], balance: ['الميزانية العمومية', 'Balance sheet'], profit: ['الربح والخسارة', 'Profit and loss'], cashflow: ['حركات نقدية مصنفة', 'Classified cash movements'], ledger: ['الأستاذ العام', 'General ledger'], journal: ['اليومية', 'Journal'], receivables: ['المستحقات وأعمار الديون', 'Receivables and ageing'], custody: ['العهد', 'Custody'], vouchers: ['سندات الصرف', 'Payment vouchers'], cards: ['البطاقات', 'Cards'], kpi: ['وقائع الأداء', 'Performance facts'], vat: ['تقرير ضريبة إداري', 'Tax management report'], asset: ['أصل', 'Asset'], liability: ['التزام', 'Liability'], equity: ['حقوق الملكية', 'Equity'], income: ['إيراد', 'Income'], expense: ['مصروف', 'Expense'] });
     Object.assign(words, { collections: ['التحصيل الفعلي', 'Actual collections'], deposits: ['الإيداعات', 'Deposits'], cheques: ['الشيكات', 'Cheques'], funds: ['الصناديق', 'Funds'], intercompany: ['الحسابات المتقابلة', 'Intercompany'], installments: ['التمويلات والأقساط', 'Financing & installments'], adjustments: ['الخصومات والشطب', 'Credits & write-offs'], 'cost-centres':['مراكز التكلفة','Cost centres'],profitability: ['ربحية البنود', 'Item profitability'] });
@@ -96,7 +96,7 @@
             }
         }
     }
-    function reset() { ReceivablesUI.reset();FinancialPackageUI.reset();epoch++; preferencesLoaded = false; cap = book = null; co = ''; actor = ''; busy = false; customers = []; vehicles = []; docs = []; bills = []; report = preview = importJob = context = null; drafts = {}; notice = ''; tab = 'dashboard'; }
+    function reset() { ReceivablesUI.reset();FinancialPackageUI.reset();epoch++; preferencesLoaded = false; cap = book = null; co = ''; actor = ''; busy = false; customers = []; vehicles = []; docs = []; bills = []; report = preview = importJob = context = null; importType='invoice'; drafts = {}; notice = ''; tab = 'dashboard'; }
     const packageContext=()=>({co,book,api,refresh,customers,vehicles,docs,scope:registerScope(),company:cap?.companies?.find(r=>r.id===co)});
     function body() {
         const packageBody=FinancialPackageUI.body(tab,packageContext());if(packageBody!==null)return packageBody;
@@ -143,13 +143,77 @@
             return FinancialPackageUI.itemPanel(packageContext()) +
                 '<h3>'+e(t('دليل الحسابات','Chart of accounts'))+'</h3>' +
                 table(book.finance_accounts, ['code', 'name_ar', 'name_en', 'kind', 'active'], r => allowed('account_manage') ? btn('account-edit', t('تعديل / تفعيل', 'Edit / activate'), r.id) : '') + setup();
-        if (tab === 'import')
-            return form('import-preview', t('معاينة CSV / Excel — المطابقة قبل الاعتماد', 'Preview CSV / Excel — match before commit'), [f('file', 'ملف الفواتير الأصلي', 'Original invoice file', 'file'), ...['sourceKey', 'customerNumber', 'vehicleNumber', 'plate', 'itemCode', 'amount', 'currency', 'dueOn'].map(k => f(k, label(k), k, 'text', k, null, !['vehicleNumber', 'plate'].includes(k)))], t('معاينة', 'Preview'), 'invoice_import') + (importJob ? table(importJob.rows.map(r => ({ line: r.line, status: r.error || 'Ready', amount: r.data?.amount })), ['line', 'status', 'amount']) + btn('import-commit', t('اعتماد السجلات الصحيحة', 'Commit valid rows')) : '');
+        if (tab === 'import') return accountingImportPanel();
         if (tab === 'closing')
             return form('closing-review', t('قائمة الإغلاق قبل الاعتماد', 'Closing checklist before approval'), [f('month', 'أول يوم من الشهر', 'First day of month', 'date', now().slice(0, 7) + '-01')], t('فحص النواقص', 'Review blockers'), 'close') + (report?.problems ? `<p>${Object.entries(report.problems).map(([k, n]) => e(k) + ': ' + e(n)).join(' | ') || t('اجتازت قائمة الفحص', 'Checklist passed')}</p>${report.canClose ? btn('close-confirm', t('اعتماد إغلاق الشهر', 'Approve monthly close')) : ''}` : '') + table(book.finance_periods, ['month', 'created_at']);
         return '';
     }
     function journalRows() { return '<div class="full ld-lines">' + [0, 1, 2, 3].map(i => `<div class="ld-row">${field(f('chart' + i, 'الحساب', 'Account', 'select', '', accountOptions(), i < 2), 'journal')}${field(f('debit' + i, 'مدين', 'Debit', 'text', '0', null, i < 2), 'journal')}${field(f('credit' + i, 'دائن', 'Credit', 'text', '0', null, i < 2), 'journal')}</div>`).join('') + '</div>'; }
+    const importTypes={invoice:['فاتورة','Invoice'],receipt:['سند قبض','Receipt voucher'],
+        voucher:['سند صرف','Payment voucher'],deposit:['سند إيداع بنكي','Bank deposit voucher']};
+    const importRights={invoice:'invoice_create',receipt:'collect',voucher:'voucher_create',deposit:'deposit'};
+    const importFields=['sourceKey','customerNumber','vehicleNumber','plate','itemCode','amount','currency','dueOn'];
+    const importErrors={
+        duplicate:['مرجع مكرر','Duplicate reference'],invalidRow:['حقل مفقود أو تنسيق غير صالح','Missing field or invalid format'],
+        unmatchedCustomer:['العميل غير موجود في النطاق','Customer not found in scope'],
+        unmatchedCustomerOrItem:['تعذرت مطابقة العميل أو البند','Customer or item could not be matched'],
+        unmatchedInvoice:['مرجع الفاتورة غير مطابق للعميل والشركة والعملة','Invoice reference does not match the customer, company and currency'],
+        invalidTargetInvoice:['المبلغ يتجاوز المستحق أو لا يمكن تخصيصه للفاتورة','Amount exceeds the balance or cannot be allocated to the invoice'],
+        unmatchedItem:['رمز البند غير مطابق','Item code does not match'],unmatchedPlate:['اللوحة غير مطابقة','Plate does not match'],
+        unmatchedVehicle:['المركبة غير مطابقة','Vehicle does not match'],vehicleNumberRequiredForPlate:['يلزم رقم ملف المركبة مع اللوحة','Vehicle file number is required with a plate'],
+        documentItemNotAllowed:['البند لا يسمح بهذا النوع من المستند','Item does not allow this document type'],
+        unmatchedReceipt:['مرجع سند القبض غير مطابق','Receipt reference does not match'],
+        invalidReceiptReferences:['مراجع سندات القبض مكررة أو تتجاوز الحد','Duplicate or too many receipt references'],
+        unusedReceiptReference:['المبلغ لا يستخدم جميع السندات المذكورة','Amount does not use all referenced receipts'],
+        insufficientReceiptCustody:['العهدة المتاحة للسندات لا تكفي','Referenced receipts have insufficient available custody'],
+        insufficientCustody:['العهدة النقدية غير كافية','Insufficient cash custody'],
+        inactiveBank:['الحساب البنكي غير نشط أو خارج الشركة أو العملة','Bank account is inactive or outside the company or currency'],
+        invalidDate:['التاريخ غير مقبول','Date is not allowed'],periodClosed:['الفترة المالية مغلقة','Financial period is closed'],
+        denied:['السجل خارج نطاق الصلاحية','Record is outside the permitted scope'],
+    };
+    function importRowReason(error){
+        if(importErrors[error])return t(...importErrors[error]);
+        if(error.startsWith('invalidField:')){
+            const field=error.split(':')[1];
+            const names={sourceKey:['المرجع الأصلي','Original reference'],customerNumber:['رقم ملف العميل','Customer file number'],
+                bankAccountId:['الحساب البنكي','Bank account'],documentVersionId:['إثبات الإيداع','Deposit evidence'],
+                receivedOn:['تاريخ القبض','Receipt date'],effectiveOn:['تاريخ الإيداع','Deposit date'],
+                issuedOn:['تاريخ الإصدار','Issue date'],beneficiary:['المستفيد','Beneficiary']};
+            return t('قيمة غير صالحة في حقل ','Invalid value in ')+(names[field]?t(...names[field]):label(field));
+        }
+        return message(error);
+    }
+    function accountingImportPanel(){
+        if(!allowed('invoice_import'))return '<p>'+e(message('denied'))+'</p>';
+        const choose=`<fieldset id="ld-import-type" class="ld-import-types">
+            <legend>${t('نوع المستند','Document type')}</legend>
+            ${Object.entries(importTypes).map(([id,names])=>`<label><input type="radio" name="accountingImportType" value="${id}"
+                ${id===importType?'checked':''}> ${e(t(...names))}</label>`).join('')}
+            </fieldset><div class="fw-actions">${btn('import-template',t('قالب Excel','Excel template'),'xlsx')}
+                ${btn('import-template',t('قالب CSV','CSV template'),'csv')}</div>`;
+        const fields=[f('file','ملف CSV أو Excel','CSV or Excel file','file')];
+        if(importType==='invoice')fields.push(...importFields.map(k=>f(k,label(k),k,'text',k,null,!['vehicleNumber','plate'].includes(k))));
+        const upload=form('import-preview',t('رفع الملف ومعاينته','Upload and preview'),fields,t('معاينة','Preview'),'invoice_import');
+        if(!importJob)return choose+upload;
+        const changed=new Map((importJob.result?.rows||[]).map(row=>[row.line,row]));
+        const rows=importJob.rows.map(r=>({...r,...changed.get(r.line)}));
+        const groups=[
+            {title:t('السجلات الصحيحة','Valid records'),match:r=>!r.error},
+            {title:t('السجلات المكررة','Duplicates'),match:r=>r.error==='duplicate'},
+            {title:t('الأخطاء','Errors'),match:r=>r.error&&r.error!=='duplicate'},
+        ];
+        const preview=groups.map(group=>{
+            const entries=rows.filter(group.match);
+            return '<section class="ld-import-preview"><h3>'+e(group.title)+' ('+entries.length+')</h3>'+
+                table(entries.map(r=>({line:r.line,reference:r.reference??r.data?.sourceKey??r.original?.sourceKey,
+                    amount:r.amount??r.data?.amount??r.original?.amount,
+                    reason:r.error?importRowReason(r.error):t('صالح','Valid')})),
+                    ['line','reference','amount','reason'])+'</section>';
+        }).join('');
+        return choose+upload+preview+(importJob.completed
+            ?'<p>'+e(t('الدفعة معتمدة','Batch completed'))+'</p>'
+            :rows.some(r=>!r.error)&&allowed(importRights[importType])?btn('import-commit',t('اعتماد السجلات الصحيحة','Commit valid records')):'');
+    }
     function setup() { const a = defs(), charts = accountOptions(); return form('account', t('حساب موحد — مرتبط بالشركات المختارة', 'Shared account — mapped to selected companies'), [f('code', 'الرمز', 'Code'), f('nameAr', 'الاسم العربي', 'Arabic name'), f('nameEn', 'الاسم الإنجليزي', 'English name'), f('kind', 'الطبيعة', 'Nature', 'select', 'asset', choice(['asset', 'liability', 'equity', 'income', 'expense'])), f('parentId', 'حساب رئيسي (اختياري)', 'Parent (optional)', 'select', '', a, false), f('currency', 'العملة', 'Currency', 'text', 'AED'), f('bankAccountId', 'ربط حساب بنكي (اختياري)', 'Map existing bank (optional)', 'select', '', book.banks, false), f('eliminate', 'حساب متبادل بين الشركات', 'Intercompany elimination account', 'checkbox', false)], undefined, 'account_manage') + form('config', t('ربط عهدة الشركة والتقويم', 'Company custody mappings and calendar'), [f('currency', 'العملة', 'Currency', 'text', 'AED'), f('custodyAccountId', 'حساب عهدة النقد', 'Cash custody account', 'select', book.config.custodyAccountId || '', charts), f('chequeTransitAccountId', 'حساب الشيكات قيد التحصيل', 'Cheque transit account', 'select', book.config.chequeTransitAccountId || '', charts), f('depositBankAccountId','حساب الإيداع المعتمد (اختياري)','Approved deposit account (optional)','select',book.config.depositBankAccountId||'',book.banks,false), f('customerCreditAccountId', 'أمانات وأرصدة العملاء الدائنة', 'Customer credit/liability', 'select', book.config.customerCreditAccountId || '', charts), f('automaticFinanceJobs', 'تمكين الجدولة للشركة بعد تفعيل عامل الخادم', 'Enable company scheduling after server worker activation', 'checkbox', book.config.automaticFinanceJobs || false), f('depositDays', 'مهلة الإيداع بأيام العمل', 'Deposit working days', 'number', book.config.depositDays || 1), f('holidays', 'العطلات: تاريخ واحد في كل سطر', 'Holidays: one date per line', 'textarea', (book.config.holidays || []).join('\n'), null, false)], undefined, 'configure'); }
     function renderNavigation() {
         return `<nav class="ld-navigation" dir="${getLocale() === 'ar' ? 'rtl' : 'ltr'}" aria-label="${t('أقسام الإدارة المالية', 'Financial management sections')}">
@@ -419,6 +483,7 @@
             return;
         }
         if (key === 'import-preview') {
+            const company=co,type=importType;
             const file = fd.get('file');
             if (!file || !file.size || file.size > 5e6)
                 throw Error('invalidFile');
@@ -426,10 +491,13 @@
             let raw = '';
             for (const b of bytes)
                 raw += String.fromCharCode(b);
-            const mapping = {};
-            for (const k of ['sourceKey', 'customerNumber', 'vehicleNumber', 'plate', 'itemCode', 'amount', 'currency', 'dueOn'])
-                mapping[k] = d[k] || '';
-            importJob = await api('invoice-imports', 'POST', { companyId: co, name: file.name, format: file.name.toLowerCase().endsWith('.xlsx') ? 'xlsx' : 'csv', base64: btoa(raw), mapping }, form._key ??= crypto.randomUUID());
+            if(company!==co||type!==importType)return;
+            const path=type==='invoice'?'invoice-imports':'accounting-imports';
+            const extra=type==='invoice'?{mapping:Object.fromEntries(importFields.map(k=>[k,d[k]||'']))}:{type};
+            const result=await api(path,'POST',{companyId:co,name:file.name,
+                format:file.name.toLowerCase().endsWith('.xlsx')?'xlsx':'csv',base64:btoa(raw),...extra},form._key??=crypto.randomUUID());
+            if(type!==importType)return;
+            importJob=result;
             render();
             return;
         }
@@ -523,11 +591,23 @@
                     await refresh();
                     return;
                 }
+                if(action==='import-template'){
+                    const r=await api('accounting-imports/template?'+new URLSearchParams({companyId:co,type:importType,format:key}));
+                    download({...r,data:Uint8Array.from(atob(r.base64),byte=>byte.charCodeAt(0))});
+                    return;
+                }
                 if (action === 'import-commit') {
-                    const r = await api('invoice-imports/' + importJob.id + '/commit', 'POST', {}, crypto.randomUUID());
-                    notice = t('تم إنشاء ', 'Created ') + r.created.length + t(' — مكرر ', ' — duplicate ') + r.duplicate + t(' — معزول ', ' — rejected ') + r.rejected;
-                    importJob = null;
-                    await refresh();
+                    const job=importJob,type=importType;
+                    if(!job||job.completed||button.disabled)return;
+                    button.disabled=true;
+                    try{
+                        const path=type==='invoice'?'invoice-imports':'accounting-imports';
+                        const r=await api(path+'/'+job.id+'/commit','POST',type==='invoice'?{}:{companyId:co},job.commitKey??=crypto.randomUUID());
+                        if(importJob!==job)return;
+                        notice=t('تم إنشاء ','Created ')+r.created.length+t(' — مكرر ',' — duplicate ')+r.duplicate+t(' — مرفوض ',' — rejected ')+r.rejected;
+                        importJob={...job,completed:true,result:r};
+                        await refresh();
+                    }finally{if(button.isConnected)button.disabled=false;}
                     return;
                 }
                 if (action === 'journal-post') {
@@ -626,7 +706,11 @@
  function bind() {
         if (app.state.currentPage !== 'financialManagement')
             return;
-        document.getElementById('ld-company')?.addEventListener('change', async (ev) => { epoch++; busy = false; co = ev.target.value; context = null; report = null; preview = null; drafts = {}; bills = []; await refresh(); });
+        document.getElementById('ld-import-type')?.addEventListener('change',ev=>{
+            if(!importTypes[ev.target.value])return;
+            importType=ev.target.value;importJob=null;notice='';delete drafts['import-preview'];render();
+        });
+        document.getElementById('ld-company')?.addEventListener('change', async (ev) => { epoch++; busy = false; co = ev.target.value; importJob=null; context = null; report = null; preview = null; drafts = {}; bills = []; await refresh(); });
         FinancialTables.bind(document.querySelector(".ld-section"),bindRegisterActions);
         bindForms();
         bindRegisterActions();

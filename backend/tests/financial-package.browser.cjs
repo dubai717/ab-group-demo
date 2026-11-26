@@ -39,6 +39,47 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         await p.locator('.stats-grid').waitFor();
         await p.locator('[data-page=financialManagement]').click();
         await p.locator('#ld-company').selectOption(f.companyId);
+        if(process.env.AB_ACCOUNTING_IMPORT_ONLY==='1'){
+            const path=process.env.AB_ACCOUNTING_IMPORT_SCREENSHOTS;
+            if(path)fs.mkdirSync(path,{recursive:true});
+            const customer=await p.evaluate(async id=>(await ABCentral.api('customers?limit=100')).rows.find(row=>row.id===id).fileNumber,f.customerId);
+            const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dubai'}).format(new Date());
+            const picker=p.locator('#ld-import-type');
+            for(const lang of ['ar','en']){
+                await p.evaluate(locale=>setLocale(locale),lang);
+                await tab('import');
+                assert.deepEqual(await picker.locator('input').evaluateAll(options=>options.map(x=>x.value)),
+                    ['invoice','receipt','voucher','deposit']);
+                await picker.locator('[value=receipt]').check();
+                await p.locator('[data-ld=import-template][data-id=xlsx]').waitFor();
+                if(path)await p.locator('#ld-body').screenshot({path:path+'/type-'+lang+'.png'});
+                for(const format of ['csv','xlsx']){
+                    const download=p.waitForEvent('download');
+                    await p.locator('[data-ld=import-template][data-id='+format+']').click();
+                    assert.equal((await download).suggestedFilename(),'receipt-import.'+format);
+                }
+                const form=p.locator('[data-ld-form=import-preview]');
+                const details=p.locator('details').filter({has:form});
+                await details.locator(':scope > summary').click();
+                const line='SYN-RC-1,'+customer+','+f.invoiceId+',salik,200,AED,'+day;
+                const file=['sourceKey,customerNumber,invoiceReference,itemCode,amount,currency,receivedOn',line,line,
+                    'SYN-RC-BAD,'+customer+',MISSING,salik,20,AED,'+day].join('\n');
+                await form.locator('[type=file]').setInputFiles({name:'synthetic-receipts.csv',mimeType:'text/csv',buffer:Buffer.from(file)});
+                await form.locator('[type=submit]').click();
+                const preview=p.locator('.ld-import-preview');
+                await preview.last().waitFor();
+                assert.equal(await preview.count(),3);
+                assert.deepEqual(await preview.locator('h3').allTextContents(),lang==='ar'
+                    ?['السجلات الصحيحة (1)','السجلات المكررة (1)','الأخطاء (1)']:['Valid records (1)','Duplicates (1)','Errors (1)']);
+                await preview.last().getByRole('cell',{name:/مرجع الفاتورة غير مطابق|Invoice reference does not match/}).waitFor();
+                if(path)await p.locator('#ld-body').screenshot({path:path+'/preview-'+lang+'.png'});
+                await picker.locator('[value=invoice]').check();
+                assert.equal(await preview.count(),0);
+            }
+            assert.deepEqual(errors,[]);
+            console.log('PASS accounting import type chooser, CSV and Excel downloads, bilingual preview and row reasons.');
+            return;
+        }
         await require('./company-tax.browser.cjs')(p,f);
         await require('./cost-centres.browser.cjs')(p,f);
         await tab('setup');

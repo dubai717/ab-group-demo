@@ -1,3 +1,4 @@
+import {registerAccountingImports, importedReference, originalReference, accountingImportLock} from './accounting-imports.js';
 import {costCentreSnapshot} from './cost-centres.js';
 import {reviewDepositReceipt} from './deposit-review.js';
 import {registerReceivables} from './receivables.js';
@@ -326,7 +327,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
             const it = await item(c, cipher, m, selectedItem.itemId, d.companyId);
             requireOk(it.data.receipt, 403, 'denied');
             const key = randomUUID(), n = await number(c, s.tenant_id, 'receipt'), state = d.method === 'cheque'||deferUntilDeposit ? 'Pending' : 'Cleared';
-            await c.query('insert into ab.finance_receipts(id,tenant_id,company_id,holder_id,amount,currency,kind,cheque_id,reference,created_by,item_id,batch_id,customer_id,vehicle_id,receipt_number,received_on,payment_state,payload_cipher'+corporateColumn+')values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18'+(d.contractingCompanyId?',$19':'')+')', [key, s.tenant_id, d.companyId, s.user_id, selectedItem.amount, d.currency, d.method, chequeId, 'RC-' + n, s.user_id, it.id, batchId, d.customerId, selectedItem.invoiceId?selectedItem.vehicleId:d.vehicleId || null, n, d.receivedOn, state, cipher.seal({ override: d.overridePriority, reason: d.reason,...(deferUntilDeposit?{deferUntilDeposit:true,invoiceAllocations:[{invoiceId:selectedItem.invoiceId,amount:selectedItem.amount}]}:{}),...((selectedItem.invoiceId||d.targetInvoiceId)?{targetInvoiceId:selectedItem.invoiceId||d.targetInvoiceId}:{}),...(d.allocations?{invoiceAllocations:d.allocations.filter((a:any)=>due.find((b:any)=>b.id===a.invoiceId)?.item_id===it.id)}:{}) }),...(d.contractingCompanyId?[d.contractingCompanyId]:[])]);
+            await c.query('insert into ab.finance_receipts(id,tenant_id,company_id,holder_id,amount,currency,kind,cheque_id,reference,created_by,item_id,batch_id,customer_id,vehicle_id,receipt_number,received_on,payment_state,payload_cipher'+corporateColumn+')values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18'+(d.contractingCompanyId?',$19':'')+')', [key, s.tenant_id, d.companyId, s.user_id, selectedItem.amount, d.currency, d.method, chequeId, 'RC-' + n, s.user_id, it.id, batchId, d.customerId, selectedItem.invoiceId?selectedItem.vehicleId:d.vehicleId || null, n, d.receivedOn, state, cipher.seal({ override: d.overridePriority, reason: d.reason,originalReference:d.originalReference,...(deferUntilDeposit?{deferUntilDeposit:true,invoiceAllocations:[{invoiceId:selectedItem.invoiceId,amount:selectedItem.amount}]}:{}),...((selectedItem.invoiceId||d.targetInvoiceId)?{targetInvoiceId:selectedItem.invoiceId||d.targetInvoiceId}:{}),...(d.allocations?{invoiceAllocations:d.allocations.filter((a:any)=>due.find((b:any)=>b.id===a.invoiceId)?.item_id===it.id)}:{}) }),...(d.contractingCompanyId?[d.contractingCompanyId]:[])]);
             const r = (await c.query('select * from ab.finance_receipts where id=$1', [key])).rows[0];
             if (d.method === 'cheque')
                 await move(c, s, d.companyId, key, s.user_id, d.currency, L.units(r.amount), 'physical-cheque:' + key, d.receivedOn);
@@ -567,10 +568,58 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         requireOk(pending.length<=100,422,'registerTooLarge');
         return {rows,pending:pending.filter((r:any)=>financeRight(m,'ledger_deposit_verify',r.company_id))};
     }));
-    app.post('/api/ledger/deposits', route(async (c: any, m: any, s: any, req: any) => { const d = z.object({ companyId: id, bankAccountId: id, currency, amount: positive, effectiveOn: day, documentVersionId: id, reference: text }).strict().parse(req.body); need(m,'deposit',d.companyId);
+    async function reservedDepositReceipts(c:any,co:string,holder:string,cur:string,except?:string){
+        const waiting=(await c.query(`select payload_cipher from ab.finance_deposits
+            where company_id=$1 and holder_id=$2 and currency=$3 and status='Review'
+              and ($4::uuid is null or id<>$4)`,[co,holder,cur,except||null])).rows;
+        const reserved=new Map<string,bigint>();
+        for(const row of waiting){
+            for(const allocation of cipher.open(row.payload_cipher).receiptAllocations||[])
+                reserved.set(allocation.id,(reserved.get(allocation.id)||0n)+L.units(allocation.amount));
+        }
+        return reserved;
+    }
+    async function depositReceiptAllocations(c:any,s:any,d:{companyId:string;currency:string;amount:string;effectiveOn:string},receiptIds:string[]){
+        if(!receiptIds.length)return undefined;
+        const available=await custody(c,d.companyId,s.user_id,d.currency);
+        const reserved=await reservedDepositReceipts(c,d.companyId,s.user_id,d.currency);
+        const receipts=(await c.query(`select id from ab.finance_receipts where company_id=$1 and currency=$2 and kind='cash'
+            and received_on<=$3 and id=any($4::uuid[])`,[d.companyId,d.currency,d.effectiveOn,receiptIds])).rows;
+        requireOk(receipts.length===receiptIds.length,422,'unmatchedReceipt');
+        let remaining=L.units(d.amount);
+        const allocations=[];
+        for(const id of receiptIds){
+            const balance=available.find((r:any)=>r.id===id);
+            const unreserved=L.units(balance?.amount||'0')-(reserved.get(id)||0n);
+            requireOk(unreserved>0n,409,'insufficientReceiptCustody');
+            const part=unreserved<remaining?unreserved:remaining;
+            requireOk(part>0n,422,'unusedReceiptReference');
+            allocations.push({id,amount:L.money(part)});
+            remaining-=part;
+        }
+        requireOk(remaining===0n,409,'insufficientReceiptCustody');
+        return allocations;
+    }
+    async function moveImportedDeposit(c:any,s:any,deposit:any,d:any,allocations:{id:string;amount:string}[]){
+        requireOk(L.units(d.confirmedAmount)===L.units(deposit.amount),422,'depositReceiptTotalMismatch');
+        const available=await custody(c,deposit.company_id,deposit.holder_id,deposit.currency);
+        const moved=[];
+        for(const entry of allocations){
+            const amount=L.units(entry.amount), balance=available.find((r:any)=>r.id===entry.id);
+            requireOk(balance&&L.units(balance.amount)>=amount,409,'insufficientReceiptCustody');
+            await move(c,s,deposit.company_id,entry.id,deposit.holder_id,deposit.currency,-amount,'deposit:'+deposit.id+':out:'+entry.id,d.effectiveOn);
+            moved.push({id:entry.id,amount});
+        }
+        return moved;
+    }
+    const depositSchema=z.object({companyId:id,bankAccountId:id,currency,amount:positive,effectiveOn:day,documentVersionId:id,reference:text}).strict();
+    async function createDeposit(c:any,m:any,s:any,d:z.infer<typeof depositSchema>,receiptIds:string[]=[]){
+        need(m,'deposit',d.companyId);
         const scoped=await narrowDepositAccess(c,m,d.companyId,d.currency,d.bankAccountId,d.documentVersionId,s.user_id);
         m=scoped||m;
-        requireOk(d.effectiveOn<=today(),422,'invalidDate');const prior=(await c.query("select payload_cipher from ab.finance_deposits where company_id=$1 and status<>'Rejected'",[d.companyId])).rows;const ref=d.reference.normalize('NFKC').trim().toLowerCase();requireOk(!prior.some((x:any)=>cipher.open(x.payload_cipher).reference?.normalize('NFKC').trim().toLowerCase()===ref),409,'duplicate');requireOk(!(await c.query("select 1 from ab.finance_custody_transfers where company_id=$1 and sender_id=$2 and currency=$3 and status='Pending'",[d.companyId,s.user_id,d.currency])).rowCount,409,'handoverPending');const reserved=L.units((await c.query("select coalesce(sum(amount),0)::text amount from ab.finance_deposits where company_id=$1 and holder_id=$2 and currency=$3 and status='Review'",[d.companyId,s.user_id,d.currency])).rows[0].amount); const b = m.bank.list().find((b: any) => b.id === d.bankAccountId && b.companyId === d.companyId && b.status === 'Active' && b.currency === d.currency); requireOk(b, 422, 'inactiveBank'); await evidence(c, m, d.companyId, d.documentVersionId, false); const repeatedImage=(await c.query("select 1 from ab.finance_deposits p join ab.document_versions old on old.id=p.document_version_id join ab.document_versions incoming on incoming.id=$3 where p.company_id=$1 and p.bank_account_id=$2 and p.status<>'Rejected' and incoming.mime in('image/png','image/jpeg') and old.sha256=incoming.sha256 limit 1",[d.companyId,d.bankAccountId,d.documentVersionId])).rowCount;requireOk(!repeatedImage,409,'duplicateDepositEvidence'); const available = (await custody(c, d.companyId, s.user_id, d.currency, undefined, 'kind' in d ? String(d.kind) : 'cash')).reduce((n: bigint, r: any) => n + L.units(r.amount), 0n); requireOk(available-reserved >= L.units(d.amount), 409, 'insufficientCustody'); const key = randomUUID(); await c.query('insert into ab.finance_deposits(id,tenant_id,company_id,holder_id,bank_account_id,currency,amount,effective_on,document_version_id,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)', [key, s.tenant_id, d.companyId, s.user_id, d.bankAccountId, d.currency, d.amount, d.effectiveOn, d.documentVersionId, cipher.seal({...d,receiptReviewPolicy:1}), s.user_id]); await event(c, cipher, s, d.companyId, key, 'deposit_review_requested', null, d);await recordFinancialDocument(c,cipher,s,d.companyId,key,'Deposit'); return { id: key, status: 'Review', ocr: false, custodyClosed: '0.000' }; }));
+        requireOk(d.effectiveOn<=today(),422,'invalidDate');const prior=(await c.query("select payload_cipher from ab.finance_deposits where company_id=$1 and status<>'Rejected'",[d.companyId])).rows;const ref=d.reference.normalize('NFKC').trim().toLowerCase();requireOk(!prior.some((x:any)=>cipher.open(x.payload_cipher).reference?.normalize('NFKC').trim().toLowerCase()===ref),409,'duplicate');requireOk(!(await c.query("select 1 from ab.finance_custody_transfers where company_id=$1 and sender_id=$2 and currency=$3 and status='Pending'",[d.companyId,s.user_id,d.currency])).rowCount,409,'handoverPending');const reserved=L.units((await c.query("select coalesce(sum(amount),0)::text amount from ab.finance_deposits where company_id=$1 and holder_id=$2 and currency=$3 and status='Review'",[d.companyId,s.user_id,d.currency])).rows[0].amount); const b = m.bank.list().find((b: any) => b.id === d.bankAccountId && b.companyId === d.companyId && b.status === 'Active' && b.currency === d.currency); requireOk(b, 422, 'inactiveBank'); await evidence(c, m, d.companyId, d.documentVersionId, false); const repeatedImage=(await c.query("select 1 from ab.finance_deposits p join ab.document_versions old on old.id=p.document_version_id join ab.document_versions incoming on incoming.id=$3 where p.company_id=$1 and p.bank_account_id=$2 and p.status<>'Rejected' and incoming.mime in('image/png','image/jpeg') and old.sha256=incoming.sha256 limit 1",[d.companyId,d.bankAccountId,d.documentVersionId])).rowCount;requireOk(!repeatedImage,409,'duplicateDepositEvidence'); const available = (await custody(c, d.companyId, s.user_id, d.currency, undefined, 'kind' in d ? String(d.kind) : 'cash')).reduce((n: bigint, r: any) => n + L.units(r.amount), 0n); requireOk(available-reserved >= L.units(d.amount), 409, 'insufficientCustody'); const receiptAllocations=await depositReceiptAllocations(c,s,d,receiptIds); const key = randomUUID(); await c.query('insert into ab.finance_deposits(id,tenant_id,company_id,holder_id,bank_account_id,currency,amount,effective_on,document_version_id,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)', [key, s.tenant_id, d.companyId, s.user_id, d.bankAccountId, d.currency, d.amount, d.effectiveOn, d.documentVersionId, cipher.seal({...d,receiptReviewPolicy:1,receiptAllocations}), s.user_id]); await event(c, cipher, s, d.companyId, key, 'deposit_review_requested', null, d);await recordFinancialDocument(c,cipher,s,d.companyId,key,'Deposit'); return { id: key, status: 'Review', ocr: false, custodyClosed: '0.000' };
+    }
+    app.post('/api/ledger/deposits',route((c:any,m:any,s:any,req:any)=>createDeposit(c,m,s,depositSchema.parse(req.body))));
     app.post('/api/ledger/deposits/:id/confirm', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ confirmedAmount: positive, bankConfirmation: text, effectiveOn: day, accountAndDateVerified: z.literal(true),receiptMismatchReason:z.string().trim().max(2000).default('') }).strict().parse(req.body), r = (await c.query('select * from ab.finance_deposits where id=$1 for update', [id.parse(req.params.id)])).rows[0];
         requireOk(r, 404, 'notFound');
@@ -583,7 +632,11 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         let receiptReview:any=null;const details=cipher.open(r.payload_cipher);if(details.receiptReviewPolicy===1){receiptReview=await reviewDepositReceipt(c,m,cipher,options.objects,{companyId:r.company_id,bankAccountId:r.bank_account_id,documentVersionId:r.document_version_id,amount:d.confirmedAmount,effectiveOn:d.effectiveOn,reference:details.reference});if(receiptReview.differences.length){requireOk(d.receiptMismatchReason&&(m.actor.roleId==='owner'||financeRight(m,'finance_approve',r.company_id)),422,'receiptMismatchReviewRequired');}if(receiptReview.facts?.reference){const prior=(await c.query("select payload_cipher from ab.finance_deposits where company_id=$1 and bank_account_id=$2 and id<>$3 and status<>'Rejected'",[r.company_id,r.bank_account_id,r.id])).rows;const ref=receiptReview.facts.reference.normalize('NFKC').trim().toLowerCase();requireOk(!prior.some((p:any)=>{const x=cipher.open(p.payload_cipher);return[x.reference,x.receiptReview?.facts?.reference].filter(Boolean).some((v:string)=>v.normalize('NFKC').trim().toLowerCase()===ref);}),409,'duplicate');}}
         const pending = (await c.query("select 1 from ab.finance_custody_transfers where company_id=$1 and sender_id=$2 and currency=$3 and status='Pending'", [r.company_id, r.holder_id, r.currency])).rowCount;
         requireOk(!pending, 409, 'handoverPending');
-        const moved=await moveAmount(c, s, r.company_id, r.holder_id, r.currency, L.units(d.confirmedAmount), 'deposit:' + r.id, undefined, d.effectiveOn);
+        const exact=details.receiptAllocations as {id:string;amount:string}[]|undefined;
+        const moved=exact?.length
+            ?await moveImportedDeposit(c,s,r,d,exact)
+            :await moveAmount(c, s, r.company_id, r.holder_id, r.currency, L.units(d.confirmedAmount), 'deposit:' + r.id, undefined, d.effectiveOn,'cash',
+                await reservedDepositReceipts(c,r.company_id,r.holder_id,r.currency,r.id));
         const deferred=(await c.query(`select * from ab.finance_receipts
             where company_id=$1 and id=any($2::uuid[]) and kind='cash' and payment_state='Pending' order by id for update`,
             [r.company_id,moved.map(entry=>entry.id)])).rows;
@@ -907,6 +960,85 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         await event(c, cipher, s, r.to_company_id, r.id, 'intercompany_deposited', null, { operationId: op, ...d });
         return { id: r.id, operationId: op };
     }));
+    registerAccountingImports(app,route,cipher,async(c,m,s,co,type,values,apply)=>{
+        const parsed=z.object({amount:positive,currency}).parse(values);
+        const {amount,currency:cur}=parsed;
+        if(type==='deposit'){
+            const d=depositSchema.parse({companyId:co,amount,currency:cur,bankAccountId:values.bankAccountId,
+                documentVersionId:values.documentVersionId,effectiveOn:values.effectiveOn,reference:values.sourceKey});
+            const refs=values.receiptReferences.split(';').map(ref=>ref.trim()).filter(Boolean);
+            requireOk(refs.length<=100&&new Set(refs.map(originalReference)).size===refs.length,422,'invalidReceiptReferences');
+            const receiptIds:string[]=[];
+            for(const ref of refs){
+                const imported=await importedReference(c,co,'receipt',ref);
+                if(imported){receiptIds.push(...imported.ids);continue;}
+                const rows=(await c.query(`select id from ab.finance_receipts where company_id=$1 and currency=$2 and kind='cash'
+                    and (id::text=$3 or receipt_number::text=$3 or reference=$3) limit 2`,[co,cur,ref])).rows;
+                requireOk(rows.length===1,422,'unmatchedReceipt');
+                receiptIds.push(rows[0].id);
+            }
+            requireOk(receiptIds.length<=100&&new Set(receiptIds).size===receiptIds.length,422,'invalidReceiptReferences');
+            if(apply){const r=await createDeposit(c,m,s,d,receiptIds);return {ids:[r.id],status:r.status};}
+            requireOk(d.effectiveOn<=today(),422,'invalidDate');
+            requireOk(m.bank.list().some((bank:any)=>bank.id===d.bankAccountId&&bank.companyId===co&&bank.currency===cur&&bank.status==='Active'),422,'inactiveBank');
+            await evidence(c,m,co,d.documentVersionId,false);
+            await depositReceiptAllocations(c,s,d,receiptIds);
+            const previous=(await c.query("select payload_cipher from ab.finance_deposits where company_id=$1 and status<>'Rejected'",[co])).rows;
+            requireOk(!previous.some((entry:any)=>originalReference(cipher.open(entry.payload_cipher).reference||'')===originalReference(d.reference)),409,'duplicate');
+            return;
+        }
+        let customerId:string|undefined;
+        if(type==='receipt'||values.customerNumber){
+            const customerNumber=z.string().regex(/^\d{1,15}$/).parse(values.customerNumber);
+            const client=(await c.query("select id,company_id from ab.customers where file_number=$1 and status='Active'",[customerNumber])).rows[0];
+            requireOk(client&&customerCan(m,'view',client.company_id),422,'unmatchedCustomer');
+            customerId=client.id;
+        }
+        let itemId:string|undefined,vehicleId:string|null=null,targetInvoiceId:string|undefined;
+        if(type==='receipt'&&values.invoiceReference){
+            const matches=(await c.query(`select i.id from ab.vehicle_invoices i join ab.finance_invoice_links l
+                on l.invoice_id=i.id and l.company_id=i.company_id
+                where i.company_id=$1 and i.customer_id=$2 and i.currency=$3
+                and (i.id::text=$4 or i.invoice_number::text=$4 or l.source_key=$4) limit 2`,[co,customerId,cur,values.invoiceReference])).rows;
+            requireOk(matches.length===1,422,'unmatchedInvoice');
+            const invoiceId=matches[0].id;
+            const bill=(await invoices(c,{companyId:co,customerId,invoiceIds:[invoiceId]}))[0];
+            requireOk(bill&&L.units(amount)<=L.units(bill.outstanding),422,'invalidTargetInvoice');
+            itemId=bill.item_id;targetInvoiceId=invoiceId;vehicleId=bill.vehicle_id||null;
+        }
+        if(values.itemCode){
+            const candidate=(await c.query('select id from ab.finance_items where code=$1 and active',[values.itemCode])).rows[0];
+            requireOk(candidate&&(!itemId||candidate.id===itemId),422,'unmatchedItem');
+            itemId=candidate.id;
+        }
+        requireOk(itemId,422,'unmatchedItem');
+        const definition=await item(c,cipher,m,itemId,co);
+        if(type==='voucher'){
+            requireOk(definition.data.payment,422,'documentItemNotAllowed');
+            const d=voucherSchema.parse({companyId:co,itemId,customerId,amount,currency:cur,issuedOn:values.issuedOn,
+                beneficiary:values.beneficiary,reason:values.reason,sourceKey:'import-voucher:'+sha(originalReference(values.sourceKey))});
+            await open(c,co,d.issuedOn);
+            if(customerId)await customer(c,m,customerId,co);
+            if(apply){const r=await voucher(c,m,s,d,{originalReference:values.sourceKey});return {ids:[r.id],status:r.status};}
+            return;
+        }
+        requireOk(definition.data.receipt,422,'documentItemNotAllowed');
+        const d=collection.parse({companyId:co,customerId,vehicleId,currency:cur,receivedOn:values.receivedOn,
+            method:'cash',mode:'manual',amount,items:[{itemId,amount}],targetInvoiceId});
+        requireOk(d.receivedOn<=today(),422,'invalidDate');
+        await open(c,co,d.receivedOn);
+        const deferred=await financialApproval(c,cipher,m,co,'deposit-allocation');
+        if(!deferred)await customer(c,m,customerId!,co,vehicleId||undefined);
+        if(!apply)return;
+        let result;
+        if(deferred){
+            const plan=await depositAllocationPlan(c,m,{companyId:co,customerId:customerId!,receivedOn:d.receivedOn,
+                currency:z.literal('AED').parse(cur),amount,mode:'manual',...(targetInvoiceId?{invoiceId:targetInvoiceId}:{itemId})});
+            requireOk(plan.receipts.length>0&&L.units(plan.unallocated)===0n,422,'invalidTargetInvoice');
+            result=await collect(c,m,s,{...d,originalReference:values.sourceKey},false,plan.receipts,true);
+        }else result=await collect(c,m,s,{...d,originalReference:values.sourceKey});
+        return {ids:result.receipts.map((receipt:any)=>receipt.id),status:deferred?'Pending':'Cleared'};
+    });
     app.post('/api/ledger/invoice-imports', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ companyId: id, name: z.string().min(1).max(200), format: z.enum(['csv', 'xlsx']), base64: z.string().min(4).max(7000000), mapping: z.object({ sourceKey: text, customerNumber: text, vehicleNumber: z.string().max(100).default(''), plate: z.string().max(100).default(''), itemCode: text, amount: text, currency: text, dueOn: text }).strict() }).strict().parse(req.body);
         need(m, 'invoice_import', d.companyId);
@@ -914,6 +1046,14 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         requireOk(bytes.length <= 5e6 && bytes.toString('base64') === d.base64, 422, 'invalidFile');
         const records = d.format === 'csv' ? Csv.csv(bytes.toString('utf8'), d.mapping.sourceKey) : await customerSpreadsheet(bytes, d.mapping.sourceKey);
         requireOk(records.length > 0 && records.length <= 1000, 422, 'importLimit');
+        await accountingImportLock(c,s);
+        const hash=sha(bytes);
+        const previous=(await c.query('select id,status,payload_cipher from ab.finance_invoice_imports where company_id=$1 and source_hash=$2',[d.companyId,hash])).rows[0];
+        if(previous?.status==='Preview'){
+            const saved=cipher.open(previous.payload_cipher);
+            requireOk(JSON.stringify(saved.mapping)===JSON.stringify(d.mapping),409,'importMappingConflict');
+            return {id:previous.id,rows:saved.rows,originalStoredEncrypted:true};
+        }
         const rows = [], seen = new Set();
         for (let n = 0; n < records.length; n++) {
             const r = records[n], value: any = Object.fromEntries(Object.entries(d.mapping).map(([k, v]) => [k, v ? r[v] : '']));
@@ -944,17 +1084,21 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
                 rows.push({ line: n + 1, error: e instanceof ApiError ? e.code || 'unmatched' : 'invalidRow', original: value });
             }
         }
-        const key = randomUUID(), hash = sha(bytes);
-        await c.query('insert into ab.finance_invoice_imports(id,tenant_id,company_id,source_hash,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6)', [key, s.tenant_id, d.companyId, hash, cipher.seal({ name: d.name, format: d.format, originalBase64: d.base64, mapping: d.mapping, rows }), s.user_id]);
+        if(previous?.status==='Completed')return {id:previous.id,rows,completed:true,result:cipher.open(previous.payload_cipher).result};
+        const key=randomUUID(), payload=cipher.seal({name:d.name,format:d.format,originalBase64:d.base64,mapping:d.mapping,rows});
+        await c.query('insert into ab.finance_invoice_imports(id,tenant_id,company_id,source_hash,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6)', [key, s.tenant_id, d.companyId, hash, payload, s.user_id]);
         await event(c, cipher, s, d.companyId, key, 'invoice_import_preview', null, { sourceHash: hash, rows: rows.length });
         return { id: key, rows, originalStoredEncrypted: true };
     }));
     app.post('/api/ledger/invoice-imports/:id/commit', route(async (c: any, m: any, s: any, req: any) => {
+        await accountingImportLock(c,s);
         const r = (await c.query('select * from ab.finance_invoice_imports where id=$1 for update', [id.parse(req.params.id)])).rows[0];
         requireOk(r?.status === 'Preview', 409, 'invalidTransition');
         need(m, 'invoice_import', r.company_id);
         need(m, 'invoice_create', r.company_id);
-        const d = cipher.open(r.payload_cipher), result = { created: [] as any[], duplicate: 0, rejected: 0 };
+        const d = cipher.open(r.payload_cipher);
+        requireOk(!d.type,404,'notFound');
+        const result = { created: [] as any[], duplicate: 0, rejected: 0, rows:[] as any[] };
         for (const row of d.rows) {
             if (row.error) {
                 if (row.error === 'duplicate')
@@ -965,11 +1109,20 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
             }
             if ((await c.query('select 1 from ab.finance_invoice_links where company_id=$1 and source_key=$2', [r.company_id, row.data.sourceKey])).rowCount) {
                 result.duplicate++;
+                result.rows.push({line:row.line,reference:row.data.sourceKey,error:'duplicate'});
                 continue;
             }
-            result.created.push(await invoice(c, cipher, m, s, { ...row.data, mode: 'bulk' }));
+            await c.query('savepoint invoice_import_row');
+            try{result.created.push(await invoice(c,cipher,m,s,{...row.data,mode:'bulk'}));}
+            catch(error){
+                await c.query('rollback to savepoint invoice_import_row');
+                if(!(error instanceof ApiError)||error.status>=500)throw error;
+                if(error.code==='duplicate')result.duplicate++;else result.rejected++;
+                result.rows.push({line:row.line,reference:row.data.sourceKey,error:error.code});
+            }
+            await c.query('release savepoint invoice_import_row');
         }
-        await c.query("update ab.finance_invoice_imports set status='Completed'where id=$1", [r.id]);
+        await c.query("update ab.finance_invoice_imports set status='Completed',payload_cipher=$2 where id=$1", [r.id,cipher.seal({...d,result})]);
         await event(c, cipher, s, r.company_id, r.id, 'invoice_import_committed', null, result);
         return result;
     }));

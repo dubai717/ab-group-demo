@@ -16,3 +16,11 @@ The catalogue opens from the chart of accounts and items. Item details show the 
 The new month-end rules use twice the configured monthly due as an inclusive threshold or a separately configured balance as a strict threshold. The fee amount is independent. Stored legacy conditions keep their original meaning. The item and its monthly rule are saved in one transaction. Existing company financial approval still controls issuance.
 
 `supabase/proposed/026_accounting_item_catalogue.sql` requires separate schema review before hosted use. It supports assigning the new grants and removing unused items. Until then, the server reports the missing database capability on an unused-item removal request. The isolated test applies the proposal only to disposable PostgreSQL.
+
+## Accounting document imports
+
+The accounting settings offer CSV and Excel templates for invoices, cash receipt vouchers, payment vouchers, and bank deposit vouchers. The existing invoice column mapping and endpoints remain available. For receipt vouchers, an invoice UUID, number, or original imported reference identifies the exact invoice for a partial payment. Without an invoice reference, the item code and existing collection and allocation rules apply.
+
+A payment voucher enters the original pending approval workflow. A bank deposit enters the original review workflow and uses an existing evidence version. Optional receipt references are separated by semicolons. Each referenced cash receipt must belong to the selected company's currency and available custody. When references are provided, verification moves the selected receipt amounts. The deposit does not create another customer receipt.
+
+The company import grant is paired with the corresponding operation grant when committing a batch. Source files, previews, and results are retained in the existing encrypted import register. Original references and saved batch results prevent re-creation on retries.

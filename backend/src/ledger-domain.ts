@@ -112,13 +112,15 @@ export async function linkInvoice(c: any, cipher: any, m: any, s: any, id: strin
 }
 export async function custody(c: any, co: string, holder: string, currency: string, receipt?: string, kind = 'cash') { return (await c.query('select r.id,r.reference,r.item_id,r.kind,sum(m.amount)::text amount,min(m.created_at) since from ab.finance_custody_moves m join ab.finance_receipts r on r.id=m.receipt_id where m.company_id=$1 and m.holder_id=$2 and m.currency=$3 and r.kind=$5 and($4::uuid is null or r.id=$4)group by r.id having sum(m.amount)>0 order by min(m.created_at),r.id', [co, holder, currency, receipt || null, kind])).rows; }
 export async function move(c: any, s: any, co: string, receipt: string, holder: string, currency: string, amount: bigint, key: string, date = today()) { await c.query('insert into ab.finance_custody_moves(id,tenant_id,company_id,receipt_id,holder_id,currency,amount,source_key,created_by,effective_on)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [randomUUID(), s.tenant_id, co, receipt, holder, currency, L.money(amount), key, s.user_id, date]); }
-export async function moveAmount(c: any, s: any, co: string, holder: string, currency: string, amount: bigint, key: string, to?: string, date = today(), kind = 'cash') {
+export async function moveAmount(c: any, s: any, co: string, holder: string, currency: string, amount: bigint, key: string, to?: string, date = today(), kind = 'cash', reserved?:Map<string,bigint>) {
     let remaining = amount;
     const moved:{id:string;amount:bigint}[]=[];
     for (const r of await custody(c, co, holder, currency, undefined, kind)) {
         if (!remaining)
             break;
-        const taken = L.units(r.amount) < remaining ? L.units(r.amount) : remaining;
+        const available=L.units(r.amount)-(reserved?.get(r.id)||0n);
+        if(available<=0n)continue;
+        const taken = available < remaining ? available : remaining;
         await move(c, s, co, r.id, holder, currency, -taken, key + ':out:' + r.id, date);
         if (to)
             await move(c, s, co, r.id, to, currency, taken, key + ':in:' + r.id, date);
