@@ -2,5 +2,22 @@
 import {ledgerFixture} from './ledger-fixture.js';import {build} from '../src/app.js';import {security} from '../src/core.js';import {writeFile} from 'node:fs/promises';
 const f=await ledgerFixture(),bank=await f.bank();
 await f.admin.query(`insert into ab.finance_operations(id,tenant_id,company_id,kind,bank_account_id,amount,currency,effective_on,direction,reason,reference,created_by,created_at)select gen_random_uuid(),$1,$2,'receipt',$3,i+0.125,'AED','2026-01-01','credit','Synthetic financial register','REG-'||lpad(i::text,5,'0'),$4,now()-i*interval '1 second'from generate_series(1,512)i`,[f.org.tenant,f.co1,bank.id,f.org.user]);
-await f.admin.query(`insert into ab.finance_vouchers(id,tenant_id,company_id,item_id,number,source_key,amount,currency,issued_on,payload_cipher,created_by,created_at)select gen_random_uuid(),$1,$2,$3,100000+i,'synthetic-register-'||i,1.125,'AED','2026-01-01',$4,$5,now()-i*interval '1 second'from generate_series(1,225)i`,[f.org.tenant,f.co1,f.items.expense,security(f.secret.key).seal({reason:'Synthetic register only'}),f.org.user]);
+await f.admin.query(`insert into ab.finance_vouchers(id,tenant_id,company_id,item_id,number,source_key,amount,currency,issued_on,payload_cipher,created_by,created_at)select gen_random_uuid(),$1,$2,$3,100000+i,'synthetic-register-'||i,1.125,'AED','2026-01-01',$4,$5,now()-i*interval '1 second'from generate_series(1,225)i`,[f.org.tenant,f.co1,f.items.expense,security(f.secret.key).seal({reason:'Synthetic register only',beneficiary:'Synthetic register beneficiary'}),f.org.user]);
+// The first row on each of the first two pages must be eligible for approval.
+const evidence = await f.proof();
+const candidates = await f.admin.query(
+    'select id, number from ab.finance_vouchers where tenant_id=$1 and company_id=$2 and number in (100001, 100051)',
+    [f.org.tenant, f.co1]
+);
+if (candidates.rowCount !== 2) throw new Error('Expected two synthetic approval candidates');
+for (const voucher of candidates.rows) {
+    const prepared = await f.req('POST', '/api/ledger/vouchers/' + voucher.id + '/prepare', {
+        bankAccountId: bank.id,
+        chequeNumber: 'REGISTER-' + voucher.number,
+        issuedOn: '2026-01-01',
+        dueOn: '2026-01-01',
+        documentVersionId: evidence,
+    });
+    if (!prepared.chequeId) throw new Error('Synthetic voucher was not prepared');
+}
 await f.app.close();const app=await build({pool:f.runtime,key:f.secret.key,origin:'http://127.0.0.1:3800',secureCookies:false,auth:f.auth,objects:f.objects,scan:async()=> 'clean'});await app.listen({host:'127.0.0.1',port:3800});await writeFile('work/financial-registers-browser.json',JSON.stringify({username:f.username,password:f.password,companyId:f.co1}),{mode:0o600});console.log('CHECK: SYNTHETIC_FINANCIAL_REGISTERS_LOOPBACK_READY');process.on('SIGTERM',async()=>{await app.close();await f.runtime.end();await f.admin.end();process.exit(0);});
