@@ -3,9 +3,35 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
     const f = JSON.parse(fs.readFileSync('work/financial-package-fixture.json')), browser = await chromium.launch({ executablePath: process.env.AB_BROWSER_EXECUTABLE || '/usr/bin/chromium', headless: true, args: ['--no-sandbox'] }), p = await browser.newPage({ viewport: { width: 1440, height: 1000 } }), errors = [];
     p.on('pageerror', e => errors.push(e.message));
     p.on('dialog', d => d.accept());
-    const tab = async (id) => { await p.locator('.ld-navigation [data-ld=tab][data-id="' + id + '"]').click(); await p.locator('.ld-section').waitFor(); const ready = { setup: '[data-fp=new-item]', priorities: '#fp-priority', compliance: '[data-fp=fee-new]', documents: '#fp-document-type' }[id]; if (ready)
+    const tab = async (id) => { await p.locator('.ld-navigation [data-ld=tab][data-id="' + id + '"]').click(); await p.locator('.ld-section').waitFor(); const ready = { setup: '.fp-item-register,.fp-item-detail', priorities: '#fp-priority', compliance: '[data-fp=fee-new]', documents: '#fp-document-type' }[id]; if (ready)
         await p.locator(ready).waitFor(); };
     try {
+        if(process.env.AB_CATALOGUE_SCOPES_ONLY==='1'){
+            for(const actor of f.catalogueActors){
+                const scoped=await browser.newPage();
+                scoped.on('pageerror',error=>errors.push(error.message));
+                try{
+                    const origin='http://127.0.0.1:3646';
+                    const login=await scoped.request.post(origin+'/api/login',{
+                        headers:{origin,'x-ab-request':'1'},data:{username:actor.username,password:actor.password},
+                    });
+                    assert.equal(login.status(),200,'synthetic scoped catalogue login');
+                    const page=await scoped.goto(origin);
+                    assert.equal(page.status(),200,'synthetic scoped catalogue page');
+                    await scoped.locator('[data-page=financialManagement]').click();
+                    await scoped.locator('.ld-navigation [data-id=setup]').click();
+                    await scoped.locator('.fp-item-register').waitFor();
+                    assert.equal(await scoped.locator('[data-fp=new-item]').count(),actor.permission==='ledger_item_create'?1:0);
+                    await scoped.locator('[data-fp-open="'+f.scopedItemId+'"]').locator('xpath=ancestor::tr').locator('td').first().click();
+                    await scoped.locator('.fp-item-detail').waitFor();
+                    assert.equal(await scoped.locator('[data-fp=item-edit]').count(),actor.permission==='ledger_item_edit'?1:0);
+                    assert.equal(await scoped.locator('[data-fp=item-remove]').count(),actor.permission==='ledger_item_edit'?1:0);
+                }finally{await scoped.close();}
+            }
+            assert.deepEqual(errors, []);
+            console.log('PASS catalogue controls for view-only, create-only and edit/remove-only company grants.');
+            return;
+        }
         await p.goto('http://127.0.0.1:3646');
         await p.fill('#username', f.username);
         await p.fill('#password', f.password);
@@ -25,6 +51,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         await dialog.locator('[name=nameAr]').fill('بند واجهة الحزمة');
         await dialog.locator('[name=nameEn]').fill('Financial package UI item');
         await dialog.locator('[name=category]').selectOption('general');
+        await dialog.locator('[name=recurring]').check();
         await dialog.locator('[name=recurrence]').selectOption('monthly');
         await dialog.locator('[name=recurringAmount]').fill('50');
         await dialog.locator('details summary').click();
@@ -39,9 +66,22 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         await p.locator('[data-ft-search] [name=q]').fill('Financial package UI item');
         await p.locator('[data-ft-search] button').click();
         await p.locator('[data-ft-table="package:items"] [data-fp-open="' + item.id + '"]').locator('xpath=ancestor::tr').locator('td').first().click();
+        await p.locator('[data-fp=item-edit]').click();
         dialog = p.locator('dialog[open]').last();
         assert.equal(await dialog.locator('[name=nameEn]').inputValue(), 'Financial package UI item', 'row action is rebound after shared filtering');
         await dialog.locator('[data-cancel]').click();
+        await p.locator('[data-fp=relation-new]').click();
+        dialog = p.locator('dialog[open]').last();
+        await dialog.locator('[name=customerId]').selectOption(f.customerId);
+        await dialog.locator('[name=contractEvidenceId]').selectOption(f.proofId);
+        await dialog.locator('[name=notes]').fill('Synthetic recurring relationship');
+        await dialog.locator('[type=submit]').click();
+        await dialog.waitFor({state:'detached'});
+        await p.locator('[data-fp=relation-preview]').click();
+        dialog=p.locator('dialog[open]').last();
+        await dialog.getByText(/معاينة فقط|Preview only/).waitFor();
+        await dialog.locator('[data-close]').click();
+        await p.locator('[data-fp=item-register]').click();
         await p.locator('[data-ft-search] [name=q]').fill('');
         await p.locator('[data-ft-search] button').click();
         await tab('priorities');
@@ -57,7 +97,13 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         assert.equal(state.priority.itemIds[index - 1], item.id);
         assert.equal(state.priority.requestedEnabled, true);
         assert.equal(state.priority.enabled, false);
-        await tab('compliance');
+        const openItem=async(id)=>{
+            await tab('setup');
+            if(await p.locator('[data-fp=item-register]').count())await p.locator('[data-fp=item-register]').click();
+            await p.locator('[data-fp-open="'+id+'"]').locator('xpath=ancestor::tr').locator('td').first().click();
+            await p.locator('.fp-item-detail').waitFor();
+        };
+        await openItem(f.itemId);
         await p.locator('[data-fp=fee-new]').click();
         dialog = p.locator('dialog[open]').last();
         await dialog.locator('[name=itemId]').selectOption(f.itemId);
@@ -77,18 +123,25 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
         await p.locator('[data-fp=fee-status]').click();
         await p.locator('#ld-notice').filter({ hasText: /موافقة|approval/ }).waitFor();
         assert.equal(await p.locator('dialog[open]').count(), 0);
-        await p.locator('[data-fp=monthly-new]').click();
+        await p.locator('[data-fp=item-edit]').click();
         dialog = p.locator('dialog[open]').last();
-        await dialog.locator('[name=itemId]').selectOption(f.itemId);
-        await dialog.locator('[name=incomeAccountId]').selectOption(f.incomeId);
-        await dialog.locator('[name=amount]').fill('20');
-        await dialog.locator('[name=condition]').selectOption('double_fee');
+        await dialog.locator('[name=feeConfigured]').check();
+        await dialog.locator('[name=feeCondition]').selectOption('above_limit');
+        await dialog.locator('[name=feeThreshold]').fill('500');
+        await dialog.locator('[name=feeIncome]').selectOption(f.incomeId);
+        await dialog.locator('[name=feeAmount]').fill('50');
+        assert(await dialog.locator('[name=feeEnabled]').isDisabled());
         await dialog.locator('[type=submit]').click();
         await dialog.waitFor({ state: 'detached' });
         const monthly = await p.evaluate(co => ABCentral.api('ledger/package/state?companyId=' + co), f.companyId);
         assert.equal(monthly.monthlyFollowups[0].itemId, f.itemId);
-        assert.equal(monthly.monthlyFollowups[0].condition, 'double_fee');
+        assert.equal(monthly.monthlyFollowups[0].condition, 'above_limit');
         assert.equal(monthly.monthlyFollowups[0].enabled, false);
+        await p.locator('[data-fp=item-edit]').click();
+        dialog=p.locator('dialog[open]').last();
+        assert.equal(await dialog.locator('[name=feeThreshold]').inputValue(),'500');
+        assert.equal(await dialog.locator('[name=feeAmount]').inputValue(),'50');
+        await dialog.locator('[data-cancel]').click();
         await p.locator('[data-fp=monthly-review]').click();
         dialog = p.locator('dialog[open]').last();
         await dialog.getByText(/تاريخ الإقفال|Close date/).waitFor();
@@ -151,7 +204,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
             'invoices collect vouchers custody deposits work intercompany',
             'dashboard funds cards reconciliation closing',
             'reports receivables cost-centres documents',
-            'setup journals taxes priorities compliance entitlements import',
+            'setup journals taxes priorities import',
         ];
         for (const id of expectedGroups.flatMap(group => group.split(' '))) {
             await tab(id);
@@ -179,14 +232,21 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
                     assert(locale === 'ar' ? layout[0].x > layout[3].x : layout[0].x < layout[3].x);
                 }
                 if (width === 390) assert(layout.every((group, index) => index === 0 || group.y > layout[index - 1].y));
-                await tab('compliance');
-                assert.equal(await navigation.locator('[aria-current=true]').getAttribute('data-id'), 'compliance');
-                if (process.env.AB_FINANCE_SCREENSHOTS && width !== 768) {
-                    const file = process.env.AB_FINANCE_SCREENSHOTS + '/finance-' + locale + '-' + width + '.png';
-                    if (width === 1440) {
-                        await p.evaluate(() => scrollTo(0, 0));
-                        await p.screenshot({ path: file, animations: 'disabled' });
-                    } else await navigation.screenshot({ path: file, animations: 'disabled' });
+                await tab('setup');
+                const back=p.locator('[data-fp=item-register]');
+                if(await back.count())await back.click();
+                if (process.env.AB_FINANCE_SCREENSHOTS && width===1440) {
+                    const folder=process.env.AB_FINANCE_SCREENSHOTS;
+                    await p.locator('.fp-item-register').screenshot({path:folder+'/catalogue-'+locale+'.png',animations:'disabled'});
+                    await openItem(f.itemId);
+                    await p.locator('[data-fp=item-edit]').click();
+                    dialog=p.locator('dialog[open]').last();
+                    await p.setViewportSize({width,height:1250});
+                    await dialog.locator('[name=recurring]').check();
+                    await dialog.locator('[name=recurringAmount]').fill('300');
+                    await dialog.screenshot({path:folder+'/item-form-'+locale+'.png',animations:'disabled'});
+                    await dialog.locator('[data-cancel]').click();
+                    await p.setViewportSize({width,height:950});
                 }
                 assert(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), locale + ' ' + width);
                 await tab('priorities');
@@ -194,7 +254,7 @@ const { chromium } = require('playwright'), assert = require('node:assert/strict
             }
         }
         assert.deepEqual(errors, []);
-        console.log('PASS financial package actual UI: delayed Invoice to Discount switch ignores stale response, atomic delayed model refresh, auto-code item save/readback, collapsed accounting mapping, priority reordering/draft gate, disabled fee rule/row/activation denial, Invoice/RV/Discount/PV/Deposit metadata, noncash discount, no noninvoice Cancel, AR/EN desktop/tablet/mobile.');
+        console.log('PASS financial package actual UI: delayed Invoice to Discount switch ignores stale response, atomic delayed model refresh, auto-code item save/readback, collapsed accounting mapping, priority reordering/draft gate, scoped entitlement preview, threshold and fee readback, disabled fee rule/row/activation denial, Invoice/RV/Discount/PV/Deposit metadata, noncash discount, no noninvoice Cancel, AR/EN desktop/tablet/mobile.');
     }
     catch (e) {
         await p.screenshot({ path: 'work/financial-package-failure.png' });

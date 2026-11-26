@@ -12,7 +12,7 @@ module.exports=async function(p,f){
  }}
  await p.setViewportSize({width:1440,height:1000});await p.evaluate(()=>setLocale('ar'));
  await p.locator('[data-ld=tab][data-id="journals"]').click();await p.locator('details.ld-form-section summary').first().click();await p.locator('[name=costCentreId]').selectOption(centre.id);assert.equal(await p.locator('[name=costCentreId]').inputValue(),centre.id);
- await p.locator('[data-ld=tab][data-id="reports"]').click();await p.locator('details.ld-form-section summary').first().click();await p.locator('[name=kind]').selectOption('cost-centres');
+ await p.locator('[data-ld=tab][data-id="reports"]').click();await p.locator('details.ld-form-section').filter({has:p.locator('[data-ld-form=report]')}).locator(':scope > summary').click();await p.locator('[data-ld-form=report] [name=kind]').selectOption('cost-centres');
  await p.locator('[data-ld-form=report] [type=submit]').click();
  await p.waitForFunction(()=>document.querySelector('.ld-section')?.textContent.includes('explicit cost centre'));
 };

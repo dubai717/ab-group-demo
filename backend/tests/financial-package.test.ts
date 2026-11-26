@@ -353,3 +353,71 @@ test('configured automatic allocation exhausts the first item by oldest due and 
   assert.equal((await f.admin.query('select count(*)::int n from ab.finance_receipts')).rows[0].n,0);
  }finally{await f.close();}
 });
+
+test('accounting catalogue scopes read, create, and removal, preserving used items',async()=>{
+ const f=await businessCentersFixture();
+ try{
+  const {readFile}=await import('node:fs/promises');
+  await f.admin.query(await readFile('supabase/proposed/026_accounting_item_catalogue.sql','utf8'));
+  const viewer=await f.employee(),creator=await f.employee(),editor=await f.employee();
+  for(const [person,permissions] of [[viewer,['ledger_view']],[creator,['ledger_view','ledger_item_create']],
+   [editor,['ledger_view','ledger_item_edit']]] as const){
+   for(const action of permissions)await f.req('POST','/api/users/'+person.id+'/grants',{action,scope:{type:'company',id:f.co1},delegable:false});
+  }
+  const draft={nameAr:'بند للمراجعة',nameEn:'Catalogue review item',category:'general',companyIds:[f.co1],
+   invoice:true,receipt:true,payment:false,methods:['manual'],receivableId:f.accounts.ar.id,revenueId:f.accounts.income.id};
+  const used=await newItem(f);
+  await f.bill('80',used.id);
+  await f.login(viewer.username,viewer.password);
+  assert((await f.req('GET','/api/ledger/workbench?companyId='+f.co1)).finance_items.some((r:any)=>r.id===f.items.salik));
+  await f.req('GET','/api/ledger/workbench?companyId='+f.co2,undefined,403);
+  await f.req('POST','/api/ledger/items',draft,403);
+  await f.req('POST','/api/ledger/items/'+f.items.salik+'/remove',{companyId:f.co1},403);
+  await f.login(creator.username,creator.password);
+  const unused=await f.req('POST','/api/ledger/items',draft);
+  await f.req('PATCH','/api/ledger/items/'+unused.id,draft,403);
+  await f.req('POST','/api/ledger/items/'+unused.id+'/remove',{companyId:f.co1},403);
+  await f.req('POST','/api/ledger/items',{...draft,companyIds:[f.co2]},403);
+  await f.login(editor.username,editor.password);
+  await f.req('POST','/api/ledger/items',draft,403);
+  await f.req('PATCH','/api/ledger/items/'+unused.id,{...draft,nameEn:'Edited catalogue item'});
+  assert.equal((await f.req('POST','/api/ledger/items/'+unused.id+'/remove',{companyId:f.co1})).disabled,false);
+  await f.req('POST','/api/ledger/items/'+f.items.salik+'/remove',{companyId:f.co1},403);
+  assert.equal((await f.req('POST','/api/ledger/items/'+used.id+'/remove',{companyId:f.co1})).disabled,true);
+  assert.equal((await f.admin.query('select active from ab.finance_items where id=$1',[used.id])).rows[0].active,false);
+  assert.equal((await f.admin.query('select id from ab.finance_items where id=$1',[unused.id])).rowCount,0);
+  assert.equal((await f.admin.query('select invoice_id from ab.finance_invoice_links where item_id=$1',[used.id])).rowCount,1);
+ }finally{await f.close();}
+});
+
+test('catalogue fee thresholds are independent of fees and use month-end allocated balances',async()=>{
+ const f=await businessCentersFixture();
+ try{
+  const now=today(),[year,month]=now.split('-').map(Number);
+  const next=new Date(Date.UTC(year,month,1)).toISOString().slice(0,10);
+  const later=new Date(Date.UTC(year,month+1,1)).toISOString().slice(0,10);
+  const config={companyId:f.co1,incomeAccountId:f.accounts.income.id,effectiveOn:now,amount:'50',
+   configured:true,enabled:true,revision:0};
+  const setup={recurrence:'monthly',recurringAmount:'300',dueDateBasis:'specific'};
+  const create=(condition:string,threshold?:string)=>newItem(f,{...setup,monthlyFollowup:{...config,condition,threshold}});
+  await assert.rejects(create('double_monthly_due'));
+  await approve(f,['monthly-followup']);
+  const doubled=await create('double_monthly_due'),limit=await create('above_limit','500'),over=await create('above_limit','500'),partial=await create('above_limit','500');
+  await f.bill('600',doubled.id);
+  await f.bill('500',limit.id);
+  await f.bill('501',over.id);
+  const paid=await f.bill('550',partial.id);
+  await f.collection('51',{receivedOn:now,targetInvoiceId:paid.id,overridePriority:true,reason:'Synthetic threshold allocation',items:[{itemId:partial.id,amount:'51'}]});
+  const cipher=security(f.secret.key);
+  const close=(when:string)=>transaction(f.runtime,f.org.tenant,f.org.user,async c=>
+   runAdministrativeFees(c,cipher,await model(c,f.org.user,cipher),{tenant_id:f.org.tenant,user_id:f.org.user},f.co1,when));
+  for(const month of [next,later]){
+   assert.equal((await close(month)).issued,2);
+   assert.equal((await close(month)).issued,0);
+  }
+  const invoices=(await f.admin.query("select source_key from ab.finance_invoice_links where source_key like 'monthly-followup:%'")).rows;
+  assert.equal(invoices.length,4);
+  assert.equal(invoices.filter(r=>r.source_key.includes(doubled.id)).length,2);
+  assert.equal(invoices.filter(r=>r.source_key.includes(over.id)).length,2);
+ }finally{await f.close();}
+});

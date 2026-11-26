@@ -15,7 +15,7 @@
     const can = key => ctx?.book.rights.includes('ledger_' + key), options = () => ctx.book.finance_items.map(r => ({ id: r.id, name: itemName(r) }));
     const accounts = () => ctx.book.finance_accounts.filter(r => r.active).map(r => ({ id: r.id, name: getLocale() === 'ar' ? r.name_ar : r.name_en }));
     const call = (path, method, body, key) => ctx.api('package/' + path, method, body, key), confirmChange = () => confirm(t('راجع التغييرات. هل تؤكد حفظها؟ لن يُغير الحفظ تحصيلات سابقة.', 'Review the changes. Confirm saving? Previous collections will remain unchanged.'));
-    const msg = err => ({ invalidCostCentre:t('اختر مركز تكلفة نشطاً تابعاً للشركة.','Choose an active cost centre for this company.'),duplicateCostCentre:t('يوجد مركز تكلفة بالاسم نفسه.','A cost centre with this name already exists.'), vehicleFollowupPolicyRequired: t('رسوم المركبة والفئة تُحسب بعد أكثر من 60 يوماً وفي أول الشهر فقط.', 'Vehicle/category fees use more than 60 days and month start only.'), pvDraftGuardReviewRequired: t('تعديل مبلغ سند الصرف محمي بحارس قاعدة البيانات. جرى تجهيز التغيير للمراجعة المالية دون تطبيقه.', 'Payment amount amendment is protected by the database guard. The change is prepared for financial review, without applying it.'), financialActivationRequired: t('التطبيق المالي يتطلب موافقة المالك المحددة. بقيت البيانات والأرصدة محفوظة.', 'Financial activation requires specific owner approval. Data and balances remain intact.'), revisionConflict: t('تغيرت البيانات؛ حدّث المعاينة وأعد المحاولة.', 'Data changed. Refresh the preview and retry.'), retroactiveFinancialRuleForbidden: t('لا يجوز تاريخ سريان سابق دون اعتماد مالي محدد.', 'A past effective date requires specific financial approval.'), principalMappingReviewRequired: t('أصل التمويل وأموال الغير تحتاج ربطاً محاسبياً معتمداً، ولا يجوز تسجيلها إيراداً للخدمات.', 'Principal and third-party funds require an approved accounting mapping and cannot be service revenue.'), accountMappingRequired: t('اختر ربطاً محاسبياً معتمداً من الإعدادات المتقدمة.', 'Choose an approved accounting mapping in advanced settings.'), unsafeInvoiceCancellation: t('لا يمكن إلغاء فاتورة مرتبطة بتحصيل أو تسوية، أو فاتورة مستحقة حالياً.', 'A due, collected or adjusted invoice cannot be cancelled.'), overlappingEntitlement: t('توجد علاقة استحقاق متداخلة للبند والعميل.', 'An overlapping entitlement exists for this customer and item.') })[err.message] || t('تعذر إتمام العملية. البيانات المدخلة محفوظة: ', 'Operation failed. Inputs remain: ') + err.message;
+    const msg = err => ({ itemRemovalSchemaPending:t('مسح البند غير المستخدم يتطلب اعتماد تحديث قاعدة البيانات.','Removing unused items requires the reviewed database update.'), monthlyDueRequired:t('أدخل مبلغ الاستحقاق الشهري للبند.','Enter the monthly due amount for the item.'), invalidCostCentre:t('اختر مركز تكلفة نشطاً تابعاً للشركة.','Choose an active cost centre for this company.'),duplicateCostCentre:t('يوجد مركز تكلفة بالاسم نفسه.','A cost centre with this name already exists.'), vehicleFollowupPolicyRequired: t('رسوم المركبة والفئة تُحسب بعد أكثر من 60 يوماً وفي أول الشهر فقط.', 'Vehicle/category fees use more than 60 days and month start only.'), pvDraftGuardReviewRequired: t('تعديل مبلغ سند الصرف محمي بحارس قاعدة البيانات. جرى تجهيز التغيير للمراجعة المالية دون تطبيقه.', 'Payment amount amendment is protected by the database guard. The change is prepared for financial review, without applying it.'), financialActivationRequired: t('التطبيق المالي يتطلب موافقة المالك المحددة. بقيت البيانات والأرصدة محفوظة.', 'Financial activation requires specific owner approval. Data and balances remain intact.'), revisionConflict: t('تغيرت البيانات؛ حدّث المعاينة وأعد المحاولة.', 'Data changed. Refresh the preview and retry.'), retroactiveFinancialRuleForbidden: t('لا يجوز تاريخ سريان سابق دون اعتماد مالي محدد.', 'A past effective date requires specific financial approval.'), principalMappingReviewRequired: t('أصل التمويل وأموال الغير تحتاج ربطاً محاسبياً معتمداً، ولا يجوز تسجيلها إيراداً للخدمات.', 'Principal and third-party funds require an approved accounting mapping and cannot be service revenue.'), accountMappingRequired: t('اختر ربطاً محاسبياً معتمداً من الإعدادات المتقدمة.', 'Choose an approved accounting mapping in advanced settings.'), unsafeInvoiceCancellation: t('لا يمكن إلغاء فاتورة مرتبطة بتحصيل أو تسوية، أو فاتورة مستحقة حالياً.', 'A due, collected or adjusted invoice cannot be cancelled.'), overlappingEntitlement: t('توجد علاقة استحقاق متداخلة للبند والعميل.', 'An overlapping entitlement exists for this customer and item.') })[err.message] || t('تعذر إتمام العملية. البيانات المدخلة محفوظة: ', 'Operation failed. Inputs remain: ') + err.message;
     function scopedForm(title, fields, save) { const company = ctx.co, actor = ABCentral.actor.id; return CenterForms.form(title, fields, (d, key) => { if (ctx?.co !== company || ABCentral.actor?.id !== actor)
         throw Error(t('تغير نطاق العمل؛ أعد فتح النموذج.', 'Scope changed. Reopen the form.')); return save(d, key); }); }
     async function safely(fn) { try {
@@ -26,9 +26,45 @@
     } }
     function table(key, rows, cols, actions = () => '', open) { return FinancialTables.table(ctx.scope, [...cols.map(([, title]) => title), t('الإجراءات', 'Actions')], rows.map(r => [...cols.map(([name]) => e(WorkspaceUI.dateTime(r[name]))), (open ? `<button hidden type="button" data-fp-open="${e(r.id)}" data-kind="${key}">${t('تفاصيل', 'Details')}</button>` : '') + actions(r)]), { key: 'package:' + key, columns: [...cols.map(([name]) => name), null], rawRows: rows, companyId: ctx.co }); }
     function detail(title, pairs) { const d = document.createElement('dialog'); d.className = 'record-form-dialog'; d.dataset.centerOwned = '1'; d.innerHTML = '<h2>' + e(title) + '</h2>' + RecordLayout.values(pairs) + `<button class="secondary-btn" data-close>${t('إغلاق', 'Close')}</button>`; document.body.append(d); d.querySelector('[data-close]').onclick = () => { d.close(); d.remove(); }; FloatingRecords.open(d); return d; }
+    let selectedItem = null;
     function itemEditor(existing) {
-        const d = existing?.details || {}, fields = [f('nameAr', 'الاسم العربي', 'Arabic name', 'text', existing?.name_ar || ''), f('nameEn', 'الاسم الإنجليزي', 'English name', 'text', existing?.name_en || ''), f('category', 'التصنيف المالي', 'Financial classification', 'text', existing?.category || 'general', choices({ ...categories, ...Object.fromEntries(ctx.book.finance_items.filter(r => !categories[r.category]).map(r => [r.category, [r.category, r.category]])) })), f('templateItemId', 'استخدام الربط المعتمد من بند مماثل (اختياري)', 'Use approved mapping from a similar item (optional)', 'text', '', options(), false), f('recurrence', 'دورية الاستحقاق', 'Recurrence', 'text', d.recurrence || 'none', choices(recurrence)), f('recurringAmount', 'المبلغ الافتراضي', 'Default amount', 'text', d.recurringAmount || '0'), f('recurrenceStart','تاريخ بدء الدورية','Recurrence start date','date',d.recurrenceStart||'',null,false), f('invoice', 'السماح بالفوترة', 'Allow invoicing', 'checkbox', d.invoice ?? true), f('receipt', 'السماح بالقبض', 'Allow receipts', 'checkbox', d.receipt ?? true), f('payment', 'السماح بالصرف', 'Allow payment', 'checkbox', d.payment ?? false), f('annualMonth', 'أساس شهر الاستحقاق السنوي', 'Annual due month basis', 'text', String(d.annualMonth || 0), [{ id: '0', name: t('شهر تسجيل المركبة — اليوم الأول من الشهر', 'Vehicle registration month — first day of month') }, ...Array.from({ length: 12 }, (_, i) => ({ id: String(i + 1), name: new Intl.DateTimeFormat(getLocale() === 'ar' ? 'ar-AE' : 'en', { month: 'long' }).format(new Date(2026, i, 1)) }))]), ...['receivableId', 'revenueId', 'expenseId', 'payableId'].map((key, i) => ({ ...f(key, ['حساب المستحقات', 'حساب الإيرادات أو أمانات العميل', 'حساب المصروف', 'حساب الدائنين'][i], ['Receivables account', 'Income / customer liability account', 'Expense account', 'Payables account'][i], 'text', d[key] || '', accounts(), false), group: 'accounting', groupTitle: ['الربط المحاسبي — إعدادات متقدمة', 'Accounting mapping — advanced settings'] })), { ...f('taxRate', 'نسبة الضريبة المعتمدة', 'Approved tax rate', 'text', d.taxRate || '0'), group: 'accounting', groupTitle: ['الربط المحاسبي — إعدادات متقدمة', 'Accounting mapping — advanced settings'] }, { ...f('taxAccountId', 'حساب الضريبة', 'Tax account', 'text', d.taxAccountId || '', accounts(), false), group: 'accounting', groupTitle: ['الربط المحاسبي — إعدادات متقدمة', 'Accounting mapping — advanced settings'] }];
-        const dialog = scopedForm(t(existing ? 'تعديل البند — الرمز ثابت' : 'تعريف بند مالي — الرمز يولد تلقائياً', existing ? 'Edit item — fixed internal code' : 'Define financial item — code generated automatically'), fields, async (values, key) => safely(async () => { const payload = { ...d, ...values, annualMonth: Number(values.annualMonth), priority: existing?.priority ?? 100, companyIds: d.companyIds || [ctx.co], active: existing?.active ?? true, methods: d.methods || ['manual', 'automatic', 'bulk'] }; if (existing)
+        const editingCompany=ctx.co;
+        const rule=ctx.book.package.monthlyFollowups?.find(r=>r.itemId===existing?.id);
+        const canSetFee=can('item_manage')&&can('configure')&&ABCentral.actor.roleId==='owner';
+        const d = existing?.details || {}, fields = [f('nameAr', 'اسم المستند الحسابي بالعربية', 'Accounting document name in Arabic', 'text', existing?.name_ar || ''), f('nameEn', 'اسم المستند الحسابي بالإنجليزية', 'Accounting document name in English', 'text', existing?.name_en || ''), f('category', 'التصنيف المالي', 'Financial classification', 'text', existing?.category || 'general', choices({ ...categories, ...Object.fromEntries(ctx.book.finance_items.filter(r => !categories[r.category]).map(r => [r.category, [r.category, r.category]])) })), f('templateItemId', 'استخدام الربط المعتمد من بند مماثل (اختياري)', 'Use approved mapping from a similar item (optional)', 'text', '', options(), false), f('recurrence', 'دورية الاستحقاق', 'Recurrence', 'text', d.recurrence || 'none', choices(recurrence)), f('recurringAmount', 'المبلغ الافتراضي', 'Default amount', 'text', d.recurringAmount || '0'), f('recurrenceStart','تاريخ بدء الدورية','Recurrence start date','date',d.recurrenceStart||'',null,false), f('invoice', 'فاتورة', 'Invoice', 'checkbox', d.invoice ?? true), f('receipt', 'سند قبض', 'Receipt voucher', 'checkbox', d.receipt ?? true), f('payment', 'سند صرف', 'Payment voucher', 'checkbox', d.payment ?? false), f('annualMonth', 'أساس شهر الاستحقاق السنوي', 'Annual due month basis', 'text', String(d.annualMonth || 0), [{ id: '0', name: t('شهر تسجيل المركبة — اليوم الأول من الشهر', 'Vehicle registration month — first day of month') }, ...Array.from({ length: 12 }, (_, i) => ({ id: String(i + 1), name: new Intl.DateTimeFormat(getLocale() === 'ar' ? 'ar-AE' : 'en', { month: 'long' }).format(new Date(2026, i, 1)) }))]), ...['receivableId', 'revenueId', 'expenseId', 'payableId'].map((key, i) => ({ ...f(key, ['حساب المستحقات', 'حساب الإيرادات أو أمانات العميل', 'حساب المصروف', 'حساب الدائنين'][i], ['Receivables account', 'Income / customer liability account', 'Expense account', 'Payables account'][i], 'text', d[key] || '', accounts(), false), group: 'accounting', groupTitle: ['الربط المحاسبي — إعدادات متقدمة', 'Accounting mapping — advanced settings'] })), { ...f('taxRate', 'نسبة الضريبة المعتمدة', 'Approved tax rate', 'text', d.taxRate || '0'), group: 'accounting', groupTitle: ['الربط المحاسبي — إعدادات متقدمة', 'Accounting mapping — advanced settings'] }, { ...f('taxAccountId', 'حساب الضريبة', 'Tax account', 'text', d.taxAccountId || '', accounts(), false), group: 'accounting', groupTitle: ['الربط المحاسبي — إعدادات متقدمة', 'Accounting mapping — advanced settings'] }];
+        fields.push(f('recurring','دوري','Recurring','checkbox',!!d.recurrence&&d.recurrence!=='none'),
+            f('dueDateBasis','أساس تاريخ الاستحقاق','Due date basis','text',d.dueDateBasis||'relationship_start',dueBasisOptions()));
+        if(canSetFee)fields.push(
+            f('feeConfigured','تُفرض عليه رسوم إدارية لعدم الالتزام','Charge administrative noncompliance fees','checkbox',rule?.configured??!!rule),
+            f('feeCondition','شرط الرسوم','Fee condition','text',rule?.condition||'double_monthly_due',choices({
+                double_monthly_due:['عند بلوغ ضعف المستحق الشهري','At twice the monthly due'],
+                above_limit:['عند تجاوز مبلغ محدد','Above a specified amount'],
+                ...(rule?.condition==='double_fee'?{double_fee:['ضعف الرسم — قاعدة سابقة','Twice the fee — existing rule']}:{}),
+                ...(rule?.condition==='any_unpaid'?{any_unpaid:['أي رصيد — قاعدة سابقة','Any unpaid balance — existing rule']}:{})})),
+            f('feeThreshold','حد الرصيد بالدرهم','Outstanding threshold (AED)','number',rule?.threshold||'',null,false),
+            f('feeAmount','قيمة الرسوم الشهرية','Monthly fee amount','number',rule?.amount||'',null,false),
+            f('feeIncome','حساب إيراد الرسوم','Fee income account','text',rule?.incomeAccountId||'',ctx.book.finance_accounts
+                .filter(a=>a.active&&a.kind==='income'&&(!rule||a.id===rule.incomeAccountId)).map(a=>({id:a.id,name:itemName(a)})),false),
+            f('feeEffective','تاريخ سريان التعديل','Change effective date','date',date(),null,false),
+            f('feeEnabled','تفعيل الإصدار بعد الاعتماد المالي','Enable issuance after financial approval','checkbox',!!rule?.enabled));
+        const names=['nameAr','nameEn','invoice','receipt','payment','recurring','recurrence','recurringAmount','dueDateBasis','recurrenceStart','annualMonth',
+            'feeConfigured','feeCondition','feeThreshold','feeAmount','feeIncome','feeEffective','feeEnabled'];
+        const position=field=>names.includes(field.name)?names.indexOf(field.name):names.length;
+        fields.sort((a,b)=>position(a)-position(b));
+        const dialog = scopedForm(t(existing ? 'تعديل البند — الرمز ثابت' : 'تعريف بند مالي — الرمز يولد تلقائياً', existing ? 'Edit item — fixed internal code' : 'Define financial item — code generated automatically'), fields, async (values, key) => safely(async () => { const {recurring,feeConfigured,feeCondition,feeThreshold,feeAmount,feeIncome,feeEffective,feeEnabled,...itemValues}=values;
+            itemValues.recurrence=recurring?(itemValues.recurrence==='none'?'monthly':itemValues.recurrence):'none';
+            const payload = { ...d, ...itemValues, annualMonth: Number(values.annualMonth), priority: existing?.priority ?? 100, companyIds: d.companyIds || [ctx.co], active: existing?.active ?? true, methods: d.methods || ['manual', 'automatic', 'bulk'] }; if (canSetFee&&(feeConfigured||rule)){
+                const enabled=!!(feeConfigured&&feeEnabled);
+                if(!(feeAmount||rule?.amount)||!(feeIncome||rule?.incomeAccountId))throw Error(t('أدخل قيمة الرسم وحساب الإيراد','Enter the fee amount and income account'));
+                if(feeCondition==='above_limit'&&!feeThreshold)throw Error(t('أدخل حد الرصيد','Enter the outstanding threshold'));
+                const changed=!rule||(rule.configured??true)!==feeConfigured||rule.enabled!==enabled||rule.condition!==feeCondition||
+                    (feeEffective!==date()&&feeEffective!==rule.effectiveOn)||Number(rule.amount)!==Number(feeAmount)||Number(rule.threshold||0)!==Number(feeThreshold||0)||
+                    (feeCondition==='double_monthly_due'&&Number(rule.monthlyDue)!==Number(itemValues.recurringAmount));
+                if(changed)payload.monthlyFollowup={companyId:editingCompany,incomeAccountId:feeIncome||rule.incomeAccountId,
+                    effectiveOn:feeEffective,amount:feeAmount||rule.amount,condition:feeCondition,configured:feeConfigured,enabled,revision:rule?.revision||0,
+                    ...(feeCondition==='above_limit'?{threshold:feeThreshold}:{})};
+            }
+            if (existing)
             payload.code = existing.code;
             if(!payload.recurrenceStart)delete payload.recurrenceStart;
             for (const k of Object.keys(payload))
@@ -43,10 +79,28 @@
             details.append(group);
             group.querySelector('legend').hidden = true;
         }
-        const toggle = () => { const form = dialog.querySelector('form'); for (const key of ['receivableId', 'revenueId'])
+        const form=dialog.querySelector('form');
+        const classification=document.createElement('fieldset');
+        classification.className='fp-item-classification full';
+        classification.innerHTML='<legend>'+e(t('تصنيف المستند المحاسبي','Accounting document classification'))+'</legend>';
+        form.elements.invoice.closest('label').before(classification);
+        for(const name of ['invoice','receipt','payment'])classification.append(form.elements[name].closest('label'));
+        for(const name of ['recurring','feeConfigured'])form.elements[name]?.closest('label').classList.add('full','fp-item-switch');
+        const toggle = () => {
+            for(const name of ['recurrence','recurringAmount','dueDateBasis','recurrenceStart'])
+                form.elements[name].closest('label').hidden=!form.elements.recurring.checked;
+            for(const name of ['feeCondition','feeAmount','feeThreshold','feeIncome','feeEffective','feeEnabled']){
+                const input=form.elements[name];
+                if(input){
+                    input.closest('label').hidden=!form.elements.feeConfigured.checked||
+                        (name==='feeThreshold'&&form.elements.feeCondition.value!=='above_limit');
+                    if(name==='feeEnabled')input.disabled=!ctx.book.package.approved['monthly-followup'];
+                }
+            }
+ for (const key of ['receivableId', 'revenueId'])
             form.elements[key].closest('label').hidden = !form.elements.invoice.checked; for (const key of ['expenseId', 'payableId'])
-            form.elements[key].closest('label').hidden = !form.elements.payment.checked; form.elements.annualMonth.closest('label').hidden = form.elements.recurrence.value !== 'annual' || !existing || d.recurrenceBinding === 'explicit'; };
-        dialog.querySelector('form').onchange = ev => { if (ev.target.name === 'templateItemId') {
+            form.elements[key].closest('label').hidden = !form.elements.payment.checked; form.elements.annualMonth.closest('label').hidden = !form.elements.recurring.checked || form.elements.recurrence.value !== 'annual' || !existing || d.recurrenceBinding === 'explicit'; };
+        dialog.querySelector('form').onchange = ev => { if(ev.target.name==='recurring'&&ev.target.checked&&form.elements.recurrence.value==='none')form.elements.recurrence.value='monthly'; if (ev.target.name === 'templateItemId') {
             const source = ctx.book.finance_items.find(x => x.id === ev.target.value), form = dialog.querySelector('form');
             if (source) {
                 form.elements.category.value = source.category;
@@ -58,8 +112,30 @@
         toggle();
         return dialog;
     }
-    function itemPanel(context) { ctx = context; return (can('item_manage') ? button('new-item', t('تعريف بند مالي', 'Define financial item')) : '') + table('items', ctx.book.finance_items.map(r => ({ ...r, displayName: itemName(r), recurrenceName: t(...(recurrence[r.details.recurrence] || recurrence.none)), state: r.active ? t('نشط', 'Active') : t('غير نشط', 'Inactive') })), [['displayName', t('البند', 'Item')], ['recurrenceName', t('دورية الاستحقاق', 'Recurrence')], ['state', t('الحالة', 'Status')]], () => '', true); }
-    function body(tab, context) {
+    const dueBasisOptions=()=>choices({
+        relationship_start:['بداية العلاقة','Relationship start'],vehicle_registration:['تسجيل المركبة','Vehicle registration'],
+        specific:['تاريخ محدد','Specific date'],
+    });
+    function itemPanel(context) {
+        ctx=context;
+        const record=selectedItem?.company===ctx.co&&selectedItem.actor===ABCentral.actor.id
+            ?ctx.book.finance_items.find(r=>r.id===selectedItem.id):null;
+        const register=table('items',ctx.book.finance_items.map(r=>({...r,displayName:itemName(r),
+            recurrenceName:t(...(recurrence[r.details.recurrence]||recurrence.none)),state:r.active?t('نشط','Active'):t('غير نشط','Inactive')})),
+            [['code',t('رقم البند','Item number')],['displayName',t('البند','Item')],['recurrenceName',t('دورية الاستحقاق','Recurrence')],['state',t('الحالة','Status')]],()=>'',true);
+        const tools=(can('item_manage')||can('item_create'))?button('new-item',t('تعريف بند مالي','Define financial item')):'';
+        if(!record)return '<section class="fp-item-register"><h3>'+e(t('سجل البنود المحاسبية','Accounting item register'))+'</h3>'+tools+register+'</section>';
+        const edit=record.canEdit;
+        return '<section class="fp-item-detail"><h3>'+e(itemName(record))+'</h3>'+
+            RecordLayout.values([[t('رقم البند','Item number'),record.code],
+                [t('تصنيف المستند','Document classification'),['invoice','receipt','payment'].filter(k=>record.details[k])
+                    .map(k=>({invoice:t('فاتورة','Invoice'),receipt:t('سند قبض','Receipt voucher'),payment:t('سند صرف','Payment voucher')})[k]).join(' · ')]])+
+            button('item-register',t('العودة إلى سجل البنود','Back to item register'))+
+            (edit?button('item-edit',t('تعديل البند','Edit item'),record.id)+button('item-remove',t('مسح أو تعطيل البند','Remove or disable item'),record.id):'')+
+            '<h4>'+e(t(...names.entitlements))+'</h4>'+body('entitlements',context,record)+
+            '<h4>'+e(t(...names.compliance))+'</h4>'+body('compliance',context,record)+'</section>';
+    }
+    function body(tab, context, record=null) {
         ctx = context;
         const state = ctx.book.package;
         if (!names[tab])
@@ -79,16 +155,20 @@
             return intro + `<form id="fp-priority"><label><input type="checkbox" name="enabled" ${state.priority?.requestedEnabled ? 'checked' : ''}>${t('تفعيل الأولوية للدفعات غير المخصصة', 'Enable priority for unspecified payments')}</label><ol data-priority-list>${ordered.map(id => { const r = ctx.book.finance_items.find(r => r.id === id); return r ? `<li data-item="${e(id)}"><label><input type="checkbox" name="included" ${ids.includes(id)?'checked':''}>${e(itemName(r))}</label>${can('configure') ? button('up', t('للأعلى', 'Move up'), id) + button('down', t('للأسفل', 'Move down'), id) : ''}</li>` : ''; }).join('')}</ol><p>${t('الحالة المالية الفعلية', 'Actual financial state')}: ${!state.approved.priority || !state.priority ? t('الأولوية الرقمية السابقة محفوظة؛ الترتيب الجديد لم يفعّل مالياً.', 'Existing numeric priorities are preserved; the new order is not financially activated.') : state.priority.enabled ? t('الترتيب الجديد مفعل للمستحقات العامة غير المخصصة. قواعد العقود محفوظة.', 'New order active for unallocated general receivables. Contract rules are preserved.') : t('التوزيع بالأولوية معطل للمستحقات العامة؛ يلزم تخصيص فواتير صراحة.', 'Priority allocation disabled for general receivables; select invoices explicitly.')}</p>${can('configure') ? '<button type="submit" class="primary-btn">' + t('معاينة وحفظ الترتيب', 'Review and save order') + '</button>' : ''}<p role="alert"></p></form>`;
         }
         if (tab === 'compliance') {
-            const rows = state.feeRules.map(r => ({ ...r, companyName: getLocale() === 'ar' ? ctx.company?.arabicName : ctx.company?.englishName, displayName: ctx.book.finance_items.find(x => x.id === r.itemId) ? itemName(ctx.book.finance_items.find(x => x.id === r.itemId)) : t('بند غير متاح', 'Unavailable item'), repeatName: r.repeat === 'once' ? t('مرة واحدة', 'One time') : t('شهري', 'Monthly'), unitName: r.unit === 'vehicle_category' ? t('كل مركبة وفئة — أكثر من 60 يوماً، أول الشهر', 'Vehicle/category — over 60 days, month start') : r.unit === 'customer_item' ? t('رصيد البند للعميل', 'Customer item balance') : t('كل مستحق مستقل', 'Each receivable'), state: r.enabled ? t('مفعل', 'Enabled') : t('معطل', 'Disabled') }));
-            return intro + button('monthly-review',t('معاينة إقفال الشهر','Preview month close')) +
-                (can('configure')&&ABCentral.actor.roleId==='owner'?button('monthly-new',t('إعداد متابعة شهرية','Configure monthly follow-up')):'') +
-                table('monthly-followup',(state.monthlyFollowups||[]).map(r=>({...r,displayName:itemName(ctx.book.finance_items.find(x=>x.id===r.itemId)||{})})),
-                  [['displayName',t('البند الأساسي','Base item')],['amount',t('الرسم','Fee')],['effectiveOn',t('السريان','Effective date')]],
-                  r=>can('configure')&&ABCentral.actor.roleId==='owner'?button('monthly-edit',t('تعديل','Edit'),r.itemId):'') +
-                (can('configure') ? button('fee-new', t('إضافة قاعدة رسوم', 'Add fee rule')) : '') + table('fees', rows, [['displayName', t('البند', 'Item')], ['companyName', t('الشركة', 'Company')], ['delayMonths', t('مدة التأخر بالأشهر', 'Delay months')], ['amount', t('الرسوم AED', 'Fee AED')], ['unitName', t('وحدة الاحتساب', 'Calculation unit')], ['repeatName', t('التكرار', 'Recurrence')], ['effectiveOn', t('السريان', 'Effective date')], ['state', t('الحالة', 'State')]], r => can('configure') ? button('fee-status', r.enabled ? t('تعطيل', 'Disable') : t('تفعيل', 'Enable'), r.id) : '', true);
+            const rows = state.feeRules.filter(r=>!record||r.itemId===record.id).map(r => ({ ...r, companyName: getLocale() === 'ar' ? ctx.company?.arabicName : ctx.company?.englishName, displayName: ctx.book.finance_items.find(x => x.id === r.itemId) ? itemName(ctx.book.finance_items.find(x => x.id === r.itemId)) : t('بند غير متاح', 'Unavailable item'), repeatName: r.repeat === 'once' ? t('مرة واحدة', 'One time') : t('شهري', 'Monthly'), unitName: r.unit === 'vehicle_category' ? t('كل مركبة وفئة — أكثر من 60 يوماً، أول الشهر', 'Vehicle/category — over 60 days, month start') : r.unit === 'customer_item' ? t('رصيد البند للعميل', 'Customer item balance') : t('كل مستحق مستقل', 'Each receivable'), state: r.enabled ? t('مفعل', 'Enabled') : t('معطل', 'Disabled') }));
+            return intro + button('monthly-review',t('معاينة إقفال الشهر','Preview month close'),record?.id||'') +
+                table('monthly-followup',(state.monthlyFollowups||[]).filter(r=>!record||r.itemId===record.id).map(r=>({...r,
+                  displayName:itemName(ctx.book.finance_items.find(x=>x.id===r.itemId)||{}),
+                  conditionName:({double_monthly_due:t('ضعف المستحق الشهري','Twice the monthly due'),above_limit:t('تجاوز مبلغ محدد','Above a specified amount'),
+                      double_fee:t('ضعف الرسم','Twice the fee'),any_unpaid:t('أي رصيد مستحق','Any unpaid balance')})[r.condition],
+                  limit:r.threshold||r.monthlyDue||'—',status:r.enabled?t('الإصدار مفعّل','Issuance enabled'):t('الإصدار غير مفعّل','Issuance disabled')})),
+                  [['displayName',t('البند الأساسي','Base item')],['conditionName',t('الشرط','Condition')],['limit',t('المبلغ المرجعي','Reference amount')],
+                      ['amount',t('الرسم','Fee')],['effectiveOn',t('السريان','Effective date')],['status',t('الحالة','Status')]],
+                  ()=>'',false) +
+                (can('configure') ? button('fee-new', t('إضافة قاعدة رسوم سابقة', 'Add legacy fee rule'),record?.id||'') : '') + table('fees', rows, [['displayName', t('البند', 'Item')], ['companyName', t('الشركة', 'Company')], ['delayMonths', t('مدة التأخر بالأشهر', 'Delay months')], ['amount', t('الرسوم AED', 'Fee AED')], ['unitName', t('وحدة الاحتساب', 'Calculation unit')], ['repeatName', t('التكرار', 'Recurrence')], ['effectiveOn', t('السريان', 'Effective date')], ['state', t('الحالة', 'State')]], r => can('configure') ? button('fee-status', r.enabled ? t('تعطيل', 'Disable') : t('تفعيل', 'Enable'), r.id) : '', true);
         }
         if (tab === 'entitlements')
-            return intro + (can('configure') ? button('relation-new', t('ربط استحقاق فعلي', 'Link actual entitlement')) : '') + button('relation-preview', t('معاينة الاستحقاقات', 'Preview entitlements')) + table('relations', state.relations.map(r => ({ ...r, customerName: ctx.customers.find(c => c.id === r.customerId)?.name || t('غير متاح في نطاق العرض', 'Unavailable in scope'), itemName: ctx.book.finance_items.find(x => x.id === r.itemId) ? itemName(ctx.book.finance_items.find(x => x.id === r.itemId)) : t('غير متاح', 'Unavailable'), state: r.enabled ? t('مفعل', 'Enabled') : t('معطل', 'Disabled') })), [['itemName', t('البند', 'Item')], ['customerName', t('العميل', 'Customer')], ['amount', t('المبلغ', 'Amount')], ['anchorOn', t('بداية الاستحقاق', 'First due date')], ['untilOn', t('نهاية العلاقة', 'Relationship end')], ['state', t('الحالة', 'State')]], r => can('configure') ? button('relation-status', r.enabled ? t('تعطيل', 'Disable') : t('تفعيل', 'Enable'), r.id) : '', true);
+            return intro + (can('configure') ? button('relation-new', t('ربط استحقاق فعلي', 'Link actual entitlement'),record?.id||'') : '') + button('relation-preview', t('معاينة الاستحقاقات', 'Preview entitlements'),record?.id||'') + table('relations', state.relations.filter(r=>!record||r.itemId===record.id).map(r => ({ ...r, customerName: ctx.customers.find(c => c.id === r.customerId)?.name || t('غير متاح في نطاق العرض', 'Unavailable in scope'), itemName: ctx.book.finance_items.find(x => x.id === r.itemId) ? itemName(ctx.book.finance_items.find(x => x.id === r.itemId)) : t('غير متاح', 'Unavailable'), state: r.enabled ? t('مفعل', 'Enabled') : t('معطل', 'Disabled') })), [['itemName', t('البند', 'Item')], ['customerName', t('العميل', 'Customer')], ['amount', t('المبلغ', 'Amount')], ['anchorOn', t('بداية الاستحقاق', 'First due date')], ['untilOn', t('نهاية العلاقة', 'Relationship end')], ['state', t('الحالة', 'State')]], r => can('configure') ? button('relation-status', r.enabled ? t('تعطيل', 'Disable') : t('تفعيل', 'Enable'), r.id) : '', true);
         if (tab === 'documents') {
             const key = ctx.co + ':' + docType + ':' + docPage + ':' + ABCentral.actor.id;
             if (docContext !== key) {
@@ -127,7 +207,7 @@
     function taxMappingEditor(r){const old=taxValue();if(!old.trn)throw Error(t('أدخل إعداد الشركة أولاً','Configure the company first'));return scopedForm(t('تصنيف بند — لا يغيّر الفواتير','Item classification — no invoice changes'),[f('itemId','البند','Item','text',r?.itemId||'',options()),f('category','التصنيف المقترح','Proposed classification','text',r?.category||'review',choices(taxCategories)),f('rate','المعدل المقترح % — يترك فارغاً عند عدم الحسم','Proposed rate % — blank if unresolved','text',r?.rateBasisPoints==null?'':r.rateBasisPoints/100,null,false),f('inputRecovery','استرداد المدخلات المقترح','Proposed input recovery','text',r?.inputRecovery||'review',choices({review:['مراجعة','Review'],recoverable:['قابل للاسترداد','Recoverable'],blocked:['غير قابل للاسترداد','Blocked'],partial:['جزئي — مراجعة','Partial — review']})),f('reason','سبب التصنيف','Classification reason','textarea',r?.reason||'')],async(d,key)=>safely(async()=>{if(d.rate!==''&&!/^\d{1,3}(\.\d{1,2})?$/.test(d.rate))throw Error(t('أدخل نسبة صحيحة حتى منزلتين عشريتين','Enter a rate with at most two decimals'));const value={itemId:d.itemId,category:d.category,rateBasisPoints:d.rate===''?null:Math.round(Number(d.rate)*100),inputRecovery:d.inputRecovery,reason:d.reason};await saveTax(old,{mappings:[...old.mappings.filter(x=>x.itemId!==d.itemId),value]},key);}));}
     function taxAdjustmentEditor(){const old=taxValue();if(!old.trn)throw Error(t('أدخل إعداد الشركة أولاً','Configure the company first'));return scopedForm(t('تسوية مقترحة — دون قيد أو إقرار','Proposed adjustment — no posting or filing'),[f('from','بداية الفترة','Period start','date',old.corporatePeriods[0]?.from||''),f('to','نهاية الفترة','Period end','date',old.corporatePeriods[0]?.to||''),f('direction','الأثر المقترح','Proposed effect','text','add',choices({add:['إضافة','Add'],deduct:['استبعاد','Deduct']})),f('amount','المبلغ AED','Amount AED'),f('reason','السبب','Reason','textarea'),f('evidenceVersionId','مرجع إصدار المستند إن توفر','Document version reference if available','text','',null,false)],async(d,key)=>safely(()=>saveTax(old,{adjustments:[...old.adjustments,{...d,id:crypto.randomUUID(),evidenceVersionId:d.evidenceVersionId||null}]},key)));}
     function taxBridgeEditor(){return scopedForm(t('معاينة ضريبة الشركات — دون اعتماد نهائي','Corporate tax preview — not final approval'),[f('from','من','From','date',ctx.book.package.taxPreparation?.corporatePeriods[0]?.from||date()),f('to','إلى','To','date',ctx.book.package.taxPreparation?.corporatePeriods[0]?.to||date())],async(d)=>safely(async()=>{const r=await call('tax-bridge?'+new URLSearchParams({companyId:ctx.co,...d}),'GET');detail(t('تسوية مقترحة — ليست إقراراً','Proposed reconciliation — not a filing'),[[t('الربح المحاسبي AED','Accounting profit AED'),r.accountingProfit],[t('الإضافات المقترحة','Proposed additions'),r.proposedAdditions],[t('الاستبعادات المقترحة','Proposed deductions'),r.proposedDeductions],[t('الدخل المقترح للمراجعة','Proposed income for review'),r.proposedTaxableIncome],[t('الضريبة المستحقة','Tax due'),t('غير معتمدة — لا تُحسب تلقائياً','Not approved — not calculated automatically')]]);}));}
-    function feeEditor(r) { const fields = [f('itemId', 'البند الأصلي', 'Original item', 'text', r?.itemId || '', options()), f('feeItemId', 'بند الرسوم المستقل المرتبط بحساب الإيرادات', 'Separate fee item mapped to income', 'text', r?.feeItemId || '', options()), f('delayMonths', 'مدة التأخر بالأشهر', 'Delay months', 'number', r?.delayMonths || 2), f('amount', 'قيمة الرسوم بالدرهم', 'Fee AED', 'text', r?.amount || '10'), f('repeat', 'طريقة التكرار', 'Recurrence', 'text', r?.repeat || 'once', choices({ once: ['مرة واحدة', 'Once'], monthly: ['شهرياً', 'Monthly'] })), f('unit', 'وحدة الاحتساب', 'Calculation unit', 'text', r?.unit || 'customer_item', choices({ customer_item: ['إجمالي رصيد البند للعميل', 'Customer item balance'], invoice: ['كل مستحق مستقل', 'Each receivable'], vehicle_category: ['كل مركبة وفئة — أكثر من 60 يوماً، أول الشهر', 'Vehicle/category — over 60 days, month start'] })), f('effectiveOn', 'تاريخ السريان المستقبلي', 'Prospective effective date', 'date', date()), f('contractEvidenceId', 'المستند التعاقدي المعتمد', 'Approved contractual evidence', 'text', r?.contractEvidenceId || '', ctx.docs), f('notes', 'الشروط والملاحظات', 'Conditions and notes', 'textarea', r?.notes || '', null, false)]; return scopedForm(t('قاعدة رسوم — تحفظ معطلة افتراضياً', 'Fee rule — saved disabled by default'), fields, async (d, key) => safely(async () => { if (!confirmChange())
+    function feeEditor(r,baseItemId) { const fields = [f('itemId', 'البند الأصلي', 'Original item', 'text', r?.itemId || baseItemId || '', baseItemId?options().filter(o=>o.id===baseItemId):options()), f('feeItemId', 'بند الرسوم المستقل المرتبط بحساب الإيرادات', 'Separate fee item mapped to income', 'text', r?.feeItemId || '', options()), f('delayMonths', 'مدة التأخر بالأشهر', 'Delay months', 'number', r?.delayMonths || 2), f('amount', 'قيمة الرسوم بالدرهم', 'Fee AED', 'text', r?.amount || '10'), f('repeat', 'طريقة التكرار', 'Recurrence', 'text', r?.repeat || 'once', choices({ once: ['مرة واحدة', 'Once'], monthly: ['شهرياً', 'Monthly'] })), f('unit', 'وحدة الاحتساب', 'Calculation unit', 'text', r?.unit || 'customer_item', choices({ customer_item: ['إجمالي رصيد البند للعميل', 'Customer item balance'], invoice: ['كل مستحق مستقل', 'Each receivable'], vehicle_category: ['كل مركبة وفئة — أكثر من 60 يوماً، أول الشهر', 'Vehicle/category — over 60 days, month start'] })), f('effectiveOn', 'تاريخ السريان المستقبلي', 'Prospective effective date', 'date', date()), f('contractEvidenceId', 'المستند التعاقدي المعتمد', 'Approved contractual evidence', 'text', r?.contractEvidenceId || '', ctx.docs), f('notes', 'الشروط والملاحظات', 'Conditions and notes', 'textarea', r?.notes || '', null, false)]; return scopedForm(t('قاعدة رسوم — تحفظ معطلة افتراضياً', 'Fee rule — saved disabled by default'), fields, async (d, key) => safely(async () => { if (!confirmChange())
         throw Error(t('لم يتم التأكيد', 'Not confirmed')); await call(r ? 'fees/' + r.id : 'fees', r ? 'PATCH' : 'POST', { ...d, companyId: ctx.co, delayMonths: d.unit === 'vehicle_category' ? 2 : Number(d.delayMonths), repeat: d.unit === 'vehicle_category' ? 'monthly' : d.repeat, revision: r?.revision || 0, enabled: r?.enabled || false, confirm: true }, key); await ctx.refresh(); })); }
     function costCentreEditor(r){return scopedForm(t('مركز التكلفة','Cost centre'),[f('nameAr','الاسم العربي','Arabic name','text',r?.nameAr||''),f('nameEn','الاسم الإنجليزي','English name','text',r?.nameEn||''),f('active','نشط','Active','checkbox',r?r.active:true),f('reason','سبب التغيير','Change reason')],(d,key)=>safely(async()=>{await call('cost-centres','POST',{companyId:ctx.co,...(r?{id:r.id}:{}),revision:r?.revision||0,nameAr:d.nameAr,nameEn:d.nameEn,active:!!d.active,reason:d.reason},key);await ctx.refresh();}));}
     function bind(context) {
@@ -144,35 +224,20 @@
             if(action==='tax-mapping'){taxMappingEditor();return;}
             if(action==='tax-adjustment'){taxAdjustmentEditor();return;}
             if(action==='tax-bridge'){taxBridgeEditor();return;}
+            if(action==='item-register'){selectedItem=null;render();return;}
+            if(action==='item-edit'){itemEditor(ctx.book.finance_items.find(r=>r.id===key));return;}
+            if(action==='item-remove'){
+                if(!confirm(t('مسح البند غير المستخدم أو تعطيل البند المستخدم مع حفظ تاريخه؟','Remove an unused item or disable a used item and keep its history?')))return;
+                await ctx.api('items/'+key+'/remove','POST',{companyId:ctx.co},crypto.randomUUID());
+                selectedItem=null;await ctx.refresh();return;
+            }
             if (action === 'new-item') {
                 itemEditor();
                 return;
             }
-            if(action==='monthly-new'||action==='monthly-edit'){
-                const old=ctx.book.package.monthlyFollowups?.find(r=>r.itemId===key);
-                const baseItems=ctx.book.finance_items.filter(r=>r.category!=='monthly_followup'&&(!old||r.id===old.itemId))
-                    .map(r=>({id:r.id,name:itemName(r)}));
-                const income=ctx.book.finance_accounts.filter(r=>r.active&&r.kind==='income'&&(!old||r.id===old.incomeAccountId))
-                    .map(r=>({id:r.id,name:itemName(r)}));
-                scopedForm(t('مصاريف المتابعة الشهرية','Monthly follow-up expenses'),[
-                    f('itemId','البند الأساسي','Base item','text',old?.itemId||'',baseItems),
-                    f('incomeAccountId','حساب الإيراد','Income account','text',old?.incomeAccountId||'',income),
-                    f('amount','الرسم بالدرهم','Fee in AED','text',old?.amount||''),
-                    f('effectiveOn','تاريخ السريان','Effective date','date',date()),
-                    f('condition','شرط الاحتساب','Charge condition','text',old?.condition||'any_unpaid',[
-                        {id:'any_unpaid',name:t('أي رصيد مستحق عند الإقفال','Any unpaid balance at close')},
-                        {id:'double_fee',name:t('الرصيد لا يقل عن ضعفي الرسم','Balance at least twice the fee')},
-                    ]),
-                    f('enabled','تفعيل القاعدة المعتمدة','Enable approved rule','checkbox',old?.enabled||false),
-                ],(d,requestKey)=>safely(async()=>{
-                    await call('monthly-followup','POST',{...d,companyId:ctx.co,revision:old?.revision||0,confirm:true},requestKey);
-                    await ctx.refresh();
-                }));
-                return;
-            }
             if(action==='monthly-review'){
                 const requestCompany=ctx.co,actor=ABCentral.actor.id;
-                const plan=await call('monthly-followup/preview?'+new URLSearchParams({companyId:requestCompany}));
+                const plan=await call('monthly-followup/preview?'+new URLSearchParams({companyId:requestCompany,...(key?{itemId:key}:{})}));
                 if(ctx.co!==requestCompany||ABCentral.actor.id!==actor)return;
                 const dialog=detail(t('معاينة إقفال الشهر','Month close preview'),[
                     [t('تاريخ الإقفال','Close date'),plan.closeOn],
@@ -192,7 +257,7 @@
                         if(ctx.co!==requestCompany||ABCentral.actor.id!==actor||!confirmChange())return;
                         apply.disabled=true;
                         try{
-                            await call('monthly-followup/close','POST',{companyId:requestCompany,digest:plan.digest,confirm:true},requestKey);
+                            await call('monthly-followup/close','POST',{companyId:requestCompany,...(key?{itemId:key}:{}),digest:plan.digest,confirm:true},requestKey);
                             dialog.close();
                             dialog.remove();
                             await ctx.refresh();
@@ -202,7 +267,7 @@
                 return;
             }
             if (action === 'fee-new') {
-                feeEditor();
+                feeEditor(null,key);
                 return;
             }
             if (action === 'up' || action === 'down') {
@@ -233,12 +298,12 @@
                 return;
             }
             if (action === 'relation-preview') {
-                const result = await call('recurring/preview', 'POST', { companyId: ctx.co }, crypto.randomUUID());
+                const result = await call('recurring/preview', 'POST', { companyId: ctx.co,...(key?{itemId:key}:{}) }, crypto.randomUUID());
                 detail(t('معاينة فقط — لا فواتير جديدة', 'Preview only — no invoices created'), result.rows.map(r => [r.dueOn, r.amount + ' ' + r.currency]));
                 return;
             }
             if (action === 'relation-new') {
-                scopedForm(t('علاقة استحقاق معتمدة — دون إنشاء تلقائي عند الحفظ', 'Approved entitlement — saving does not issue invoices'), [f('customerId', 'العميل', 'Customer', 'text', '', ctx.customers), f('vehicleId', 'المركبة إن انطبقت', 'Vehicle if applicable', 'text', '', ctx.vehicles, false), f('itemId', 'البند الدوري', 'Recurring item', 'text', '', options()), f('amount', 'المبلغ — فارغ لاستخدام الافتراضي للبند', 'Amount — leave blank for item default', 'text', '', null, false), f('currency', 'العملة', 'Currency', 'text', 'AED'), f('effectiveOn', 'سريان العلاقة', 'Effective date', 'date', date()), f('anchorOn', 'تاريخ الاستحقاق الأول', 'First due date', 'date', date()), f('untilOn', 'نهاية العلاقة', 'Relationship end', 'date', '', null, false), f('dateBasis', 'أساس تاريخ الاستحقاق', 'Due date basis', 'text', 'relationship_start', choices({ relationship_start: ['بداية العلاقة', 'Relationship start'], vehicle_registration: ['تسجيل المركبة', 'Vehicle registration'], specific: ['تاريخ محدد', 'Specific date'] })), f('proration', 'الجزء الأول وفق العقد', 'First period per contract', 'text', 'none', choices({ none: ['دون تجزئة', 'No proration'], calendar_days: ['أيام التقويم وفق مستند العقد', 'Calendar days per contract evidence'] })), f('contractEvidenceId', 'دليل الاستحقاق التعاقدي', 'Contractual entitlement evidence', 'text', '', ctx.docs), f('notes', 'شروط العلاقة', 'Entitlement terms', 'textarea')], async (d, k) => safely(async () => { if (!d.untilOn)
+                scopedForm(t('علاقة استحقاق معتمدة — دون إنشاء تلقائي عند الحفظ', 'Approved entitlement — saving does not issue invoices'), [f('customerId', 'العميل', 'Customer', 'text', '', ctx.customers), f('vehicleId', 'المركبة إن انطبقت', 'Vehicle if applicable', 'text', '', ctx.vehicles, false), f('itemId', 'البند الدوري', 'Recurring item', 'text', key, key?options().filter(o=>o.id===key):options()), f('amount', 'المبلغ — فارغ لاستخدام الافتراضي للبند', 'Amount — leave blank for item default', 'text', '', null, false), f('currency', 'العملة', 'Currency', 'text', 'AED'), f('effectiveOn', 'سريان العلاقة', 'Effective date', 'date', date()), f('anchorOn', 'تاريخ الاستحقاق الأول', 'First due date', 'date', date()), f('untilOn', 'نهاية العلاقة', 'Relationship end', 'date', '', null, false), f('dateBasis', 'أساس تاريخ الاستحقاق', 'Due date basis', 'text', ctx.book.finance_items.find(r=>r.id===key)?.details.dueDateBasis||'relationship_start', dueBasisOptions()), f('proration', 'الجزء الأول وفق العقد', 'First period per contract', 'text', 'none', choices({ none: ['دون تجزئة', 'No proration'], calendar_days: ['أيام التقويم وفق مستند العقد', 'Calendar days per contract evidence'] })), f('contractEvidenceId', 'دليل الاستحقاق التعاقدي', 'Contractual entitlement evidence', 'text', '', ctx.docs), f('notes', 'شروط العلاقة', 'Entitlement terms', 'textarea')], async (d, k) => safely(async () => { if (!d.untilOn)
                     delete d.untilOn; if (!d.amount)
                     delete d.amount; if (!d.vehicleId)
                     delete d.vehicleId; await call('relations', 'POST', { ...d, companyId: ctx.co, enabled: false, confirm: true }, k); await ctx.refresh(); }));
@@ -283,10 +348,7 @@
     }
     function openRow(kind, id) { if(kind==='cost-centres'){const r=ctx.book.package.costCentres.find(x=>x.id===id);if(can('configure'))costCentreEditor(r);else detail(t('مركز التكلفة','Cost centre'),[[t('الاسم','Name'),getLocale()==='ar'?r.nameAr:r.nameEn]]);return;} if (kind === 'items') {
         const r = ctx.book.finance_items.find(r => r.id === id);
-        if (can('item_manage'))
-            itemEditor(r);
-        else
-            detail(t('بيانات البند', 'Item details'), [[t('الاسم', 'Name'), itemName(r)], [t('الدورية', 'Recurrence'), t(...(recurrence[r.details.recurrence] || recurrence.none))]]);
+        if(r){selectedItem={company:ctx.co,actor:ABCentral.actor.id,id:r.id};render();}
         return;
     } if(kind==='tax-mappings'){const r=ctx.book.package.taxPreparation?.mappings.find(x=>x.itemId===id);if(can('configure'))taxMappingEditor(r);return;
     } if (kind === 'fees') {
@@ -357,5 +419,5 @@
             }
         }
     } }
-    root.FinancialPackageUI = { names, body, bind, itemPanel, reset() { ++docRequest; ctx = null; docContext = ''; docResult = null; docLoading = false; } };
+    root.FinancialPackageUI = { names, body, bind, itemPanel, clearItemSelection() { selectedItem=null; }, reset() { selectedItem=null; ++docRequest; ctx = null; docContext = ''; docResult = null; docLoading = false; } };
 })(globalThis);

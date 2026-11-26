@@ -10,7 +10,7 @@
         { titles: ['الفوترة', 'Billing'], tabs: ['invoices', 'collect', 'vouchers', 'custody', 'deposits', 'work', 'intercompany'] },
         { titles: ['الرقابة', 'Control'], tabs: ['dashboard', 'funds', 'cards', 'reconciliation', 'closing'] },
         { titles: ['التقارير', 'Reports'], tabs: ['reports', 'receivables', 'cost-centres', 'documents'] },
-        { titles: ['الإعدادات المحاسبية', 'Accounting settings'], tabs: ['setup', 'journals', 'taxes', 'priorities', 'compliance', 'entitlements', 'import'] },
+        { titles: ['الإعدادات المحاسبية', 'Accounting settings'], tabs: ['setup', 'journals', 'taxes', 'priorities', 'import'] },
     ];
 
     const words = {cost_centre_id:['مرجع مركز التكلفة','Cost centre reference'],cost_centre_name_ar:['مركز التكلفة بالعربية','Arabic cost centre'],cost_centre_name_en:['مركز التكلفة بالإنجليزية','English cost centre'],income:['الإيرادات','Income'],expense:['المصروفات','Expenses'],net:['الصافي','Net'],company_id:['الشركة','Company'], id: ['المرجع', 'Reference'], invoiceNumber: ['رقم الفاتورة', 'Invoice number'], receipt_number: ['رقم السند', 'Receipt number'], number: ['الرقم', 'Number'], amount: ['المبلغ', 'Amount'], paid: ['المحصل', 'Paid'], outstanding: ['المستحق', 'Outstanding'], status: ['الحالة', 'Status'], currency: ['العملة', 'Currency'], kind: ['النوع', 'Type'], name: ['الاسم', 'Name'], name_ar: ['الاسم العربي', 'Arabic name'], name_en: ['الاسم الإنجليزي', 'English name'], code: ['الرمز', 'Code'], balance: ['الرصيد', 'Balance'], refill: ['التغذية المطلوبة', 'Refill required'], actual: ['المستلم فعلياً', 'Actually received'], debit: ['مدين', 'Debit'], credit: ['دائن', 'Credit'], net: ['الصافي', 'Net'], company_id: ['الشركة', 'Company'], holder_id: ['الموظف', 'Employee'], dueOn: ['الاستحقاق', 'Due date'], last_four: ['آخر أربعة أرقام', 'Last four'], payment_state: ['حالة التحصيل', 'Collection state'], Active: ['نشط', 'Active'], Pending: ['معلق', 'Pending'], Approved: ['معتمد', 'Approved'], Paid: ['مسدد', 'Paid'], Review: ['للمراجعة', 'Review'], Cleared: ['محصل فعلياً', 'Cleared'], Returned: ['مرتجع', 'Returned'], Partial: ['مسدد جزئياً', 'Partial'], Unpaid: ['غير مسدد', 'Unpaid'], Posted: ['مرحل', 'Posted'], Draft: ['مسودة', 'Draft'], Cancelled: ['ملغى', 'Cancelled'], Corrected: ['مصحح', 'Corrected'] };
@@ -69,7 +69,7 @@
                 if (!context && preserveTab!==true && cap.companies.some(c => c.id === p.companyId)) {
                     co = p.companyId;
                     if (labels[p.tab])
-                        tab = p.tab;
+                        tab = ['compliance','entitlements'].includes(p.tab)?'setup':p.tab;
                 }
             }
             if (!co || !cap.companies.some(c => c.id === co))
@@ -140,7 +140,9 @@
         if (tab === 'reports')
             return form('report', t('تقارير من القيود والمستندات الفعلية', 'Reports from actual entries and documents'), [f('groupBy', 'تجميع التحصيل', 'Collections grouping', 'select', 'day', choice(['day', 'month', 'year', 'employee', 'item'])), f('kind', 'التقرير', 'Report', 'select', 'trial', choice(['trial', 'balance', 'profit', 'cashflow', 'ledger', 'journal', 'receivables', 'custody', 'vouchers', 'cards', 'kpi', 'vat', 'collections', 'deposits', 'cheques', 'funds', 'intercompany', 'installments', 'adjustments', 'profitability','cost-centres'])), f('from', 'من', 'From', 'date', now().slice(0, 4) + '-01-01'), f('to', 'إلى', 'To', 'date', now()), f('currency', 'العملة (اختياري)', 'Currency (optional)', 'text', '', null, false)], t('عرض التقرير', 'Show report'), 'report', `<details class="full"><summary>${t('الشركات المصرح بها', 'Authorized companies')}</summary>${cap.companies.map(c => `<label><input type="checkbox" name="reportCompany" value="${c.id}" ${c.id === co ? 'checked' : ''}/>${e(c.englishName || c.arabicName)}</label>`).join('')}</details>`) + (report ? `<p>${e(report.scope)} — ${t('فواتير غير مصنفة', 'Unclassified invoices')}: ${report.unclassifiedInvoices}</p>${btn('export-csv', 'CSV')}${btn('export-excel', 'Excel')}${btn('print', t('طباعة / PDF', 'Print / PDF'))}${table(report.rows, report.rows[0] ? Object.keys(report.rows[0]).filter(k => !['payload_cipher'].includes(k)).slice(0, 12) : [])}` : '');
         if (tab === 'setup')
-            return setup() + table(book.finance_accounts, ['code', 'name_ar', 'name_en', 'kind', 'active'], r => btn('account-edit', t('تعديل / تفعيل', 'Edit / activate'), r.id)) + FinancialPackageUI.itemPanel(packageContext());
+            return FinancialPackageUI.itemPanel(packageContext()) +
+                '<h3>'+e(t('دليل الحسابات','Chart of accounts'))+'</h3>' +
+                table(book.finance_accounts, ['code', 'name_ar', 'name_en', 'kind', 'active'], r => allowed('account_manage') ? btn('account-edit', t('تعديل / تفعيل', 'Edit / activate'), r.id) : '') + setup();
         if (tab === 'import')
             return form('import-preview', t('معاينة CSV / Excel — المطابقة قبل الاعتماد', 'Preview CSV / Excel — match before commit'), [f('file', 'ملف الفواتير الأصلي', 'Original invoice file', 'file'), ...['sourceKey', 'customerNumber', 'vehicleNumber', 'plate', 'itemCode', 'amount', 'currency', 'dueOn'].map(k => f(k, label(k), k, 'text', k, null, !['vehicleNumber', 'plate'].includes(k)))], t('معاينة', 'Preview'), 'invoice_import') + (importJob ? table(importJob.rows.map(r => ({ line: r.line, status: r.error || 'Ready', amount: r.data?.amount })), ['line', 'status', 'amount']) + btn('import-commit', t('اعتماد السجلات الصحيحة', 'Commit valid rows')) : '');
         if (tab === 'closing')
@@ -486,6 +488,7 @@
             const action = button.dataset.ld, key = button.dataset.id;
             try {
                 if (action === 'tab') {
+                    if(key==='setup')FinancialPackageUI.clearItemSelection();
                     tab = key;
                     if(!ABCentral.viewAs)await api('preferences', 'POST', { companyId: co, tab: key }, crypto.randomUUID());
                     report = null;

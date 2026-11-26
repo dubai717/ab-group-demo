@@ -1,7 +1,7 @@
 import {costCentreSnapshot} from './cost-centres.js';
 import {reviewDepositReceipt} from './deposit-review.js';
 import {registerReceivables} from './receivables.js';
-import {registerManualVoucher,recordFinancialDocument,registerFinancialPackage,priorityPolicy,orderDues,financialApproval} from './financial-package.js';
+import {registerManualVoucher,recordFinancialDocument,registerFinancialPackage,priorityPolicy,orderDues,financialApproval,saveMonthlyFollowup,hasItemRules} from './financial-package.js';
 import{assertServiceRequestVoucher,serviceRequest}from'./customer-service-requests.js';
 import {contractingParty,contractingRight,exactFinancialParty} from './contracting-access.js';
 import { assertInvestorPayoutEligible,notifyInvestorCheque } from './investors.js';
@@ -21,6 +21,7 @@ import {createFinancialVoucher} from './ledger-domain.js';
 import { L, P, need, ready, company, open, event, notify, fact, config, chart, resolve, item, line, journal, post, reverse, evidence, balance, invoices, customer, invoice, linkInvoice, custody, move, moveAmount, bankPosting, allocateReceipt, postReceipt } from './ledger-domain.js';
 const id = z.uuid(), day = z.iso.date(), money = z.string().regex(/^\d{1,15}(\.\d{1,3})?$/), positive = money.refine(x => L.units(x) > 0n), currency = z.string().regex(/^[A-Z]{3}$/), text = z.string().trim().min(1).max(2000), opt = id.nullish();
 const invoiceSchema = z.object({ companyId: id, customerId: id.optional(), contractingCompanyId:id.optional(), vehicleId: opt, itemId: id, amount: positive, currency, issuedOn: day, dueOn: day, sourceKey: z.string().trim().min(1).max(160), description: z.string().max(2000).default('') }).strict().refine(exactFinancialParty,'financialPartyRequired');
+const canChangeItem=(m:any,co:string)=>financeRight(m,'ledger_item_manage',co)||financeRight(m,'ledger_item_edit',co);
 export async function ledgerWorkbench(c:any,m:any,s:any,cipher:any,companyId:string){
         const co = id.parse(companyId);
         need(m, 'view', co);
@@ -34,7 +35,12 @@ export async function ledgerWorkbench(c:any,m:any,s:any,cipher:any,companyId:str
                 rows = rows.filter((r: any) => { const d = cipher.open(r.payload_cipher); return !d.companyIds?.length || d.companyIds.includes(co); });
             if (tab === 'finance_kpi_facts' && !financeRight(m, 'ledger_audit', co))
                 rows = rows.filter((r: any) => r.employee_id === s.user_id);
-            out[tab] = rows.map((r: any) => ({ ...r, ...(r.payload_cipher ? { details: cipher.open(r.payload_cipher) } : {}), payload_cipher: undefined }));
+            out[tab] = rows.map((r: any) => {
+                const details=r.payload_cipher?cipher.open(r.payload_cipher):undefined;
+                const canEdit=tab==='finance_items'&&r.category!=='monthly_followup'&&details?.companyIds?.length>0&&
+                    details.companyIds.every((id:string)=>financeRight(m,'ledger_view',id)&&canChangeItem(m,id));
+                return {...r,...(details?{details}:{}),...(tab==='finance_items'?{canEdit}:{}),payload_cipher:undefined};
+            });
         }
         out.custodyRecipients=m.state.users.filter((u:any)=>u.status==='Active'&&u.id!==s.user_id&&financeRight({...m,actor:u},'ledger_receive',co)).map((u:any)=>({id:u.id,nameAr:u.nameAr||u.nameEn||u.username,nameEn:u.nameEn||u.nameAr||u.username}));
         out.receipts = (await c.query('select id,receipt_number,customer_id,vehicle_id,item_id,kind,amount::text,currency,holder_id,payment_state,received_on,batch_id from ab.finance_receipts where company_id=$1 and item_id is not null order by created_at desc limit 20001', [co])).rows;
@@ -119,14 +125,26 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
             await event(c, cipher, s, co.company_id, r.id, 'account_updated', { nameAr: r.name_ar, nameEn: r.name_en, active: r.active }, d);
         return { id: r.id };
     }));
-    const itemSchema = z.object({ code: z.string().trim().min(1).max(40).optional(), nameAr: text, nameEn: text, category: z.string().min(1).max(100), priority: z.number().int().min(0).max(10000).default(100), active: z.boolean().default(true), companyIds: z.array(id).min(1).max(100), invoice: z.boolean(), receipt: z.boolean(), payment: z.boolean(), methods: z.array(z.enum(['manual', 'automatic', 'bulk'])).min(1), receivableId: opt, revenueId: opt, expenseId: opt, payableId: opt, permission: z.enum(L.rights).optional(), recurrence: z.enum(['none', 'monthly', 'annual', 'contract']).default('none'), annualMonth: z.number().int().min(0).max(12).default(0), recurrenceStart: day.optional(), recurringAmount: money.default('0'), templateItemId:id.optional(),recurrenceBinding:z.enum(['explicit','legacy']).optional(), taxAccountId: opt, taxRate: z.string().regex(/^\d{1,2}(\.\d{1,3})?$/).default('0') }).strict();
-    async function validateItem(c: any, m: any, d: any) {
+    const itemSchema = z.object({ code: z.string().trim().min(1).max(40).optional(), nameAr: text, nameEn: text, category: z.string().min(1).max(100), priority: z.number().int().min(0).max(10000).default(100), active: z.boolean().default(true), companyIds: z.array(id).min(1).max(100), invoice: z.boolean(), receipt: z.boolean(), payment: z.boolean(), methods: z.array(z.enum(['manual', 'automatic', 'bulk'])).min(1), receivableId: opt, revenueId: opt, expenseId: opt, payableId: opt, permission: z.enum(L.rights).optional(), recurrence: z.enum(['none', 'monthly', 'annual', 'contract']).default('none'), annualMonth: z.number().int().min(0).max(12).default(0), recurrenceStart: day.optional(), recurringAmount: money.default('0'), templateItemId:id.optional(),recurrenceBinding:z.enum(['explicit','legacy']).optional(), dueDateBasis:z.enum(['relationship_start','vehicle_registration','specific']).optional(), taxAccountId: opt, taxRate: z.string().regex(/^\d{1,2}(\.\d{1,3})?$/).default('0') }).strict();
+    const itemRequest=itemSchema.extend({monthlyFollowup:z.object({
+        companyId:id,incomeAccountId:id,effectiveOn:day,amount:positive,
+        condition:z.enum(['double_fee','any_unpaid','double_monthly_due','above_limit']),
+        threshold:positive.optional(),configured:z.boolean(),enabled:z.boolean(),revision:z.number().int().nonnegative()
+    }).strict().optional()});
+    async function saveItemFollowup(c:any,m:any,s:any,itemId:string,companyIds:string[],rule:any){
+        if(!rule)return;
+        requireOk(companyIds.includes(rule.companyId),403,'denied');
+        await saveMonthlyFollowup(c,cipher,m,s,{...rule,itemId,confirm:true});
+    }
+    async function validateItem(c: any, m: any, d: any, creating=false) {
         requireOk(d.category!=='monthly_followup'&&!d.code?.startsWith('MF-'),422,'followupItemManagedByRule');
         if(d.templateItemId){for(const co of d.companyIds){const source=await item(c,cipher,m,d.templateItemId,co);requireOk(source.category===d.category,422,'templateClassificationMismatch');for(const k of ['receivableId','revenueId','expenseId','payableId','taxAccountId','taxRate'])d[k]=source.data[k]||(k==='taxRate'?'0':undefined);}delete d.templateItemId;}
         if(d.code?.startsWith('FI-')&&d.invoice&&['loan','finance','work_amount','investor'].includes(d.category)){if(['loan','finance','investor'].includes(d.category))requireOk(d.recurrence==='contract',422,'principalScheduleRequired');const mapping=(await c.query('select kind from ab.finance_accounts where id=$1',[d.revenueId])).rows[0];requireOk(mapping?.kind==='liability',422,'principalMappingReviewRequired');}
 
-        for (const co of d.companyIds)
-            need(m, 'item_manage', co);
+        for (const co of d.companyIds){
+            need(m,'view',co);
+            requireOk(creating?financeRight(m,'ledger_item_manage',co)||financeRight(m,'ledger_item_create',co):canChangeItem(m,co));
+        }
         for (const k of ['receivableId', 'revenueId', 'expenseId', 'payableId', 'taxAccountId'])
             if (d[k])
                 {requireOk((await c.query('select 1 from ab.finance_accounts where id=$1 and active', [d[k]])).rowCount,422,'accountMappingRequired');for(const co of d.companyIds)requireOk((await c.query('select 1 from ab.finance_chart where definition_id=$1 and company_id=$2 and active',[d[k],co])).rowCount,422,'accountMappingRequired');}
@@ -135,30 +153,57 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         requireOk(L.units(d.taxRate) === 0n || !!d.taxAccountId, 422, 'taxAccountRequired');
     }
     app.post('/api/ledger/items', route(async (c: any, m: any, s: any, req: any) => {
-        const d = itemSchema.parse(req.body);
+        const {monthlyFollowup,...d}=itemRequest.parse(req.body);
         if(!d.code){await c.query("insert into ab.vehicle_numbers(tenant_id,kind,next_number)select $1,'financial_item',coalesce(max(substring(code from 4)::bigint),0)+1 from ab.finance_items where code ~ '^FI-[0-9]{1,18}$' on conflict(tenant_id,kind)do update set next_number=greatest(ab.vehicle_numbers.next_number,excluded.next_number)",[s.tenant_id]);d.code='FI-'+String(await number(c,s.tenant_id,'financial_item')).padStart(6,'0');}d.recurrenceBinding='explicit';
-        await validateItem(c, m, d);
+        await validateItem(c, m, d, true);
         const key = randomUUID();
         await c.query('insert into ab.finance_items(id,tenant_id,code,name_ar,name_en,category,priority,active,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [key, s.tenant_id, d.code, d.nameAr, d.nameEn, d.category, d.priority, d.active, cipher.seal(d), s.user_id]);
         for (const co of d.companyIds)
             await event(c, cipher, s, co, key, 'item_created', null, d);
+        await saveItemFollowup(c,m,s,key,d.companyIds,monthlyFollowup);
         return { id: key };
     }));
     app.patch('/api/ledger/items/:id', route(async (c: any, m: any, s: any, req: any) => {
-        const old = (await c.query('select * from ab.finance_items where id=$1', [id.parse(req.params.id)])).rows[0];
+        const old = (await c.query('select * from ab.finance_items where id=$1 for update', [id.parse(req.params.id)])).rows[0];
         requireOk(old, 404, 'notFound');
-        const before = cipher.open(old.payload_cipher), d = itemSchema.parse(req.body);
+        const before = cipher.open(old.payload_cipher), {monthlyFollowup,...d}=itemRequest.parse(req.body);
         requireOk(!d.code||d.code===old.code,409,'itemCodeImmutable');d.code=old.code;d.recurrenceBinding=before.recurrenceBinding||'legacy';requireOk(d.priority===old.priority,409,'priorityManagedSeparately');
+        requireOk(before.companyIds?.length>0,403,'denied');
+        for(const co of before.companyIds){need(m,'view',co);requireOk(canChangeItem(m,co));}
         await validateItem(c, m, d);
-        for (const co of before.companyIds)
-            need(m, 'item_manage', co);
         if ((await c.query('select 1 from ab.finance_invoice_links where item_id=$1 union all select 1 from ab.finance_receipts where item_id=$1 union all select 1 from ab.finance_vouchers where item_id=$1 limit 1', [old.id])).rowCount)
             for (const k of ['receivableId', 'revenueId', 'expenseId', 'payableId', 'category', 'taxAccountId', 'taxRate'])
                 requireOk((d as any)[k] === before[k], 409, 'usedItemMappingImmutable');
         await c.query('update ab.finance_items set code=$2,name_ar=$3,name_en=$4,category=$5,priority=$6,active=$7,payload_cipher=$8 where id=$1', [old.id, d.code, d.nameAr, d.nameEn, d.category, d.priority, d.active, cipher.seal(d)]);
         for (const co of d.companyIds)
             await event(c, cipher, s, co, old.id, 'item_updated', before, d);
+        await saveItemFollowup(c,m,s,old.id,d.companyIds,monthlyFollowup);
         return { id: old.id };
+    }));
+    app.post('/api/ledger/items/:id/remove',route(async(c:any,m:any,s:any,req:any)=>{
+        const companyId=id.parse(req.body.companyId);
+        need(m,'view',companyId);
+        requireOk(canChangeItem(m,companyId));
+        const key=id.parse(req.params.id);
+        const row=(await c.query('select * from ab.finance_items where id=$1 for update',[key])).rows[0];
+        requireOk(row,404,'notFound');
+        const data=cipher.open(row.payload_cipher);
+        requireOk(data.companyIds?.includes(companyId),404,'notFound');
+        requireOk(row.category!=='monthly_followup',422,'followupItemManagedByRule');
+        for(const co of data.companyIds){need(m,'view',co);requireOk(canChangeItem(m,co));}
+        const used=(await c.query(`select exists(
+            select 1 from ab.finance_invoice_links where item_id=$1
+            union all select 1 from ab.finance_receipts where item_id=$1
+            union all select 1 from ab.finance_vouchers where item_id=$1
+            union all select 1 from ab.finance_card_splits where item_id=$1
+        ) used`,[key])).rows[0].used||await hasItemRules(c,cipher,data.companyIds,key);
+        if(used)await c.query('update ab.finance_items set active=false where id=$1',[key]);
+        else {
+            requireOk((await c.query("select has_table_privilege(current_user,'ab.finance_items','DELETE') allowed")).rows[0].allowed,409,'itemRemovalSchemaPending');
+            await c.query('delete from ab.finance_items where id=$1',[key]);
+        }
+        for(const co of data.companyIds)await event(c,cipher,s,co,key,used?'item_disabled':'item_removed',data,null);
+        return {id:key,disabled:used};
     }));
     app.post('/api/ledger/configuration', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ companyId: id, currency, custodyAccountId: id, chequeTransitAccountId: id, customerCreditAccountId: id, depositBankAccountId:id.nullish(), workdays: z.array(z.number().int().min(0).max(6)).min(1).max(7).default([1, 2, 3, 4, 5]), holidays: z.array(day).max(400).default([]), depositDays: z.number().int().min(1).max(30).default(1), automaticFinanceJobs: z.boolean().default(false) }).strict().parse(req.body);
