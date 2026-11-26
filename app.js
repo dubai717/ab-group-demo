@@ -507,10 +507,9 @@ function render() {
   if(MarketingUI.canEnter())sidebarItems.push({id:'marketing',label:getLocale()==='ar'?'التسويق وتطوير الأعمال':'Marketing & business development'});
   if(InvestorUI.canEnter())sidebarItems.push({id:'investors',label:getLocale()==='ar'?'المستثمرون':'Investors'});
   if(globalThis.ABCentral?.enabled&&currentUser.roleId==='investor'){sidebarItems.splice(0,sidebarItems.length,{id:'investors',label:getLocale()==='ar'?'لوحة المستثمر':'Investor portal'});if(app.state.currentPage==='dashboard')app.state.currentPage='investors';}
-  const fullDashboard=ABCentral.enabled&&app.state.currentPage==='dashboard'&&!AuthFlows.isSettings();
   appEl.innerHTML = `
-    <div class="app-shell ${fullDashboard?'app-shell-dashboard':''}">
-      ${fullDashboard?'':`<aside class="sidebar">
+    <div class="app-shell">
+      <aside class="sidebar">
         <div class="sidebar-logo">
           <div class="sidebar-logo-badge">
             <img src="assets/Untitled.png" alt="AB Group logo" />
@@ -531,13 +530,12 @@ function render() {
         <div class="sidebar-footer">
           <button class="nav-item" data-action="logout">${localeText('logout')}</button>
         </div>
-      </aside>`}
+      </aside>
 
       <main class="main">
         <header class="topbar">
           <div><h1>${AuthFlows.isSettings() ? AuthFlows.text('accountSettings') : pageTitle(app.state.currentPage)}</h1>${app.state.currentPage==='dashboard'&&(ABCentral.actor?.roleId==='owner'||ABCentral.viewAs)?ViewAsUI.identity():''}</div>
           <div class="user-controls">
-            ${fullDashboard?`<details class="dashboard-navigation" ${matchMedia('(min-width: 721px)').matches?'open':''}><summary>${getLocale()==='ar'?'القائمة الرئيسية':'Main menu'}</summary><nav>${sidebarItems.map(item=>`<button type="button" data-page="${item.id}">${item.label}</button>`).join('')}</nav></details>`:''}
             <button class="lang-switch" data-action="toggle-language">
               ${getLocale() === 'ar' ? 'English' : 'العربية'}
             </button>

@@ -54,10 +54,12 @@
  function overlay(title,body){
   const opener=document.activeElement,d=document.createElement('dialog');
   d.className='ab-board-dialog';d.dir=document.documentElement.dir|| (getLocale()==='ar'?'rtl':'ltr');
-  const previous=dialogs.at(-1);if(previous)previous.classList.add('ab-board-underlay');
+  const previous=dialogs.at(-1),scrollParent=previous?.querySelector('.ab-board-dialog-body');
+  const scroll=scrollParent?{top:scrollParent.scrollTop,left:scrollParent.scrollLeft}:{top:window.scrollY,left:window.scrollX};
+  if(previous)previous.classList.add('ab-board-underlay');
   d.innerHTML='<header><h2>'+e(title)+'</h2><button type="button" aria-label="'+t('إغلاق','Close')+'">×</button></header><div class="ab-board-dialog-body">'+body+'</div>';
   document.body.append(d);dialogs.push(d);d.querySelector('header button').onclick=()=>d.close();
-  d.addEventListener('close',()=>{dialogs.splice(dialogs.indexOf(d),1);d.remove();previous?.classList.remove('ab-board-underlay');if(opener?.isConnected)opener.focus({preventScroll:true});},{once:true});
+  d.addEventListener('close',()=>{dialogs.splice(dialogs.indexOf(d),1);d.remove();previous?.classList.remove('ab-board-underlay');if(opener?.isConnected)opener.focus({preventScroll:true});if(scrollParent?.isConnected)scrollParent.scrollTo(scroll);else if(!previous)window.scrollTo(scroll);},{once:true});
   boardActions(d);d.showModal();return d;
  }
  function layoutFor(model){
@@ -91,8 +93,9 @@
   const scoresByMetric={overall:mean(scores),marketing:hasTarget&&target>0?count/target*10000:null,management:model.management?.eligible?model.management.onTime/model.management.eligible*10000:null,employees:completed.length?within/completed.length*10000:null};
   const companyStatus='<div class="ab-board-company-status"><span aria-label="'+t('الشركات الخضراء','Green companies')+'">'+number(states.filter(x=>x===true).length)+'</span><span aria-label="'+t('الشركات الحمراء','Red companies')+'">'+number(states.filter(x=>x===false).length)+'</span></div>';
   return '<div class="ab-board-metrics">'+metrics.map(([title,value,id,note])=>{
-   const score=scoresByMetric[id],meter=score==null?'':'<meter min="0" max="10000" value="'+Math.min(10000,Math.max(0,score))+'" aria-label="'+e(title)+'"></meter>';
-   return '<article><h3>'+(readOnly?e(title):action(title,id))+'</h3>'+meter+'<strong>'+e(value)+'</strong>'+(id==='overall'?companyStatus:'')+'<small>'+e(note)+'</small></article>';
+   const score=scoresByMetric[id],arc=score==null?0:Math.min(10000,Math.max(0,score))*180/10000;
+   const gauge='<div class="ab-board-gauge'+(score==null?' is-empty':'')+'" style="--score:'+arc+'deg"><strong>'+e(value)+'</strong></div>';
+   return '<article><h3>'+(readOnly?e(title):action(title,id))+'</h3>'+gauge+(id==='overall'?companyStatus:'')+'<small>'+e(note)+'</small></article>';
   }).join('')+'</div>';
  }
  function dashboardModules(model,counts,readOnly=false){
@@ -119,12 +122,12 @@
  function movementPanel(report,readOnly){
   if(!report?.available)return '<p>'+e((!readOnly&&movementError)||missing())+'</p>';
   const years=[...new Set(report.months.map(row=>row.month.slice(0,4)))].slice(-3).reverse();
-  const palette=['#146447','#62a78a','#976170'],colors=years.map(year=>palette[(Number(year)%palette.length+palette.length)%palette.length]),scale=Math.max(1,...report.months.flatMap(r=>[r.in,r.out]));
+  const palette=['#146447','#487a65','#976170'],colors=years.map(year=>palette[(Number(year)%palette.length+palette.length)%palette.length]),scale=Math.max(1,...report.months.flatMap(r=>[r.in,r.out]));
   return '<div class="ab-board-year">'+years.map((year,i)=>'<span style="--year:'+colors[i]+'">'+year+'</span>').join('')+'</div><div class="ab-board-chart">'+Array.from({length:12},(_,i)=>{
    const mm=String(i+1).padStart(2,'0'),label=new Intl.DateTimeFormat(getLocale(),{month:'short',timeZone:'UTC'}).format(new Date(Date.UTC(2020,i,1)));
    return '<div class="ab-board-month"><div class="ab-board-bars">'+years.map((year,index)=>{
     const row=report.months.find(r=>r.month===year+'-'+mm);
-    return '<div style="--year:'+colors[index]+'">'+['in','out'].map(dir=>row?.[dir]?'<button type="button" class="ab-board-bar '+dir+'" style="--height:'+Math.max(5,row[dir]/scale*56)+'px" aria-label="'+e(row.month+' '+(dir==='in'?t('إضافات','Additions'):t('خروج','Exits'))+' '+row[dir])+'" data-board-action="movement:'+row.month+':'+dir+'" '+(readOnly?'disabled':'')+'></button>':'<span class="ab-board-bar '+dir+'"></span>').join('')+'</div>';
+    return '<div style="--year:'+colors[index]+'">'+['in','out'].map(dir=>row?.[dir]?'<button type="button" class="ab-board-bar '+dir+'" style="--height:'+Math.max(15,row[dir]/scale*56)+'px" aria-label="'+e(row.month+' '+(dir==='in'?t('إضافات','Additions'):t('خروج','Exits'))+' '+row[dir])+'" data-board-action="movement:'+row.month+':'+dir+'" '+(readOnly?'disabled':'')+'>'+e(number(row[dir]))+'</button>':'<span class="ab-board-bar '+dir+'"></span>').join('')+'</div>';
    }).join('')+'</div><small>'+e(label)+'</small></div>';
   }).join('')+'</div>';
  }
@@ -134,7 +137,8 @@
  }
  function boardActions(host){
   host.addEventListener('click',async event=>{
-   const button=event.target.closest('[data-board-action]')||(!event.target.closest('button,input,select,a')&&event.target.closest('tr')?.querySelector('[data-board-action]'));if(!button||button.disabled)return;
+   const button=event.target.closest('[data-board-action]')||(!event.target.closest('button,input,select,a')&&event.target.closest('tr,.ab-board-metrics article')?.querySelector('[data-board-action]'));if(!button||button.disabled)return;
+   button.focus({preventScroll:true});
    const [kind,id,direction]=button.dataset.boardAction.split(':');
    try {
     if(kind==='task'){
@@ -149,7 +153,7 @@
       return [action(companyName(companyId),'company-performance:'+companyId),e(score==null?missing():number(Math.round(score/100))+'%')];
      })));
     }else if(kind==='company-performance'){
-     overlay(companyName(id),tableView([t('الموظف','Employee'),t('الوظيفة','Job'),t('التقييم','Evaluation'),t('المستهدف / المحصّل / المتبقي','Target / collected / remaining')],data.overview.evaluations.filter(r=>r.companyId===id).map(r=>[e(r.name),e(r.jobTitle||'—'),e(r.score==null?missing():number(r.score/100)+'%'),e((r.collections||[]).map(c=>[money(c.target,c.currency),money(c.actual,c.currency),money(c.remaining,c.currency)].join(' / ')).join(' · ')||'—')])));
+     overlay(t('العاملون في ','Employees at ')+companyName(id),tableView([t('الموظف','Employee'),t('الوظيفة','Job'),t('التقييم','Evaluation'),t('المستهدف / المحصّل / المتبقي','Target / collected / remaining')],data.overview.evaluations.filter(r=>r.companyId===id).map(r=>[e(r.name),e(r.jobTitle||'—'),e(r.score==null?missing():number(r.score/100)+'%'),e((r.collections||[]).map(c=>[money(c.target,c.currency),money(c.actual,c.currency),money(c.remaining,c.currency)].join(' / ')).join(' · ')||'—')])));
     }else if(kind==='marketing'){
      overlay(moduleTitle('contracts'),tableView([t('الشركة','Company'),t('مؤكد','Confirmed'),t('الهدف','Target'),t('الفرص المفتوحة','Open opportunities')],(data.overview.marketingCompanies||[]).map(r=>[action(companyName(r.companyId),'marketing-company:'+r.companyId),number(r.contracts.length),r.target==null?t('لا يوجد هدف محدد','No target configured'):number(r.target),number(r.open)])));
     }else if(kind==='marketing-company'){
