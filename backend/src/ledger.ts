@@ -22,6 +22,9 @@ import {createFinancialVoucher} from './ledger-domain.js';
 import { L, P, need, ready, company, open, event, notify, fact, config, chart, resolve, item, line, journal, post, reverse, evidence, balance, invoices, customer, invoice, linkInvoice, custody, move, moveAmount, bankPosting, allocateReceipt, postReceipt } from './ledger-domain.js';
 const id = z.uuid(), day = z.iso.date(), money = z.string().regex(/^\d{1,15}(\.\d{1,3})?$/), positive = money.refine(x => L.units(x) > 0n), currency = z.string().regex(/^[A-Z]{3}$/), text = z.string().trim().min(1).max(2000), opt = id.nullish();
 const invoiceSchema = z.object({ companyId: id, customerId: id.optional(), contractingCompanyId:id.optional(), vehicleId: opt, itemId: id, amount: positive, currency, issuedOn: day, dueOn: day, sourceKey: z.string().trim().min(1).max(160), description: z.string().max(2000).default('') }).strict().refine(exactFinancialParty,'financialPartyRequired');
+const catalogueScopeReady=async(c:any)=>Boolean((await c.query(
+    "select 1 from pg_attribute where attrelid='ab.finance_items'::regclass and attname='catalogue_company_ids' and not attisdropped"
+)).rowCount);
 const canChangeItem=(m:any,co:string)=>financeRight(m,'ledger_item_manage',co)||financeRight(m,'ledger_item_edit',co);
 export async function ledgerWorkbench(c:any,m:any,s:any,cipher:any,companyId:string){
         const co = id.parse(companyId);
@@ -158,7 +161,10 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         if(!d.code){await c.query("insert into ab.vehicle_numbers(tenant_id,kind,next_number)select $1,'financial_item',coalesce(max(substring(code from 4)::bigint),0)+1 from ab.finance_items where code ~ '^FI-[0-9]{1,18}$' on conflict(tenant_id,kind)do update set next_number=greatest(ab.vehicle_numbers.next_number,excluded.next_number)",[s.tenant_id]);d.code='FI-'+String(await number(c,s.tenant_id,'financial_item')).padStart(6,'0');}d.recurrenceBinding='explicit';
         await validateItem(c, m, d, true);
         const key = randomUUID();
-        await c.query('insert into ab.finance_items(id,tenant_id,code,name_ar,name_en,category,priority,active,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [key, s.tenant_id, d.code, d.nameAr, d.nameEn, d.category, d.priority, d.active, cipher.seal(d), s.user_id]);
+        const scoped=await catalogueScopeReady(c);
+        await c.query('insert into ab.finance_items(id,tenant_id,code,name_ar,name_en,category,priority,active,payload_cipher,created_by'+
+            (scoped?',catalogue_company_ids':'')+')values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10'+(scoped?',$11':'')+')',
+            [key,s.tenant_id,d.code,d.nameAr,d.nameEn,d.category,d.priority,d.active,cipher.seal(d),s.user_id,...(scoped?[d.companyIds]:[])]);
         for (const co of d.companyIds)
             await event(c, cipher, s, co, key, 'item_created', null, d);
         await saveItemFollowup(c,m,s,key,d.companyIds,monthlyFollowup);
@@ -175,7 +181,11 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         if ((await c.query('select 1 from ab.finance_invoice_links where item_id=$1 union all select 1 from ab.finance_receipts where item_id=$1 union all select 1 from ab.finance_vouchers where item_id=$1 limit 1', [old.id])).rowCount)
             for (const k of ['receivableId', 'revenueId', 'expenseId', 'payableId', 'category', 'taxAccountId', 'taxRate'])
                 requireOk((d as any)[k] === before[k], 409, 'usedItemMappingImmutable');
-        await c.query('update ab.finance_items set code=$2,name_ar=$3,name_en=$4,category=$5,priority=$6,active=$7,payload_cipher=$8 where id=$1', [old.id, d.code, d.nameAr, d.nameEn, d.category, d.priority, d.active, cipher.seal(d)]);
+        const scopeReady=await catalogueScopeReady(c);
+        const writeScope=scopeReady&&(old.catalogue_company_ids||m.actor.roleId==='owner');
+        await c.query('update ab.finance_items set code=$2,name_ar=$3,name_en=$4,category=$5,priority=$6,active=$7,payload_cipher=$8'+
+            (writeScope?',catalogue_company_ids=$9':'')+' where id=$1',
+            [old.id,d.code,d.nameAr,d.nameEn,d.category,d.priority,d.active,cipher.seal(d),...(writeScope?[d.companyIds]:[])]);
         for (const co of d.companyIds)
             await event(c, cipher, s, co, old.id, 'item_updated', before, d);
         await saveItemFollowup(c,m,s,old.id,d.companyIds,monthlyFollowup);
@@ -198,13 +208,14 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
             union all select 1 from ab.finance_vouchers where item_id=$1
             union all select 1 from ab.finance_card_splits where item_id=$1
         ) used`,[key])).rows[0].used||await hasItemRules(c,cipher,data.companyIds,key);
-        if(used)await c.query('update ab.finance_items set active=false where id=$1',[key]);
+        const disabled=used||row.catalogue_company_ids===null;
+        if(disabled)await c.query('update ab.finance_items set active=false where id=$1',[key]);
         else {
-            requireOk((await c.query("select has_table_privilege(current_user,'ab.finance_items','DELETE') allowed")).rows[0].allowed,409,'itemRemovalSchemaPending');
+            requireOk(await catalogueScopeReady(c)&&(await c.query("select has_table_privilege(current_user,'ab.finance_items','DELETE') allowed")).rows[0].allowed,409,'itemRemovalSchemaPending');
             await c.query('delete from ab.finance_items where id=$1',[key]);
         }
-        for(const co of data.companyIds)await event(c,cipher,s,co,key,used?'item_disabled':'item_removed',data,null);
-        return {id:key,disabled:used};
+        for(const co of data.companyIds)await event(c,cipher,s,co,key,disabled?'item_disabled':'item_removed',data,null);
+        return {id:key,disabled};
     }));
     app.post('/api/ledger/configuration', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ companyId: id, currency, custodyAccountId: id, chequeTransitAccountId: id, customerCreditAccountId: id, depositBankAccountId:id.nullish(), workdays: z.array(z.number().int().min(0).max(6)).min(1).max(7).default([1, 2, 3, 4, 5]), holidays: z.array(day).max(400).default([]), depositDays: z.number().int().min(1).max(30).default(1), automaticFinanceJobs: z.boolean().default(false) }).strict().parse(req.body);

@@ -358,7 +358,7 @@ test('accounting catalogue scopes read, create, and removal, preserving used ite
  const f=await businessCentersFixture();
  try{
   const {readFile}=await import('node:fs/promises');
-  await f.admin.query(await readFile('supabase/proposed/028_accounting_item_catalogue.sql','utf8'));
+  await f.admin.query(await readFile('supabase/proposed/030_accounting_item_catalogue.sql','utf8'));
   const viewer=await f.employee(),creator=await f.employee(),editor=await f.employee();
   for(const [person,permissions] of [[viewer,['ledger_view']],[creator,['ledger_view','ledger_item_create']],
    [editor,['ledger_view','ledger_item_edit']]] as const){

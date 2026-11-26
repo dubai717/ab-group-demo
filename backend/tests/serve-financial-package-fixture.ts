@@ -11,7 +11,7 @@ if(!acceptance){
     await f.req('POST', '/api/ledger/vouchers', { companyId: f.co1, itemId: f.items.expense, customerId: f.client, amount: '20', currency: 'AED', issuedOn: today(), sourceKey: 'synthetic-package-pv', reason: 'Synthetic pending payment', beneficiary: 'Synthetic beneficiary' });
     await f.req('POST', '/api/ledger/deposits', { companyId: f.co1, bankAccountId: bank.id, currency: 'AED', amount: '20', effectiveOn: today(), documentVersionId: proof, reference: 'synthetic-package-deposit' });
 }
-await f.admin.query(await readFile('supabase/proposed/028_accounting_item_catalogue.sql','utf8'));
+await f.admin.query(await readFile('supabase/proposed/030_accounting_item_catalogue.sql','utf8'));
 const scopedItem=await f.req('POST','/api/ledger/items',{
     nameAr:'بند تجريبي للشركة',nameEn:'Synthetic scoped catalogue item',category:'general',companyIds:[f.co1],
     invoice:true,receipt:true,payment:false,methods:['manual'],receivableId:f.accounts.ar.id,revenueId:f.accounts.income.id,
