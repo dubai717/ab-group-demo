@@ -22,6 +22,8 @@ jobs:
             const get=async p=>{const r=await fetch(base+p,{headers:{authorization:'Bearer '+e.GH_TOKEN,accept:'application/vnd.github+json'},redirect:'error',signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error();return r.json();};
             const sha=(await get('/git/ref/heads/staging/ab-group-test')).object.sha;
             if(!/^[a-f0-9]{40}$/.test(sha))throw Error();
+            // A controller update may only auto-dispatch the release approved with this pin.
+            if(e.GITHUB_EVENT_NAME==='push'&&sha!=='aec2882e16962243e9a450ad6422c802e533bb39')throw Error();
             const runs=e.GITHUB_EVENT_NAME==='workflow_run'?[await get('/actions/runs/'+e.EVENT_RUN_ID)]:(await get('/actions/workflows/staging-ci.yml/runs?branch=staging%2Fab-group-test&event=push&status=success&per_page=100')).workflow_runs;
             const run=runs.find(r=>r.head_sha===sha&&r.head_branch==='staging/ab-group-test'&&r.event==='push'&&r.conclusion==='success'&&r.path==='.github/workflows/staging-ci.yml'&&r.repository?.full_name==='dubai717/ab-group-demo');
             if(!run||!Number.isSafeInteger(run.id))throw Error();
@@ -46,10 +48,11 @@ jobs:
       hook_hash: ${{ steps.policy.outputs.hook_hash }}
       previous_sha: ${{ steps.policy.outputs.previous_sha }}
       requires_owner: ${{ steps.policy.outputs.requires_owner }}
+      catalogue_selected: ${{ steps.policy.outputs.catalogue_selected }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: c2c8aa7b0310049273de9cc24a3efab1eb526ac3
+          ref: aec2882e16962243e9a450ad6422c802e533bb39
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -112,7 +115,7 @@ jobs:
           NODE
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: c2c8aa7b0310049273de9cc24a3efab1eb526ac3
+          ref: aec2882e16962243e9a450ad6422c802e533bb39
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -134,6 +137,7 @@ jobs:
       - id: current-schema
         name: Recheck current ledger; ordinary releases never run migrations or backup restore
         env:
+          AB_CATALOGUE_SELECTED: ${{ needs.policy.outputs.catalogue_selected }}
           NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
@@ -155,6 +159,7 @@ jobs:
         env:
           NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
           AB_STAGING_AUTOMATION: controlled-test-only
+          AB_CATALOGUE_OWNER_APPROVAL: ${{ needs.owner-approval.result }}
           AB_BACKUP_DRILL_APPROVED: read-only-source-isolated-restore
           AB_BACKUP_RETAIN_APPROVED: private-bucket-no-overwrite
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -175,7 +180,7 @@ jobs:
         run: |
           docker rm --force --volumes ab-backup-drill-postgres > /dev/null 2>&1 || true
           rm -rf -- work/backups
-    if: always() && needs.policy.result == 'success' && (needs.owner-approval.result == 'success' || needs.owner-approval.result == 'skipped') && needs.schema-readiness.result == 'success' && needs.supersede.result == 'success'
+    if: always() && needs.policy.result == 'success' && (needs.owner-approval.result == 'success' || (needs.owner-approval.result == 'skipped' && needs.policy.outputs.catalogue_selected != 'true')) && needs.schema-readiness.result == 'success' && needs.supersede.result == 'success'
     env:
       AB_STAGING_SOURCE_SHA: ${{ needs.source.outputs.sha }}
       AB_SOURCE_RUN_ID: ${{ needs.source.outputs.run }}
@@ -198,7 +203,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: c2c8aa7b0310049273de9cc24a3efab1eb526ac3
+          ref: aec2882e16962243e9a450ad6422c802e533bb39
           fetch-depth: 0
           persist-credentials: false
       - id: trigger
@@ -243,7 +248,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: c2c8aa7b0310049273de9cc24a3efab1eb526ac3
+          ref: aec2882e16962243e9a450ad6422c802e533bb39
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -359,7 +364,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: c2c8aa7b0310049273de9cc24a3efab1eb526ac3
+          ref: aec2882e16962243e9a450ad6422c802e533bb39
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
@@ -369,6 +374,7 @@ jobs:
       - id: readiness
         name: Read-only ledger and actual runtime identity; no role impersonation
         env:
+          AB_CATALOGUE_SELECTED: ${{ needs.policy.outputs.catalogue_selected }}
           NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/backend/certificates/supabase-prod-ca-2021.crt
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
@@ -387,7 +393,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: c2c8aa7b0310049273de9cc24a3efab1eb526ac3
+          ref: aec2882e16962243e9a450ad6422c802e533bb39
           persist-credentials: false
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
@@ -421,4 +427,4 @@ on:
           - approval-test
 env:
   AB_CONTROLLER_VERIFIED: protected-v2
-  AB_CONTROLLER_REF: c2c8aa7b0310049273de9cc24a3efab1eb526ac3
+  AB_CONTROLLER_REF: aec2882e16962243e9a450ad6422c802e533bb39
