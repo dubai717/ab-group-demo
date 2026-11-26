@@ -23,7 +23,7 @@ jobs:
             const sha=(await get('/git/ref/heads/staging/ab-group-test')).object.sha;
             if(!/^[a-f0-9]{40}$/.test(sha))throw Error();
             // A controller update may only auto-dispatch the release approved with this pin.
-            if(e.GITHUB_EVENT_NAME==='push'&&sha!=='aec2882e16962243e9a450ad6422c802e533bb39')throw Error();
+            if(e.GITHUB_EVENT_NAME==='push'&&sha!=='df0fbed28fde81f4a7fe6e90a91d6bb963cf47a3')throw Error();
             const runs=e.GITHUB_EVENT_NAME==='workflow_run'?[await get('/actions/runs/'+e.EVENT_RUN_ID)]:(await get('/actions/workflows/staging-ci.yml/runs?branch=staging%2Fab-group-test&event=push&status=success&per_page=100')).workflow_runs;
             const run=runs.find(r=>r.head_sha===sha&&r.head_branch==='staging/ab-group-test'&&r.event==='push'&&r.conclusion==='success'&&r.path==='.github/workflows/staging-ci.yml'&&r.repository?.full_name==='dubai717/ab-group-demo');
             if(!run||!Number.isSafeInteger(run.id))throw Error();
@@ -52,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: aec2882e16962243e9a450ad6422c802e533bb39
+          ref: d9b9800a6508f80830dbe63fe65d7075b46ba7fb
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -115,7 +115,7 @@ jobs:
           NODE
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: aec2882e16962243e9a450ad6422c802e533bb39
+          ref: d9b9800a6508f80830dbe63fe65d7075b46ba7fb
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -171,8 +171,8 @@ jobs:
           BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
         run: |
           set -euo pipefail
-          node --import tsx backend/deploy/diagnose-source-drift.ts
           node --import tsx backend/deploy/backup-restore-drill.ts
+          node --import tsx backend/deploy/diagnose-source-drift.ts
           node --import tsx backend/deploy/apply-business-centers-release.ts
         if: steps.current-schema.outputs.pending != '0'
       - name: Remove only isolated runner copies
@@ -203,7 +203,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: aec2882e16962243e9a450ad6422c802e533bb39
+          ref: d9b9800a6508f80830dbe63fe65d7075b46ba7fb
           fetch-depth: 0
           persist-credentials: false
       - id: trigger
@@ -248,7 +248,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: aec2882e16962243e9a450ad6422c802e533bb39
+          ref: d9b9800a6508f80830dbe63fe65d7075b46ba7fb
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -364,7 +364,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: aec2882e16962243e9a450ad6422c802e533bb39
+          ref: d9b9800a6508f80830dbe63fe65d7075b46ba7fb
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
@@ -393,7 +393,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: aec2882e16962243e9a450ad6422c802e533bb39
+          ref: d9b9800a6508f80830dbe63fe65d7075b46ba7fb
           persist-credentials: false
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
@@ -427,4 +427,4 @@ on:
           - approval-test
 env:
   AB_CONTROLLER_VERIFIED: protected-v2
-  AB_CONTROLLER_REF: aec2882e16962243e9a450ad6422c802e533bb39
+  AB_CONTROLLER_REF: d9b9800a6508f80830dbe63fe65d7075b46ba7fb
