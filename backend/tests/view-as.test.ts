@@ -19,3 +19,29 @@ test('Owner View As uses target RLS and immutable owner identity with a read-onl
   await t.test('return restores the original owner without changing accounts or grants',async()=>{await owner.request('POST','/api/view-as/stop',{});assert.equal((await owner.request('GET','/api/bootstrap')).body.actor.id,f.org.user);assert.deepEqual((await f.admin.query('select * from ab.role_permissions order by role_id,permission_id')).rows,roles);assert.deepEqual((await f.admin.query('select * from ab.permission_grants order by id')).rows,grants);});
  }finally{await f.close();}
 });
+
+test('Only the owner can delegate a specific user screen and revocation ends an active read-only preview',async()=>{
+ const f=await personnelFixture();
+ try{
+  const reviewer=await f.employee(),target=await f.employee('general_manager'),other=await f.employee();
+  const owner=client(f.app),delegate=client(f.app);
+  await owner.request('POST','/api/login',{username:f.username,password:f.password});
+  await delegate.request('POST','/api/login',{username:reviewer.username,password:reviewer.password});
+  await owner.request('GET','/api/bootstrap');
+  await delegate.request('GET','/api/bootstrap');
+  const grant={viewerId:reviewer.id,targetId:target.id,allowed:true};
+  await delegate.request('GET','/api/view-as/targets',undefined,403);
+  await delegate.request('POST','/api/view-as/grants',grant,403);
+  await delegate.request('POST','/api/view-as/start',{userId:target.id},403);
+  await owner.request('POST','/api/view-as/grants',grant);
+  assert.deepEqual((await delegate.request('GET','/api/view-as/targets')).body.rows.map((row:any)=>row.id),[target.id]);
+  await delegate.request('POST','/api/view-as/start',{userId:other.id},403);
+  await delegate.request('POST','/api/view-as/start',{userId:target.id});
+  assert.equal((await delegate.request('GET','/api/bootstrap')).body.actor.id,target.id);
+  await delegate.request('POST','/api/personnel/tasks',{},403);
+  await owner.request('POST','/api/view-as/grants',{...grant,allowed:false});
+  await delegate.request('GET','/api/bootstrap',undefined,403);
+  await delegate.request('POST','/api/view-as/stop',{});
+  assert.equal((await delegate.request('GET','/api/bootstrap')).body.actor.id,reviewer.id);
+ }finally{await f.close();}
+});

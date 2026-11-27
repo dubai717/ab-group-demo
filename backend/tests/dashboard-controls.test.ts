@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {businessCentersFixture} from './business-centers-fixture.js';
+import {ledgerFixture} from './ledger-fixture.js';
 
 test('Dashboard counts match original registers, distinguish denied/empty, and bank balances remain scoped',async()=>{
  const f=await businessCentersFixture();try{
@@ -25,5 +26,26 @@ test('Owner employee/role/unit appearance bounds never grant data rights and per
  const effective=await f.req('GET','/api/central-dashboard/preferences');assert.deepEqual(effective.widgets,['tasks']);assert.equal(effective.sections.charts,false);assert.equal(effective.sections.alerts,false);assert.equal(effective.changesAccessRights,false);
  const own=await f.req('GET','/api/central-dashboard');assert.equal(own.counts.banks,null);assert.equal(own.layout.sections.charts,false);await f.req('GET','/api/central-dashboard?source=banks',undefined,403);
  assert.deepEqual((await f.admin.query('select * from ab.permission_grants order by id')).rows,before);assert.deepEqual((await f.admin.query('select * from ab.role_permissions order by role_id,permission_id')).rows,roles);
+ }finally{await f.close();}
+});
+
+test('Dashboard ranks actual outstanding items and opens only a pending deposit in the authorized account',async()=>{
+ const f=await ledgerFixture();
+ try{
+  const bank=await f.bank(),otherBank=await f.bank(f.co2);
+  await f.bill('300');await f.bill('500',f.items.salik);
+  await f.collection('200');
+  const deposit=await f.req('POST','/api/ledger/deposits',{companyId:f.co1,bankAccountId:bank.id,currency:'AED',amount:'100',effectiveOn:f.date,documentVersionId:await f.proof(),reference:'Synthetic pending deposit'});
+  const dashboard=await f.req('GET','/api/central-dashboard?companyId='+f.co1);
+  assert.deepEqual(dashboard.ageing.items.map((row:any)=>row.amount),['500.000','100.000']);
+  assert.equal(dashboard.ageing.debtors[0].amount,'600.000');
+  assert.equal(dashboard.postedFinancial.banks.find((row:any)=>row.id===bank.id).canViewDeposits,true);
+  const path='/api/central-dashboard/banks/'+bank.id+'/deposits';
+  assert.deepEqual((await f.req('GET',path)).rows.map((row:any)=>row.id),[deposit.id]);
+  assert.equal((await f.req('GET',path+'?depositId='+deposit.id)).detail.reference,'Synthetic pending deposit');
+  await f.req('GET','/api/central-dashboard/banks/'+otherBank.id+'/deposits?depositId='+deposit.id,undefined,404);
+  const employee=await f.employee();
+  await f.login(employee.username,employee.password);
+  await f.req('GET',path,undefined,403);
  }finally{await f.close();}
 });
