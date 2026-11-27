@@ -215,10 +215,12 @@ export async function build(options: Options) {
     (handler: (c: PoolClient, m: any, s: any, req: any) => Promise<any>) =>
     async (req: any) => {
       const s = await session(req);
+      const dashboardProjection=req.query?.asUserId!==undefined;
+      requireOk(!dashboardProjection||['GET','HEAD'].includes(req.method),403,'dashboardPreviewReadOnly');
       if(req.body)req.body=normalizeContactPayload(req.body);
       return transaction(pool, s.tenant_id, s.user_id, async (c) => {
         // Personnel export contains personal contact data; never cache the file in request_dedup.
-        const key = s.viewAs || req.method === "GET" || isReadOnlyPost(req.url.split("?")[0]) ? undefined : req.headers["idempotency-key"];
+        const key = s.viewAs || dashboardProjection || req.method === "GET" || isReadOnlyPost(req.url.split("?")[0]) ? undefined : req.headers["idempotency-key"];
         const fingerprint = cipher.digest(
           req.method + req.url + JSON.stringify(req.body || null),
         );
@@ -258,7 +260,7 @@ export async function build(options: Options) {
             JSON.stringify(result),
           ]);
         return result;
-      },s.viewAs?{readOnly:true,auditActor:s.viewAs.ownerId}:undefined);
+      },s.viewAs||dashboardProjection?{readOnly:true,auditActor:s.viewAs?.ownerId||s.user_id}:undefined);
     };
   registerPermissionAdmin(app,call,cipher);registerSecurityRoles(app,call,cipher);
   registerFinance(app,call,cipher);

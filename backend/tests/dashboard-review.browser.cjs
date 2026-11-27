@@ -104,10 +104,31 @@ const output=process.env.AB_DASHBOARD_SCREENSHOTS||'work';
    await page.screenshot({path:output+'/dashboard-tasks-'+locale+'.png'});
    await page.keyboard.press('Escape');
    await page.locator('[data-board-action=banks]').click();
-   await page.locator('[data-bank-filter=id]').selectOption({index:1});
+   if(fixture.depositId){
+    await page.locator('[data-bank-filter=companyId]').selectOption(fixture.companyId);
+    await page.locator('[data-bank-filter=bankId]').selectOption('demo-bank');
+    await page.locator('[data-bank-filter=id]').selectOption(fixture.bankId);
+   }else await page.locator('[data-bank-filter=id]').selectOption({index:1});
    await page.locator('[data-bank-table] [data-board-action^="bank:"]').first().click();
+   if(fixture.depositId){
+    const stack=page.locator('.ab-board-dialog[open]'),details=stack.last();
+    const deposit=details.locator('[data-board-action="deposit:'+fixture.depositId+'"]');
+    await deposit.click();
+    await stack.getByRole('heading',{name:locale==='ar'?'سجل الإيداع':'Deposit record',exact:true}).waitFor();
+    assert.equal(await stack.last().getByText('SYN-DASHBOARD-200',{exact:true}).count(),1);
+    assert.equal(await stack.count(),3);
+    if(locale==='ar')await page.screenshot({path:output+'/deposit-from-banks-ar.png'});
+    await stack.last().locator('header button').click();
+    await deposit.waitFor();
+    assert.equal(await stack.count(),2);
+   }
    await page.locator('.ab-board-dialog[open]').last().locator('header button').click();
    assert.notEqual(await page.locator('[data-bank-filter=id]').inputValue(),'');
+   if(fixture.depositId){
+    assert.equal(await page.locator('[data-bank-filter=companyId]').inputValue(),fixture.companyId);
+    assert.equal(await page.locator('[data-bank-filter=bankId]').inputValue(),'demo-bank');
+    assert.equal(await page.locator('[data-bank-filter=id]').inputValue(),fixture.bankId);
+   }
    await page.screenshot({path:output+'/dashboard-banks-'+locale+'.png'});
    await page.keyboard.press('Escape');
    await page.locator('[data-dashboard=board-settings]').click();
@@ -165,6 +186,31 @@ const output=process.env.AB_DASHBOARD_SCREENSHOTS||'work';
   await companyPage.waitFor();
   await mobileMenu.click();
   assert.equal(await companyPage.isVisible(),false);
+  if(fixture.depositId){
+   const delegate=await browser.newPage({viewport:{width:1440,height:1000}});
+   delegate.on('pageerror',error=>errors.push(error.message));
+   await delegate.goto('http://127.0.0.1:3625');
+   await delegate.fill('#username',fixture.managerUsername);
+   await delegate.fill('#password',fixture.managerPassword);
+   await delegate.locator('#login-form [type=submit]').click();
+   await delegate.locator('[data-dashboard=board-settings]').click();
+   const preview=delegate.locator('[data-board-preview]'),dialogs=delegate.locator('.ab-board-dialog[open]');
+   await preview.click();
+   await delegate.locator('[data-preview-board] .ab-board-grid').waitFor();
+   const input=delegate.locator('[data-preview-search]'),select=delegate.locator('[data-user]');
+   await input.fill('تجريبي');
+   await select.selectOption(fixture.permissionTargetId);
+   await delegate.locator('[data-preview-board] .ab-board-grid').waitFor();
+   assert.equal(await select.locator('option').count(),1);
+   assert.equal(await delegate.locator('[data-preview-board] .stat-card:enabled').count(),0);
+   await delegate.screenshot({path:output+'/delegated-central-preview-ar.png'});
+   await dialogs.last().locator('header button').click();
+   await preview.waitFor();
+   await preview.click();
+   await input.waitFor();
+   assert.equal(await input.inputValue(),'تجريبي');
+   assert.equal(await select.inputValue(),fixture.permissionTargetId);
+  }
   assert.deepEqual(errors,[]);
   console.log('PASS original sidebar with adjacent dashboard, stacked dialogs, stored layout, bank/task drilldowns, read-only preview, AR/EN at 1440/768/390');
  }catch(error){console.error(await page.locator("[role=alert]").allTextContents(),errors);throw error;}finally{await browser.close();}

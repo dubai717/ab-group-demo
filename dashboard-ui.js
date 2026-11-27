@@ -1,14 +1,14 @@
 (function(root){'use strict';
  const t=(a,b)=>getLocale()==='ar'?a:b,e=v=>CenterForms.esc(v),labels={contractingCompanies:['الشركات المتعاقدة','Contracting companies'],companies:['الشركات','Companies'],banks:['الحسابات البنكية','Bank accounts'],customers:['العملاء','Customers'],vehicles:['المركبات','Vehicles'],invoices:['الفواتير','Invoices'],employees:['الموظفون','Employees'],tasks:['المهام','Tasks'],marketing:['فرص التسويق','Marketing opportunities'],investments:['الاستثمارات','Investments']};
  let movementEpoch=0;let movementData=null,movementError='',userQuery='',previewUser='',previewOpen=false,previewError='';const searches={};
- let ownerPicker=null;
+ let ownerPicker=null,centralPreviewChoice={};
  let targetCache=null;let actor='',epoch=0,data=null,error='',loading=false,company='',asUser='',source='',from='',to='',department='',widgets=Object.keys(labels),sections={charts:true,reports:true,tasks:true,shortcuts:true,alerts:true};
  function sync(){if(actor!==ABCentral.actor?.id){
  const next=ABCentral.actor?.id;
  if(ABCentral.viewAs?.ownerId===actor&&actor)ownerPicker={ownerId:actor,userQuery,previewUser,company,from,to,department};
  const restored=!ABCentral.viewAs&&ownerPicker?.ownerId===next?ownerPicker:null;
  if(!ABCentral.viewAs)ownerPicker=null;
- actor=next;targetCache=null;sections={charts:true,reports:true,tasks:true,shortcuts:true,alerts:true};for(const key of Object.keys(searches))delete searches[key];epoch++;data=null;error='';loading=false;company=asUser=source=from=to=department='';widgets=Object.keys(labels);movementData=null;movementEpoch++;userQuery=restored?.userQuery||'';previewUser=restored?.previewUser||'';previewOpen=false;previewError='';if(restored)({company,from,to,department}=restored);}}
+ actor=next;targetCache=null;centralPreviewChoice={};sections={charts:true,reports:true,tasks:true,shortcuts:true,alerts:true};for(const key of Object.keys(searches))delete searches[key];epoch++;data=null;error='';loading=false;company=asUser=source=from=to=department='';widgets=Object.keys(labels);movementData=null;movementEpoch++;userQuery=restored?.userQuery||'';previewUser=restored?.previewUser||'';previewOpen=false;previewError='';if(restored)({company,from,to,department}=restored);}}
  async function load(){sync();loading=true;error='';const n=++epoch;const host=document.getElementById('central-dashboard');host?.querySelectorAll('button,input,select').forEach(b=>b.disabled=true);const spinner=setTimeout(()=>{if(n===epoch&&loading&&host?.isConnected)host.insertAdjacentHTML('afterbegin',`<p data-dashboard-loading role="status">${t('جارٍ تحميل السجلات المصرح بها…','Loading authorized records…')}</p>`);},180);try{const q=new URLSearchParams();for(const [k,v]of Object.entries({companyId:company,departmentId:department,asUserId:asUser,from,to}))if(v)q.set(k,v);if(source)q.set('source',source);const [result,targets]=await Promise.all([CenterForms.api('central-dashboard?'+q),(ABCentral.actor?.roleId==='owner'||ABCentral.viewAs)?(targetCache?Promise.resolve({rows:targetCache}):CenterForms.api('view-as/targets')):null,!asUser?MyWorkUI.load({companyId:company,departmentId:department}):null]);if(n!==epoch)return;if(targets){targetCache=targets.rows;result.targets=targets.rows;}data=result;widgets=result.layout.widgets;sections=result.layout.sections||{charts:true,reports:true,tasks:true,shortcuts:true,alerts:true};}catch(err){if(n===epoch){error=t('تعذر تحميل لوحة التحكم. أعد المحاولة؛ لم تُعرض أعداد بديلة. ','Cannot load dashboard. Retry; no replacement counts were shown. ')+err.message;data=null;}}finally{clearTimeout(spinner);if(n===epoch){loading=false;if(app.state.currentPage==='dashboard')render();if(data?.layout.sections.charts&&data.layout.detailWidgets.includes('vehicles')&&data.counts.vehicles!=null&&!department){void loadMovements();}}}}
  const columnNames={nameAr:['الاسم بالعربية','Arabic name'],nameEn:['الاسم بالإنجليزية','English name'],companyName:['الشركة','Company'],tradeLicenseNumber:['رقم الرخصة','License number'],emirate:['الإمارة','Emirate'],status:['الحالة','Status'],number:['رقم الملف','File number'],name:['الاسم','Name'],accountName:['اسم الحساب','Account name'],bankName:['البنك','Bank'],currency:['العملة','Currency'],nationality:['الجنسية','Nationality'],type:['النوع','Type'],plate:['رقم اللوحة','Plate'],customerName:['العميل','Customer'],kind:['النوع','Kind'],dueOn:['تاريخ الاستحقاق','Due date'],amount:['المبلغ','Amount'],paid:['المحصل','Paid'],outstanding:['المتبقي','Outstanding'],title:['العنوان','Title'],jobTitle:['الوظيفة','Job title'],hiredOn:['تاريخ التعيين','Hire date'],stage:['المرحلة','Stage'],mode:['نوع الاستثمار','Investment type'],licenseNumber:['رقم الرخصة','License number'],relationship:['العلاقة التعاقدية','Relationship']};
  const fields={companies:['nameAr','nameEn','tradeLicenseNumber','emirate','status'],contractingCompanies:['nameAr','nameEn','licenseNumber','relationship','status'],banks:['companyName','bankName','accountName','currency','status'],customers:['number','name','nationality','companyName','status'],vehicles:['number','plate','type','customerName','companyName','status'],invoices:['number','companyName','dueOn','currency','amount','paid','outstanding','status'],employees:['number','name','jobTitle','companyName','hiredOn','status'],tasks:['number','title','companyName','dueOn','status'],marketing:['title','companyName','stage'],investments:['companyName','mode','currency','status']};
@@ -206,9 +206,22 @@
      const unique=(key,label)=>[...new Map(rows.map(row=>[key(row),label(row)]))];
      const d=overlay(moduleTitle('banks'),'<div class="ab-board-filters">'+filter('companyId',t('الشركة','Company'),unique(r=>r.companyId,r=>companyName(r.companyId)))+filter('bankId',t('البنك','Bank'),unique(r=>r.bankId,bankLabel))+filter('id',t('الحساب','Account'),unique(r=>r.id,r=>r.name))+'</div><div data-bank-table>'+bankTable(rows)+'</div>');
      d.querySelectorAll('select').forEach(sel=>sel.onchange=()=>{const filters=[...d.querySelectorAll('select')];d.querySelector('[data-bank-table]').innerHTML=bankTable(rows.filter(r=>filters.every(f=>!f.value||r[f.dataset.bankFilter]===f.value)));});
+    }else if(kind==='deposit'){
+     button.disabled=true;
+     let deposit;
+     try{deposit=await CenterForms.api('ledger/deposits/'+encodeURIComponent(id));}
+     catch(error){if(host.open)throw error;return;}
+     finally{button.disabled=false;}
+     if(!host.open||dialogs.at(-1)!==host)return;
+     overlay(t('سجل الإيداع','Deposit record'),RecordLayout.values([
+      [t('مرجع الإيداع','Deposit reference'),deposit.reference||deposit.id],
+      [t('تاريخ الإيداع','Deposit date'),deposit.date],
+      [t('المبلغ','Amount'),money(deposit.amount,deposit.currency)],
+      [t('الحالة','Status'),deposit.status==='Review'?t('قيد التحقق','Pending verification'):deposit.status],
+     ]));
     }else if(kind==='bank'){
      const row=data.postedFinancial.banks.find(r=>r.id===id);
-     const d=overlay(row.name,bankTable([row],true)+'<p>'+t('آخر كشف مسجّل','Latest recorded statement')+': '+e(row.statementPeriod||'—')+'</p>'+tableView([t('مرجع الإيداع','Deposit reference'),t('تاريخ الإيداع','Deposit date'),t('المبلغ','Amount')],(row.deposits||[]).map(item=>[e(item.reference||item.id),e(item.date),e(money(item.amount,row.currency))]))+'<button type="button" class="ghost-btn" data-bank-original>'+t('فتح ملف الحساب','Open account record')+'</button>');
+     const d=overlay(row.name,bankTable([row],true)+'<p>'+t('آخر كشف مسجّل','Latest recorded statement')+': '+e(row.statementPeriod||'—')+'</p>'+'<h3>'+t('الإيداعات قيد التحقق','Deposits pending verification')+'</h3>'+tableView([t('مرجع الإيداع','Deposit reference'),t('تاريخ الإيداع','Deposit date'),t('المبلغ','Amount')],(row.deposits||[]).map(item=>[action(item.reference||item.id,'deposit:'+item.id),e(item.date),e(money(item.amount,row.currency))]))+'<button type="button" class="ghost-btn" data-bank-original>'+t('فتح ملف الحساب','Open account record')+'</button>');
      d.querySelector('[data-bank-original]').onclick=()=>ABCentral.openBank(id);
      if(row.statementId){
       const b=document.createElement('button');b.type='button';b.className='ghost-btn';b.textContent=t('فتح كشف المطابقة','Open reconciliation statement');
@@ -225,7 +238,7 @@
  }
  function openBoardSettings(){
   const current=layoutFor(data),items=[...current.filter(row=>!summarySections.includes(row.id)),...current.filter(row=>summarySections.includes(row.id))].map(row=>({...row}));
-  const d=overlay(t('تخصيص','Customize'),'<div data-board-settings></div><footer><button type="button" data-board-save>'+t('حفظ','Save')+'</button>'+(data.targets?.length?'<button type="button" data-board-preview>'+t('لوحة التحكم المركزية','Central dashboard')+'</button>':'')+'</footer><p role="alert"></p>');
+  const d=overlay(t('تخصيص','Customize'),'<div data-board-settings></div><footer><button type="button" data-board-save>'+t('حفظ','Save')+'</button>'+(data.canPreview?'<button type="button" data-board-preview>'+t('لوحة التحكم المركزية','Central dashboard')+'</button>':'')+'</footer><p role="alert"></p>');
   const host=d.querySelector('[data-board-settings]');
   const refresh=()=>{
    host.innerHTML=items.map((row,i)=>'<div class="ab-board-setting"><label><input type="checkbox" data-visible '+(row.visible?'checked':'')+'> '+moduleTitle(row.id)+'</label><select '+(summarySections.includes(row.id)||row.id==='summary'?'disabled ':'')+'aria-label="'+t('الحجم','Size')+'">'+[['small',t('صغير','Small')],['medium',t('متوسط','Medium')],['wide',t('كامل','Wide')]].map(([id,name])=>'<option value="'+id+'" '+(row.size===id?'selected':'')+'>'+name+'</option>').join('')+'</select><button type="button" aria-label="'+t('تحريك لأعلى','Move up')+'" '+(i===0||summarySections.includes(row.id)?'disabled':'')+'>↑</button><button type="button" aria-label="'+t('تحريك لأسفل','Move down')+'" '+(i===items.length-1||summarySections.includes(items[i+1]?.id)||summarySections.includes(row.id)?'disabled':'')+'>↓</button></div>').join('');
@@ -237,30 +250,57 @@
    try{await CenterForms.api('central-dashboard/preferences','POST',{widgets,sections,modules:items},crypto.randomUUID());d.close();await load();}
    catch(error){d.querySelector('[role=alert]').textContent=error.message;event.target.disabled=false;}
   };
-  d.querySelector('[data-board-preview]')?.addEventListener('click',openCentralPreview);
+  d.querySelector('[data-board-preview]')?.addEventListener('click',async event=>{
+   const button=event.currentTarget;
+   if(button.hasAttribute('aria-busy'))return;
+   button.setAttribute('aria-busy','true');
+   try{const {rows}=await CenterForms.api('central-dashboard/preview-targets');if(d.open)openCentralPreview(rows);}
+   catch(error){d.querySelector('[role=alert]').textContent=error.message;}
+   finally{button.removeAttribute('aria-busy');}
+  });
  }
- function openCentralPreview(){
-  const targets=data.targets.filter(u=>u.previewable!==false&&u.status==='Active');
+ function openCentralPreview(targets){
   const options=(rows)=>rows.map(([id,label])=>'<option value="'+e(id)+'">'+e(label)+'</option>').join('');
-  const d=overlay(t('لوحة التحكم المركزية','Central dashboard'),'<p class="ab-board-preview-label">'+t('وضع المعاينة','Preview mode')+'</p><div class="ab-board-filters"><label>'+t('الدور','Role')+'<select data-role>'+options([...new Set(targets.map(u=>u.roleId))].map(id=>[id,getRoleName(id)]))+'</select></label><label>'+t('المستخدم','User')+'<select data-user></select></label><label>'+t('الشركة','Company')+'<select data-company></select></label><label>'+t('الجهاز','Device')+'<select data-device>'+options([['desktop',t('كمبيوتر','Desktop')],['tablet',t('تابلت','Tablet')],['phone',t('هاتف','Phone')]])+'</select></label></div><div class="ab-board-preview" data-preview-board></div>');
+  const d=overlay(t('لوحة التحكم المركزية','Central dashboard'),'<p class="ab-board-preview-label">'+t('وضع المعاينة','Preview mode')+'</p><div class="ab-board-filters"><label>'+t('الدور','Role')+'<select data-role>'+options([...new Set(targets.map(u=>u.roleId))].map(id=>[id,getRoleName(id)]))+'</select></label><label>'+t('بحث عن مستخدم','Search users')+'<input type="search" data-preview-search></label><label>'+t('المستخدم','User')+'<select data-user></select></label><label>'+t('الشركة','Company')+'<select data-company></select></label><label>'+t('الجهاز','Device')+'<select data-device>'+options([['desktop',t('كمبيوتر','Desktop')],['tablet',t('تابلت','Tablet')],['phone',t('هاتف','Phone')]])+'</select></label></div><div class="ab-board-preview" data-preview-board></div>');
   const role=d.querySelector('[data-role]'),user=d.querySelector('[data-user]'),co=d.querySelector('[data-company]'),screen=d.querySelector('[data-preview-board]'),device=d.querySelector('[data-device]');
+  const search=d.querySelector('[data-preview-search]');
+  const choice=centralPreviewChoice;
+  search.value=choice.query||'';
+  if([...role.options].some(option=>option.value===choice.role))role.value=choice.role;
+  if(choice.device)device.value=choice.device;
   let request=0;
-  device.onchange=()=>screen.dataset.device=device.value;
+  device.onchange=()=>{screen.dataset.device=device.value;choice.device=device.value;};
   async function refresh(resetCompanies){
    const id=++request;screen.textContent=t('جار التحميل','Loading');
    if(!user.value){screen.textContent=missing();return;}
    const query=new URLSearchParams({asUserId:user.value});if(!resetCompanies&&co.value)query.set('companyId',co.value);
    try {
     const model=await CenterForms.api('central-dashboard?'+query);if(id!==request)return;
-    if(resetCompanies)co.innerHTML='<option value="">'+t('الكل','All')+'</option>'+options(model.companies.map(r=>[r.id,companyName(r.id)]));
+    if(resetCompanies){
+     co.innerHTML='<option value="">'+t('الكل','All')+'</option>'+options(model.companies.map(r=>[r.id,r.name]));
+     if(choice.company&&[...co.options].some(option=>option.value===choice.company)){
+      co.value=choice.company;
+      return refresh(false);
+     }
+    }
     if(model.layout.sections.charts&&model.layout.detailWidgets.includes('vehicles')&&model.counts.vehicles!=null){
      try{model.previewMovement=await CenterForms.api('central-dashboard/vehicle-movements?'+query+'&months=36');}catch{model.previewMovement=null;}
     }
     if(id===request)screen.innerHTML=dashboardModules(model,renderCounts(model,true),true);
    }catch{if(id===request)screen.textContent=t('المعاينة غير متاحة لهذا الدور أو النطاق','Preview unavailable for this role or scope');}
   }
-  role.onchange=()=>{user.innerHTML=options(targets.filter(u=>u.roleId===role.value).map(u=>[u.id,targetName(u)]));void refresh(true);};
-  user.onchange=()=>refresh(true);co.onchange=()=>refresh(false);role.onchange();device.onchange();
+  function filterUsers(){
+   const matches=targets.filter(u=>u.roleId===role.value&&RegisterTools.search([targetName(u),u.nameAr,u.nameEn,u.username,getRoleName(u.roleId)],search.value));
+   user.innerHTML=options(matches.map(u=>[u.id,targetName(u)]));
+   if(matches.some(u=>u.id===choice.user))user.value=choice.user;
+   else if(user.value){choice.user=user.value;choice.company='';}
+   void refresh(true);
+  }
+  role.onchange=()=>{choice.role=role.value;filterUsers();};
+  search.oninput=()=>{choice.query=search.value;filterUsers();};
+  user.onchange=()=>{choice.user=user.value;choice.company='';void refresh(true);};
+  co.onchange=()=>{choice.company=co.value;void refresh(false);};
+  filterUsers();device.onchange();
  }
  function renderCounts(model,readOnly=false){
   return '<div class="stats-grid">'+Object.entries(model.counts).filter(([key,value])=>model.layout.widgets.includes(key)&&value!==null&&(key!=='tasks'||model.layout.sections.tasks)).map(([key,value])=>'<button type="button" class="stat-card" data-dashboard="source" data-id="'+e(key)+'" '+(readOnly||!model.layout.detailWidgets.includes(key)?'disabled':'')+'><strong class="stat-label">'+e(t(...labels[key]))+'</strong><span class="stat-value">'+e(number(value))+'</span></button>').join('')+'</div>';

@@ -16,6 +16,7 @@ const Csv = createRequire(import.meta.url)('../../customer-policy.js');
 const normalize = (x: string) => x.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
 import { ApiError, requireOk, sha } from './core.js';
 import { financeRight } from './finance.js';
+import {canReadLedgerDeposit} from './ledger-deposit-access.js';
 import { customerCan } from './customers.js';
 import { number, today } from './vehicle-domain.js';
 import {createFinancialVoucher} from './ledger-domain.js';
@@ -49,7 +50,7 @@ export async function ledgerWorkbench(c:any,m:any,s:any,cipher:any,companyId:str
         out.custodyRecipients=m.state.users.filter((u:any)=>u.status==='Active'&&u.id!==s.user_id&&financeRight({...m,actor:u},'ledger_receive',co)).map((u:any)=>({id:u.id,nameAr:u.nameAr||u.nameEn||u.username,nameEn:u.nameEn||u.nameAr||u.username}));
         out.receipts = (await c.query('select id,receipt_number,customer_id,vehicle_id,item_id,kind,amount::text,currency,holder_id,payment_state,received_on,batch_id from ab.finance_receipts where company_id=$1 and item_id is not null order by created_at desc limit 20001', [co])).rows;
         if(!financeRight(m,'ledger_audit',co))out.finance_custody_transfers=out.finance_custody_transfers.filter((r:any)=>r.sender_id===s.user_id||r.receiver_id===s.user_id);
-        if(!financeRight(m,'ledger_audit',co)&&!financeRight(m,'ledger_deposit_verify',co))out.finance_deposits=out.finance_deposits.filter((r:any)=>r.holder_id===s.user_id);
+        out.finance_deposits=out.finance_deposits.filter((r:any)=>canReadLedgerDeposit(m,r));
         out.custody = (await c.query('select m.holder_id,m.currency,r.kind,sum(m.amount)::text amount from ab.finance_custody_moves m join ab.finance_receipts r on r.id=m.receipt_id where m.company_id=$1 group by m.holder_id,m.currency,r.kind having sum(m.amount)<>0', [co])).rows.filter((r: any) => r.holder_id === s.user_id || financeRight(m, 'ledger_audit', co));
         for (const f of out.finance_funds) {
             f.balance = L.money(await balance(c, f.chart_id));
@@ -631,6 +632,16 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         requireOk(d.effectiveOn<=today(),422,'invalidDate');const prior=(await c.query("select payload_cipher from ab.finance_deposits where company_id=$1 and status<>'Rejected'",[d.companyId])).rows;const ref=d.reference.normalize('NFKC').trim().toLowerCase();requireOk(!prior.some((x:any)=>cipher.open(x.payload_cipher).reference?.normalize('NFKC').trim().toLowerCase()===ref),409,'duplicate');requireOk(!(await c.query("select 1 from ab.finance_custody_transfers where company_id=$1 and sender_id=$2 and currency=$3 and status='Pending'",[d.companyId,s.user_id,d.currency])).rowCount,409,'handoverPending');const reserved=L.units((await c.query("select coalesce(sum(amount),0)::text amount from ab.finance_deposits where company_id=$1 and holder_id=$2 and currency=$3 and status='Review'",[d.companyId,s.user_id,d.currency])).rows[0].amount); const b = m.bank.list().find((b: any) => b.id === d.bankAccountId && b.companyId === d.companyId && b.status === 'Active' && b.currency === d.currency); requireOk(b, 422, 'inactiveBank'); await evidence(c, m, d.companyId, d.documentVersionId, false); const repeatedImage=(await c.query("select 1 from ab.finance_deposits p join ab.document_versions old on old.id=p.document_version_id join ab.document_versions incoming on incoming.id=$3 where p.company_id=$1 and p.bank_account_id=$2 and p.status<>'Rejected' and incoming.mime in('image/png','image/jpeg') and old.sha256=incoming.sha256 limit 1",[d.companyId,d.bankAccountId,d.documentVersionId])).rowCount;requireOk(!repeatedImage,409,'duplicateDepositEvidence'); const available = (await custody(c, d.companyId, s.user_id, d.currency, undefined, 'kind' in d ? String(d.kind) : 'cash')).reduce((n: bigint, r: any) => n + L.units(r.amount), 0n); requireOk(available-reserved >= L.units(d.amount), 409, 'insufficientCustody'); const receiptAllocations=await depositReceiptAllocations(c,s,d,receiptIds); const key = randomUUID(); await c.query('insert into ab.finance_deposits(id,tenant_id,company_id,holder_id,bank_account_id,currency,amount,effective_on,document_version_id,payload_cipher,created_by)values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)', [key, s.tenant_id, d.companyId, s.user_id, d.bankAccountId, d.currency, d.amount, d.effectiveOn, d.documentVersionId, cipher.seal({...d,receiptReviewPolicy:1,receiptAllocations}), s.user_id]); await event(c, cipher, s, d.companyId, key, 'deposit_review_requested', null, d);await recordFinancialDocument(c,cipher,s,d.companyId,key,'Deposit'); return { id: key, status: 'Review', ocr: false, custodyClosed: '0.000' };
     }
     app.post('/api/ledger/deposits',route((c:any,m:any,s:any,req:any)=>createDeposit(c,m,s,depositSchema.parse(req.body))));
+    app.get('/api/ledger/deposits/:id', route(async(c:any,m:any,_s:any,req:any)=>{
+        const row=(await c.query(`select id,company_id,holder_id,bank_account_id,currency,amount::text,
+            effective_on::text date,status,confirmed::text,payload_cipher
+            from ab.finance_deposits where id=$1`,[id.parse(req.params.id)])).rows[0];
+        requireOk(row&&canReadLedgerDeposit(m,row),403,'denied');
+        return {id:row.id,companyId:row.company_id,bankAccountId:row.bank_account_id,currency:row.currency,
+            amount:row.amount,date:row.date,status:row.status,confirmed:row.confirmed,
+            reference:cipher.open(row.payload_cipher).reference,
+            canVerify:row.status==='Review'&&financeRight(m,'ledger_deposit_verify',row.company_id)};
+    }));
     app.post('/api/ledger/deposits/:id/confirm', route(async (c: any, m: any, s: any, req: any) => {
         const d = z.object({ confirmedAmount: positive, bankConfirmation: text, effectiveOn: day, accountAndDateVerified: z.literal(true),receiptMismatchReason:z.string().trim().max(2000).default('') }).strict().parse(req.body), r = (await c.query('select * from ab.finance_deposits where id=$1 for update', [id.parse(req.params.id)])).rows[0];
         requireOk(r, 404, 'notFound');

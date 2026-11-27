@@ -1,3 +1,5 @@
+import {randomUUID} from "node:crypto";
+import {security} from "../src/core.js";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {businessCentersFixture} from './business-centers-fixture.js';
@@ -31,5 +33,67 @@ test('Owner employee/role/unit appearance bounds never grant data rights and per
  const effective=await f.req('GET','/api/central-dashboard/preferences');assert.deepEqual(effective.widgets,['tasks']);assert.equal(effective.sections.charts,false);assert.equal(effective.sections.alerts,false);assert.equal(effective.changesAccessRights,false);
  const own=await f.req('GET','/api/central-dashboard');assert.equal(own.counts.banks,null);assert.equal(own.layout.sections.charts,false);await f.req('GET','/api/central-dashboard?source=banks',undefined,403);
  assert.deepEqual((await f.admin.query('select * from ab.permission_grants order by id')).rows,before);assert.deepEqual((await f.admin.query('select * from ab.role_permissions order by role_id,permission_id')).rows,roles);
+ }finally{await f.close();}
+});
+
+test('Explicit central preview delegation is bounded and read-only, including direct requests',async()=>{
+ const f=await businessCentersFixture();try{
+  const reviewer=await f.employee(),target=await f.employee(),outsider=await f.employee();
+  await f.req('PATCH','/api/users/'+outsider.id,{revision:1,companyIds:[f.co2]});
+  await f.req('PATCH','/api/users/'+target.id,{revision:1,companyIds:[f.co1,f.co2]});
+  for(const companyId of [f.co1,f.co2])await f.req('POST','/api/users/'+target.id+'/grants',{action:'customer_view',scope:{type:'company',id:companyId},delegable:false});
+  const directory='/api/central-dashboard/preview-targets',preview='/api/central-dashboard?asUserId=';
+  const owner=await f.req('GET',directory);
+  assert(owner.rows.some((u:any)=>u.id===outsider.id));
+  const key='/api/central-dashboard/security',userId=reviewer.id;
+  async function grant(previewCompanyIds:string[]){
+   const before=await f.req('GET',key+'?userId='+userId);
+   const body={userId,version:before.version,value:{...before.value,previewCompanyIds}};
+   const {planHash}=await f.req('POST',key+'-plan',body);
+   await f.req('POST',key+'-apply',{...body,planHash,confirm:true});
+  }
+  await f.login(reviewer.username,reviewer.password);
+  await f.req('GET',directory,undefined,403);await f.req('GET',preview+target.id,undefined,403);
+  await f.login();await grant([f.co1,f.co2]);
+  await f.login(reviewer.username,reviewer.password);
+  const {rows}=await f.req('GET',directory);
+  assert.deepEqual(rows.map((u:any)=>u.id),[target.id]);
+  const model=await f.req('GET',preview+target.id+'&source=customers');
+  assert.equal(model.actor.id,target.id);assert.equal(model.viewAs.readOnly,true);
+  assert(model.sources.customers.length>0);assert(model.sources.customers.every((r:any)=>r.companyId===f.co1));
+  assert(model.companies.every((r:any)=>r.id===f.co1));
+  await f.req('GET',preview+target.id+'&companyId='+f.co2,undefined,403);
+  await f.req('GET',preview+outsider.id,undefined,403);
+  await f.req('GET','/api/central-dashboard/vehicle-movements?asUserId='+target.id+'&companyId='+f.co2,undefined,403);
+  await f.req('POST','/api/central-dashboard/preferences?asUserId='+target.id,{widgets:['tasks']},403);
+  await f.req('POST','/api/central-dashboard/preferences',{widgets:['tasks']});
+  await f.login();await grant([]);await f.login(reviewer.username,reviewer.password);
+  await f.req('GET',preview+target.id,undefined,403);
+ }finally{await f.close();}
+});
+
+test('Bank monitoring and direct deposit read enforce company and reader scope independently of confirmation',async()=>{
+ const f=await businessCentersFixture();try{
+  const reader=await f.employee(),outsider=await f.employee(),cipher=security(f.secret.key);
+  async function deposit(companyId:string){
+   const bank=await f.bank(companyId),proof=await f.proof(companyId),id=randomUUID();
+   await f.admin.query(`insert into ab.finance_deposits(id,tenant_id,company_id,holder_id,bank_account_id,currency,
+    amount,effective_on,document_version_id,payload_cipher,created_by)values($1,$2,$3,$4,$5,'AED',200,$6,$7,$8,$4)`,
+    [id,f.org.tenant,companyId,f.org.user,bank.id,f.date,proof,cipher.seal({reference:'SYN-DASHBOARD-DEPOSIT'})]);
+   return {id,bank};
+  }
+  const inScope=await deposit(f.co1),outOfScope=await deposit(f.co2),url='/api/ledger/deposits/';
+  assert.equal((await f.req('GET',url+inScope.id)).canVerify,true);
+  for(const action of ['bank_view','finance_view','ledger_view','ledger_audit'])
+   await f.req('POST','/api/users/'+reader.id+'/grants',{action,scope:{type:'company',id:f.co1},delegable:false});
+  await f.login(reader.username,reader.password);
+  const board=await f.req('GET','/api/central-dashboard'),account=board.postedFinancial.banks.find((r:any)=>r.id===inScope.bank.id);
+  assert.equal(account.deposits[0].id,inScope.id);
+  assert(!board.postedFinancial.banks.some((r:any)=>r.id===outOfScope.bank.id));
+  const record=await f.req('GET',url+inScope.id);
+  assert.equal(record.reference,'SYN-DASHBOARD-DEPOSIT');assert.equal(record.amount,'200.000');assert.equal(record.canVerify,false);
+  await f.req('GET',url+outOfScope.id,undefined,403);
+  await f.req('POST',url+inScope.id+'/confirm',{confirmedAmount:'200',effectiveOn:f.date,bankConfirmation:'Synthetic',accountAndDateVerified:true},403);
+  await f.login(outsider.username,outsider.password);await f.req('GET',url+inScope.id,undefined,403);
  }finally{await f.close();}
 });
