@@ -1408,3 +1408,7 @@ form .record-field-control:disabled,form .record-field-control[readonly]{color:v
  margin:0 0 6px;padding:6px 8px;border-radius:6px;background:var(--primary);color:var(--warm-paper);
 }
 .customer-register-summaries .customer-matrix tbody tr:last-child>* {background:var(--panel-alt);color:var(--text);font-weight:700;}
+.summary-count {background:transparent;color:inherit;border:0;border-radius:4px;text-decoration:underline;cursor:pointer;font:inherit;padding:4px;min-inline-size:28px;}
+.summary-count:hover,.summary-count:focus-visible {background:var(--primary-soft);color:var(--primary-strong);}
+.summary-filter {display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px;margin-block:8px;background:var(--panel-alt);border-radius:6px;}
+.summary-filter span {padding:4px 9px;border-radius:12px;background:var(--panel);}

@@ -1,4 +1,5 @@
 // Read-only projections over canonical customer, vehicle and accounting records.
+import {securityRoleCompany} from './security-role-access.js';
 import {customerCan} from './customers.js';
 import {financeRight} from './finance.js';
 import {vehicleRight,vehicleData,vehicleInvoices,today,V} from './vehicle-domain.js';
@@ -10,17 +11,18 @@ import {requireOk} from './core.js';
 const has=async(c:any,name:string)=>!!(await c.query('select to_regclass($1) ok',['ab.'+name])).rows[0].ok;
 export const customerBucket=(s:string)=>['Active','Prospect'].includes(s)?s:['Ended','Archived'].includes(s)?'Ended':'Pending';
 const sum=(rows:any[],key:string)=>V.money(rows.reduce((n:bigint,r:any)=>n+V.units(String(r[key]||'0')),0n));
-async function summaryVehicles(c:any,m:any){
- const scope=m.state.companies.filter((co:any)=>vehicleRight(m,'view',co.id)).map((co:any)=>co.id);
+export const vehicleBucket=(status:string)=>status==='Active'?'Active':status==='Terminated'?'Ended':'Pending';
+export async function summaryVehicles(c:any,m:any){
+ const scope=m.state.companies.filter((co:any)=>securityRoleCompany(m,co.id)&&vehicleRight(m,'view',co.id)).map((co:any)=>co.id);
  if(!scope.length||!await has(c,'vehicles'))return null;
- return (await c.query('select v.customer_id,v.company_id,v.status,r.finance_type from ab.vehicles v join ab.vehicle_requests r on r.id=v.request_id where v.company_id=any($1::uuid[])',[scope])).rows;
+ return (await c.query('select v.id,v.customer_id,v.company_id,v.status,r.finance_type from ab.vehicles v join ab.vehicle_requests r on r.id=v.request_id where v.company_id=any($1::uuid[])',[scope])).rows;
 }
 export async function vehicleRegisterSummary(c:any,m:any){
  const vehicles=await summaryVehicles(c,m);
  if(!vehicles)return null;
  const cells={Active:{cash:0,group:0,bank:0,investor:0},Pending:{cash:0,group:0,bank:0,investor:0},Ended:{cash:0,group:0,bank:0,investor:0}};
  for(const v of vehicles){
-  const row=cells[v.status==='Active'?'Active':v.status==='Terminated'?'Ended':'Pending'];
+  const row=cells[vehicleBucket(v.status)];
   row[v.finance_type as keyof typeof row]++;
  }
  return {cells,total:vehicles.length};
@@ -119,21 +121,29 @@ async function pendingResidenceCustomers(c:any,cipher:any,companies:string[]){
   ['new','cancellation','amendment'].includes(request.transactionType)&&!['Closed','Cancelled'].includes(request.state)
  ).map(request=>request.customerId)).size;
 }
+export function customerSummaryCompanies(m:any){
+ return m.state.companies.filter((co:any)=>securityRoleCompany(m,co.id)&&customerCan(m,'view',co.id));
+}
+export async function customerSummaryLinks(c:any,m:any,profiles:any[],allowed:Set<string>){
+ const links=new Map<string,Set<string>>(),operational=new Set<string>();
+ for(const row of profiles){
+  const recorded=[row.profile.residencyCompanyId,row.profile.sponsorCompanyId].filter(id=>allowed.has(id));
+  links.set(row.id,new Set([row.company_id,...recorded]));
+  if(recorded.length)operational.add(row.id);
+ }
+ for(const vehicle of await summaryVehicles(c,m)||[])if(allowed.has(vehicle.company_id)&&links.has(vehicle.customer_id)){
+  links.get(vehicle.customer_id)!.add(vehicle.company_id);
+  operational.add(vehicle.customer_id);
+ }
+ return {links,operational};
+}
 export async function customerRegisterSummary(c:any,m:any,cipher:any){
- const companies=m.state.companies.filter((co:any)=>customerCan(m,'view',co.id));
+ const companies=customerSummaryCompanies(m);
  const allowed=new Set<string>(companies.map((co:any)=>co.id));
  const clients=(await c.query('select id,company_id,status,payload_cipher from ab.customers where company_id=any($1::uuid[])',[[...allowed]])).rows;
  requireOk(clients.length<=20000,422,'customerSummaryRangeRequired');
  const profiles=clients.map((r:any)=>({...r,profile:cipher.open(r.payload_cipher)}));
- const links=new Map<string,Set<string>>(),operational=new Set<string>();
- for(const r of profiles){
-  const recorded=[r.profile.residencyCompanyId,r.profile.sponsorCompanyId].filter(id=>allowed.has(id));
-  links.set(r.id,new Set([r.company_id,...recorded]));
-  if(recorded.length)operational.add(r.id);
- }
- for(const v of await summaryVehicles(c,m)||[])if(allowed.has(v.company_id)){
-  links.get(v.customer_id)?.add(v.company_id);operational.add(v.customer_id);
- }
+ const {links,operational}=await customerSummaryLinks(c,m,profiles,allowed);
  const cells:any={Active:{},Pending:{},Prospect:{},Ended:{}},totals:any={Active:0,Pending:0,Prospect:0,Ended:0};
  for(const counts of Object.values(cells) as Record<string,number>[])for(const id of allowed)counts[id]=0;
  for(const r of profiles){

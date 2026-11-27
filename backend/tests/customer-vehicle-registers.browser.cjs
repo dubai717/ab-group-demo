@@ -1,6 +1,7 @@
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
 const fixture=JSON.parse(fs.readFileSync('work/customer-workspace-fixture.json'));
 const output=process.env.AB_REGISTER_SCREENSHOTS;
+const drilldownOnly=process.env.AB_DRILLDOWN_ONLY==='1';
 const url='http://127.0.0.1:3635';
 async function login(p,username,password){
  await p.goto(url);await p.fill('#username',username);await p.fill('#password',password);
@@ -51,6 +52,7 @@ async function pinned(p,locale){
   assert.equal(models.customers.totals.Prospect,1);assert.equal(models.customers.totals.Pending,1);
   assert.equal(models.residences.cells.customers[fixture.companyId],1);
   assert.equal(await p.locator('.vehicle-register-summary').count(),0);
+  if(!drilldownOnly){
   await p.evaluate(()=>setLocale('ar'));
   await press(p,'nationality');
   await p.locator('[data-cu-add]').click();
@@ -124,7 +126,70 @@ async function pinned(p,locale){
   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:b.x+b.width/2,y:b.y+b.height/2}]});
   await phone.locator('[data-cu-add]').waitFor();
   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  await phone.close();
+  }
+  const customerMatrix=p.locator('.customer-register-summaries section').first(),vehicleMatrix=p.locator('.vehicle-register-summary');
+  async function selectCell(table,status,dimension,expected,locale){
+   const button=table.locator(`[data-summary-status="${status}"][data-summary-dimension="${dimension}"]`);
+   await button.waitFor();
+   assert.equal(await button.innerText(),new Intl.NumberFormat(locale).format(expected));
+   const register=table===customerMatrix?'customers':'vehicles';
+   const response=p.waitForResponse(r=>{
+    const url=new URL(r.url()),query=JSON.parse(url.searchParams.get('query')||'{}');
+    return url.pathname==='/api/registers/'+register&&query.summaryView==='1'&&
+     (query.summaryStatus||'')===status&&(query.summaryCompany||query.summaryFinance||'')===dimension&&url.searchParams.get('offset')==='0';
+   });
+   await button.click();const result=await response;const body=await result.json();assert.equal(result.status(),200,JSON.stringify(body));assert.equal(body.total,expected);
+   await p.locator('.summary-filter').waitFor();
+   if(!expected)await p.getByText(locale==='ar'?'لا توجد نتائج':'No results',{exact:true}).waitFor();
+   return p.locator('.summary-filter');
+  }
+  if(drilldownOnly){
+  for(const [locale,width] of [['ar',1440],['en',390]]){
+   await p.setViewportSize({width,height:950});
+   await p.evaluate(locale=>setLocale(locale),locale);
+   await go(p,'customers');
+   const s=await p.evaluate(()=>ABCentral.api('customers/register-summary'));
+   const labels=s.companies.find(co=>co.id===fixture.companyId);
+   await selectCell(customerMatrix,'Active',fixture.companyId,s.customers.cells.Active[fixture.companyId],locale);
+   assert.match(await p.locator('.summary-filter').innerText(),locale==='ar'?/بولحية للنقل/:/Boulahia Transport/);
+   assert.deepEqual((await headings(p)).slice(0,4),['fileNumber','fullName','nationality','type']);
+   await pinned(p,locale);
+   if(output&&locale==='ar'){
+    await p.locator('.summary-filter').evaluate(el=>el.scrollIntoView({block:'center',behavior:'instant'}));
+    await p.screenshot({path:output+'/customers-filter-applied.png'});
+   }
+   const pages=await p.evaluate(async companyId=>{
+    const query=JSON.stringify({summaryView:'1',summaryStatus:'Active',summaryCompany:companyId});
+    const page=offset=>ABCentral.api('registers/customers?'+new URLSearchParams({query,offset:String(offset),limit:'1'}));
+    return [await page(0),await page(1)];
+   },fixture.companyId);
+   assert.equal(pages[0].rows.length,1);assert(pages[1].rows.length>0);
+   assert.equal(new Set([...pages[0].rows,...pages[1].rows].map(row=>row.id)).size,pages[0].total);
+   await selectCell(customerMatrix,'Ended',fixture.otherCompany,1,locale);
+   await selectCell(customerMatrix,'Ended',labels.id,1,locale);
+   await selectCell(customerMatrix,'Ended','',1,locale);
+   await selectCell(customerMatrix,'',labels.id,Object.values(s.customers.cells).reduce((total,row)=>total+row[labels.id],0),locale);
+   await selectCell(customerMatrix,'','',s.customers.total,locale);
+   await selectCell(customerMatrix,'Active',empty.id,0,locale);
+   await p.locator('[data-summary-clear]').click();
+   await p.locator('.summary-filter').waitFor({state:'detached'});
+   await go(p,'vehicles');
+   const v=await p.evaluate(()=>ABCentral.api('vehicles/register-summary'));
+   await selectCell(vehicleMatrix,'Active','group',1,locale);
+   if(output&&locale==='ar'){
+    await p.locator('.summary-filter').evaluate(el=>el.scrollIntoView({block:'center',behavior:'instant'}));
+    await p.screenshot({path:output+'/vehicles-filter-applied.png'});
+   }
+   await selectCell(vehicleMatrix,'','group',1,locale);
+   await selectCell(vehicleMatrix,'Active','',Object.values(v.cells.Active).reduce((total,n)=>total+n,0),locale);
+   await selectCell(vehicleMatrix,'','',v.total,locale);
+   await selectCell(vehicleMatrix,'Ended','bank',0,locale);
+   await p.locator('[data-summary-clear]').click();
+   await p.locator('.summary-filter').waitFor({state:'detached'});
+  }
+  }
   assert.deepEqual(errors,[]);
-  console.log('PASS customer and vehicle summaries, scoped company columns, sticky file number, saved drag order and mobile long press in AR/EN');
+  console.log(drilldownOnly?'PASS summary cells, totals, zero, pagination and applied filters in AR/EN':'PASS scoped summaries, residence follow-up, sticky file numbers, saved drag order and mobile long press in AR/EN');
  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});
