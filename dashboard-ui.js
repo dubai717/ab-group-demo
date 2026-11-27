@@ -41,8 +41,8 @@
  input.oninput=event=>{userQuery=event.target.value;previewUser='';popup.innerHTML=previewOptions();button.querySelector('[data-preview-selected]').textContent=t('اختر مستخدماً','Choose a user');host.querySelector('[data-preview-selected-details]').textContent='';host.querySelector('[data-preview-count]').textContent=previewTargets().length+' / '+data.targets.length;host.querySelector('[data-dashboard=preview]').disabled=true;toggle(true);bindChoices();};bindChoices();
  }
  document.addEventListener('pointerdown',event=>{if(previewOpen&&!event.target.closest('#preview-picker')){previewOpen=false;const p=document.getElementById('dashboard-user-options'),b=document.getElementById('dashboard-as');if(p)p.hidden=true;b?.setAttribute('aria-expanded','false');}});
- const moduleLabels={performance:['الأداء','Performance'],movement:['حركة المركبات الشهرية','Monthly vehicle movements'],financial:['الملخص المالي حسب الشركة','Financial summary by company'],debt:['أعلى الجهات مديونية','Largest debtors'],items:['أعلى البنود المستحقة','Largest outstanding items'],contracts:['العقود حسب الشركة','Contracts by company'],emirates:['الشركات حسب الإمارة','Companies by emirate'],investors:['ملخص المستثمرين حسب الشركة','Investors by company'],banks:['رصد البنوك','Bank monitoring'],counts:['أعداد السجلات','Record counts'],tasks:['المهام','Tasks']};
- const moduleDefaults=Object.keys(moduleLabels).map(id=>({id,visible:true,size:['debt','items','contracts','emirates'].includes(id)?'small':id==='banks'?'medium':'wide'}));
+ const moduleLabels={performance:['الأداء','Performance'],movement:['حركة المركبات الشهرية','Monthly vehicle movements'],financial:['الملخص المالي حسب الشركة','Financial summary by company'],debt:['أعلى الجهات مديونية','Largest debtors'],items:['أعلى البنود المستحقة','Largest outstanding items'],contracts:['العقود حسب الشركة','Contracts by company'],emirates:['الشركات حسب الإمارة','Companies by emirate'],investors:['ملخص المستثمرين حسب الشركة','Investors by company'],banks:['رصد البنوك','Bank monitoring'],summary:['ملخص السجلات','Register overview'],counts:['أعداد السجلات','Record counts'],tasks:['المهام','Tasks']};
+ const moduleDefaults=Object.keys(moduleLabels).map(id=>({id,visible:id!=='counts',size:['debt','items','contracts','emirates'].includes(id)?'small':id==='banks'?'medium':'wide'}));
  const missing=()=>t('لا توجد بيانات كافية','Insufficient data');
  const number=value=>value==null?'—':new Intl.NumberFormat(getLocale()).format(value);
  const money=(value,currency)=>value==null?'—':new Intl.NumberFormat(getLocale(),{style:'currency',currency,maximumFractionDigits:3}).format(value);
@@ -64,7 +64,12 @@
  }
  function layoutFor(model){
   const saved=model.layout.modules||[];
-  return [...saved,...moduleDefaults.filter(item=>!saved.some(row=>row.id===item.id))];
+  const layout=[...saved,...moduleDefaults.filter(item=>!saved.some(row=>row.id===item.id))];
+  if(!saved.some(row=>row.id==='summary')){
+   const index=layout.findIndex(row=>row.id==='summary'),[summary]=layout.splice(index,1);
+   layout.splice(layout.findIndex(row=>row.id==='counts'),0,summary);
+  }
+  return layout;
  }
  function taskRows(model,filter){
   const rows=model.panels?.tasks||[],day=todayDubai();
@@ -98,26 +103,45 @@
    return '<article><h3>'+(readOnly?e(title):action(title,id))+'</h3>'+gauge+(id==='overall'?companyStatus:'')+'<small>'+e(note)+'</small></article>';
   }).join('')+'</div>';
  }
+ const summarySections=['financial','debt','items','contracts','emirates','investors'];
+ function rankedList(rows,title,nameLabel){
+  if(!rows.length)return '<p>'+missing()+'</p>';
+  const html=tableView([nameLabel,t('المستحق','Amount due')],rows.map(row=>{
+   const name=getLocale()==='en'&&row.nameEn?row.nameEn:row.name;
+   return ['<span title="'+e(name)+'">'+e(name)+'</span>',e(money(row.amount,row.currency))];
+  }));
+  return '<div class="ab-board-ranking" role="region" tabindex="0" aria-label="'+e(title)+'">'+html+'</div>';
+ }
  function dashboardModules(model,counts,readOnly=false){
   const overview=model.overview||{},reports=model.layout.sections.reports,charts=model.layout.sections.charts;
   const names=new Set([...model.companies.map(row=>row.id),...(overview.financial||[]).map(row=>row.companyId)]);
   const financial=(overview.financial||[]),byCompany=[...names].flatMap(id=>financial.some(r=>r.companyId===id)?financial.filter(r=>r.companyId===id):[{companyId:id}]);
   const columns=['amount','due','paid','overdue','outstanding'];
   const companyCount=(data,id)=>number(data?(data[id]||0):null);
-  const financialHTML=()=>tableView([t('الشركة','Company'),t('الحسابات البنكية','Bank accounts'),t('الموظفون','Employees'),t('إجمالي الفواتير','Invoiced'),t('المستحق للدفع','Due'),t('المحصّل','Collected'),t('المتأخرات','Overdue'),t('إجمالي المتبقي','Outstanding')],[...byCompany.map(r=>[e(companyName(r.companyId)),companyCount(overview.bankCounts,r.companyId),companyCount(overview.employeeCounts,r.companyId),...columns.map(key=>e(money(r[key],r.currency)))]),...(overview.totals||[]).map((r,index)=>[e(t('إجمالي المجموعة','Group total')),index?'—':number(model.counts.banks),index?'—':number(model.counts.employees),...columns.map(key=>e(money(r[key],r.currency)))])]);
+  const financialTotals=overview.totals?.length?overview.totals:[{}];
+  const financialHTML=()=>tableView([t('الشركة','Company'),t('الحسابات البنكية','Bank accounts'),t('الموظفون','Employees'),t('إجمالي الفواتير','Invoiced'),t('المستحق للدفع','Due'),t('المحصّل','Collected'),t('المتأخرات','Overdue'),t('إجمالي المتبقي','Outstanding')],[...byCompany.map(r=>[e(companyName(r.companyId)),companyCount(overview.bankCounts,r.companyId),companyCount(overview.employeeCounts,r.companyId),...columns.map(key=>e(money(r[key],r.currency)))]),...financialTotals.map((r,index)=>[e(t('إجمالي المجموعة','Group total')),index?'—':number(model.counts.banks),index?'—':number(model.counts.employees),...columns.map(key=>e(money(r[key],r.currency)))])]);
   const banks=model.postedFinancial?.banks||[];
   const metricAllowed=charts;
   const bodies={performance:metricAllowed?()=>performance(model,readOnly):null,movement:charts&&model.layout.detailWidgets.includes('vehicles')&&model.counts.vehicles!=null?()=>movementPanel(readOnly?model.previewMovement:movementData,readOnly):null,
    financial:reports&&(model.counts.invoices!=null||overview.bankCounts||overview.employeeCounts)?financialHTML:null,
-   debt:reports&&model.counts.invoices!=null?()=>tableView([t('الجهة','Debtor'),t('المستحق','Due')],(overview.debt||[]).map(r=>[e(r.name),e(money(r.amount,r.currency))])):null,
-   items:reports&&model.counts.invoices!=null?()=>tableView([t('البند','Item'),t('المستحق','Due')],(overview.items||[]).map(r=>[e(r.name),e(money(r.amount,r.currency))])):null,
+   debt:reports&&model.counts.invoices!=null?()=>rankedList(overview.debt||[],moduleTitle('debt'),t('الجهة','Debtor')):null,
+   items:reports&&model.counts.invoices!=null?()=>rankedList(overview.items||[],moduleTitle('items'),t('البند','Item')):null,
    contracts:reports&&overview.marketing?()=>tableView([t('الشركة','Company'),t('العقود','Contracts')],(overview.marketingCompanies||[]).map(r=>[e(companyName(r.companyId)),number(r.contracts?.length)])):null,
    emirates:reports&&overview.companies?()=>{const groups={};for(const r of overview.companies)if(r.emirate)groups[r.emirate]=(groups[r.emirate]||0)+1;return tableView([t('الإمارة','Emirate'),t('الشركات','Companies')],Object.entries(groups).map(([id,n])=>{const area=AreaReference.emirates.find(a=>[a.id,a.ar,a.en,a.legacy].includes(id));return [e(area?t(area.ar,area.en):id),number(n)];}));}:null,
-   investors:reports&&overview.investments?()=>tableView([t('الشركة','Company'),t('المستثمرون','Investors'),t('المبلغ المستثمر','Invested amount'),t('المركبات','Vehicles'),t('محصّل الأقساط','Installments collected'),t('محصّل رسوم اللوحات','Plate fees collected'),t('المتبقي من الأصل','Principal remaining')],(overview.investorCompanies||[]).map(r=>[e(companyName(r.companyId)),number(r.investors),e(money(r.invested,r.currency)),number(r.vehicles),e(money(r.installments,r.currency)),e(money(r.plateFees,r.currency)),e(money(r.principal,r.currency))])):null,
+   investors:reports&&overview.investments?()=>tableView([t('الشركة','Company'),t('المستثمرون','Investors'),t('المبلغ المستثمر','Invested amount'),t('المركبات','Vehicles'),t('محصّل الأقساط','Installments collected'),t('محصّل رسوم اللوحات','Plate fees collected'),t('المتبقي من الأصل','Principal remaining')],[...(overview.investorCompanies||[]),...(overview.investorTotals?.length?overview.investorTotals:[{}])].map(r=>[e(r.companyId?companyName(r.companyId):t('إجمالي المجموعة','Group total')),number(r.investors),e(money(r.invested,r.currency)),number(r.vehicles),e(money(r.installments,r.currency)),e(money(r.plateFees,r.currency)),e(money(r.principal,r.currency))])):null,
    banks:banks.length?()=>readOnly?bankTable(banks,true):action(t('فتح رصد البنوك','Open bank monitoring'),'banks'):null,
    counts:()=>counts,tasks:model.layout.sections.tasks?()=>'<div class="ab-board-filters">'+(readOnly?'':[['today',t('اليوم','Today')],['late',t('متأخرة','Overdue')],['pending',t('بانتظار إجراء','Awaiting action')]].map(([id,label])=>'<button type="button" data-task-filter="'+id+'" aria-pressed="'+(id===taskFilter)+'">'+label+'</button>').join(''))+'</div><div data-board-tasks>'+taskTable(taskRows(model,taskFilter),readOnly)+'</div>'+(!readOnly&&!model.layout.securityConfigured?'<details><summary>'+t('مهامي وقراراتي','My tasks and decisions')+'</summary>'+MyWorkUI.html()+'</details>':''):null};
   const urgent=model.layout.sections.alerts&&(model.panels?.alerts||[]).length?'<aside class="ab-board-urgent"><h2>'+t('يتطلب إجراءً','Requires action')+'</h2>'+taskTable(model.panels.alerts,readOnly)+'</aside>':'';
-  return urgent+'<div class="ab-board-grid">'+layoutFor(model).filter(row=>row.visible&&bodies[row.id]).map(row=>'<section class="ab-board-module ab-board-'+row.size+'"><h2>'+moduleTitle(row.id)+'</h2><div>'+bodies[row.id]()+'</div></section>').join('')+'</div>';
+  const layout=layoutFor(model),visible=id=>layout.some(row=>row.id===id&&row.visible)&&bodies[id];
+  const panel=(id,content)=>'<section class="ab-board-module ab-board-summary-'+id+'" data-summary-panel="'+id+'"><h2>'+moduleTitle(id)+'</h2><div>'+content+'</div></section>';
+  const summary=()=>'<div class="ab-board-summary" data-board-summary>'+
+   (visible('financial')?panel('financial',bodies.financial()):'')+
+   '<div class="ab-board-summary-middle">'+summarySections.slice(1,-1).filter(visible).map(id=>panel(id,bodies[id]())).join('')+'</div>'+
+   (visible('investors')?panel('investors',bodies.investors()):'')+'</div>';
+  return urgent+'<div class="ab-board-grid">'+layout.filter(row=>row.visible&&!summarySections.includes(row.id)).map(row=>{
+   if(row.id==='summary')return summarySections.some(visible)?'<div class="ab-board-wide">'+summary()+'</div>':'';
+   return bodies[row.id]?'<section class="ab-board-module ab-board-'+row.size+'" data-board-module="'+row.id+'"><h2>'+moduleTitle(row.id)+'</h2><div>'+bodies[row.id]()+'</div></section>':'';
+  }).join('')+'</div>';
  }
  function movementPanel(report,readOnly){
   if(!report?.available)return '<p>'+e((!readOnly&&movementError)||missing())+'</p>';
@@ -190,11 +214,11 @@
   });
  }
  function openBoardSettings(){
-  const items=layoutFor(data).map(row=>({...row}));
+  const current=layoutFor(data),items=[...current.filter(row=>!summarySections.includes(row.id)),...current.filter(row=>summarySections.includes(row.id))].map(row=>({...row}));
   const d=overlay(t('تخصيص','Customize'),'<div data-board-settings></div><footer><button type="button" data-board-save>'+t('حفظ','Save')+'</button>'+(data.targets?.length?'<button type="button" data-board-preview>'+t('لوحة التحكم المركزية','Central dashboard')+'</button>':'')+'</footer><p role="alert"></p>');
   const host=d.querySelector('[data-board-settings]');
   const refresh=()=>{
-   host.innerHTML=items.map((row,i)=>'<div class="ab-board-setting"><label><input type="checkbox" data-visible '+(row.visible?'checked':'')+'> '+moduleTitle(row.id)+'</label><select aria-label="'+t('الحجم','Size')+'">'+[['small',t('صغير','Small')],['medium',t('متوسط','Medium')],['wide',t('كامل','Wide')]].map(([id,name])=>'<option value="'+id+'" '+(row.size===id?'selected':'')+'>'+name+'</option>').join('')+'</select><button type="button" aria-label="'+t('تحريك لأعلى','Move up')+'" '+(i===0?'disabled':'')+'>↑</button><button type="button" aria-label="'+t('تحريك لأسفل','Move down')+'" '+(i===items.length-1?'disabled':'')+'>↓</button></div>').join('');
+   host.innerHTML=items.map((row,i)=>'<div class="ab-board-setting"><label><input type="checkbox" data-visible '+(row.visible?'checked':'')+'> '+moduleTitle(row.id)+'</label><select '+(summarySections.includes(row.id)||row.id==='summary'?'disabled ':'')+'aria-label="'+t('الحجم','Size')+'">'+[['small',t('صغير','Small')],['medium',t('متوسط','Medium')],['wide',t('كامل','Wide')]].map(([id,name])=>'<option value="'+id+'" '+(row.size===id?'selected':'')+'>'+name+'</option>').join('')+'</select><button type="button" aria-label="'+t('تحريك لأعلى','Move up')+'" '+(i===0||summarySections.includes(row.id)?'disabled':'')+'>↑</button><button type="button" aria-label="'+t('تحريك لأسفل','Move down')+'" '+(i===items.length-1||summarySections.includes(items[i+1]?.id)||summarySections.includes(row.id)?'disabled':'')+'>↓</button></div>').join('');
    [...host.children].forEach((el,i)=>{el.querySelector('input').onchange=ev=>items[i].visible=ev.target.checked;el.querySelector('select').onchange=ev=>items[i].size=ev.target.value;[...el.querySelectorAll('button')].forEach((b,n)=>b.onclick=()=>{const next=i+(n?1:-1);[items[i],items[next]]=[items[next],items[i]];refresh();});});
   };
   refresh();

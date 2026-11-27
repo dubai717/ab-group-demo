@@ -5,6 +5,15 @@ import {writeFile} from 'node:fs/promises';
 import {security} from '../src/core.js';
 const f=await businessCentersFixture(),manager=await f.employee('general_manager');
 await f.bank();
+if(process.env.AB_DASHBOARD_RANKING_FIXTURE==='1'){
+ for(let index=1;index<=14;index++){
+  const companyId=index===14?f.co2:f.co1, tag=String(index).padStart(2,'0');
+  const customer=(await f.req('POST','/api/customers',{profile:{fullName:'عميل تجريبي '+tag,companyId,type:'owner',status:'Active'}})).id;
+  const item=(await f.req('POST','/api/ledger/items',{code:'dashboard-'+tag,nameAr:'بند محاسبي تجريبي '+tag,nameEn:'Synthetic accounting item '+tag,category:'loan',priority:100+index,companyIds:[companyId],invoice:true,receipt:true,payment:false,methods:['manual'],receivableId:f.accounts.ar.id,revenueId:f.accounts.income.id})).id;
+  await f.bill(String(index*125),item,{companyId,customerId:customer,dueOn:index===13?'2026-02-06':f.date});
+ }
+}
+
 for(const action of ['customer_view','vehicle_view'])await f.req('POST','/api/users/'+manager.id+'/grants',{action,scope:{type:'company',id:f.co1},delegable:false});
 const department=await f.req('POST','/api/departments',{companyId:f.co1,name:'Synthetic Preview Department'});
 await f.req('PATCH','/api/users/'+manager.id,{revision:1,nameAr:'علي معاينة جزئية مسؤول العلاقات العامة وإدارة العمليات والنقل للمجموعة',nameEn:'Ali Partial Preview — Senior Public Relations and Transport Operations Coordinator for AB Group',departmentIds:[department.id]});

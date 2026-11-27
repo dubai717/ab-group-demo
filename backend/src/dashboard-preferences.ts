@@ -3,7 +3,7 @@ import {requireOk} from './core.js';
 import {audit,has} from './data.js';
 import {datasetNames} from './central-read-models.js';
 export const dashboardSections=['charts','reports','tasks','shortcuts','alerts'] as const;
-const moduleIds=['performance','movement','financial','debt','items','contracts','emirates','investors','banks','counts','tasks'] as const;
+const moduleIds=['performance','movement','financial','debt','items','contracts','emirates','investors','banks','summary','counts','tasks'] as const;
 const moduleSchema=z.array(z.object({id:z.enum(moduleIds),visible:z.boolean(),size:z.enum(['small','medium','wide'])}).strict()).max(moduleIds.length).refine(rows=>new Set(rows.map(row=>row.id)).size===rows.length);
 const sectionSchema=z.object(Object.fromEntries(dashboardSections.map(k=>[k,z.boolean().optional()]))).strict();
 const defaults=()=>({widgets:[...datasetNames.options],sections:Object.fromEntries(dashboardSections.map(k=>[k,true]))});

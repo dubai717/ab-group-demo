@@ -1,15 +1,16 @@
 import {investorStatement} from './investors.js';
+import {marketingAllowed} from './marketing.js';
 import {hrRight} from './personnel-domain.js';
 import {V,today} from './vehicle-domain.js';
 
-export async function dashboardOverview(c:any,m:any,rows:Map<string,any[]>,cipher:any,month:string) {
+export async function dashboardOverview(c:any,m:any,rows:Map<string,any[]>,cipher:any,month:string,scope:{companyId?:string;companyIds:string[]|null;from?:string;to?:string;departmentScoped:boolean}) {
  const visible=(key:string)=>rows.get(key);
  const day=today();
  const invoices=visible('invoices')||[], employees=visible('employees')||[];
  const groups=new Map<string,any>(), rankings={debt:new Map<string,any>(),items:new Map<string,any>()};
- const rank=(kind:keyof typeof rankings,id:string,name:string,currency:string,amount:bigint)=>{
-  if(!id||!name)return;
-  const map=rankings[kind],key=id+':'+currency,row=map.get(key)||{id,name,currency,amount:0n};
+ const rank=(kind:keyof typeof rankings,id:string,name:string,currency:string,amount:bigint,nameEn?:string)=>{
+  if(!id)return;
+  const map=rankings[kind],key=id+':'+currency,row=map.get(key)||{id,name:name||id,nameEn,currency,amount:0n};
   row.amount+=amount;map.set(key,row);
  };
  for(const bill of invoices){
@@ -20,7 +21,7 @@ export async function dashboardOverview(c:any,m:any,rows:Map<string,any[]>,ciphe
   if(outstanding>0n&&bill.dueOn<=day){
    row.due+=outstanding;if(bill.dueOn<day)row.overdue+=outstanding;
    rank('debt',bill.partyId,bill.customerName||bill.contractingCompanyName,bill.currency,outstanding);
-   rank('items',bill.itemId,bill.itemName,bill.currency,outstanding);
+   rank('items',bill.itemId,bill.itemName,bill.currency,outstanding,bill.itemNameEn);
   }
   groups.set(key,row);
  }
@@ -31,7 +32,9 @@ export async function dashboardOverview(c:any,m:any,rows:Map<string,any[]>,ciphe
   for(const key of ['amount','due','paid','overdue','outstanding'])sum[key]+=row[key];
   totals.set(row.currency,sum);
  }
- const rankRows=(map:Map<string,any>)=>[...new Set([...map.values()].map(row=>row.currency))].flatMap(currency=>[...map.values()].filter(row=>row.currency===currency).sort((a,b)=>a.amount===b.amount?0:a.amount>b.amount?-1:1).slice(0,5).map(format));
+ const rankRows=(map:Map<string,any>)=>[...map.values()]
+  .sort((a,b)=>a.currency.localeCompare(b.currency)||(a.amount===b.amount?a.name.localeCompare(b.name)||a.id.localeCompare(b.id):a.amount>b.amount?-1:1))
+  .map(format);
  const evaluable=employees.filter(e=>hrRight(m,'evaluation_view',e.companyId));
  const hasReviews=evaluable.length&&(await c.query("select to_regclass('ab.hr_reviews') as ready")).rows[0].ready;
  const reviews=hasReviews?(await c.query('select employee_id,company_id,score,payload_cipher from ab.hr_reviews where employee_id=any($1::uuid[]) and month=$2',[evaluable.map(e=>e.id),month])).rows:[];
@@ -43,9 +46,10 @@ export async function dashboardOverview(c:any,m:any,rows:Map<string,any[]>,ciphe
  });
  const marketing=visible('marketing');
  const marketingCompanies=[];
- if(marketing){
-  const ids=[...new Set(marketing.map(row=>row.companyId))],year=Number(month.slice(0,4));
-  const contracts=(await c.query("select id,company_id,state,payload_cipher from ab.marketing_contracts where company_id=any($1::uuid[]) and starts_on >= make_date($2,1,1) and starts_on < make_date($2+1,1,1)",[ids,year])).rows;
+ if(marketing&&!scope.departmentScoped&&(await c.query("select value from ab.settings where key='marketing-enabled'")).rows[0]?.value?.enabled===true){
+  const ids=m.state.companies.filter((company:any)=>(!scope.companyId||scope.companyId===company.id)&&(!scope.companyIds||scope.companyIds.includes(company.id))&&marketingAllowed(m,company.id)).map((company:any)=>company.id);
+  const year=Number(month.slice(0,4));
+  const contracts=(await c.query("select id,company_id,state,payload_cipher from ab.marketing_contracts where company_id=any($1::uuid[]) and starts_on >= coalesce($2::date,make_date($4,1,1)) and starts_on <= coalesce($3::date,make_date($4,12,31))",[ids,scope.from||null,scope.to||null,year])).rows;
   const targets=(await c.query("select company_id,payload_cipher from ab.marketing_targets where company_id=any($1::uuid[]) and year=$2 and metric='contracts' and user_id is null and department_id is null",[ids,year])).rows;
   for(const companyId of ids){
    const goals=targets.filter((row:any)=>row.company_id===companyId);
@@ -72,9 +76,19 @@ export async function dashboardOverview(c:any,m:any,rows:Map<string,any[]>,ciphe
    investorCompanies.set(key,row);
   }
  }
+ const investorTotals=new Map<string,any>();
+ for(const row of investorCompanies.values()){
+  const total=investorTotals.get(row.currency)||{currency:row.currency,investors:new Set(),vehicles:new Set(),invested:0n,installments:0n,principal:0n,plateFees:null};
+  for(const id of row.investors)total.investors.add(id);
+  for(const id of row.vehicles)total.vehicles.add(id);
+  for(const key of ['invested','installments','principal'])total[key]+=row[key];
+  if(row.plateFees!==null)total.plateFees=(total.plateFees??0n)+row.plateFees;
+  investorTotals.set(row.currency,total);
+ }
+ const investorRow=(row:any)=>format({...row,investors:row.investors.size,vehicles:row.vehicles.size});
  return {financial:[...groups.values()].map(format),totals:[...totals.values()].map(format),
   debt:rankRows(rankings.debt),items:rankRows(rankings.items),evaluations,month,
-  companies:visible('companies'),marketing,marketingCompanies,investments:agreements,investorCompanies:[...investorCompanies.values()].map(row=>format({...row,investors:row.investors.size,vehicles:row.vehicles.size})),
+  companies:visible('companies'),marketing,marketingCompanies,investments:agreements,investorCompanies:[...investorCompanies.values()].map(investorRow),investorTotals:[...investorTotals.values()].map(investorRow),
   bankCounts:visible('banks')?.reduce((a,r)=>(a[r.companyId]=(a[r.companyId]||0)+1,a),{}),
   employeeCounts:visible('employees')?.reduce((a,r)=>(a[r.companyId]=(a[r.companyId]||0)+1,a),{})};
 }

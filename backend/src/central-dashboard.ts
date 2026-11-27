@@ -37,7 +37,7 @@ export function registerCentralDashboard(app:any,call:any,cipher:any){
   for(const key of ['companies','marketing','investments','employees'])if(!security.details.includes(key))overviewRows.delete(key);
   const reviewDate=new Date(((q.to&&q.to<today())?q.to:today()).slice(0,7)+'-01T00:00:00Z');
   if(!q.to||q.to>=today())reviewDate.setUTCMonth(reviewDate.getUTCMonth()-1);
-  const overview=await dashboardOverview(c,m,overviewRows,cipher,reviewDate.toISOString().slice(0,10));
+  const overview=await dashboardOverview(c,m,overviewRows,cipher,reviewDate.toISOString().slice(0,10),{...q,companyIds:security.companyIds,departmentScoped:!!q.departmentId||security.departmentIds!==null});
   const approvals=security.panels.includes('charts')&&!q.departmentId&&security.departmentIds===null&&(!security.companyIds||security.companyIds.length)?(await approvalRows(c,m,q.companyId?{companyId:q.companyId}:{},cipher)).rows.filter((r:any)=>(!security.companyIds||security.companyIds.includes(r.companyId))&&(!q.from||String(r.createdAt instanceof Date?r.createdAt.toISOString():r.createdAt).slice(0,10)>=q.from)&&(!q.to||String(r.createdAt instanceof Date?r.createdAt.toISOString():r.createdAt).slice(0,10)<=q.to)):null;
   const dated=approvals?.filter((r:any)=>r.dueOn&&r.completedAt)||[];
   const management=approvals?{eligible:dated.length,onTime:dated.filter((r:any)=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dubai'}).format(new Date(r.completedAt))<=r.dueOn).length,overdue:approvals.some((r:any)=>r.dueOn)?approvals.filter((r:any)=>r.pending&&r.dueOn&&r.dueOn<today()).length:null,returned:approvals.filter((r:any)=>r.state==='Returned').length}:null;

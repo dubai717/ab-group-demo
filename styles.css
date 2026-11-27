@@ -1338,3 +1338,27 @@ form .record-field-control:disabled,form .record-field-control[readonly]{color:v
 .ab-board-toolbar label .input{padding:.48rem .65rem}
 .ab-board th,.ab-board-dialog th{color:#311c16}
 .ab-board-urgent .table-wrap{max-height:11rem}
+
+.ab-board-summary{display:grid;gap:.7rem;min-width:0;container-type:inline-size}
+.ab-board-summary-middle{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.65rem}
+.ab-board-summary-middle:empty{display:none}
+.ab-board-summary [data-summary-panel]>div{padding:.38rem}
+.ab-board-summary [data-summary-panel]>h2{padding:.48rem .65rem;font-size:1rem}
+.ab-board-summary th,.ab-board-summary td{padding:.4rem .55rem}
+.ab-board-summary-financial tbody tr:last-child,.ab-board-summary-investors tbody tr:last-child{background:#dfeadd;color:#155436;font-weight:700}
+.ab-board-ranking{max-block-size:21rem;overflow:auto;scrollbar-gutter:stable}
+.ab-board-ranking .table-wrap{overflow:visible}
+.ab-board-ranking th{position:sticky;inset-block-start:0;z-index:1}
+.ab-board-ranking td:first-child{white-space:normal;overflow-wrap:anywhere}
+.ab-board-ranking td:last-child{font-variant-numeric:tabular-nums;font-weight:650}
+.ab-board-ranking:focus-visible{outline:2px solid #176746;outline-offset:-2px}
+@container(max-width:1050px){.ab-board-summary-middle{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container(max-width:480px){.ab-board-summary-middle{grid-template-columns:1fr}}
+.ab-board-ranking .table-wrap{max-block-size:none;scrollbar-gutter:auto}
+.ab-board-summary-middle table th,.ab-board-summary-middle table td{min-inline-size:0}
+.ab-board-ranking table{table-layout:fixed}
+.ab-board-ranking th,.ab-board-ranking td{padding:.26rem .36rem;font-size:.82rem;line-height:1.5}
+.ab-board-ranking th:first-child{width:55%}
+.ab-board-ranking td:first-child span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ab-board-ranking td:last-child{white-space:normal;overflow-wrap:anywhere}
+.ab-board-summary-financial tbody tr:last-child td,.ab-board-summary-investors tbody tr:last-child td{background:#dfeadd}

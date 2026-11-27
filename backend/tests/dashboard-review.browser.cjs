@@ -23,6 +23,24 @@ const output=process.env.AB_DASHBOARD_SCREENSHOTS||'work';
   await page.locator('#dashboard-company').selectOption(fixture.companyId);
   await page.locator('[data-board-action=overall]:enabled').waitFor();
   await page.locator('.ab-board-gauge').first().scrollIntoViewIfNeeded();
+  assert.equal(await page.locator('[data-board-module=counts]').count(),0);
+  const summary=page.locator('[data-board-summary]');
+  assert.deepEqual(await summary.locator('[data-summary-panel]').evaluateAll(panels=>panels.map(p=>p.dataset.summaryPanel)),['financial','debt','items','contracts','emirates','investors']);
+  if(process.env.AB_DASHBOARD_RANKING_FIXTURE==='1'){
+   const ranked=await page.evaluate(async(companyId)=>{
+    const base='central-dashboard?companyId='+companyId+'&from=2026-01-01&to=2026-01-31';
+    return (await CenterForms.api(base)).overview;
+   },fixture.companyId);
+   const expected=Array.from({length:12},(_,index)=>((12-index)*125).toFixed(3));
+   for(const rows of [ranked.debt.filter(r=>r.name.startsWith('عميل تجريبي')),ranked.items.filter(r=>r.name.startsWith('بند محاسبي تجريبي'))])assert.deepEqual(rows.map(r=>r.amount),expected);
+   for(const id of ['debt','items']){
+    const list=summary.locator('[data-summary-panel='+id+'] .ab-board-ranking');
+    assert.equal(await list.locator('tbody tr').count()>=12,true);
+    assert(await list.evaluate(el=>el.scrollHeight>el.clientHeight));
+    assert(await list.evaluate(el=>{el.scrollTop=el.scrollHeight;return el.scrollTop>0;}));
+    await list.evaluate(el=>el.scrollTop=0);
+   }
+  }
   const dashboardScroll=await page.evaluate(()=>scrollY);
   await page.locator('.ab-board-gauge').first().click();
   await page.screenshot({path:output+'/dashboard-companies-ar.png'});
@@ -45,6 +63,9 @@ const output=process.env.AB_DASHBOARD_SCREENSHOTS||'work';
   await page.keyboard.press('Escape');
   await page.keyboard.press('Escape');
   await page.locator('[data-dashboard=board-settings]').click();
+  const countsControl=page.locator('.ab-board-setting').filter({hasText:/أعداد السجلات|Record counts/}).locator('input');
+  assert.equal(await countsControl.isChecked(),false);
+  await countsControl.check();
   const visible=page.locator('.ab-board-setting input').first();
   await visible.uncheck();
   await page.locator('.ab-board-setting').first().locator('select').selectOption('medium');
@@ -52,7 +73,9 @@ const output=process.env.AB_DASHBOARD_SCREENSHOTS||'work';
   await page.locator('[data-board-save]').click();
   await page.waitForFunction(()=>!document.querySelector('[data-board-save]'));
   await page.reload();
+  await page.locator('[data-board-module=counts] .stat-card').first().waitFor();
   await page.locator('[data-dashboard=board-settings]').click();
+  await countsControl.uncheck();
   assert.equal(await page.locator('.ab-board-setting input').nth(1).isChecked(),false);
   assert.equal(await page.locator('.ab-board-setting select').nth(1).inputValue(),'medium');
   await page.locator('.ab-board-setting input').nth(1).check();
@@ -65,6 +88,7 @@ const output=process.env.AB_DASHBOARD_SCREENSHOTS||'work';
    for(const width of [1440,768,390]){
     await page.setViewportSize({width,height:1000});
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),locale+' '+width);
+    if(locale==='ar')await summary.screenshot({path:output+'/summary-'+width+'-ar.png'});
    }
    await page.setViewportSize({width:1440,height:1000});
    const menuBox=await sidebar.boundingBox(),mainBox=await page.locator('.app-shell > .main').boundingBox();
