@@ -39,6 +39,21 @@ test('Dashboard ranks actual outstanding items and opens only a pending deposit 
   const dashboard=await f.req('GET','/api/central-dashboard?companyId='+f.co1);
   assert.deepEqual(dashboard.ageing.items.map((row:any)=>row.amount),['500.000','100.000']);
   assert.equal(dashboard.ageing.debtors[0].amount,'600.000');
+  const financial=dashboard.overview.financial[0];
+  assert.deepEqual([financial.invoiced,financial.due,financial.collected,financial.overdue,financial.outstanding],
+    ['800.000','600.000','200.000','600.000','600.000']);
+  const interval=await f.req('GET','/api/central-dashboard?companyId='+f.co1+'&from='+f.date+'&to='+f.date);
+  assert.equal(interval.overview.performance.rows[0].collection,25);
+  assert.equal(interval.overview.financial[0].overdue,'0.000');
+  const empty=await f.req('GET','/api/central-dashboard?companyId='+f.co2);
+  assert.equal(empty.counts.invoices,0);
+  assert.deepEqual([empty.overview.financial[0].invoiced,empty.overview.financial[0].due,empty.overview.financial[0].outstanding],
+    ['0.000','0.000','0.000']);
+  assert.deepEqual(empty.ageing,{debtors:[],items:[]});
+  const movement=await f.req('GET','/api/central-dashboard/vehicle-movements?months=36&companyId='+f.co2);
+  assert.equal(movement.months.length,36);
+  assert(movement.months.every((row:any)=>row.in===0&&row.out===0));
+
   assert.equal(dashboard.postedFinancial.banks.find((row:any)=>row.id===bank.id).canViewDeposits,true);
   const path='/api/central-dashboard/banks/'+bank.id+'/deposits';
   assert.deepEqual((await f.req('GET',path)).rows.map((row:any)=>row.id),[deposit.id]);
@@ -47,5 +62,8 @@ test('Dashboard ranks actual outstanding items and opens only a pending deposit 
   const employee=await f.employee();
   await f.login(employee.username,employee.password);
   await f.req('GET',path,undefined,403);
+  const restricted=await f.req('GET','/api/central-dashboard');
+  assert.equal(restricted.overview.financial,null);
+  assert.equal(restricted.ageing,null);
  }finally{await f.close();}
 });
