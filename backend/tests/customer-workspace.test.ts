@@ -53,15 +53,43 @@ test('residence summary uses explicit document companies, Dubai dates, and scope
   assert.deepEqual(s.residences.totals,{customers:2,employees:1});
   assert.equal(s.residences.cells.customers[f.co2],2);assert.equal(s.residences.cells.employees[f.co1],0);
   assert.equal(s.residences.cells.employees[f.co2],1);assert.equal(s.residences.cells.employees[empty.id],0);
-  assert.deepEqual(s.residences.incomplete,{customers:2,employees:1});
+  assert.equal(s.pendingResidenceCustomers,0);
   const reader=await f.employee();
   for(const action of ['customer_view','vehicle_view'])await f.req('POST','/api/users/'+reader.id+'/grants',{action,scope:{type:'company',id:f.co1},delegable:false});
   await f.login(reader.username,reader.password);
   const scoped=await f.req('GET',url);
   assert.deepEqual(scoped.companies.map((row:any)=>row.id),[f.co1]);
   assert.deepEqual(scoped.residences.totals,{customers:0,employees:0});
-  assert.deepEqual(scoped.residences.incomplete,{customers:2,employees:0});
+  assert.equal(scoped.pendingResidenceCustomers,0);
   await f.req('POST','/api/customer-preferences',{columns:['status','fullName','fileNumber'],filters:{},scroll:0});
   assert.deepEqual((await f.req('GET','/api/customer-preferences')).columns,['fileNumber','status','fullName']);
+ }finally{await f.close();}
+});
+
+test('residence follow-up counts distinct scoped customers until their last applicable request closes',async()=>{
+ const f=await businessCentersFixture();try{
+  const summary=async()=>(await f.req('GET','/api/customers/register-summary')).pendingResidenceCustomers;
+  const create=(customerId:string,companyId:string,transactionType:string)=>f.req('POST','/api/customers/'+customerId+'/requests',{
+   clientKey:randomUUID(),type:'residence',companyId,transactionType,subject:'Synthetic residence follow-up'
+  });
+  const request=(customerId:string,id:string)=>'/api/customers/'+customerId+'/requests/'+id;
+  const update=(url:string,state:string,revision:number)=>f.req('POST',url+'/status',{state,revision,comment:'Synthetic status change'});
+  assert.equal(await summary(),0);
+  await create(f.client!,f.co1,'renewal');assert.equal(await summary(),0);
+  const issue=request(f.client!,(await create(f.client!,f.co1,'new')).id);
+  const amend=request(f.client!,(await create(f.client!,f.co1,'amendment')).id);
+  const cancel=request(f.client2!,(await create(f.client2!,f.co2,'cancellation')).id);
+  assert.equal(await summary(),2);
+  const reader=await f.employee();
+  await f.req('POST','/api/users/'+reader.id+'/grants',{action:'customer_view',scope:{type:'company',id:f.co1},delegable:false});
+  await f.login(reader.username,reader.password);assert.equal(await summary(),1);
+  await f.login();await update(issue,'Cancelled',0);assert.equal(await summary(),2);
+  await update(amend,'Submitted',0);
+  await f.req('POST',amend+'/approval',{decision:'Approved',comment:'Synthetic approval',revision:2});
+  await update(amend,'Completed',2);
+  assert.equal(await summary(),2);
+  await update(amend,'Closed',3);assert.equal(await summary(),1);
+  await f.login(reader.username,reader.password);assert.equal(await summary(),0);
+  await f.login();await update(cancel,'Cancelled',0);assert.equal(await summary(),0);
  }finally{await f.close();}
 });

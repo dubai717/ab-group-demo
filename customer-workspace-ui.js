@@ -15,9 +15,8 @@ function summary(data,error){
  const keys=Object.keys(groups),cells=residences.cells,totals=residences.totals;
  const residenceRows=keys.map(key=>[groups[key],...companies.map(co=>cells[key][co.id]),totals[key]]);
  residenceRows.push([totalLabel(),...companies.map(co=>add(keys.map(key=>cells[key][co.id]))),add(Object.values(totals))]);
- const incomplete=add(Object.values(residences.incomplete));
- const warning=incomplete?`<details class="residency-incomplete"><summary>${t('بيانات غير مكتملة','Incomplete data')} (${e(incomplete)})</summary>${matrix([t('الفئة','Category'),t('رقم الملف أو الموظف','File or employee number'),t('البيانات الناقصة','Missing fields')],residences.incompleteRecords.map(row=>[groups[row.group],row.reference,[row.missingCompany?t('الشركة','Company'):'',row.missingExpiry?t('تاريخ الانتهاء','Expiry date'):''].filter(Boolean).join(' · ')]))}</details>`:'';
- return `<div class="customer-register-summaries">${box('العملاء حسب الشركة والحالة','Customers by company and status',matrix([t('الحالة','Status'),...names,totalLabel()],customerRows)+`<small>${t('دون ارتباط تشغيلي مسجّل ضمن الشركات المصرح بها:','Without a recorded operational relationship to authorized companies:')} ${e(customers.withoutOperationalCompany)}</small>`)}${box('الإقامات السارية حسب الشركة','Valid residence permits by company',matrix([t('الفئة','Category'),...names,totalLabel()],residenceRows)+warning)}</div>`;
+ const followup=`<p class="residency-followup">${t('العملاء بانتظار متابعة الإقامة','Customers awaiting residence follow-up')} <strong data-residency-followup>${new Intl.NumberFormat(getLocale()).format(data.pendingResidenceCustomers)}</strong></p>`;
+ return `<div class="customer-register-summaries">${box('العملاء حسب الشركة والحالة','Customers by company and status',matrix([t('الحالة','Status'),...names,totalLabel()],customerRows)+`<small>${t('دون ارتباط تشغيلي مسجّل ضمن الشركات المصرح بها:','Without a recorded operational relationship to authorized companies:')} ${e(customers.withoutOperationalCompany)}</small>`)}${box('الإقامات السارية حسب الشركة','Valid residence permits by company',matrix([t('الفئة','Category'),...names,totalLabel()],residenceRows)+followup)}</div>`;
 }
 function vehicleSummary(data,error){
  const keys=['Active','Pending','Ended'],types=['cash','group','bank','investor'];

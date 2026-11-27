@@ -86,8 +86,9 @@ async function pinned(p,locale){
    for(const width of [1440,390]){
     await p.setViewportSize({width,height:width===390?900:1080});
     await pinned(p,locale);
-    await p.locator('.residency-incomplete summary').waitFor();
-    if(await p.locator('.residency-incomplete').getAttribute('open')===null)await p.locator('.residency-incomplete summary').click();
+    const followup=p.locator('.residency-followup');
+    await followup.getByText(locale==='ar'?'العملاء بانتظار متابعة الإقامة':'Customers awaiting residence follow-up',{exact:false}).waitFor();
+    assert.equal(await followup.locator('[data-residency-followup]').innerText(),new Intl.NumberFormat(locale).format(0));
     if(output)await p.screenshot({path:output+'/customers-'+locale+'-'+width+'.png',fullPage:true});
     await go(p,'vehicles');
     await p.locator('.vehicle-register-summary .customer-matrix').waitFor();
@@ -97,6 +98,22 @@ async function pinned(p,locale){
     await summaries.locator('.customer-matrix').first().waitFor();
    }
   }
+  const service=await p.evaluate(({customerId,companyId})=>ABCentral.api('customers/'+customerId+'/requests','POST',{
+   clientKey:crypto.randomUUID(),type:'residence',transactionType:'new',companyId,subject:'Synthetic residence follow-up'
+  },crypto.randomUUID()),fixture);
+  await go(p,'customers');
+  await p.waitForFunction(()=>document.querySelector('[data-residency-followup]')?.textContent===new Intl.NumberFormat(getLocale()).format(1));
+  for(const locale of ['ar','en']){
+   await p.evaluate(locale=>setLocale(locale),locale);
+   const followup=p.locator('.residency-followup');
+   assert.match(await followup.innerText(),locale==='ar'?/العملاء بانتظار متابعة الإقامة/:/Customers awaiting residence follow-up/);
+   assert.equal(await followup.locator('[data-residency-followup]').innerText(),new Intl.NumberFormat(locale).format(1));
+  }
+  await p.evaluate(({customerId,id})=>ABCentral.api('customers/'+customerId+'/requests/'+id+'/status','POST',{
+   state:'Cancelled',revision:0,comment:'Synthetic cancellation'
+  },crypto.randomUUID()),{customerId:fixture.customerId,id:service.id});
+  await go(p,'customers');
+  await p.waitForFunction(()=>document.querySelector('[data-residency-followup]')?.textContent==='0');
   const phone=await browser.newPage({viewport:{width:390,height:900},isMobile:true,hasTouch:true});
   await login(phone,fixture.viewerUsername,fixture.viewerPassword);await go(phone,'customers');
   const scoped=await phone.evaluate(()=>ABCentral.api('customers/register-summary'));
