@@ -3,24 +3,127 @@ import {customerCan} from './customers.js';
 import {financeRight} from './finance.js';
 import {vehicleRight,vehicleData,vehicleInvoices,today,V} from './vehicle-domain.js';
 import {invoices} from './ledger-domain.js';
+import {z} from 'zod';
+import {hrRight} from './personnel-domain.js';
+import {archivedAttachments,currentAttachmentRows,withdrawnAttachments} from './attachment-history.js';
 import {requireOk} from './core.js';
 const has=async(c:any,name:string)=>!!(await c.query('select to_regclass($1) ok',['ab.'+name])).rows[0].ok;
-export const customerBucket=(s:string)=>s==='Active'?'Active':['Ended','Archived'].includes(s)?'Ended':'Pending';
+export const customerBucket=(s:string)=>['Active','Prospect'].includes(s)?s:['Ended','Archived'].includes(s)?'Ended':'Pending';
 const sum=(rows:any[],key:string)=>V.money(rows.reduce((n:bigint,r:any)=>n+V.units(String(r[key]||'0')),0n));
+async function summaryVehicles(c:any,m:any){
+ const scope=m.state.companies.filter((co:any)=>vehicleRight(m,'view',co.id)).map((co:any)=>co.id);
+ if(!scope.length||!await has(c,'vehicles'))return null;
+ return (await c.query('select v.customer_id,v.company_id,v.status,r.finance_type from ab.vehicles v join ab.vehicle_requests r on r.id=v.request_id where v.company_id=any($1::uuid[])',[scope])).rows;
+}
+export async function vehicleRegisterSummary(c:any,m:any){
+ const vehicles=await summaryVehicles(c,m);
+ if(!vehicles)return null;
+ const cells={Active:{cash:0,group:0,bank:0,investor:0},Pending:{cash:0,group:0,bank:0,investor:0},Ended:{cash:0,group:0,bank:0,investor:0}};
+ for(const v of vehicles){
+  const row=cells[v.status==='Active'?'Active':v.status==='Terminated'?'Ended':'Pending'];
+  row[v.finance_type as keyof typeof row]++;
+ }
+ return {cells,total:vehicles.length};
+}
+const day=z.iso.date();
+async function residenceSummary(c:any,m:any,cipher:any,clients:any[],allowed:Set<string>){
+ const current=today(),companies=new Set(m.state.companies.map((co:any)=>co.id));
+ const groups={customers:new Map<string,Set<string>>(),employees:new Map<string,Set<string>>()};
+ const incomplete={customers:0,employees:0};
+ const incompleteRecords:{group:keyof typeof groups;reference:string;missingCompany:boolean;missingExpiry:boolean}[]=[];
+ function record(group:keyof typeof groups,person:string,reference:string,company:string,issued:string,expires:string){
+  if(company&&companies.has(company)&&!allowed.has(company))return;
+  const missingCompany=!companies.has(company),missingExpiry=!day.safeParse(expires).success;
+  if(missingCompany||missingExpiry){incomplete[group]++;incompleteRecords.push({group,reference,missingCompany,missingExpiry});return;}
+  if(expires<current||day.safeParse(issued).success&&issued>current)return;
+  const people=groups[group].get(company)||new Set<string>();
+  people.add(person);groups[group].set(company,people);
+ }
+ const clientFiles=new Map<string,any[]>();
+ const readable=clients.filter(row=>customerCan(m,'documents',row.company_id)).map(row=>row.id);
+ if(readable.length&&await has(c,'customer_files')){
+  const rows=(await c.query(`select f.id,f.parent_id,f.customer_id,f.payload_cipher,coalesce(r.verdict,f.scan_status) scan
+   from ab.customer_files f left join ab.customer_file_reviews r on r.file_id=f.id
+   where f.customer_id=any($1::uuid[])`,[readable])).rows;
+  const superseded=new Set(rows.map((row:any)=>row.parent_id));
+  for(const row of await currentAttachmentRows(c,'customer_file',rows)){
+   if(row.scan!=='clean'||superseded.has(row.id))continue;
+   const doc=cipher.open(row.payload_cipher);
+   if(!['residence','visa'].includes(doc.kind))continue;
+   const files=clientFiles.get(row.customer_id)||[];
+   files.push({...doc,id:row.id});clientFiles.set(row.customer_id,files);
+  }
+ }
+ const documentNumber=(value:unknown)=>String(value||'').normalize('NFKC').replace(/[^\p{L}\p{N}]/gu,'').toLowerCase();
+ for(const {id,file_number,profile} of clients){
+  const identity=(profile.identityDocuments||[]).filter((doc:any)=>['residence','visa'].includes(doc.kind));
+  const files=clientFiles.get(id)||[],used=new Set<string>(),company=profile.residencyCompanyId||profile.sponsorCompanyId;
+  for(const doc of identity){
+   const number=documentNumber(doc.number);
+   const matches=files.filter(file=>file.kind===doc.kind&&((number&&documentNumber(file.documentNumber)===number)||file.id===doc.verifiedVersionId));
+   if(matches.length){
+    for(const file of matches){
+     used.add(file.id);
+     record('customers',id,file_number,file.residenceCompanyId||doc.residenceCompanyId||company,file.issuedOn||doc.issuedOn,file.expiresOn||doc.expiresOn);
+    }
+   }else record('customers',id,file_number,doc.residenceCompanyId||company,doc.issuedOn,doc.expiresOn);
+  }
+  for(const file of files)if(!used.has(file.id))record('customers',id,file_number,file.residenceCompanyId||company,file.issuedOn,file.expiresOn);
+ }
+ const hrScope=[...allowed].filter(co=>hrRight(m,'view',co)&&hrRight(m,'documents',co));
+ if(hrScope.length&&await has(c,'hr_document_records')){
+  const rows=(await c.query(`select distinct on(v.document_id) r.employee_id,e.employee_number::text reference,r.expires_on::text expires,
+   r.payload_cipher,v.document_id from ab.hr_document_records r
+   join ab.hr_employees e on e.id=r.employee_id join ab.document_versions v on v.id=r.version_id
+   where e.company_id=any($1::uuid[]) and r.kind in ('residence','visa')
+   and r.state='Approved' and v.scan_status='clean'
+   order by v.document_id,v.version desc,r.id desc`,[hrScope])).rows;
+  const withdrawn=await withdrawnAttachments(c,'document'),archived=await archivedAttachments(c,'document');
+  for(const row of rows){
+   if(withdrawn.has(row.document_id)||archived.has(row.document_id))continue;
+   const doc=cipher.open(row.payload_cipher);
+   if(doc.residenceCompanyId&&allowed.has(doc.residenceCompanyId)&&!hrScope.includes(doc.residenceCompanyId))continue;
+   record('employees',row.employee_id,row.reference,doc.residenceCompanyId,doc.issuedOn,row.expires);
+  }
+ }
+ const cells={customers:{},employees:{}} as Record<keyof typeof groups,Record<string,number>>;
+ const totals={customers:0,employees:0};
+ for(const group of ['customers','employees'] as const){
+  const distinct=new Set<string>();
+  for(const co of allowed){
+   const people=groups[group].get(co)||[];
+   cells[group][co]=groups[group].get(co)?.size||0;
+   for(const id of people)distinct.add(id);
+  }
+  totals[group]=distinct.size;
+ }
+ return {cells,totals,incomplete,incompleteRecords};
+}
 export async function customerRegisterSummary(c:any,m:any,cipher:any){
- const companies=m.state.companies.filter((co:any)=>customerCan(m,'view',co.id)),allowed=companies.map((x:any)=>x.id);
- const clients=(await c.query('select id,company_id,status,payload_cipher from ab.customers where company_id=any($1::uuid[])',[allowed])).rows;
+ const companies=m.state.companies.filter((co:any)=>customerCan(m,'view',co.id));
+ const allowed=new Set<string>(companies.map((co:any)=>co.id));
+ const clients=(await c.query('select id,file_number::text,company_id,status,payload_cipher from ab.customers where company_id=any($1::uuid[])',[[...allowed]])).rows;
  requireOk(clients.length<=20000,422,'customerSummaryRangeRequired');
+ const profiles=clients.map((r:any)=>({...r,profile:cipher.open(r.payload_cipher)}));
  const links=new Map<string,Set<string>>(),operational=new Set<string>();
- for(const r of clients){const p=cipher.open(r.payload_cipher);links.set(r.id,new Set([r.company_id,p.residencyCompanyId,p.sponsorCompanyId].filter(x=>allowed.includes(x))));if([p.residencyCompanyId,p.sponsorCompanyId].some(x=>allowed.includes(x)))operational.add(r.id);}
- const vehicleAvailable=await has(c,'vehicles'),vehicleScope=m.state.companies.filter((co:any)=>vehicleRight(m,'view',co.id)).map((co:any)=>co.id);
- const vehicles=vehicleAvailable?(await c.query('select v.id,v.customer_id,v.company_id,v.status,r.finance_type from ab.vehicles v join ab.vehicle_requests r on r.id=v.request_id where v.company_id=any($1::uuid[])',[vehicleScope])).rows:[];
- for(const v of vehicles)if(allowed.includes(v.company_id)){links.get(v.customer_id)?.add(v.company_id);operational.add(v.customer_id);}
- const cells:any={Active:{},Pending:{},Ended:{}},totals:any={Active:0,Pending:0,Ended:0};
- for(const r of clients){const bucket=customerBucket(r.status);totals[bucket]++;for(const co of links.get(r.id)||[])cells[bucket][co]=(cells[bucket][co]||0)+1;}
- const matrix:any={Active:{cash:0,group:0,bank:0,investor:0},Pending:{cash:0,group:0,bank:0,investor:0},Ended:{cash:0,group:0,bank:0,investor:0}};
- for(const v of vehicles){matrix[v.status==='Active'?'Active':v.status==='Terminated'?'Ended':'Pending'][v.finance_type]++;}
- return{companies:companies.map((x:any)=>({id:x.id,nameAr:x.arabicName,nameEn:x.englishName,licence:x.tradeLicenseNumber})),customers:{cells,totals,total:clients.length,withoutOperationalCompany:clients.filter((r:any)=>!operational.has(r.id)).length,relationTypes:['record_scope','residency','sponsor','registered_vehicle'],distinctTotal:true},vehicles:vehicleAvailable&&vehicleScope.length?{cells:matrix,total:vehicles.length}:null,asOf:new Date().toISOString()};
+ for(const r of profiles){
+  const recorded=[r.profile.residencyCompanyId,r.profile.sponsorCompanyId].filter(id=>allowed.has(id));
+  links.set(r.id,new Set([r.company_id,...recorded]));
+  if(recorded.length)operational.add(r.id);
+ }
+ for(const v of await summaryVehicles(c,m)||[])if(allowed.has(v.company_id)){
+  links.get(v.customer_id)?.add(v.company_id);operational.add(v.customer_id);
+ }
+ const cells:any={Active:{},Pending:{},Prospect:{},Ended:{}},totals:any={Active:0,Pending:0,Prospect:0,Ended:0};
+ for(const counts of Object.values(cells) as Record<string,number>[])for(const id of allowed)counts[id]=0;
+ for(const r of profiles){
+  const bucket=customerBucket(r.status);
+  totals[bucket]++;
+  for(const co of links.get(r.id)||[])cells[bucket][co]++;
+ }
+ return {companies:companies.map((x:any)=>({id:x.id,nameAr:x.arabicName,nameEn:x.englishName,licence:x.tradeLicenseNumber})),
+  customers:{cells,totals,total:clients.length,withoutOperationalCompany:clients.filter((r:any)=>!operational.has(r.id)).length,relationTypes:['record_scope','residency','sponsor','registered_vehicle'],distinctTotal:true},
+  residences:await residenceSummary(c,m,cipher,profiles,allowed),asOf:new Date().toISOString()};
 }
 export async function customerOverview(c:any,m:any,cipher:any,client:any,events:any[]){
  const companyIds=m.state.companies.map((co:any)=>co.id),vehicleScope=companyIds.filter((co:string)=>vehicleRight(m,'view',co)),financialScope=companyIds.filter((co:string)=>financeRight(m,'ledger_view',co)),vehicleAvailable=await has(c,'vehicles'),ledger=await has(c,'finance_invoice_links');

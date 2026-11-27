@@ -6,7 +6,7 @@ import { requireOk, sha } from './core.js';
 import { employee, hrRight, need, auditHR } from './personnel-domain.js';
 import { today } from './vehicle-domain.js';
 export function registerPersonnelDocuments(app: any, route: any, cipher: any, options: any) {
-    const id = z.uuid(), text = z.string().trim().min(1).max(200), upload = z.object({ kind: z.string().min(1).max(60), name: text, title: text, mime: z.enum(['application/pdf', 'image/png', 'image/jpeg']), base64: z.string().min(4).max(13981016), documentNumber:z.string().max(120).default(''),issuer:z.string().max(240).default(''),issuedOn:z.iso.date().nullish(),notes:z.string().max(4000).default(''),expiresOn: z.iso.date().nullish(), parentVersionId: id.optional(), responsibleId: id.optional(), companyResponsible: z.boolean().default(false) }).strict();
+    const id = z.uuid(), text = z.string().trim().min(1).max(200), upload = z.object({ kind: z.string().min(1).max(60), name: text, title: text, mime: z.enum(['application/pdf', 'image/png', 'image/jpeg']), base64: z.string().min(4).max(13981016), documentNumber:z.string().max(120).default(''),issuer:z.string().max(240).default(''),issuedOn:z.iso.date().nullish(),notes:z.string().max(4000).default(''),expiresOn: z.iso.date().nullish(), parentVersionId: id.optional(), responsibleId: id.optional(), residenceCompanyId:id.optional(), companyResponsible: z.boolean().default(false) }).strict();
     async function owner(c: any, m: any, req: any, write = false) { const eid = req.params.employeeId, lid = req.params.libraryId; if (eid) {
         const e = await employee(c, m, id.parse(eid));
         requireOk(hrRight(m, write ? 'document_update' : 'documents', e.company_id) || e.user_id === m.actor.id, 403, 'denied');
@@ -21,6 +21,8 @@ export function registerPersonnelDocuments(app: any, route: any, cipher: any, op
         if(!d.parentVersionId){await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[s.tenant_id+':staff-file:'+String(own.employeeId||own.libraryId)+':'+d.kind+':'+sha(bytes)]);requireOk(!(await c.query("select 1 from ab.document_versions v join ab.documents d on d.id=v.document_id left join ab.hr_document_records r on r.version_id=v.id where d.employee_id is not distinct from $1::uuid and d.personnel_library_id is not distinct from $2::uuid and v.sha256=$3 and (r.kind=$4 or d.personnel_library_id is not null)",[own.employeeId,own.libraryId,sha(bytes),d.kind])).rowCount,409,'duplicateDocument');}
         if (d.responsibleId)
             requireOk((await c.query('select 1 from ab.hr_employees where id=$1 and company_id=$2', [d.responsibleId, own.companyId])).rowCount, 422, 'invalidResponsible');
+        if(d.residenceCompanyId)requireOk(own.employeeId&&['residence','visa'].includes(d.kind)&&
+            m.state.companies.some((co:any)=>co.id===d.residenceCompanyId)&&hrRight(m,'document_update',d.residenceCompanyId),403,'denied');
         requireOk(!d.companyResponsible || d.responsibleId, 422, 'responsibleRequired');
         if(own.libraryId&&!d.parentVersionId){const latest=(await c.query('select version_id from ab.hr_library_versions where library_id=$1 order by version desc limit 1',[own.libraryId])).rows[0];if(latest)d.parentVersionId=latest.version_id;}let parent: any;
         if (d.parentVersionId) {

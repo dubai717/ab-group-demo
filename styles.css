@@ -1385,3 +1385,26 @@ form .record-field-control:disabled,form .record-field-control[readonly]{color:v
 .sidebar-subnav[hidden] {display:none;}
 .sidebar-subnav .nav-item {font-size:.9rem;font-weight:600;padding-block:6px;}
 .ws-menu-open .sidebar-nav {overflow-y:auto;}
+
+.customer-register-summaries {grid-template-columns:repeat(2,minmax(0,1fr));}
+.customer-register-summaries .customer-box,.vehicle-register-summary {min-inline-size:0;}
+.vehicle-register-summary {margin-block:12px;}
+.residency-incomplete {margin-block:8px 0;padding:8px;background:var(--panel-alt);border-inline-start:3px solid var(--primary);}
+[data-cu-register] table {border-collapse:separate;border-spacing:0;}
+[data-cu-register] [data-cu-heading="fileNumber"],
+[data-cu-register] [data-cu-file-number] {
+ position:sticky;inset-inline-start:0;min-inline-size:9rem;white-space:nowrap;z-index:2;
+ box-shadow:0 2px 5px #29120f26;
+}
+[data-cu-register] [data-cu-heading="fileNumber"] {z-index:4;background:var(--primary);color:var(--warm-paper);}
+[data-cu-register] [data-cu-file-number] {background:var(--warm-paper);font-weight:700;font-variant-numeric:tabular-nums;}
+[data-cu-register] [data-cu-heading]:not([data-cu-heading="fileNumber"]) summary {touch-action:none;user-select:none;}
+[data-cu-heading-tools] {display:flex;align-items:center;gap:4px;margin-block-start:4px;}
+[data-cu-heading-tools] .input {min-inline-size:8rem;}
+[data-cu-heading-tools] [hidden] {display:none;}
+[data-cu-register] .cu-column-drop {outline:2px solid var(--primary);outline-offset:-2px;}
+@media(max-width:1000px){.customer-register-summaries{grid-template-columns:minmax(0,1fr);}}
+.customer-register-summaries .customer-box>h3,.vehicle-register-summary>h3 {
+ margin:0 0 6px;padding:6px 8px;border-radius:6px;background:var(--primary);color:var(--warm-paper);
+}
+.customer-register-summaries .customer-matrix tbody tr:last-child>* {background:var(--panel-alt);color:var(--text);font-weight:700;}
