@@ -1,292 +1,361 @@
 (function(root){'use strict';
  const t=(a,b)=>getLocale()==='ar'?a:b,e=v=>CenterForms.esc(v),labels={contractingCompanies:['الشركات المتعاقدة','Contracting companies'],companies:['الشركات','Companies'],banks:['الحسابات البنكية','Bank accounts'],customers:['العملاء','Customers'],vehicles:['المركبات','Vehicles'],invoices:['الفواتير','Invoices'],employees:['الموظفون','Employees'],tasks:['المهام','Tasks'],marketing:['فرص التسويق','Marketing opportunities'],investments:['الاستثمارات','Investments']};
- let movementEpoch=0;let dynamicReport='',movementData=null,movementError='',movementMonths=12,movementEmirate='',movementLicence='',movementFocus=null,userQuery='',previewUser='',previewOpen=false,previewError='';const searches={};
- let countsOpen=false,targetCache=null;let actor='',epoch=0,data=null,error='',loading=false,company='',asUser='',source='',from='',to='',department='',widgets=Object.keys(labels),sections={charts:true,reports:true,tasks:true,shortcuts:true,alerts:true};
- function sync(){if(actor!==ABCentral.actor?.id){actor=ABCentral.actor?.id;targetCache=null;overviewMovements=null;overviewMovementError='';comparisonYears=null;sections={charts:true,reports:true,tasks:true,shortcuts:true,alerts:true};for(const key of Object.keys(searches))delete searches[key];epoch++;data=null;error='';loading=false;company=asUser=source=from=to=department='';widgets=Object.keys(labels);dynamicReport='';movementData=null;movementFocus=null;movementEpoch++;movementEmirate=movementLicence='';userQuery='';previewUser='';previewOpen=false;previewError='';}}
- async function load(){sync();loading=true;error='';overviewMovements=null;overviewMovementError='';const n=++epoch;const host=document.getElementById('central-dashboard');host?.querySelectorAll('button,input,select').forEach(b=>b.disabled=true);const spinner=setTimeout(()=>{if(n===epoch&&loading&&host?.isConnected)host.insertAdjacentHTML('afterbegin',`<p data-dashboard-loading role="status">${t('جارٍ تحميل السجلات المصرح بها…','Loading authorized records…')}</p>`);},180);try{const q=new URLSearchParams();for(const [k,v]of Object.entries({companyId:company,departmentId:department,asUserId:asUser,from,to}))if(v)q.set(k,v);if(source)q.set('source',source);const [result,targets]=await Promise.all([CenterForms.api('central-dashboard?'+q),(targetCache?Promise.resolve({rows:targetCache}):CenterForms.api('view-as/targets').catch(err=>{if(err.status===403||err.message==='denied')return {rows:[]};throw err;})),!asUser?MyWorkUI.load({companyId:company,departmentId:department}):null]);if(n!==epoch)return;if(targets){targetCache=targets.rows;result.targets=targets.rows;}data=result;widgets=result.layout.widgets;sections=result.layout.sections||{charts:true,reports:true,tasks:true,shortcuts:true,alerts:true};movementRequest(result);}catch(err){if(n===epoch){error=t('تعذر تحميل لوحة التحكم. أعد المحاولة؛ لم تُعرض أعداد بديلة. ','Cannot load dashboard. Retry; no replacement counts were shown. ')+err.message;data=null;}}finally{clearTimeout(spinner);if(n===epoch){loading=false;if(app.state.currentPage==='dashboard')render();}}}
+ let movementEpoch=0;let movementData=null,movementError='',userQuery='',previewUser='',previewOpen=false,previewError='';const searches={};
+ let countsOpen=false,dynamicReport='',legacyMovementEpoch=0,legacyMovementData=null,legacyMovementError='',movementMonths=12,movementEmirate='',movementLicence='',movementFocus=null;
+ let ownerPicker=null,centralPreviewChoice={};
+ let targetCache=null;let actor='',epoch=0,data=null,error='',loading=false,company='',asUser='',source='',from='',to='',department='',widgets=Object.keys(labels),sections={charts:true,reports:true,tasks:true,shortcuts:true,alerts:true};
+ function sync(){if(actor!==ABCentral.actor?.id){
+ const next=ABCentral.actor?.id;
+ if(ABCentral.viewAs?.ownerId===actor&&actor)ownerPicker={ownerId:actor,userQuery,previewUser,company,from,to,department};
+ const restored=!ABCentral.viewAs&&ownerPicker?.ownerId===next?ownerPicker:null;
+ if(!ABCentral.viewAs)ownerPicker=null;
+ actor=next;targetCache=null;countsOpen=false;myWorkOpen=false;dynamicReport='';legacyMovementEpoch++;legacyMovementData=null;movementFocus=null;centralPreviewChoice={};sections={charts:true,reports:true,tasks:true,shortcuts:true,alerts:true};for(const key of Object.keys(searches))delete searches[key];epoch++;data=null;error='';loading=false;company=asUser=source=from=to=department='';widgets=Object.keys(labels);movementData=null;movementEpoch++;userQuery=restored?.userQuery||'';previewUser=restored?.previewUser||'';previewOpen=false;previewError='';if(restored)({company,from,to,department}=restored);}}
+ async function load(){sync();loading=true;error='';const n=++epoch;const host=document.getElementById('central-dashboard');host?.querySelectorAll('button,input,select').forEach(b=>b.disabled=true);const spinner=setTimeout(()=>{if(n===epoch&&loading&&host?.isConnected)host.insertAdjacentHTML('afterbegin',`<p data-dashboard-loading role="status">${t('جارٍ تحميل السجلات المصرح بها…','Loading authorized records…')}</p>`);},180);try{const q=new URLSearchParams();for(const [k,v]of Object.entries({companyId:company,departmentId:department,asUserId:asUser,from,to}))if(v)q.set(k,v);if(source)q.set('source',source);const [result,targets]=await Promise.all([CenterForms.api('central-dashboard?'+q),(targetCache?Promise.resolve({rows:targetCache}):CenterForms.api('view-as/targets').catch(err=>{if(err.status===403||err.message==='denied')return {rows:[]};throw err;})),!asUser?MyWorkUI.load({companyId:company,departmentId:department}):null]);if(n!==epoch)return;if(targets){targetCache=targets.rows;result.targets=targets.rows;}data=result;widgets=result.layout.widgets;sections=result.layout.sections||{charts:true,reports:true,tasks:true,shortcuts:true,alerts:true};}catch(err){if(n===epoch){error=t('تعذر تحميل لوحة التحكم. أعد المحاولة؛ لم تُعرض أعداد بديلة. ','Cannot load dashboard. Retry; no replacement counts were shown. ')+err.message;data=null;}}finally{clearTimeout(spinner);if(n===epoch){loading=false;if(app.state.currentPage==='dashboard')render();if(data?.layout.sections.charts&&data.layout.detailWidgets.includes('vehicles')&&data.counts.vehicles!=null&&!department){void loadMovements();if(dynamicReport==='movement')void loadLegacyMovements();}}}}
  const columnNames={nameAr:['الاسم بالعربية','Arabic name'],nameEn:['الاسم بالإنجليزية','English name'],companyName:['الشركة','Company'],tradeLicenseNumber:['رقم الرخصة','License number'],emirate:['الإمارة','Emirate'],status:['الحالة','Status'],number:['رقم الملف','File number'],name:['الاسم','Name'],accountName:['اسم الحساب','Account name'],bankName:['البنك','Bank'],currency:['العملة','Currency'],nationality:['الجنسية','Nationality'],type:['النوع','Type'],plate:['رقم اللوحة','Plate'],customerName:['العميل','Customer'],kind:['النوع','Kind'],dueOn:['تاريخ الاستحقاق','Due date'],amount:['المبلغ','Amount'],paid:['المحصل','Paid'],outstanding:['المتبقي','Outstanding'],title:['العنوان','Title'],jobTitle:['الوظيفة','Job title'],hiredOn:['تاريخ التعيين','Hire date'],stage:['المرحلة','Stage'],mode:['نوع الاستثمار','Investment type'],licenseNumber:['رقم الرخصة','License number'],relationship:['العلاقة التعاقدية','Relationship']};
  const fields={companies:['nameAr','nameEn','tradeLicenseNumber','emirate','status'],contractingCompanies:['nameAr','nameEn','licenseNumber','relationship','status'],banks:['companyName','bankName','accountName','currency','status'],customers:['number','name','nationality','companyName','status'],vehicles:['number','plate','type','customerName','companyName','status'],invoices:['number','companyName','dueOn','currency','amount','paid','outstanding','status'],employees:['number','name','jobTitle','companyName','hiredOn','status'],tasks:['number','title','companyName','dueOn','status'],marketing:['title','companyName','stage'],investments:['companyName','mode','currency','status']};
  function companyName(id){const co=(app.state.companies||[]).find(c=>c.id===id);return co?(getLocale()==='ar'?co.arabicName:co.englishName)||co.arabicName||co.englishName:t('شركة ضمن الصلاحيات','Authorized company');}
- function bankDialog(title,content,onOpen){
-  const trigger=document.activeElement,parent=trigger?.closest('dialog[open]');
-  const dialog=document.createElement('dialog');
-  dialog.className='record-form-dialog dashboard-bank-dialog';
-  dialog.dataset.centerOwned='1';
-  dialog.innerHTML=`<div class="section-head"><h2>${e(title)}</h2><button type="button" class="secondary-btn" data-bank-close aria-label="${e(t('إغلاق','Close'))}">×</button></div>${content}`;
-  if(parent)parent.hidden=true;
-  const close=()=>dialog.close();
-  dialog.querySelector('[data-bank-close]').onclick=close;
-  dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
-  dialog.addEventListener('close',()=>{
-   dialog.remove();
-   if(parent?.isConnected)parent.hidden=false;
-   if(trigger?.isConnected)trigger.focus();
-  },{once:true});
-  document.body.append(dialog);
-  FloatingRecords.open(dialog,{close});
-  onOpen?.(dialog);
- }
- async function openBankDeposits(accountId){
-  const snapshot=data;
-  const bank=snapshot?.postedFinancial?.banks.find(row=>row.id===accountId&&row.canViewDeposits);
-  if(!bank)return;
-  const path='central-dashboard/banks/'+encodeURIComponent(bank.id)+'/deposits';
-  const {rows,hasMore}=await CenterForms.api(path);
-  if(snapshot!==data||app.state.currentPage!=='dashboard')return;
-  const heading=t('الإيداعات قيد التحقق','Deposits pending verification');
-  const table=rows.length?`<div class="dashboard-compact-scroll"><table><thead><tr><th>${t('التاريخ','Date')}</th><th>${t('المبلغ','Amount')}</th><th>${t('تفاصيل','Details')}</th></tr></thead><tbody>${rows.map(row=>`<tr><td>${e(row.effective_on)}</td><td>${e(formatAmount(row.amount))} ${e(row.currency)}</td><td><button type="button" class="secondary-btn" data-deposit="${e(row.id)}">${t('فتح الإيداع','Open deposit')}</button></td></tr>`).join('')}</tbody></table></div>`:`<p>${t('لا توجد إيداعات قيد التحقق','No deposits pending verification')}</p>`;
-  bankDialog(heading+' · '+bank.name,table+(hasMore?`<p>${t('تُعرض أحدث 100 نتيجة. بقية الإيداعات في سجل المالية.','Showing the latest 100 results. See the finance register for more.')}</p>`:''),dialog=>{
-   for(const button of dialog.querySelectorAll('[data-deposit]'))button.onclick=async()=>{
-    try{
-     const {detail}=await CenterForms.api(path+'?depositId='+encodeURIComponent(button.dataset.deposit));
-     if(!dialog.isConnected)return;
-     bankDialog(t('تفاصيل الإيداع','Deposit details'),`<dl><dt>${t('المرجع','Reference')}</dt><dd>${e(detail.reference||'—')}</dd><dt>${t('تاريخ الإيداع','Deposit date')}</dt><dd>${e(detail.effective_on)}</dd><dt>${t('المبلغ','Amount')}</dt><dd>${e(formatAmount(detail.amount))} ${e(detail.currency)}</dd><dt>${t('الحالة','Status')}</dt><dd>${e(heading)}</dd></dl>`);
-    }catch{alert(t('تعذر فتح الإيداع أو تغيّرت حالته.','The deposit could not be opened or its status changed.'));}
-   };
-  });
- }
- const formatAmount=value=>new Intl.NumberFormat(getLocale()==='ar'?'ar-AE':'en-AE',{minimumFractionDigits:2,maximumFractionDigits:3}).format(value);
- const textValue=value=>value===null||value===undefined?'—':String(value);
- const statusEmpty=()=>t('لا توجد سجلات ضمن النطاق','No records in scope');
- const noMeasure=()=>t('لا توجد بيانات','No data');
- const noTarget=()=>t('لا يوجد هدف محدد','No target configured');
- const percent=value=>e(value??0)+'%';
- const detailPercent=(value,note=noMeasure())=>percent(value)+(value===null?` <small class="dashboard-rate-note">${e(note)}</small>`:'');
- const panel=(title,content,kind='')=>`<section class="dashboard-panel ${kind}"><h3>${e(title)}</h3><div class="dashboard-panel-body">${content}</div></section>`;
- function overviewTable(headers,rows,footer=[]){
-  return `<div class="dashboard-compact-scroll" tabindex="0"><table><thead><tr>${headers.map(label=>`<th scope="col">${e(label)}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.map(row=>`<tr>${row.map(value=>`<td>${value}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${headers.length}">${statusEmpty()}</td></tr>`}</tbody>${footer.length?`<tfoot>${footer.map(row=>`<tr>${row.map(value=>`<td>${value}</td>`).join('')}</tr>`).join('')}</tfoot>`:''}</table></div>`;
- }
- const moneyCell=(amount,currency)=>e(formatAmount(amount)+(currency?' '+currency:''));
- const moneyUnits=value=>{const parts=String(value).split('.');return BigInt(parts[0])*1000n+BigInt((parts[0].startsWith('-')?'-':'')+(parts[1]||'').padEnd(3,'0'));};
- function monetaryTotals(rows,counts,amounts,distinctCounts){
-  const totals=new Map(),totalCounts=counts.map(field=>distinctCounts?.[field]??(rows.some(row=>row[field]!==null)?rows.reduce((sum,row)=>sum+(row[field]||0),0):null));
-  for(const row of rows){
-   if(!row.currency)continue;
-   const sums=totals.get(row.currency)||amounts.map(()=>0n);
-   amounts.forEach((field,i)=>{sums[i]+=moneyUnits(row[field]);});
-   totals.set(row.currency,sums);
-  }
-  if(!totals.size)totals.set(null,amounts.map(()=>0n));
-  const amountFromUnits=value=>{const absolute=value<0n?-value:value;return (value<0n?'-':'')+String(absolute/1000n)+'.'+String(absolute%1000n).padStart(3,'0');};
-  return [...totals].map(([currency,values],i)=>[e(t('إجمالي النطاق','Scope total')),
-   ...(i===0?totalCounts.map(v=>e(textValue(rows.length?v:0))):counts.map(()=>e('—'))),
-   ...values.map(value=>moneyCell(amountFromUnits(value),currency))]);
- }
- function financialOverview(){
-  const rows=data?.overview?.financial;
-  if(!Array.isArray(rows))return '';
-  const counts=['banks','employees'],amounts=['invoiced','due','collected','overdue','outstanding'];
-  return panel(t('الملخص المالي حسب الشركة','Financial summary by company'),overviewTable(
-   [t('الشركة','Company'),t('الحسابات البنكية','Bank accounts'),t('الموظفون','Employees'),t('إجمالي الفواتير','Total invoiced'),t('المستحق للدفع','Due for payment'),t('المحصّل','Collected'),t('المتأخرات','Overdue'),t('إجمالي المتبقي','Total outstanding')],
-   rows.map(row=>[e(companyName(row.companyId)),...counts.map(field=>e(textValue(row[field]))),...amounts.map(field=>moneyCell(row[field],row.currency))]),
-   monetaryTotals(rows,counts,amounts)));
- }
- function supportingSummaries(){
-  const overview=data?.overview;
-  if(!overview)return '';
-  const cards=[];
-  if(data.ageing)for(const [title,rows] of [
-   [t('أعلى الجهات مديونية','Highest outstanding by party'),data.ageing.debtors],
-   [t('أعلى البنود المستحقة','Highest outstanding by item'),data.ageing.items]
-  ])cards.push(panel(title,overviewTable([t('الاسم','Name'),t('المستحق','Outstanding')],rows.map(row=>[
-    e((getLocale()==='ar'?row.nameAr:row.nameEn)||row.nameAr||row.nameEn),moneyCell(row.amount,row.currency)
-   ]), rows.length?[]:[[e(t('الإجمالي الظاهر','Total shown')),moneyCell('0',null)]])));
-  if(Array.isArray(overview.contracts))cards.push(panel(t('العقود حسب الشركة','Contracts by company'),overviewTable(
-   [t('الشركة','Company'),t('العقود','Contracts')],overview.contracts.map(row=>[e(companyName(row.companyId)),row.count]),
-   [[e(t('الإجمالي','Total')),overview.contracts.reduce((a,row)=>a+row.count,0)]])));
-  if(Array.isArray(overview.emirates))cards.push(panel(t('الشركات حسب الإمارة','Companies by emirate'),overviewTable(
-   [t('الإمارة','Emirate'),t('الشركات','Companies')],overview.emirates.map(row=>{const entry=AreaReference.emirates.find(x=>[x.id,x.ar,x.en,x.legacy].includes(row.emirate));return [e(entry?t(entry.ar,entry.en):row.emirate),row.count];}),
-   [[e(t('الإجمالي المسجّل حسب الإمارة','Total with recorded emirate')),overview.emirates.reduce((a,row)=>a+row.count,0)]])));
-  return cards.length?`<div class="dashboard-debt-lists">${cards.join('')}</div>`:'';
- }
- function investorsOverview(){
-  const rows=data?.overview?.investors;
-  if(!Array.isArray(rows))return '';
-  const counts=['investors','vehicles'],amounts=['invested','installments','plates','principal'];
-  return panel(t('ملخص المستثمرين حسب الشركة','Investor summary by company'),overviewTable(
-   [t('الشركة','Company'),t('المستثمرون','Investors'),t('المركبات','Vehicles'),t('المبلغ المستثمر','Capital received'),t('محصّل الأقساط','Installments collected'),t('محصّل رسوم اللوحات','Plate fees collected'),t('المتبقي من الأصل','Remaining principal')],
-   rows.map(row=>[e(companyName(row.companyId)),...counts.map(field=>row[field]),...amounts.map(field=>moneyCell(row[field],row.currency))]),
-   monetaryTotals(rows,counts,amounts,data.overview.investorTotals)));
- }
- const metricNames={
-  collection:['الأداء العام','Overall performance'],marketing:['التسويق وجلب الأعمال','Marketing and new business'],
-  management:['أداء الإدارة','Management performance'],staff:['أداء الموظفين','Employee performance']
- };
- const completion=(done,due)=>due?Math.round(done*100/due):null;
- function score(row,key){
-  if(key==='collection')return row.collection;
-  if(key==='marketing')return row.target>0&&row.opportunities!==null?Math.round(100*row.opportunities/row.target):null;
-  return completion(row.done,row.due);
- }
- function performanceOverview(){
-  const report=data?.overview?.performance;
-  if(!report)return '';
-  const taskAmount=(rows,key)=>rows.reduce((total,row)=>total+row[key],0);
-  const entries=[];
-  if(report.collectionReady){
-   const measured=report.rows.map(r=>r.collection).filter(x=>x!==null);
-   const target=90;
-   const green=measured.filter(x=>x>=target).length;
-   entries.push(['collection',measured.length?Math.round(measured.reduce((a,b)=>a+b,0)/measured.length):null,
-    `<span class="dashboard-badge-green" aria-label="${t('شركات عند الهدف','Companies at target')}">${green}</span> <span class="dashboard-badge-red" aria-label="${t('شركات دون الهدف','Companies below target')}">${measured.length-green}</span> <small>${t('هدف التحصيل','Collection target')} ${target}%</small>`,report.drilldowns.collection]);
-  }
-  if(report.marketingReady){
-   const measured=report.rows.filter(row=>row.target>0&&row.opportunities!==null);
-   entries.push(['marketing',measured.length?completion(taskAmount(measured,'opportunities'),taskAmount(measured,'target')):null,
-    `${t('فرص مسجّلة','Recorded opportunities')} ${taskAmount(report.rows,'opportunities')}`,report.drilldowns.marketing]);
-  }
-  if(report.managementReady)entries.push(['management',completion(taskAmount(report.rows,'done'),taskAmount(report.rows,'due')),
-   `${t('مهام متأخرة','Overdue tasks')} ${taskAmount(report.rows,'overdue')}`,report.drilldowns.management]);
-  if(report.staffReady)entries.push(['staff',completion(taskAmount(report.staff,'done'),taskAmount(report.staff,'due')),
-   `${t('مهام مكتملة','Completed tasks')} ${taskAmount(report.staff,'done')}`,true]);
-  return entries.length?panel(t('الأداء','Performance'),`<p class="dashboard-metric-period">${e(report.specialPeriod?t('حسب الفترة المختارة','Selected period'):t('الشهر','Month')+' '+report.month)}</p><div class="dashboard-gauges">${entries.map(([key,value,caption,clickable])=>`<div class="dashboard-gauge">
-   <h4>${clickable?`<button type="button" class="secondary-btn" data-overview-metric="${key}">${t(...metricNames[key])}</button>`:e(t(...metricNames[key]))}</h4>
-   <div class="dashboard-gauge-arc" style="--progress:${Math.min(100,Math.max(0,value||0))*1.8}deg"><strong>${percent(value)}</strong></div>
-   ${value===null?`<small>${key==='marketing'&&taskAmount(report.rows,'opportunities')>0?noTarget():noMeasure()}</small>`:''}<div>${caption}</div>
-  </div>`).join('')}</div>`):'';
- }
- function openPerformance(key){
-  const report=data.overview.performance;
-  const title=t(...metricNames[key]);
-  const headers=[t('الشركة','Company'),t('الأداء','Performance'),t('التفاصيل','Details')];
-  const rows=report.rows.map(row=>{
-   const value=score(row,key);
-   const canStaff=report.staffReady&&report.staff.some(staff=>staff.companyId===row.companyId)&&(key==='collection'||key==='staff'||key==='management');
-   const extra=key==='marketing'?e(t('الفرص','Opportunities')+' '+textValue(row.opportunities)+' / '+textValue(row.target)):
-    canStaff?`<button type="button" class="secondary-btn" data-overview-staff="${e(row.companyId)}">${key==='collection'?t('عرض المحصّلين','View collectors'):t('عرض الموظفين','View employees')}</button>`:'—';
-   const scoped=key==='collection'?row.collectionScoped:key==='marketing'?row.opportunities!==null:row.taskScope||canStaff;
-   return [e(companyName(row.companyId)),scoped?detailPercent(value,key==='marketing'&&row.opportunities>0?noTarget():noMeasure()):'—',extra];
-  });
-  bankDialog(title,overviewTable(headers,rows),dialog=>{
-   for(const b of dialog.querySelectorAll('[data-overview-staff]'))b.onclick=()=>{
-    const staff=report.staff.filter(row=>row.companyId===b.dataset.overviewStaff&&(key!=='collection'||row.collections.due>0));
-    bankDialog(companyName(b.dataset.overviewStaff),overviewTable(
-     [t('الموظف','Employee'),t('المكتملة','Completed'),t('المستحقة','Due'),key==='collection'?t('إنجاز مهام التحصيل','Collection task completion'):t('نسبة الإنجاز','Completion rate')],
-     staff.map(row=>{const metrics=key==='collection'?row.collections:row;const rate=score(metrics,'staff');return [e(row.name),metrics.done,metrics.due,detailPercent(rate)];})));
-   };
-  });
- }
- function urgentOverview(){
-  const rows=data?.overview?.urgent;
-  return Array.isArray(rows)?panel(t('يتطلب إجراءً','Action required'),overviewTable(
-   [t('المهمة','Task'),t('الشركة','Company'),t('المسؤول','Assignee'),t('الاستحقاق','Due'),t('الحالة','Status')],
-   rows.map(row=>[data.layout.detailWidgets.includes('tasks')?`<button type="button" class="secondary-btn" data-overview-task="${e(row.id)}">${e(row.title)}</button>`:e(row.title),
-    e(companyName(row.companyId)),e(textValue(row.employee)),e(row.dueOn),e(row.status)]), rows.length?[]:[[e(t('مهام تتطلب إجراءً','Tasks requiring action')),0,'—','—','—']]),'dashboard-urgent'):'';
- }
- function bankOverview(){
-  const rows=data?.postedFinancial?.banks;
-  if(!sections.reports||department||!Array.isArray(rows)||(!rows.length&&data?.counts.banks===null))return '';
-  const table=rows.length?CenterForms.table('dashboard-banks:'+actor,data.postedFinancial.banks,[['name',t('الحساب','Account')],['currency',t('العملة','Currency')],['balance',t('الرصيد','Balance')],['status',t('الحالة','Status')]],'',row=>row.canViewDeposits?`<button type="button" class="secondary-btn" data-bank-deposits="${e(row.id)}">${t('الإيداعات قيد التحقق','Pending deposits')}</button>`:'',{balance:'number'}):overviewTable([t('الحساب','Account'),t('الرصيد','Balance')],[],[[e(t('إجمالي الحسابات المعروضة','Displayed accounts')),0]]);
-  return panel(t('رصد البنوك','Bank monitoring'),table);
- }
- let overviewMovements=null,overviewMovementError='',comparisonYears=null;
- const monthLabel=(month,style='short')=>new Intl.DateTimeFormat(getLocale()==='ar'?'ar-AE':'en-AE',{month:style,timeZone:'UTC'}).format(new Date(Date.UTC(2020,month-1,1)));
- function movementRequest(result){
-  if(!sections.charts||department||result.counts.vehicles===null||!result.layout.detailWidgets.includes('vehicles'))return;
-  const current=epoch,params=new URLSearchParams({months:'36'});
-  if(company)params.set('companyId',company);
-  if(from)params.set('from',from);
-  if(to)params.set('to',to);
-  CenterForms.api('central-dashboard/vehicle-movements?'+params).then(series=>{
-   if(current!==epoch||data!==result)return;
-   overviewMovements=series;
-   if(app.state.currentPage==='dashboard')render();
-  }).catch(()=>{
-   if(current!==epoch||data!==result)return;
-   overviewMovementError=t('تعذر تحميل حركة المركبات','Unable to load vehicle movements');
-   if(app.state.currentPage==='dashboard')render();
-  });
- }
- function movementOverview(){
-  if(!data||!sections.charts||department||data.counts.vehicles===null||!data.layout.detailWidgets.includes('vehicles'))return '';
-  const title=t('حركة المركبات الشهرية','Monthly vehicle movements');
-  if(!overviewMovements?.available)return panel(title,`<p role="status">${e(overviewMovementError||(overviewMovements?t('مصدر حركة المركبات غير متاح','Vehicle movement source unavailable'):t('جارٍ تحميل الحركة','Loading movements')))}</p>`);
-  const series=overviewMovements.months,latest=Number(series.at(-1).month.slice(0,4));
-  const years=Array.from({length:3},(_,index)=>latest-index);
-  const selected=comparisonYears?.filter(year=>years.includes(year))||years;
-  const active=selected.length?selected:[latest];
-  const byMonth=new Map(series.map(row=>[row.month,row]));
-  const peak=Math.max(1,...series.filter(row=>active.includes(Number(row.month.slice(0,4)))).flatMap(row=>[row.in,row.out]));
-  return panel(title,`<div class="dashboard-movement-years">${years.map((year,index)=>`<button type="button" class="secondary-btn dashboard-year-${index}" data-overview-year="${year}" aria-pressed="${active.includes(year)}">${year}</button>`).join('')}
-   <small>${t('الإضافات أعلى الخط والخروج أسفله','Entries above the line, exits below')}</small></div>
-   <div class="dashboard-movement-scroll"><div class="dashboard-movement-chart">${Array.from({length:12},(_,index)=>{
-    const month=index+1;
-    const groups=active.map(year=>{
-     const key=year+'-'+String(month).padStart(2,'0'),row=byMonth.get(key);
-     if(!row)return '<div class="dashboard-movement-empty" aria-hidden="true"></div>';
-     return `<button type="button" class="dashboard-movement-column dashboard-year-${years.indexOf(year)}" data-overview-month="${key}"
-      aria-label="${e(monthLabel(month,'long')+' '+year+' · '+t('الإضافات','Entries')+' '+row.in+' · '+t('الخروج','Exits')+' '+row.out)}">
-      <span class="dashboard-movement-in"><b style="--bar-size:${Math.max(13,row.in/peak*67)}px">${row.in}</b></span>
-      <span class="dashboard-movement-out"><b style="--bar-size:${Math.max(13,row.out/peak*67)}px">${row.out}</b></span></button>`;
-    }).join('');
-    return `<div class="dashboard-movement-month"><div>${groups}</div><small>${e(monthLabel(month))}</small></div>`;
-   }).join('')}</div></div>`);
- }
- function openMovementMonth(month){
-  const rows=overviewMovements.rows.filter(row=>row.month===month);
-  const companies=Map.groupBy(rows,row=>row.companyId);
-  bankDialog(t('حركة المركبات حسب الشركة','Vehicle movements by company')+' · '+month,overviewTable(
-   [t('الشركة','Company'),t('الإضافات','Entries'),t('الخروج','Exits'),t('السجلات','Records')],
-   [...companies].map(([id,vehicles])=>[e(companyName(id)),vehicles.filter(row=>row.direction==='in').length,vehicles.filter(row=>row.direction==='out').length,
-    `<button type="button" class="secondary-btn" data-overview-movement-company="${e(id)}">${t('عرض السجلات','View records')}</button>`]),
-   rows.length?[]:[[e(t('الإجمالي','Total')),0,0,'—']]),dialog=>{
-   for(const b of dialog.querySelectorAll('[data-overview-movement-company]'))b.onclick=()=>{
-    const id=b.dataset.overviewMovementCompany;
-    bankDialog(companyName(id)+' · '+month,overviewTable(
-     [t('ملف المركبة','Vehicle file'),t('اللوحة','Plate'),t('الحركة','Movement'),t('التاريخ','Date')],
-     companies.get(id).map(row=>[e(row.fileNumber),e(row.plate),e(row.direction==='in'?t('دخول','Entry'):t('خروج','Exit')),e(row.date)])));
-   };
-  });
- }
- function currentOverview(){
-  if(!data)return '';
-  const keys=['companies','customers','vehicles','invoices','tasks'];
-  const cards=keys.filter(key=>widgets.includes(key)&&data.counts[key]!==null&&(key!=='tasks'||sections.tasks));
-  return cards.length?panel(t('الوضع الحالي','Current status'),`<div class="dashboard-current">${cards.map(key=>`<div><span>${e(t(...labels[key]))}</span><strong>${data.counts[key]}</strong></div>`).join('')}</div>`):'';
- }
  function records(){return(data?.sources[source]||[]).map(row=>{const co=(app.state.companies||[]).find(c=>c.id===row.companyId),bank=source==='banks'?(app.state.bankReference||[]).find(b=>b.id===row.bankId):null;return{...row,companyName:row.companyName||(co?(getLocale()==='ar'?co.arabicName:co.englishName)||co.arabicName||co.englishName:''),...(source==='companies'?{tradeLicenseNumber:co?.tradeLicenseNumber||''}:{}),...(bank?{bankName:getLocale()==='ar'?bank.ar:bank.en}:{})};});}
  function details(){const columns=(fields[source]||[]).map(k=>[k,t(...columnNames[k])]);return `<section class="dashboard-details"><div class="section-head"><h3>${e(t(...labels[source]))}</h3><button class="secondary-btn" type="button" data-dashboard="back">${t('العودة إلى لوحة التحكم','Back to dashboard')}</button></div><form class="register-search" id="dashboard-search"><input class="input" type="search" name="q" value="${e(searches[source]||'')}" aria-label="${t('البحث المركزي','Central search')}"><button class="ghost-btn" type="submit">${t('بحث','Search')}</button></form>${CenterForms.table('dashboard-source:'+actor+':'+asUser+':'+source,records(),columns,searches[source]||'',r=>`<button type="button" class="ghost-btn" data-dashboard-record="${e(r.id)}">${t('فتح الملف','Open profile')}</button>`,{amount:'number',paid:'number',outstanding:'number',dueOn:'date',hiredOn:'date'})}</section>`;}
- async function openRecord(id){if(!await WorkspaceUI.leave())return;const row=records().find(r=>r.id===id);if(!row)throw Error('notFound');if(source==='companies')return ABCentral.openCompany(id);if(source==='customers')return CustomerUI.open(id);if(source==='vehicles')return VehicleUI.openNotification(id);if(source==='contractingCompanies'){app.state.currentPage='contractingCompanies';return ContractingCompaniesUI.open(id);}const columns=(fields[source]||[]).map(k=>[k,t(...columnNames[k])]);const types={banks:'bankAccounts',employees:'personnel',tasks:'personnel',invoices:'financialManagement',marketing:'marketing',investments:'investors'};const dialog=document.createElement('dialog');dialog.className='record-form-dialog';dialog.dataset.centerOwned='1';dialog.innerHTML=`<h2>${e(t(...labels[source]))}</h2><p>${t('عرض للقراءة فقط','Read-only')}</p><dl>${columns.map(([key,label])=>`<dt>${e(label)}</dt><dd>${e(row[key]??'—')}</dd>`).join('')}</dl><button class="secondary-btn" type="button" data-original>${t('فتح الملف في القسم الأصلي','Open profile in original module')}</button><button class="ghost-btn" type="button" data-close>${t('إغلاق','Close')}</button>`;document.body.append(dialog);dialog.querySelector('[data-close]').onclick=()=>dialog.remove();dialog.addEventListener('close',()=>dialog.remove(),{once:true});const requestedSource=source;dialog.querySelector('[data-original]').onclick=async()=>{try{if(requestedSource==='banks')await ABCentral.openBank(id);else if(requestedSource==='employees')await PersonnelUI.openProfile(id);else if(requestedSource==='investments')await InvestorUI.open(id);else await RecordLinks.open(({tasks:'task',invoices:'invoice',marketing:'marketing'})[requestedSource],id);dialog.remove();}catch(err){alert(err.message);}};FloatingRecords.open(dialog);}
- async function loadMovements(){const n=++movementEpoch;movementError='';movementData=null;try{const q=new URLSearchParams({months:String(movementMonths)});for(const[k,v]of Object.entries({companyId:company,licenseId:movementLicence,emirate:movementEmirate,from,to}))if(v)q.set(k,v);const result=await CenterForms.api('central-dashboard/vehicle-movements?'+q);if(n===movementEpoch)movementData=result;}catch(err){if(n===movementEpoch)movementError=err.message;}if(n===movementEpoch&&app.state.currentPage==='dashboard')render();}
- function dynamicHTML(){const options=[['',t('اختر تقريراً','Choose report')],['movement',t('دخول وخروج المركبات','Vehicle entries and exits')],...Object.entries(labels).map(([k,v])=>[k,t(...v)])].filter(([id])=>id===''||(id==='movement'?sections.charts&&data?.counts.vehicles!==null&&(!data?.layout?.detailWidgets||data.layout.detailWidgets.includes('vehicles')):widgets.includes(id)&&(!data?.layout?.detailWidgets||data.layout.detailWidgets.includes(id))&&data?.counts[id]!==null&&(id!=='tasks'||sections.tasks)));let chart='';if(dynamicReport==='movement'&&sections.charts){const r=movementData,largest=Math.max(1,...(r?.months||[]).flatMap(m=>[m.in,m.out]));chart=`<div class="register-actions"><label>${t('الفترة','Period')}<select id="movement-months" class="input"><option value="12" ${movementMonths===12?'selected':''}>12</option><option value="24" ${movementMonths===24?'selected':''}>24</option></select></label><label>${t('الإمارة','Emirate')}<select id="movement-emirate" class="input"><option value="">${t('الكل','All')}</option>${AreaReference.emirates.map(a=>`<option value="${e(a.id)}" ${movementEmirate===a.id?'selected':''}>${e(getLocale()==='ar'?a.ar:a.en)}</option>`).join('')}</select></label><label>${t('الرخصة الحالية','Current licence')}<select id="movement-licence" class="input"><option value="">${t('الكل','All')}</option>${(data?.companies||[]).map(co=>{const c=app.state.companies.find(c=>c.id===co.id);return c?.licenseId?`<option value="${e(c.licenseId)}" ${movementLicence===c.licenseId?'selected':''}>${e(co.name)} — ${e(c.tradeLicenseNumber||'')}</option>`:'';}).join('')}</select></label><button type="button" data-dashboard="movement-refresh">${t('تحديث الرسم','Refresh chart')}</button></div><p role="alert">${e(movementError)}</p>${r?.available===false?`<p>${t('مصدر أحداث المركبات غير جاهز. بقية التقارير متاحة.','Vehicle event source unavailable; other reports remain available.')}</p>`:r?`<p>${t('إجمالي الدخول','Entries')}: ${r.entered} · ${t('إجمالي الخروج','Exits')}: ${r.exited} · ${t('صافي الحركة','Net movement')}: ${r.net}</p><p>${t('الأخضر: تسجيل أو عودة إلى نشط؛ الأحمر: مغادرة نشط أو إغلاق بيع. التاريخ هو تاريخ السريان المسجل، وإلا وقت الحدث. الرخصة والإمارة حسب التسجيل الحالي.','Green: registration/reactivation; red: leaving Active or closing a sale. Recorded effective dates are used, otherwise event timestamps. Licence and emirate use current records.')}</p><div class="movement-chart" role="group" aria-label="${t('الحركة الشهرية للمركبات','Monthly vehicle movements')}">${r.months.map(m=>`<div class="movement-month"><div class="movement-bars">${['in','out'].map(d=>`<button type="button" class="movement-bar movement-${d}" data-movement="${d}" data-month="${m.month}" ${m[d]?'':'disabled'} style="--bar-height:${Math.max(3,m[d]/largest*150)}px" aria-label="${e(m.month+' '+(d==='in'?t('دخول','Entries'):t('خروج','Exits'))+' '+m[d])}"><span>${m[d]}</span></button>`).join('')}</div><small>${m.month}</small></div>`).join('')}</div>${movementFocus?CenterForms.table('movement:'+actor,r.rows.filter(x=>x.month===movementFocus.month&&x.direction===movementFocus.direction),[['fileNumber',t('رقم المركبة','Vehicle file')],['plate',t('اللوحة','Plate')],['date',t('التاريخ','Date')]],'',x=>`<button type="button" data-movement-vehicle="${e(x.vehicleId)}">${t('ملف المركبة','Vehicle profile')}</button>`,{date:'date'}):''}`:`<p>${t('جارٍ تحميل الأحداث الفعلية…','Loading recorded events…')}</p>`}`;}
+ function openRecord(id){
+  const row=records().find(r=>r.id===id),kind=source;if(!row)throw Error('notFound');
+  if(kind==='companies'||kind==='customers'||kind==='vehicles'){
+   for(const entry of [...dialogs].reverse())entry.close();
+   if(kind==='companies')return ABCentral.openCompany(id);
+   if(kind==='customers')return CustomerUI.open(id);
+   return VehicleUI.openNotification(id);
+  }
+  const fieldsHTML=(fields[kind]||[]).map(key=>'<dt>'+e(t(...columnNames[key]))+'</dt><dd>'+e(row[key]??'—')+'</dd>').join('');
+  const d=overlay(t(...labels[kind]),'<dl>'+fieldsHTML+'</dl><button type="button" class="ghost-btn" data-original>'+t('فتح الملف في القسم الأصلي','Open profile in original module')+'</button>');
+  d.querySelector('[data-original]').onclick=async()=>{
+   try{
+    if(kind==='companies')await ABCentral.openCompany(id);
+    else if(kind==='customers')await CustomerUI.open(id);
+    else if(kind==='vehicles')await VehicleUI.openNotification(id);
+    else if(kind==='contractingCompanies'){app.state.currentPage='contractingCompanies';await ContractingCompaniesUI.open(id);}
+    else if(kind==='banks')await ABCentral.openBank(id);
+    else if(kind==='employees')await PersonnelUI.openProfile(id);
+    else if(kind==='investments')await InvestorUI.open(id);
+    else await RecordLinks.open(({tasks:'task',invoices:'invoice',marketing:'marketing'})[kind],id);
+    for(const entry of [...dialogs].reverse())entry.close();
+   }catch(err){const status=document.createElement('p');status.setAttribute('role','alert');status.textContent=err.message;d.querySelector('.ab-board-dialog-body').append(status);}
+  };
+ }
+ async function loadMovements(){const n=++movementEpoch;movementError='';movementData=null;try{const q=new URLSearchParams({months:'36'});for(const[k,v]of Object.entries({companyId:company,from,to}))if(v)q.set(k,v);const result=await CenterForms.api('central-dashboard/vehicle-movements?'+q);if(n===movementEpoch)movementData=result;}catch(err){if(n===movementEpoch)movementError=err.message;}if(n===movementEpoch&&app.state.currentPage==='dashboard')render();}
+ async function loadLegacyMovements(){const n=++legacyMovementEpoch;legacyMovementError='';legacyMovementData=null;try{const q=new URLSearchParams({months:String(movementMonths)});for(const[k,v]of Object.entries({companyId:company,licenseId:movementLicence,emirate:movementEmirate,from,to}))if(v)q.set(k,v);const result=await CenterForms.api('central-dashboard/vehicle-movements?'+q);if(n===legacyMovementEpoch)legacyMovementData=result;}catch(err){if(n===legacyMovementEpoch)legacyMovementError=err.message;}if(n===legacyMovementEpoch&&app.state.currentPage==='dashboard')render();}
+ function dynamicHTML(){const options=[['',t('اختر تقريراً','Choose report')],['movement',t('دخول وخروج المركبات','Vehicle entries and exits')],...Object.entries(labels).map(([k,v])=>[k,t(...v)])].filter(([id])=>id===''||(id==='movement'?sections.charts&&data?.counts.vehicles!==null&&(!data?.layout?.detailWidgets||data.layout.detailWidgets.includes('vehicles')):widgets.includes(id)&&(!data?.layout?.detailWidgets||data.layout.detailWidgets.includes(id))&&data?.counts[id]!==null&&(id!=='tasks'||sections.tasks)));let chart='';if(dynamicReport==='movement'&&sections.charts){const r=legacyMovementData,largest=Math.max(1,...(r?.months||[]).flatMap(m=>[m.in,m.out]));chart=`<div class="register-actions"><label>${t('الفترة','Period')}<select id="movement-months" class="input"><option value="12" ${movementMonths===12?'selected':''}>12</option><option value="24" ${movementMonths===24?'selected':''}>24</option></select></label><label>${t('الإمارة','Emirate')}<select id="movement-emirate" class="input"><option value="">${t('الكل','All')}</option>${AreaReference.emirates.map(a=>`<option value="${e(a.id)}" ${movementEmirate===a.id?'selected':''}>${e(getLocale()==='ar'?a.ar:a.en)}</option>`).join('')}</select></label><label>${t('الرخصة الحالية','Current licence')}<select id="movement-licence" class="input"><option value="">${t('الكل','All')}</option>${(data?.companies||[]).map(co=>{const c=app.state.companies.find(c=>c.id===co.id);return c?.licenseId?`<option value="${e(c.licenseId)}" ${movementLicence===c.licenseId?'selected':''}>${e(co.name)} — ${e(c.tradeLicenseNumber||'')}</option>`:'';}).join('')}</select></label><button type="button" data-dashboard="movement-refresh">${t('تحديث الرسم','Refresh chart')}</button></div><p role="alert">${e(legacyMovementError)}</p>${r?.available===false?`<p>${t('مصدر أحداث المركبات غير جاهز. بقية التقارير متاحة.','Vehicle event source unavailable; other reports remain available.')}</p>`:r?`<p>${t('إجمالي الدخول','Entries')}: ${r.entered} · ${t('إجمالي الخروج','Exits')}: ${r.exited} · ${t('صافي الحركة','Net movement')}: ${r.net}</p><p>${t('الأخضر: تسجيل أو عودة إلى نشط؛ الأحمر: مغادرة نشط أو إغلاق بيع. التاريخ هو تاريخ السريان المسجل، وإلا وقت الحدث. الرخصة والإمارة حسب التسجيل الحالي.','Green: registration/reactivation; red: leaving Active or closing a sale. Recorded effective dates are used, otherwise event timestamps. Licence and emirate use current records.')}</p><div class="movement-chart" role="group" aria-label="${t('الحركة الشهرية للمركبات','Monthly vehicle movements')}">${r.months.map(m=>`<div class="movement-month"><div class="movement-bars">${['in','out'].map(d=>`<button type="button" class="movement-bar movement-${d}" data-movement="${d}" data-month="${m.month}" ${m[d]?'':'disabled'} style="--bar-height:${Math.max(3,m[d]/largest*150)}px" aria-label="${e(m.month+' '+(d==='in'?t('دخول','Entries'):t('خروج','Exits'))+' '+m[d])}"><span>${m[d]}</span></button>`).join('')}</div><small>${m.month}</small></div>`).join('')}</div>${movementFocus?CenterForms.table('movement:'+actor,r.rows.filter(x=>x.month===movementFocus.month&&x.direction===movementFocus.direction),[['fileNumber',t('رقم المركبة','Vehicle file')],['plate',t('اللوحة','Plate')],['date',t('التاريخ','Date')]],'',x=>`<button type="button" data-movement-vehicle="${e(x.vehicleId)}">${t('ملف المركبة','Vehicle profile')}</button>`,{date:'date'}):''}`:`<p>${t('جارٍ تحميل الأحداث الفعلية…','Loading recorded events…')}</p>`}`;}
  return `<section class="dashboard-dynamic record-section"><h3>${t('التقارير الديناميكية','Dynamic reports')}</h3><select id="dashboard-report" class="input">${options.map(([id,name])=>`<option value="${id}" ${dynamicReport===id?'selected':''}>${e(name)}</option>`).join('')}</select>${chart}</section>`;}
  function targetName(u){return (getLocale()==='ar'?u.nameAr||u.fullName||u.nameEn:u.nameEn||u.fullName||u.nameAr)||u.username;}
  function previewTargets(){return data.targets.filter(u=>RegisterTools.search([u.nameAr,u.nameEn,u.fullName,u.name,u.username,u.employeeNames,u.employeeNumber,u.roleId,getRoleName(u.roleId),u.departments?.map(d=>d.name)],userQuery));}
+ function previewCount(){
+  const formatter=new Intl.NumberFormat(getLocale(),{numberingSystem:getLocale()==='ar'?'arab':'latn',useGrouping:false});
+  return formatter.format(previewTargets().length)+' / '+formatter.format(data.targets.length);
+ }
  function previewOptions(){return previewTargets().map(u=>`<button type="button" role="option" data-preview-target="${e(u.id)}" aria-selected="${u.id===(previewUser||(ABCentral.viewAs?ABCentral.actor.id:''))}" ${u.previewable===false?'disabled':''}><strong>${e(targetName(u))}</strong><span>${e(u.employeeNumber||t('لا رقم وظيفي مرتبط','No linked employee number'))} · ${e(u.departments?.map(d=>d.name).join('، ')||t('بلا قسم مرتبط','No linked department'))} · ${e(getRoleName(u.roleId))}</span></button>`).join('')||`<p role="status">${t('لا توجد أسماء مطابقة','No matching users')}</p>`;}
- function previewPicker(){const selected=data.targets.find(u=>u.id===(previewUser||(ABCentral.viewAs?ABCentral.actor.id:'')));return `<div class="preview-picker"><div id="preview-picker"><strong>${t('عرض شاشة المستخدم','View user screen')}</strong><label for="dashboard-user-search">${t('ابحث بأي جزء من الاسم أو الرقم أو القسم أو الدور','Search any part of name, number, department or role')}</label><input class="input" type="search" id="dashboard-user-search" value="${e(userQuery)}" autocomplete="off" aria-controls="dashboard-user-options"><button type="button" class="input preview-user-combobox" id="dashboard-as" role="combobox" aria-haspopup="listbox" aria-expanded="${previewOpen}" aria-controls="dashboard-user-options" title="${e(selected?targetName(selected):'')}"><span data-preview-selected>${e(selected?targetName(selected):t('اختر مستخدماً','Choose a user'))}</span><span aria-hidden="true">▾</span></button><div class="preview-user-popup" id="dashboard-user-options" role="listbox" aria-label="${t('المستخدمون المصرح بمعاينتهم','Authorized preview users')}" ${previewOpen?'':'hidden'}>${previewOptions()}</div><p data-preview-selected-details>${selected?e(targetName(selected)+' · '+(selected.employeeNumber||'—')+' · '+(selected.departments?.map(d=>d.name).join('، ')||'—')+' · '+getRoleName(selected.roleId)):''}</p><p role="status" data-preview-count>${previewTargets().length} / ${data.targets.length}</p></div><button type="button" class="secondary-btn" data-dashboard="preview" ${!selected||selected.previewable===false?'disabled':''}>${t('معاينة شاشة الموظف','Preview employee screen')}</button><p role="alert">${e(previewError)}</p>${previewError?`<button class="secondary-btn" type="button" data-dashboard="preview-retry">${t('إعادة محاولة المعاينة','Retry preview')}</button>`:''}</div>`;}
+ function previewPicker(){const selected=data.targets.find(u=>u.id===(previewUser||(ABCentral.viewAs?ABCentral.actor.id:'')));return `<div class="preview-picker"><div id="preview-picker"><strong>${t('عرض شاشة المستخدم','View user screen')}</strong><label for="dashboard-user-search">${t('ابحث بأي جزء من الاسم أو الرقم أو القسم أو الدور','Search any part of name, number, department or role')}</label><input class="input" type="search" id="dashboard-user-search" value="${e(userQuery)}" autocomplete="off" aria-controls="dashboard-user-options"><button type="button" class="input preview-user-combobox" id="dashboard-as" role="combobox" aria-haspopup="listbox" aria-expanded="${previewOpen}" aria-controls="dashboard-user-options" title="${e(selected?targetName(selected):'')}"><span data-preview-selected>${e(selected?targetName(selected):t('اختر مستخدماً','Choose a user'))}</span><span aria-hidden="true">▾</span></button><div class="preview-user-popup" id="dashboard-user-options" role="listbox" aria-label="${t('المستخدمون المصرح بمعاينتهم','Authorized preview users')}" ${previewOpen?'':'hidden'}>${previewOptions()}</div><p data-preview-selected-details>${selected?e(targetName(selected)+' · '+(selected.employeeNumber||'—')+' · '+(selected.departments?.map(d=>d.name).join('، ')||'—')+' · '+getRoleName(selected.roleId)):''}</p><p role="status" data-preview-count>${e(previewCount())}</p></div><button type="button" class="secondary-btn" data-dashboard="preview" ${!selected||selected.previewable===false?'disabled':''}>${t('معاينة شاشة الموظف','Preview employee screen')}</button><p role="alert">${e(previewError)}</p>${previewError?`<button class="secondary-btn" type="button" data-dashboard="preview-retry">${t('إعادة محاولة المعاينة','Retry preview')}</button>`:''}</div>`;}
  function bindPreview(host){const button=host.querySelector('#dashboard-as'),popup=host.querySelector('#dashboard-user-options'),input=host.querySelector('#dashboard-user-search');if(!button)return;
  const toggle=value=>{previewOpen=value;popup.hidden=!value;button.setAttribute('aria-expanded',String(value));};
  const choices=()=>[...popup.querySelectorAll('[data-preview-target]:not(:disabled)')];
- const bindChoices=()=>popup.querySelectorAll('[data-preview-target]').forEach(b=>b.onclick=()=>{previewUser=b.dataset.previewTarget;previewError='';const u=data.targets.find(u=>u.id===previewUser);button.querySelector('[data-preview-selected]').textContent=targetName(u);button.title=targetName(u);host.querySelector('[data-preview-selected-details]').textContent=targetName(u)+' · '+(u.employeeNumber||'—')+' · '+(u.departments?.map(d=>d.name).join('، ')||'—')+' · '+getRoleName(u.roleId);popup.querySelectorAll('[role=option]').forEach(n=>n.setAttribute('aria-selected',String(n===b)));host.querySelector('[data-dashboard=preview]').disabled=false;toggle(false);button.focus();ViewAsUI.capturePicker();});
+ const bindChoices=()=>popup.querySelectorAll('[data-preview-target]').forEach(b=>b.onclick=()=>{previewUser=b.dataset.previewTarget;if(ABCentral.viewAs&&ownerPicker?.ownerId===ABCentral.viewAs.ownerId)Object.assign(ownerPicker,{userQuery,previewUser});previewError='';const u=data.targets.find(u=>u.id===previewUser);button.querySelector('[data-preview-selected]').textContent=targetName(u);button.title=targetName(u);host.querySelector('[data-preview-selected-details]').textContent=targetName(u)+' · '+(u.employeeNumber||'—')+' · '+(u.departments?.map(d=>d.name).join('، ')||'—')+' · '+getRoleName(u.roleId);popup.querySelectorAll('[role=option]').forEach(n=>n.setAttribute('aria-selected',String(n===b)));host.querySelector('[data-dashboard=preview]').disabled=false;toggle(false);button.focus();host.querySelector('[data-dashboard=preview]').click();});
  button.onclick=()=>toggle(!previewOpen);button.onkeydown=event=>{if(['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();toggle(true);choices()[event.key==='ArrowUp'?choices().length-1:0]?.focus();}};
  popup.onkeydown=event=>{const rows=choices(),i=rows.indexOf(document.activeElement);if(event.key==='Escape'){event.preventDefault();event.stopPropagation();toggle(false);button.focus();}else if(['ArrowDown','ArrowUp','Home','End'].includes(event.key)){event.preventDefault();const next=event.key==='Home'?0:event.key==='End'?rows.length-1:(i+(event.key==='ArrowDown'?1:-1)+rows.length)%rows.length;rows[next]?.focus();}};
- input.oninput=event=>{userQuery=event.target.value;previewUser='';popup.innerHTML=previewOptions();button.querySelector('[data-preview-selected]').textContent=t('اختر مستخدماً','Choose a user');host.querySelector('[data-preview-selected-details]').textContent='';host.querySelector('[data-preview-count]').textContent=previewTargets().length+' / '+data.targets.length;host.querySelector('[data-dashboard=preview]').disabled=true;toggle(true);bindChoices();};bindChoices();
+ input.oninput=event=>{userQuery=event.target.value;previewUser='';popup.innerHTML=previewOptions();button.querySelector('[data-preview-selected]').textContent=t('اختر مستخدماً','Choose a user');host.querySelector('[data-preview-selected-details]').textContent='';host.querySelector('[data-preview-count]').textContent=previewCount();host.querySelector('[data-dashboard=preview]').disabled=true;toggle(true);bindChoices();};bindChoices();
  }
  document.addEventListener('pointerdown',event=>{if(previewOpen&&!event.target.closest('#preview-picker')){previewOpen=false;const p=document.getElementById('dashboard-user-options'),b=document.getElementById('dashboard-as');if(p)p.hidden=true;b?.setAttribute('aria-expanded','false');}});
- function renderUI(){sync();if(!data&&!loading&&!error)void load();const select=(id,options,value)=>`<select class="input" id="${id}"><option value="">${t('الكل','All')}</option>${options.map(o=>`<option value="${e(o.id)}" ${o.id===value?'selected':''} ${o.disabled?'disabled':''}>${e(o.name)}</option>`).join('')}</select>`;
- return `<section class="content-panel" id="central-dashboard"><h2>${t('لوحة التحكم المركزية','Central dashboard')}</h2><p role="alert">${e(error)}</p>${data?.viewAs?`<aside class="view-as-banner" role="status">${t('معاينة قراءة فقط للوحة والتقارير باسم','Read-only dashboard projection for')} ${e(data.actor.name)} · ${e(data.actor.roleId)} <button type="button" data-dashboard="owner">${t('العودة للمالك','Return to owner')}</button><p>${t('لا تتغير هوية حسابك أو صلاحيات أي مستخدم. فتح الوحدات الأصلية يتم بوضع المالك.','Your identity and all grants are unchanged. Original modules open in owner mode.')}</p></aside>`:''}<div class="register-search-row"><label>${t('الشركة','Company')}${select('dashboard-company',data?.companies||[],company)}</label><label>${t('من','From')}<input class="input" id="dashboard-from" type="date" value="${e(from)}"></label><label>${t('إلى','To')}<input class="input" id="dashboard-to" type="date" value="${e(to)}"></label><label>${t('الإدارة (عند توفر ربط مباشر)','Department (direct attribution only)')}${select('dashboard-department',data?.departments||[],department)}</label>${data?.targets?.length?previewPicker():''}${ABCentral.actor?.roleId==='owner'&&!ABCentral.viewAs&&data?.targets?.length?`<button type="button" class="secondary-btn" data-dashboard="preview-grants">${t('صلاحية عرض شاشة المستخدم','User-screen preview access')}</button>`:''}<button type="button" class="secondary-btn" data-dashboard="refresh">${t('تحديث','Refresh')}</button>${!asUser?`<button type="button" class="secondary-btn" data-dashboard="preferences">${t('تخصيص المؤشرات','Choose widgets')}</button>`:''}</div>${loading?`<p role="status">${t('جار التحميل','Loading')}</p>`:''}<p>${t('الأعداد من سجلاتك المصرح بها؛ نطاق التاريخ للفواتير والأحداث المؤرخة. لا يجمع النظام العملات المختلفة.','Counts use your authorized records; dates apply to dated events and invoices. Different currencies are not combined.')}</p><details class="stats-grid dashboard-record-counts" ${countsOpen?'open':''}><summary>${t('أعداد السجلات','Record counts')}</summary><div class="dashboard-count-grid">${Object.entries(data?.counts||{}).filter(([key,value])=>widgets.includes(key)&&value!==null&&(key!=='tasks'||sections.tasks)).map(([key,value])=>`<button type="button" class="stat-card" data-dashboard="source" data-id="${e(key)}" ${data?.layout?.detailWidgets&&!data.layout.detailWidgets.includes(key)?'disabled':''}><strong class="stat-label">${e(t(...(labels[key]||[key,key])))}</strong><span class="stat-value">${e(value??'—')}</span></button>`).join('')}</div></details>${urgentOverview()}${currentOverview()}${performanceOverview()}${movementOverview()}${bankOverview()}${financialOverview()}${supportingSummaries()}${investorsOverview()}${sections.reports&&data?.postedFinancial?.ledger.length?`<h3>${t('الإيرادات والمصروفات المثبتة — حسب تاريخ القيد والعملة','Posted income and expenses — by effective date and currency')}</h3>${CenterForms.table('dashboard-posted:'+actor,data.postedFinancial.ledger.map(r=>({...r,companyName:companyName(r.companyId)})),[['companyName',t('الشركة','Company')],['currency',t('العملة','Currency')],['income',t('الإيرادات المثبتة','Posted income')],['expenses',t('المصروفات المثبتة','Posted expenses')],['postedNet',t('صافي القيود','Posted net')]],'',()=>'',{income:'number',expenses:'number',postedNet:'number'})}`:''}${department?`<p>${t('الأقسام غير المرتبطة مباشرة بالإدارة تظهر بشرطة، ولا تُنسب المبالغ المالية إلى إدارة افتراضية.','Sections without direct department attribution show a dash; financial values are not assigned to an inferred department.')}</p>`:''}${data&&!asUser&&sections.tasks?panel(t('المهام','Tasks'),MyWorkUI.html()):''}${sections.reports?dynamicHTML():''}${sections.tasks&&data?.panels?.tasks.length?`<section class="record-section"><h3>${t('مهامي ضمن النطاق','Tasks in scope')}</h3>${CenterForms.table('dashboard-tasks',data.panels.tasks,[['title',t('المهمة','Task')],['status',t('الحالة','State')],['dueOn',t('الاستحقاق','Due')]],'',()=>'',{dueOn:'date'})}</section>`:''}${sections.alerts&&data?.panels?.alerts.length?`<section class="record-section"><h3>${t('تنبيهات المهام المتأخرة','Overdue task alerts')}</h3>${CenterForms.table('dashboard-alerts',data.panels.alerts,[['title',t('المهمة','Task')],['dueOn',t('الاستحقاق','Due')]],'',()=>'',{dueOn:'date'})}</section>`:''}${source&&data?.sources[source]?details():''}</section>`;
+ const moduleLabels={performance:['الأداء','Performance'],movement:['حركة المركبات الشهرية','Monthly vehicle movements'],financial:['الملخص المالي حسب الشركة','Financial summary by company'],debt:['أعلى الجهات مديونية','Largest debtors'],items:['أعلى البنود المستحقة','Largest outstanding items'],contracts:['العقود حسب الشركة','Contracts by company'],emirates:['الشركات حسب الإمارة','Companies by emirate'],investors:['ملخص المستثمرين حسب الشركة','Investors by company'],banks:['رصد البنوك','Bank monitoring'],summary:['ملخص السجلات','Register overview'],counts:['أعداد السجلات','Record counts'],tasks:['المهام','Tasks']};
+ const moduleDefaults=Object.keys(moduleLabels).map(id=>({id,visible:id!=='counts',size:['debt','items','contracts','emirates'].includes(id)?'small':id==='banks'?'medium':'wide'}));
+ const missing=()=>t('لا توجد بيانات','No data');
+ const zeroPercent=()=>new Intl.NumberFormat(getLocale(),{style:'percent'}).format(0);
+ const scoreHTML=value=>value==null?e(zeroPercent())+' <small>'+e(missing())+'</small>':e(new Intl.NumberFormat(getLocale(),{style:'percent',maximumFractionDigits:1}).format(value/10000));
+ const number=value=>value==null?'—':new Intl.NumberFormat(getLocale()).format(value);
+ const money=(value,currency)=>value==null?'—':new Intl.NumberFormat(getLocale(),currency?{style:'currency',currency,maximumFractionDigits:3}:{minimumFractionDigits:2,maximumFractionDigits:3}).format(value);
+ const todayDubai=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dubai'}).format(new Date());
+ const moduleTitle=id=>t(...moduleLabels[id]);
+ const tableView=(headers,rows)=>rows.length?'<div class="table-wrap"><table><thead><tr>'+headers.map(h=>'<th scope="col">'+e(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(value=>'<td>'+value+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>':'<p>'+missing()+'</p>';
+ const action=(label,id)=>'<button type="button" class="ghost-btn" data-board-action="'+e(id)+'">'+e(label)+'</button>';
+ const dialogs=[];
+ function overlay(title,body){
+  const opener=document.activeElement,d=document.createElement('dialog');
+  d.className='ab-board-dialog';d.dir=document.documentElement.dir|| (getLocale()==='ar'?'rtl':'ltr');
+  const previous=dialogs.at(-1),scrollParent=previous?.querySelector('.ab-board-dialog-body');
+  const scroll=scrollParent?{top:scrollParent.scrollTop,left:scrollParent.scrollLeft}:{top:window.scrollY,left:window.scrollX};
+  if(previous)previous.classList.add('ab-board-underlay');
+  d.innerHTML='<header><h2>'+e(title)+'</h2><button type="button" aria-label="'+t('إغلاق','Close')+'">×</button></header><div class="ab-board-dialog-body">'+body+'</div>';
+  document.body.append(d);dialogs.push(d);d.querySelector('header button').onclick=()=>d.close();
+  d.addEventListener('close',()=>{const index=dialogs.indexOf(d);if(index>=0)dialogs.splice(index,1);d.remove();previous?.classList.remove('ab-board-underlay');if(opener?.isConnected)opener.focus({preventScroll:true});if(scrollParent?.isConnected)scrollParent.scrollTo(scroll);else if(!previous)window.scrollTo(scroll);},{once:true});
+  boardActions(d);d.showModal();return d;
  }
- function bind(){const host=document.getElementById('central-dashboard');if(!host)return;MyWorkUI.bind(host);RegisterView.bind(host,render);bindPreview(host);
- for(const b of host.querySelectorAll('[data-overview-metric]'))b.onclick=()=>openPerformance(b.dataset.overviewMetric);
- for(const b of host.querySelectorAll('[data-overview-task]'))b.onclick=()=>RecordLinks.open('task',b.dataset.overviewTask).catch(err=>alert(err.message));
- for(const b of host.querySelectorAll('[data-overview-month]'))b.onclick=()=>openMovementMonth(b.dataset.overviewMonth);
- for(const b of host.querySelectorAll('[data-overview-year]'))b.onclick=()=>{
-  const controls=[...host.querySelectorAll('[data-overview-year]')];
-  const selected=new Set(controls.filter(item=>item.getAttribute('aria-pressed')==='true').map(item=>Number(item.dataset.overviewYear)));
-  const year=Number(b.dataset.overviewYear);
-  if(selected.has(year)&&selected.size===1)return;
-  if(selected.has(year))selected.delete(year);else selected.add(year);
-  comparisonYears=controls.map(item=>Number(item.dataset.overviewYear)).filter(year=>selected.has(year));render();
-  document.querySelector('[data-overview-year="'+year+'"]')?.focus();
- };
+ function layoutFor(model){
+  const saved=model.layout.modules||[];
+  const layout=[...saved,...moduleDefaults.filter(item=>!saved.some(row=>row.id===item.id))];
+  if(!saved.some(row=>row.id==='summary')){
+   const index=layout.findIndex(row=>row.id==='summary'),[summary]=layout.splice(index,1);
+   layout.splice(layout.findIndex(row=>row.id==='counts'),0,summary);
+  }
+  return layout;
+ }
+ function taskRows(model,filter){
+  const rows=model.panels?.tasks||[],day=todayDubai();
+  return rows.filter(row=>filter==='today'?row.dueOn===day:filter==='late'?row.dueOn&&row.dueOn<day&&!finishedTask(row):!finishedTask(row));
+ }
+ const finishedTask=row=>['Done','Completed','Cancelled','Closed'].includes(row.status);
+ const taskTable=(rows,readOnly)=>tableView([t('المهمة','Task'),t('الشركة','Company'),t('المسؤول','Assignee'),t('الاستحقاق','Due'),t('الحالة','Status')],rows.map(row=>[readOnly?e(row.title):action(row.title,'task:'+row.id),e(companyName(row.companyId)),e(row.assignee||'—'),e(row.dueOn||'—'),e(row.status)]));
+ let taskFilter='today',myWorkOpen=false;
+ function performance(model,readOnly){
+  const scores=(model.overview?.evaluations||[]).filter(row=>row.score!==null);
+  const companies=new Map();
+  for(const row of scores){const list=companies.get(row.companyId)||[];list.push(row);companies.set(row.companyId,list);}
+  const mean=rows=>rows.length?rows.reduce((sum,row)=>sum+row.score,0)/rows.length:null;
+  const label=value=>value==null?missing():new Intl.NumberFormat(getLocale(),{style:'percent',maximumFractionDigits:1}).format(value/10000);
+  const states=[...companies.values()].map(rows=>rows.every(row=>row.minimumScore!=null)?mean(rows)>=rows.reduce((sum,row)=>sum+row.minimumScore,0)/rows.length:null);
+  const marketing=model.overview?.marketing;
+  const completed=(model.panels?.tasks||[]).filter(r=>r.completedAt&&r.dueOn);
+  const within=completed.filter(r=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dubai'}).format(new Date(r.completedAt))<=r.dueOn).length;
+  const business=model.overview.marketingCompanies||[], hasTarget=business.length&&business.every(r=>r.target!=null), count=business.reduce((sum,r)=>sum+r.contracts.filter(c=>c.state!=='Draft').length,0),target=business.reduce((sum,r)=>sum+(r.target||0),0);
+  const metrics=[
+   [t('الأداء العام','Overall performance'),label(mean(scores)),'overall',t('متوسط التقييمات المسجّلة للشهر','Mean of recorded monthly reviews')],
+   [t('التسويق وجلب الأعمال','Marketing and new business'),marketing?number(count)+' / '+(hasTarget?number(target):t('لا يوجد هدف محدد','No target configured')):missing(),'marketing',marketing?t('الفرص المفتوحة','Open opportunities')+' '+number(marketing.filter(r=>!['contracted','lost'].includes(r.stage)).length)+' · '+t('الهدف حسب الشركة','Target by company'):missing()],
+   [t('أداء الإدارة','Management performance'),label(model.management?.eligible?model.management.onTime/model.management.eligible*10000:null),'management',t('الموافقات المتأخرة','Overdue approvals')+' '+number(model.management?.overdue)+' · '+t('المعاملات المعادة','Returned transactions')+' '+number(model.management?.returned)],
+   [t('أداء الموظفين','Employee performance'),label(completed.length?within/completed.length*10000:null),'employees',t('المنجز في الموعد ÷ المنجز بمهلة مسجلة','On-time completions ÷ completions with a deadline')+' · '+t('المهام المتأخرة','Overdue tasks')+' '+number(taskRows(model,'late').length)]
+  ];
+  const scoresByMetric={overall:mean(scores),marketing:hasTarget&&target>0?count/target*10000:null,management:model.management?.eligible?model.management.onTime/model.management.eligible*10000:null,employees:completed.length?within/completed.length*10000:null};
+  const companyStatus='<div class="ab-board-company-status"><span aria-label="'+t('الشركات الخضراء','Green companies')+'">'+number(states.filter(x=>x===true).length)+'</span><span aria-label="'+t('الشركات الحمراء','Red companies')+'">'+number(states.filter(x=>x===false).length)+'</span></div>';
+  return '<div class="ab-board-metrics">'+metrics.map(([title,value,id,note])=>{
+   const score=scoresByMetric[id],arc=score==null?0:Math.min(10000,Math.max(0,score))*180/10000;
+   const gauge='<div class="ab-board-gauge'+(score==null?' is-empty':'')+'" style="--score:'+arc+'deg"><strong>'+e(score==null?zeroPercent():value)+'</strong></div>';
+   return '<article><h3>'+(readOnly?e(title):action(title,id))+'</h3>'+gauge+(score==null?'<small class="ab-board-measure-empty">'+e(id==='marketing'&&count>0?t('لا يوجد هدف محدد','No target configured'):missing())+'</small>':'')+(id==='overall'?companyStatus:'')+'<small>'+e(note)+'</small></article>';
+  }).join('')+'</div>';
+ }
+ const summarySections=['financial','debt','items','contracts','emirates','investors'];
+ function rankedList(rows,title,nameLabel){
+  if(!rows.length)return '<p>'+missing()+'</p>';
+  const html=tableView([nameLabel,t('المستحق','Amount due')],rows.map(row=>{
+   const name=getLocale()==='en'&&row.nameEn?row.nameEn:row.name;
+   return ['<span title="'+e(name)+'">'+e(name)+'</span>',e(money(row.amount,row.currency))];
+  }));
+  return '<div class="ab-board-ranking" role="region" tabindex="0" aria-label="'+e(title)+'">'+html+'</div>';
+ }
+ function dashboardModules(model,counts,readOnly=false){
+  const overview=model.overview||{},reports=model.layout.sections.reports,charts=model.layout.sections.charts;
+  const names=new Set([...model.companies.map(row=>row.id),...(overview.financial||[]).map(row=>row.companyId)].filter(id=>!model.selectedCompanyId||id===model.selectedCompanyId));
+  const financial=(overview.financial||[]),byCompany=[...names].flatMap(id=>financial.some(r=>r.companyId===id)?financial.filter(r=>r.companyId===id):[{companyId:id}]);
+  const columns=['amount','due','paid','overdue','outstanding'];
+  const financialAmount=(row,key)=>money(row[key]??(row.companyId?overview.financialCompanies?.includes(row.companyId)?0:null:model.counts.invoices===0?0:null),row.currency);
+  const companyCount=(data,id)=>number(data?(data[id]||0):null);
+  const financialTotals=overview.totals?.length?overview.totals:[{}];
+  const financialHTML=()=>tableView([t('الشركة','Company'),t('الحسابات البنكية','Bank accounts'),t('الموظفون','Employees'),t('إجمالي الفواتير','Invoiced'),t('المستحق للدفع','Due'),t('المحصّل','Collected'),t('المتأخرات','Overdue'),t('إجمالي المتبقي','Outstanding')],[...byCompany.map(r=>[e(companyName(r.companyId)),companyCount(overview.bankCounts,r.companyId),companyCount(overview.employeeCounts,r.companyId),...columns.map(key=>e(financialAmount(r,key)))]),...financialTotals.map((r,index)=>[e(t('إجمالي المجموعة','Group total')),index?'—':number(model.counts.banks),index?'—':number(model.counts.employees),...columns.map(key=>e(financialAmount(r,key)))])]);
+  const banks=model.postedFinancial?.banks||[];
+  const metricAllowed=charts;
+  const bodies={performance:metricAllowed?()=>performance(model,readOnly):null,movement:charts&&model.layout.detailWidgets.includes('vehicles')&&model.counts.vehicles!=null?()=>movementPanel(readOnly?model.previewMovement:movementData,readOnly):null,
+   financial:reports&&(model.counts.invoices!=null||overview.bankCounts||overview.employeeCounts)?financialHTML:null,
+   debt:reports&&model.counts.invoices!=null?()=>rankedList(overview.debt||[],moduleTitle('debt'),t('الجهة','Debtor')):null,
+   items:reports&&model.counts.invoices!=null?()=>rankedList(overview.items||[],moduleTitle('items'),t('البند','Item')):null,
+   contracts:reports&&overview.marketing?()=>tableView([t('الشركة','Company'),t('العقود','Contracts')],(overview.marketingCompanies||[]).map(r=>[e(companyName(r.companyId)),number(r.contracts?.length)])):null,
+   emirates:reports&&overview.companies?()=>{const groups={};for(const r of overview.companies)if(r.emirate)groups[r.emirate]=(groups[r.emirate]||0)+1;return tableView([t('الإمارة','Emirate'),t('الشركات','Companies')],Object.entries(groups).map(([id,n])=>{const area=AreaReference.emirates.find(a=>[a.id,a.ar,a.en,a.legacy].includes(id));return [e(area?t(area.ar,area.en):id),number(n)];}));}:null,
+   investors:reports&&overview.investments?()=>tableView([t('الشركة','Company'),t('المستثمرون','Investors'),t('المبلغ المستثمر','Invested amount'),t('المركبات','Vehicles'),t('محصّل الأقساط','Installments collected'),t('محصّل رسوم اللوحات','Plate fees collected'),t('المتبقي من الأصل','Principal remaining')],[...(overview.investorCompanies||[]),...(overview.investorTotals?.length?overview.investorTotals:[{}])].map(r=>[e(r.companyId?companyName(r.companyId):t('إجمالي المجموعة','Group total')),number(r.investors),e(money(r.invested,r.currency)),number(r.vehicles),e(money(r.installments,r.currency)),e(money(r.plateFees,r.currency)),e(money(r.principal,r.currency))])):null,
+   banks:banks.length?()=>readOnly?bankTable(banks,true):action(t('فتح رصد البنوك','Open bank monitoring'),'banks'):null,
+   counts:()=>counts,tasks:model.layout.sections.tasks?()=>'<div class="ab-board-filters">'+(readOnly?'':[['today',t('اليوم','Today')],['late',t('متأخرة','Overdue')],['pending',t('بانتظار إجراء','Awaiting action')]].map(([id,label])=>'<button type="button" data-task-filter="'+id+'" aria-pressed="'+(id===taskFilter)+'">'+label+'</button>').join(''))+'</div><div data-board-tasks>'+taskTable(taskRows(model,taskFilter),readOnly)+'</div>'+(!readOnly&&!model.layout.securityConfigured?'<details '+(myWorkOpen?'open':'')+'><summary>'+t('مهامي وقراراتي','My tasks and decisions')+'</summary>'+MyWorkUI.html()+'</details>':''):null};
+  const urgent=model.layout.sections.alerts&&(model.panels?.alerts||[]).length?'<aside class="ab-board-urgent"><h2>'+t('يتطلب إجراءً','Requires action')+'</h2>'+taskTable(model.panels.alerts,readOnly)+'</aside>':'';
+  const layout=layoutFor(model),visible=id=>layout.some(row=>row.id===id&&row.visible)&&bodies[id];
+  const panel=(id,content)=>'<section class="ab-board-module ab-board-summary-'+id+'" data-summary-panel="'+id+'"><h2>'+moduleTitle(id)+'</h2><div>'+content+'</div></section>';
+  const summary=()=>'<div class="ab-board-summary" data-board-summary>'+
+   (visible('financial')?panel('financial',bodies.financial()):'')+
+   '<div class="ab-board-summary-middle">'+summarySections.slice(1,-1).filter(visible).map(id=>panel(id,bodies[id]())).join('')+'</div>'+
+   (visible('investors')?panel('investors',bodies.investors()):'')+'</div>';
+  const currentKeys=['companies','customers','vehicles','invoices','tasks'].filter(key=>model.layout.widgets.includes(key)&&model.counts[key]!=null);
+  const current=currentKeys.length?'<section class="ab-board-module ab-board-current"><h2>'+t('الوضع الحالي','Current status')+'</h2><dl>'+currentKeys.map(key=>'<div><dt>'+e(t(...labels[key]))+'</dt><dd>'+e(number(model.counts[key]))+'</dd></div>').join('')+'</dl></section>':'';
+  return urgent+current+'<div class="ab-board-grid">'+layout.filter(row=>row.visible&&!summarySections.includes(row.id)).map(row=>{
+   if(row.id==='summary')return summarySections.some(visible)?'<div class="ab-board-wide">'+summary()+'</div>':'';
+   return bodies[row.id]?'<section class="ab-board-module ab-board-'+row.size+'" data-board-module="'+row.id+'"><h2>'+moduleTitle(row.id)+'</h2><div>'+bodies[row.id]()+'</div></section>':'';
+  }).join('')+'</div>';
+ }
+ function movementPanel(report,readOnly){
+  if(!report?.available)return '<p>'+e((!readOnly&&movementError)||missing())+'</p>';
+  const years=[...new Set(report.months.map(row=>row.month.slice(0,4)))].slice(-3).reverse();
+  const palette=['#146447','#487a65','#976170'],colors=years.map(year=>palette[(Number(year)%palette.length+palette.length)%palette.length]),scale=Math.max(1,...report.months.flatMap(r=>[r.in,r.out]));
+  return '<div class="ab-board-year">'+years.map((year,i)=>'<span style="--year:'+colors[i]+'">'+year+'</span>').join('')+'</div><div class="ab-board-chart">'+Array.from({length:12},(_,i)=>{
+   const mm=String(i+1).padStart(2,'0'),label=new Intl.DateTimeFormat(getLocale(),{month:'short',timeZone:'UTC'}).format(new Date(Date.UTC(2020,i,1)));
+   return '<div class="ab-board-month"><div class="ab-board-bars">'+years.map((year,index)=>{
+    const row=report.months.find(r=>r.month===year+'-'+mm);
+    return '<div style="--year:'+colors[index]+'">'+['in','out'].map(dir=>row?.[dir]?'<button type="button" class="ab-board-bar '+dir+'" style="--height:'+Math.max(15,row[dir]/scale*56)+'px" aria-label="'+e(row.month+' '+(dir==='in'?t('إضافات','Additions'):t('خروج','Exits'))+' '+row[dir])+'" data-board-action="movement:'+row.month+':'+dir+'" '+(readOnly?'disabled':'')+'>'+e(number(row[dir]))+'</button>':'<span class="ab-board-bar '+dir+'"></span>').join('')+'</div>';
+   }).join('')+'</div><small>'+e(label)+'</small></div>';
+  }).join('')+'</div>';
+ }
+ const bankLabel=row=>{const bank=(app.state.bankReference||[]).find(b=>b.id===row.bankId);return bank?t(bank.ar,bank.en):row.bankName||row.name;};
+ function bankTable(rows,readOnly){
+  return tableView([t('الشركة','Company'),t('البنك','Bank'),t('آخر أربعة أرقام','Last four'),t('الرصيد المسجل','Recorded balance'),t('إيداعات قيد التحقق','Deposits in review'),t('المطابقة','Reconciliation'),t('آخر مطابقة','Last reconciliation')],rows.map(r=>[e(companyName(r.companyId)),readOnly?e(bankLabel(r)):action(bankLabel(r),'bank:'+r.id),e(r.lastFour||'—'),e(money(r.balance,r.currency)),((r.deposits||[]).some(item=>item.date<todayDubai())?'<strong class="ab-board-warning">':'<strong>')+e(money(r.pending,r.currency))+'</strong>',r.reconciliation?'<strong class="'+(r.reconciliation==='Approved'&&!r.unmatched?'':'ab-board-warning')+'">'+e(r.unmatched?t('بنود غير مطابقة','Unmatched lines'):r.reconciliation)+'</strong>':'—',e(r.reconciledOn||'—')]));
+ }
+ function boardActions(host){
+  host.addEventListener('click',async event=>{
+   const button=event.target.closest('[data-board-action]')||(!event.target.closest('button,input,select,a')&&event.target.closest('tr,.ab-board-metrics article')?.querySelector('[data-board-action]'));if(!button||button.disabled)return;
+   button.focus({preventScroll:true});
+   const [kind,id,direction]=button.dataset.boardAction.split(':');
+   try {
+    if(kind==='task'){
+     const row=(data.panels?.tasks||[]).find(x=>x.id===id)||(data.panels?.alerts||[]).find(x=>x.id===id);
+     if(!row)return;
+     const d=overlay(row.title,taskTable([row],true)+'<h3>'+t('سجل المهمة','Task history')+'</h3><p role="status">'+t('جار التحميل','Loading')+'</p>');
+     try{const history=await CenterForms.api('personnel/tasks/'+encodeURIComponent(id)+'/history');if(!d.isConnected)return;d.querySelector('[role=status]').outerHTML=tableView([t('الحدث','Event'),t('التاريخ','Date')],(history.rows||[]).map(r=>[e(r.kind||r.action||r.event_type||r.event||'—'),e(String(r.createdAt||r.created_at||'').slice(0,16)||'—')]));}catch{d.querySelector('[role=status]').textContent=missing();}
+    }else if(kind==='overall'||kind==='employees'){
+     const rows=data.overview.evaluations,ids=[...new Set([...data.companies.map(r=>r.id),...rows.map(r=>r.companyId)])].filter(id=>!company||id===company);
+     overlay(t('تقييم الشركات','Company evaluations'),tableView([t('الشركة','Company'),t('التقييم','Evaluation')],ids.map(companyId=>{
+      const scores=rows.filter(r=>r.companyId===companyId&&r.score!=null),score=scores.length?scores.reduce((sum,r)=>sum+r.score,0)/scores.length:null;
+      return [action(companyName(companyId),'company-performance:'+companyId),scoreHTML(score)];
+     })));
+    }else if(kind==='company-performance'){
+     overlay(t('العاملون في ','Employees at ')+companyName(id),tableView([t('الموظف','Employee'),t('الوظيفة','Job'),t('التقييم','Evaluation'),t('المستهدف / المحصّل / المتبقي','Target / collected / remaining')],data.overview.evaluations.filter(r=>r.companyId===id).map(r=>[e(r.name),e(r.jobTitle||'—'),scoreHTML(r.score),e((r.collections||[]).map(c=>[money(c.target,c.currency),money(c.actual,c.currency),money(c.remaining,c.currency)].join(' / ')).join(' · ')||'—')])));
+    }else if(kind==='marketing'){
+     overlay(moduleTitle('contracts'),tableView([t('الشركة','Company'),t('مؤكد','Confirmed'),t('الهدف','Target'),t('الفرص المفتوحة','Open opportunities')],(data.overview.marketingCompanies||[]).map(r=>[action(companyName(r.companyId),'marketing-company:'+r.companyId),number(r.contracts.length),r.target==null?t('لا يوجد هدف محدد','No target configured'):number(r.target),number(r.open)])));
+    }else if(kind==='marketing-company'){
+     const row=data.overview.marketingCompanies.find(r=>r.companyId===id);
+     overlay(companyName(id),tableView([t('الفرصة','Opportunity'),t('المرحلة','Stage')],data.overview.marketing.filter(r=>r.companyId===id).map(r=>[e(r.title),e(r.stage)]))+'<h3>'+t('العقود','Contracts')+'</h3>'+tableView([t('العقد','Contract'),t('الحالة','Status')],row.contracts.map(r=>[e(r.title),e(r.state)])));
+    }else if(kind==='management')overlay(t('أداء الإدارة','Management performance'),'<p>'+t('المعاملات المنجزة في الموعد ÷ المعاملات المنجزة التي لها مهلة مسجلة.','On-time transactions ÷ completed transactions with a recorded deadline.')+'</p><p>'+e(data.management?.eligible?number(data.management.onTime)+' / '+number(data.management.eligible):missing())+'</p>');
+    else if(kind==='movement'){
+     const rows=movementData.rows.filter(r=>r.month===id&&r.direction===direction),ids=[...new Set(rows.map(r=>r.companyId))];
+     overlay(id+' · '+(direction==='in'?t('إضافات','Additions'):t('خروج','Exits')),'<div class="ab-board-company-chart">'+ids.map(companyId=>'<div style="--height:'+Math.max(18,rows.filter(r=>r.companyId===companyId).length/rows.length*140)+'px">'+action(companyName(companyId)+' · '+number(rows.filter(r=>r.companyId===companyId).length),'movement-company:'+id+':'+direction+':'+companyId)+'</div>').join('')+'</div>');
+    }else if(kind==='movement-company'){
+     const companyId=button.dataset.boardAction.split(':')[3];
+     overlay(companyName(companyId),tableView([t('المركبة','Vehicle'),t('اللوحة','Plate'),t('التاريخ','Date')],movementData.rows.filter(r=>r.month===id&&r.direction===direction&&r.companyId===companyId).map(r=>[e(r.fileNumber),e(r.plate),e(r.date)])));
+    }else if(kind==='banks'){
+     const rows=data.postedFinancial.banks;
+     const filter=(id,label,choices)=>'<label>'+label+'<select data-bank-filter="'+id+'"><option value="">'+t('الكل','All')+'</option>'+choices.map(([key,name])=>'<option value="'+e(key)+'">'+e(name)+'</option>').join('')+'</select></label>';
+     const unique=(key,label)=>[...new Map(rows.map(row=>[key(row),label(row)]))];
+     const d=overlay(moduleTitle('banks'),'<div class="ab-board-filters">'+filter('companyId',t('الشركة','Company'),unique(r=>r.companyId,r=>companyName(r.companyId)))+filter('bankId',t('البنك','Bank'),unique(r=>r.bankId,bankLabel))+filter('id',t('الحساب','Account'),unique(r=>r.id,r=>r.name))+'</div><div data-bank-table>'+bankTable(rows)+'</div>');
+     d.querySelectorAll('select').forEach(sel=>sel.onchange=()=>{const filters=[...d.querySelectorAll('select')];d.querySelector('[data-bank-table]').innerHTML=bankTable(rows.filter(r=>filters.every(f=>!f.value||r[f.dataset.bankFilter]===f.value)));});
+    }else if(kind==='deposit'){
+     button.disabled=true;
+     let deposit;
+     try{deposit=await CenterForms.api('ledger/deposits/'+encodeURIComponent(id));}
+     catch(error){if(host.open)throw error;return;}
+     finally{button.disabled=false;}
+     if(!host.open||dialogs.at(-1)!==host)return;
+     overlay(t('سجل الإيداع','Deposit record'),RecordLayout.values([
+      [t('مرجع الإيداع','Deposit reference'),deposit.reference||deposit.id],
+      [t('تاريخ الإيداع','Deposit date'),deposit.date],
+      [t('المبلغ','Amount'),money(deposit.amount,deposit.currency)],
+      [t('الحالة','Status'),deposit.status==='Review'?t('قيد التحقق','Pending verification'):deposit.status],
+     ]));
+    }else if(kind==='bank'){
+     const row=data.postedFinancial.banks.find(r=>r.id===id);
+     const d=overlay(row.name,bankTable([row],true)+'<p>'+t('آخر كشف مسجّل','Latest recorded statement')+': '+e(row.statementPeriod||'—')+'</p>'+'<h3>'+t('الإيداعات قيد التحقق','Deposits pending verification')+'</h3>'+tableView([t('مرجع الإيداع','Deposit reference'),t('تاريخ الإيداع','Deposit date'),t('المبلغ','Amount')],(row.deposits||[]).map(item=>[action(item.reference||item.id,'deposit:'+item.id),e(item.date),e(money(item.amount,row.currency))]))+'<button type="button" class="ghost-btn" data-bank-original>'+t('فتح ملف الحساب','Open account record')+'</button>');
+     d.querySelector('[data-bank-original]').onclick=()=>ABCentral.openBank(id);
+     if(row.statementId){
+      const b=document.createElement('button');b.type='button';b.className='ghost-btn';b.textContent=t('فتح كشف المطابقة','Open reconciliation statement');
+      d.querySelector('.ab-board-dialog-body').append(b);
+      b.onclick=async()=>{try{
+       const record=await CenterForms.api('finance/statements/'+encodeURIComponent(row.statementId));
+       overlay(b.textContent,tableView([t('التاريخ','Date'),t('المرجع','Reference'),t('المبلغ','Amount'),t('المطابقة','Match')],record.lines.map(line=>[e(String(line.effective_on).slice(0,10)),e(line.reference),e(money(line.amount,row.currency)),e(line.entry_id?t('مطابق','Matched'):line.explanation||t('غير مطابق','Unmatched'))])));
+      }catch(error){overlay(b.textContent,'<p>'+e(error.message)+'</p>');}};
+     }
 
- const counts=host.querySelector(".dashboard-record-counts");
- counts?.addEventListener("toggle",()=>{if(counts.isConnected)countsOpen=counts.open;});
- for(const button of host.querySelectorAll('[data-bank-deposits]'))button.onclick=async()=>{
-  try{await openBankDeposits(button.dataset.bankDeposits);}
-  catch{alert(t('تعذر تحميل إيداعات الحساب.','Unable to load deposits for this account.'));}
- };
- host.querySelector('[data-dashboard="preview-grants"]')?.addEventListener('click',editPreviewGrant);host.querySelector('#dashboard-report')?.addEventListener('change',async ev=>{dynamicReport=ev.target.value;if(dynamicReport==='movement'&&sections.charts){source='';movementFocus=null;await loadMovements();}else{source=dynamicReport;await load();}});for(const[id,set]of [['movement-months',v=>movementMonths=Number(v)],['movement-emirate',v=>movementEmirate=v],['movement-licence',v=>movementLicence=v]])host.querySelector('#'+id)?.addEventListener('change',async ev=>{set(ev.target.value);movementFocus=null;await loadMovements();});host.querySelectorAll('[data-movement]').forEach(b=>b.onclick=()=>{movementFocus={month:b.dataset.month,direction:b.dataset.movement};render();});host.querySelectorAll('[data-movement-vehicle]').forEach(b=>b.onclick=()=>VehicleUI.openNotification(b.dataset.movementVehicle));host.querySelector('#dashboard-search')?.addEventListener('submit',ev=>{ev.preventDefault();searches[source]=ev.target.elements.q.value;render();});for(const b of host.querySelectorAll('[data-dashboard-record]')){b.onclick=()=>openRecord(b.dataset.dashboardRecord).catch(err=>alert(err.message));const row=b.closest('tr');row.tabIndex=0;row.onclick=ev=>{if(!ev.target.closest('button,a,input,select,summary,details'))b.click();};row.onkeydown=ev=>{if(ev.target===row&&['Enter',' '].includes(ev.key)){ev.preventDefault();b.click();}};}for(const [id,set]of [['dashboard-company',v=>company=v],['dashboard-department',v=>department=v],['dashboard-from',v=>from=v],['dashboard-to',v=>to=v]])host.querySelector('#'+id)?.addEventListener('change',async ev=>{set(ev.target.value);await load();if(dynamicReport==='movement'&&sections.charts)await loadMovements();});for(const b of host.querySelectorAll('[data-dashboard]'))b.onclick=async()=>{const a=b.dataset.dashboard;if(a==='preview'||a==='preview-retry'){const target=previewUser||(ABCentral.viewAs?ABCentral.actor.id:'');if(!target)return;b.disabled=true;await ViewAsUI.start(target,{onError:message=>{previewError=message;render();}});return;}if(a==='movement-refresh'){await loadMovements();}else if(a==='back'){source='';render();}else if(a==='owner'){asUser='';source='';await load();}else if(a==='source'||a==='shortcut'){source=b.dataset.id;await load();}else if(a==='refresh')await load();else if(a==='preferences'){await customize();}};}
+    }
+   }catch(error){overlay(t('تعذر فتح السجل','Could not open record'),'<p>'+e(error.message)+'</p>');}
+  });
+ }
+ function openBoardSettings(){
+  const current=layoutFor(data),items=[...current.filter(row=>!summarySections.includes(row.id)),...current.filter(row=>summarySections.includes(row.id))].map(row=>({...row}));
+  const d=overlay(t('تخصيص','Customize'),'<div data-board-settings></div><footer><button type="button" data-board-save>'+t('حفظ','Save')+'</button>'+(data.canPreview?'<button type="button" data-board-preview>'+t('لوحة التحكم المركزية','Central dashboard')+'</button>':'')+'</footer><p role="alert"></p>');
+  const host=d.querySelector('[data-board-settings]');
+  const refresh=()=>{
+   host.innerHTML=items.map((row,i)=>'<div class="ab-board-setting"><label><input type="checkbox" data-visible '+(row.visible?'checked':'')+'> '+moduleTitle(row.id)+'</label><select '+(summarySections.includes(row.id)||row.id==='summary'?'disabled ':'')+'aria-label="'+t('الحجم','Size')+'">'+[['small',t('صغير','Small')],['medium',t('متوسط','Medium')],['wide',t('كامل','Wide')]].map(([id,name])=>'<option value="'+id+'" '+(row.size===id?'selected':'')+'>'+name+'</option>').join('')+'</select><button type="button" aria-label="'+t('تحريك لأعلى','Move up')+'" '+(i===0||summarySections.includes(row.id)?'disabled':'')+'>↑</button><button type="button" aria-label="'+t('تحريك لأسفل','Move down')+'" '+(i===items.length-1||summarySections.includes(items[i+1]?.id)||summarySections.includes(row.id)?'disabled':'')+'>↓</button></div>').join('');
+   [...host.children].forEach((el,i)=>{el.querySelector('input').onchange=ev=>items[i].visible=ev.target.checked;el.querySelector('select').onchange=ev=>items[i].size=ev.target.value;[...el.querySelectorAll('button')].forEach((b,n)=>b.onclick=()=>{const next=i+(n?1:-1);[items[i],items[next]]=[items[next],items[i]];refresh();});});
+  };
+  refresh();
+  d.querySelector('[data-board-save]').onclick=async event=>{
+   event.target.disabled=true;
+   try{await CenterForms.api('central-dashboard/preferences','POST',{widgets,sections,modules:items},crypto.randomUUID());d.close();await load();}
+   catch(error){d.querySelector('[role=alert]').textContent=error.message;event.target.disabled=false;}
+  };
+  d.querySelector('[data-board-preview]')?.addEventListener('click',async event=>{
+   const button=event.currentTarget;
+   if(button.hasAttribute('aria-busy'))return;
+   button.setAttribute('aria-busy','true');
+   try{const {rows}=await CenterForms.api('central-dashboard/preview-targets');if(d.open)openCentralPreview(rows);}
+   catch(error){d.querySelector('[role=alert]').textContent=error.message;}
+   finally{button.removeAttribute('aria-busy');}
+  });
+ }
+ function openCentralPreview(targets){
+  const options=(rows)=>rows.map(([id,label])=>'<option value="'+e(id)+'">'+e(label)+'</option>').join('');
+  const d=overlay(t('لوحة التحكم المركزية','Central dashboard'),'<p class="ab-board-preview-label">'+t('وضع المعاينة','Preview mode')+'</p><div class="ab-board-filters"><label>'+t('الدور','Role')+'<select data-role>'+options([...new Set(targets.map(u=>u.roleId))].map(id=>[id,getRoleName(id)]))+'</select></label><label>'+t('بحث عن مستخدم','Search users')+'<input type="search" data-preview-search></label><label>'+t('المستخدم','User')+'<select data-user></select></label><label>'+t('الشركة','Company')+'<select data-company></select></label><label>'+t('الجهاز','Device')+'<select data-device>'+options([['desktop',t('كمبيوتر','Desktop')],['tablet',t('تابلت','Tablet')],['phone',t('هاتف','Phone')]])+'</select></label></div><div class="ab-board-preview" data-preview-board></div>');
+  const role=d.querySelector('[data-role]'),user=d.querySelector('[data-user]'),co=d.querySelector('[data-company]'),screen=d.querySelector('[data-preview-board]'),device=d.querySelector('[data-device]');
+  const search=d.querySelector('[data-preview-search]');
+  const choice=centralPreviewChoice;
+  search.value=choice.query||'';
+  if([...role.options].some(option=>option.value===choice.role))role.value=choice.role;
+  if(choice.device)device.value=choice.device;
+  let request=0;
+  device.onchange=()=>{screen.dataset.device=device.value;choice.device=device.value;};
+  async function refresh(resetCompanies){
+   const id=++request;screen.textContent=t('جار التحميل','Loading');
+   if(!user.value){screen.textContent=missing();return;}
+   const query=new URLSearchParams({asUserId:user.value});if(!resetCompanies&&co.value)query.set('companyId',co.value);
+   try {
+    const model=await CenterForms.api('central-dashboard?'+query);if(id!==request)return;
+    if(resetCompanies){
+     co.innerHTML='<option value="">'+t('الكل','All')+'</option>'+options(model.companies.map(r=>[r.id,r.name]));
+     if(choice.company&&[...co.options].some(option=>option.value===choice.company)){
+      co.value=choice.company;
+      return refresh(false);
+     }
+    }
+    if(model.layout.sections.charts&&model.layout.detailWidgets.includes('vehicles')&&model.counts.vehicles!=null){
+     try{model.previewMovement=await CenterForms.api('central-dashboard/vehicle-movements?'+query+'&months=36');}catch{model.previewMovement=null;}
+    }
+    if(id===request)screen.innerHTML=dashboardModules(model,renderCounts(model,true),true);
+   }catch{if(id===request)screen.textContent=t('المعاينة غير متاحة لهذا الدور أو النطاق','Preview unavailable for this role or scope');}
+  }
+  function filterUsers(){
+   const matches=targets.filter(u=>u.roleId===role.value&&RegisterTools.search([targetName(u),u.nameAr,u.nameEn,u.username,getRoleName(u.roleId)],search.value));
+   user.innerHTML=options(matches.map(u=>[u.id,targetName(u)]));
+   if(matches.some(u=>u.id===choice.user))user.value=choice.user;
+   else if(user.value){choice.user=user.value;choice.company='';}
+   void refresh(true);
+  }
+  role.onchange=()=>{choice.role=role.value;filterUsers();};
+  search.oninput=()=>{choice.query=search.value;filterUsers();};
+  user.onchange=()=>{choice.user=user.value;choice.company='';void refresh(true);};
+  co.onchange=()=>{choice.company=co.value;void refresh(false);};
+  filterUsers();device.onchange();
+ }
+ function renderCounts(model,readOnly=false,gridClass='stats-grid'){
+  return '<div class="'+gridClass+'">'+Object.entries(model.counts).filter(([key,value])=>model.layout.widgets.includes(key)&&value!==null&&(key!=='tasks'||model.layout.sections.tasks)).map(([key,value])=>'<button type="button" class="stat-card" data-dashboard="source" data-id="'+e(key)+'" '+(readOnly||!model.layout.detailWidgets.includes(key)?'disabled':'')+'><strong class="stat-label">'+e(t(...labels[key]))+'</strong><span class="stat-value">'+e(number(value))+'</span></button>').join('')+'</div>';
+ }
+ function renderUI(){
+  sync();if(!data&&!loading&&!error)void load();
+  const select=(id,options,value)=>'<select class="input" id="'+id+'"><option value="">'+t('الكل','All')+'</option>'+options.map(o=>'<option value="'+e(o.id)+'" '+(o.id===value?'selected':'')+'>'+e(o.name)+'</option>').join('')+'</select>';
+  return `<section id="central-dashboard" class="ab-board"><p role="alert">${e(error)}</p><div class="ab-board-toolbar"><label>${t('الشركة','Company')}${select('dashboard-company',data?.companies||[],company)}</label><label>${t('من','From')}<input class="input" id="dashboard-from" type="date" value="${e(from)}"></label><label>${t('إلى','To')}<input class="input" id="dashboard-to" type="date" value="${e(to)}"></label><label>${t('الإدارة','Department')}${select('dashboard-department',data?.departments||[],department)}</label><button class="secondary-btn" data-dashboard="refresh">${t('تحديث','Refresh')}</button>${data&&!ABCentral.viewAs?'<button type="button" class="primary-btn" data-dashboard="board-settings">'+t('تخصيص','Customize')+'</button>':''}</div>${loading?'<p role="status">'+t('جار التحميل','Loading')+'</p>':''}${data?.targets.length?previewPicker():''}${data?`${dashboardModules(data,renderCounts(data))}${layoutFor(data).some(row=>row.id==='counts'&&row.visible)?'':`<details class="stats-grid dashboard-record-counts" ${countsOpen?'open':''}><summary>${t('أعداد السجلات','Record counts')}</summary>${renderCounts(data,false,'dashboard-count-grid')}</details>`}${sections.reports?dynamicHTML():''}`:''}${data?.targets.length&&!ABCentral.viewAs?`<details class="ab-board-legacy"><summary>${t('إدارة تفضيلات العرض للمستخدمين','Manage appearance for users')}</summary><button type="button" data-dashboard="preferences">${t('إعدادات الظهور','Appearance settings')}</button>${ABCentral.actor?.roleId==='owner'?'<button type="button" data-dashboard="preview-grants">'+t('صلاحية عرض شاشة المستخدم','User-screen preview access')+'</button>':''}</details>`:''}</section>`;
+ }
+ function bind(){const host=document.getElementById('central-dashboard');if(!host)return;
+ boardActions(host);
+ const myWork=host.querySelector('#my-work')?.closest('details');
+ myWork?.querySelector('summary')?.addEventListener('click',()=>{myWorkOpen=!myWork.open;});
+ const counts=host.querySelector('.dashboard-record-counts');
+ counts?.querySelector('summary')?.addEventListener('click',()=>{countsOpen=!counts.open;});
+ host.querySelector('#dashboard-report')?.addEventListener('change',ev=>{
+  dynamicReport=ev.target.value;movementFocus=null;
+  if(dynamicReport==='movement'){void loadLegacyMovements();return;}
+  if(dynamicReport)host.querySelector('[data-dashboard=source][data-id="'+dynamicReport+'"]')?.click();
+  else render();
+ });
+ for(const [id,set] of [['movement-months',v=>movementMonths=Number(v)],['movement-emirate',v=>movementEmirate=v],['movement-licence',v=>movementLicence=v]])
+  host.querySelector('#'+id)?.addEventListener('change',ev=>{set(ev.target.value);movementFocus=null;void loadLegacyMovements();});
+ host.querySelectorAll('[data-movement]').forEach(button=>button.onclick=()=>{movementFocus={month:button.dataset.month,direction:button.dataset.movement};render();});
+ host.querySelectorAll('[data-movement-vehicle]').forEach(button=>button.onclick=()=>VehicleUI.openNotification(button.dataset.movementVehicle));
+ host.querySelectorAll('[data-task-filter]').forEach(b=>b.onclick=()=>{taskFilter=b.dataset.taskFilter;host.querySelectorAll('[data-task-filter]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));host.querySelector('[data-board-tasks]').innerHTML=taskTable(taskRows(data,taskFilter));});
+ MyWorkUI.bind(host);RegisterView.bind(host,render);bindPreview(host);host.querySelector('#dashboard-search')?.addEventListener('submit',ev=>{ev.preventDefault();searches[source]=ev.target.elements.q.value;render();});for(const b of host.querySelectorAll('[data-dashboard-record]')){b.onclick=()=>openRecord(b.dataset.dashboardRecord);const row=b.closest('tr');row.tabIndex=0;row.onclick=ev=>{if(!ev.target.closest('button,a,input,select,summary,details'))b.click();};row.onkeydown=ev=>{if(ev.target===row&&['Enter',' '].includes(ev.key)){ev.preventDefault();b.click();}};}for(const [id,set]of [['dashboard-company',v=>company=v],['dashboard-department',v=>department=v],['dashboard-from',v=>from=v],['dashboard-to',v=>to=v]])host.querySelector('#'+id)?.addEventListener('change',async ev=>{set(ev.target.value);await load();});for(const b of host.querySelectorAll('[data-dashboard]'))b.onclick=async()=>{const a=b.dataset.dashboard;if(a==='preview'||a==='preview-retry'){const target=previewUser||(ABCentral.viewAs?ABCentral.actor.id:'');if(!target)return;b.disabled=true;ViewAsUI.capturePicker();await ViewAsUI.start(target,{onError:message=>{previewError=message;render();}});return;}if(a==='back'){source='';render();}else if(a==='owner'){asUser='';source='';await load();}else if(a==='source'||a==='shortcut'){source=b.dataset.id;
+ try {
+  const q=new URLSearchParams({source});for(const [k,v]of Object.entries({companyId:company,departmentId:department,from,to}))if(v)q.set(k,v);
+  const snapshot=data,result=await CenterForms.api('central-dashboard?'+q);if(data!==snapshot||app.state.currentPage!=='dashboard')return;data.sources[source]=result.sources[source];
+  const d=overlay(t(...labels[source]),details()),body=d.querySelector('.ab-board-dialog-body');
+  const bindDetails=()=>{body.querySelector('[data-dashboard=back]').onclick=()=>d.close();body.querySelector('form').onsubmit=ev=>{ev.preventDefault();searches[source]=ev.target.elements.q.value;body.innerHTML=details();bindDetails();};body.querySelectorAll('[data-dashboard-record]').forEach(el=>{
+  el.onclick=()=>openRecord(el.dataset.dashboardRecord);
+  const row=el.closest('tr');if(!row)return;
+  row.tabIndex=0;
+  row.onclick=event=>{if(!event.target.closest('button,a,input,select'))el.click();};
+  row.onkeydown=event=>{if(event.target===row&&['Enter',' '].includes(event.key)){event.preventDefault();el.click();}};
+ });};
+  bindDetails();
+ }catch(err){overlay(t('تعذر تحميل السجل','Could not load register'),'<p>'+e(err.message)+'</p>');}}else if(a==='refresh')await load();else if(a==='board-settings'){openBoardSettings();}else if(a==='preferences'){await customize();}else if(a==='preview-grants'){editPreviewGrant();}else if(a==='movement-refresh'){await loadLegacyMovements();}};}
 
  function editPreviewGrant(){
   const options=data.targets.filter(u=>u.previewable).map(u=>({id:u.id,name:targetName(u)+' · '+u.username}));
