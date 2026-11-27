@@ -1362,3 +1362,4 @@ form .record-field-control:disabled,form .record-field-control[readonly]{color:v
 .ab-board-ranking td:first-child span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ab-board-ranking td:last-child{white-space:normal;overflow-wrap:anywhere}
 .ab-board-summary-financial tbody tr:last-child td,.ab-board-summary-investors tbody tr:last-child td{background:#dfeadd}
+.ab-board>.preview-picker{margin-block:0 1rem}

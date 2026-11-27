@@ -121,6 +121,42 @@ const output=process.env.AB_DASHBOARD_SCREENSHOTS||'work';
    await page.keyboard.press('Escape');
    assert.equal(await page.locator('[data-task-filter=late]').getAttribute('aria-pressed'),'true');
   }
+  await page.evaluate(()=>setLocale('ar'));
+  const picker=page.locator('#preview-picker');
+  const search=picker.locator('#dashboard-user-search');
+  const manager=picker.locator('[data-preview-target="'+fixture.managerId+'"]');
+  await picker.waitFor();
+  assert.equal(await picker.locator('[data-preview-count]').innerText(),'٤ / ٤');
+  assert.equal(await picker.locator('[data-preview-selected]').innerText(),'اختر مستخدماً');
+  await picker.locator('#dashboard-as').click();
+  const employeeNumber=(await manager.locator('span').innerText()).split(' · ')[0];
+  assert.match(employeeNumber,/^\d+$/);
+  for(const query of ['معاينة جزئية',employeeNumber,'Preview Department','general_manager']){
+   await search.fill(query);
+   await manager.waitFor();
+   const count=await picker.locator('[data-preview-count]').innerText();
+   assert.match(count,/^[١-٣] \/ ٤$/);
+  }
+  await search.fill('معاينة جزئية');
+  const selection=await manager.locator('strong').innerText();
+  await manager.click();
+  await page.locator('[data-view-as-stop]').waitFor();
+  assert(await page.evaluate(id=>ABCentral.viewAs?.readOnly&&ABCentral.actor.id===id,fixture.managerId));
+  await picker.locator('[data-preview-selected]').waitFor();
+  assert.equal(await picker.locator('[data-preview-selected]').innerText(),selection);
+  const status=await page.evaluate(async()=>{
+   const res=await fetch('/api/personnel/tasks',{method:'POST',headers:{'Content-Type':'application/json','X-AB-Request':'1','X-CSRF-Token':ABCentral.csrf},body:'{}'});
+   return res.status;
+  });
+  assert.equal(status,403);
+  await page.locator('[data-view-as-stop]').click();
+  await page.waitForFunction(id=>ABCentral.actor?.id===id&&!ABCentral.viewAs,fixture.ownerId);
+  await picker.waitFor();
+  assert.equal(await search.inputValue(),'معاينة جزئية');
+  assert.equal(await picker.locator('[data-preview-selected]').innerText(),selection);
+  assert.equal(await picker.locator('[data-preview-count]').innerText(),'١ / ٤');
+  await page.locator('[data-board-summary]').waitFor();
+  await page.screenshot({path:output+'/dashboard-user-picker-ar.png',fullPage:true});
   await page.setViewportSize({width:390,height:850});
   const mobileMenu=sidebar.locator('[data-ws-menu]');
   const companyPage=sidebar.locator('[data-page=companies]');
