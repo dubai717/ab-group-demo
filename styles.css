@@ -1363,3 +1363,8 @@ form .record-field-control:disabled,form .record-field-control[readonly]{color:v
 .ab-board-ranking td:last-child{white-space:normal;overflow-wrap:anywhere}
 .ab-board-summary-financial tbody tr:last-child td,.ab-board-summary-investors tbody tr:last-child td{background:#dfeadd}
 .ab-board>.preview-picker{margin-block:0 1rem}
+
+.ab-board-measure-empty {display:block;margin-block:.2rem;color:inherit}
+.ab-board-current dl {display:flex;flex-wrap:wrap;gap:.55rem 1.5rem;margin:.55rem .75rem}
+.ab-board-current dl div {display:flex;align-items:baseline;gap:.4rem}
+.ab-board-current dd {margin:0;font-weight:700}

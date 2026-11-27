@@ -53,9 +53,11 @@
  document.addEventListener('pointerdown',event=>{if(previewOpen&&!event.target.closest('#preview-picker')){previewOpen=false;const p=document.getElementById('dashboard-user-options'),b=document.getElementById('dashboard-as');if(p)p.hidden=true;b?.setAttribute('aria-expanded','false');}});
  const moduleLabels={performance:['الأداء','Performance'],movement:['حركة المركبات الشهرية','Monthly vehicle movements'],financial:['الملخص المالي حسب الشركة','Financial summary by company'],debt:['أعلى الجهات مديونية','Largest debtors'],items:['أعلى البنود المستحقة','Largest outstanding items'],contracts:['العقود حسب الشركة','Contracts by company'],emirates:['الشركات حسب الإمارة','Companies by emirate'],investors:['ملخص المستثمرين حسب الشركة','Investors by company'],banks:['رصد البنوك','Bank monitoring'],summary:['ملخص السجلات','Register overview'],counts:['أعداد السجلات','Record counts'],tasks:['المهام','Tasks']};
  const moduleDefaults=Object.keys(moduleLabels).map(id=>({id,visible:id!=='counts',size:['debt','items','contracts','emirates'].includes(id)?'small':id==='banks'?'medium':'wide'}));
- const missing=()=>t('لا توجد بيانات كافية','Insufficient data');
+ const missing=()=>t('لا توجد بيانات','No data');
+ const zeroPercent=()=>new Intl.NumberFormat(getLocale(),{style:'percent'}).format(0);
+ const scoreHTML=value=>value==null?e(zeroPercent())+' <small>'+e(missing())+'</small>':e(new Intl.NumberFormat(getLocale(),{style:'percent',maximumFractionDigits:1}).format(value/10000));
  const number=value=>value==null?'—':new Intl.NumberFormat(getLocale()).format(value);
- const money=(value,currency)=>value==null?'—':new Intl.NumberFormat(getLocale(),{style:'currency',currency,maximumFractionDigits:3}).format(value);
+ const money=(value,currency)=>value==null?'—':new Intl.NumberFormat(getLocale(),currency?{style:'currency',currency,maximumFractionDigits:3}:{minimumFractionDigits:2,maximumFractionDigits:3}).format(value);
  const todayDubai=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dubai'}).format(new Date());
  const moduleTitle=id=>t(...moduleLabels[id]);
  const tableView=(headers,rows)=>rows.length?'<div class="table-wrap"><table><thead><tr>'+headers.map(h=>'<th scope="col">'+e(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(value=>'<td>'+value+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>':'<p>'+missing()+'</p>';
@@ -109,8 +111,8 @@
   const companyStatus='<div class="ab-board-company-status"><span aria-label="'+t('الشركات الخضراء','Green companies')+'">'+number(states.filter(x=>x===true).length)+'</span><span aria-label="'+t('الشركات الحمراء','Red companies')+'">'+number(states.filter(x=>x===false).length)+'</span></div>';
   return '<div class="ab-board-metrics">'+metrics.map(([title,value,id,note])=>{
    const score=scoresByMetric[id],arc=score==null?0:Math.min(10000,Math.max(0,score))*180/10000;
-   const gauge='<div class="ab-board-gauge'+(score==null?' is-empty':'')+'" style="--score:'+arc+'deg"><strong>'+e(value)+'</strong></div>';
-   return '<article><h3>'+(readOnly?e(title):action(title,id))+'</h3>'+gauge+(id==='overall'?companyStatus:'')+'<small>'+e(note)+'</small></article>';
+   const gauge='<div class="ab-board-gauge'+(score==null?' is-empty':'')+'" style="--score:'+arc+'deg"><strong>'+e(score==null?zeroPercent():value)+'</strong></div>';
+   return '<article><h3>'+(readOnly?e(title):action(title,id))+'</h3>'+gauge+(score==null?'<small class="ab-board-measure-empty">'+e(id==='marketing'&&count>0?t('لا يوجد هدف محدد','No target configured'):missing())+'</small>':'')+(id==='overall'?companyStatus:'')+'<small>'+e(note)+'</small></article>';
   }).join('')+'</div>';
  }
  const summarySections=['financial','debt','items','contracts','emirates','investors'];
@@ -127,9 +129,10 @@
   const names=new Set([...model.companies.map(row=>row.id),...(overview.financial||[]).map(row=>row.companyId)]);
   const financial=(overview.financial||[]),byCompany=[...names].flatMap(id=>financial.some(r=>r.companyId===id)?financial.filter(r=>r.companyId===id):[{companyId:id}]);
   const columns=['amount','due','paid','overdue','outstanding'];
+  const financialAmount=(row,key)=>money(row[key]??(model.counts.invoices===0?0:null),row.currency);
   const companyCount=(data,id)=>number(data?(data[id]||0):null);
   const financialTotals=overview.totals?.length?overview.totals:[{}];
-  const financialHTML=()=>tableView([t('الشركة','Company'),t('الحسابات البنكية','Bank accounts'),t('الموظفون','Employees'),t('إجمالي الفواتير','Invoiced'),t('المستحق للدفع','Due'),t('المحصّل','Collected'),t('المتأخرات','Overdue'),t('إجمالي المتبقي','Outstanding')],[...byCompany.map(r=>[e(companyName(r.companyId)),companyCount(overview.bankCounts,r.companyId),companyCount(overview.employeeCounts,r.companyId),...columns.map(key=>e(money(r[key],r.currency)))]),...financialTotals.map((r,index)=>[e(t('إجمالي المجموعة','Group total')),index?'—':number(model.counts.banks),index?'—':number(model.counts.employees),...columns.map(key=>e(money(r[key],r.currency)))])]);
+  const financialHTML=()=>tableView([t('الشركة','Company'),t('الحسابات البنكية','Bank accounts'),t('الموظفون','Employees'),t('إجمالي الفواتير','Invoiced'),t('المستحق للدفع','Due'),t('المحصّل','Collected'),t('المتأخرات','Overdue'),t('إجمالي المتبقي','Outstanding')],[...byCompany.map(r=>[e(companyName(r.companyId)),companyCount(overview.bankCounts,r.companyId),companyCount(overview.employeeCounts,r.companyId),...columns.map(key=>e(financialAmount(r,key)))]),...financialTotals.map((r,index)=>[e(t('إجمالي المجموعة','Group total')),index?'—':number(model.counts.banks),index?'—':number(model.counts.employees),...columns.map(key=>e(financialAmount(r,key)))])]);
   const banks=model.postedFinancial?.banks||[];
   const metricAllowed=charts;
   const bodies={performance:metricAllowed?()=>performance(model,readOnly):null,movement:charts&&model.layout.detailWidgets.includes('vehicles')&&model.counts.vehicles!=null?()=>movementPanel(readOnly?model.previewMovement:movementData,readOnly):null,
@@ -148,7 +151,9 @@
    (visible('financial')?panel('financial',bodies.financial()):'')+
    '<div class="ab-board-summary-middle">'+summarySections.slice(1,-1).filter(visible).map(id=>panel(id,bodies[id]())).join('')+'</div>'+
    (visible('investors')?panel('investors',bodies.investors()):'')+'</div>';
-  return urgent+'<div class="ab-board-grid">'+layout.filter(row=>row.visible&&!summarySections.includes(row.id)).map(row=>{
+  const currentKeys=['companies','customers','vehicles','invoices','tasks'].filter(key=>model.layout.widgets.includes(key)&&model.counts[key]!=null);
+  const current=currentKeys.length?'<section class="ab-board-module ab-board-current"><h2>'+t('الوضع الحالي','Current status')+'</h2><dl>'+currentKeys.map(key=>'<div><dt>'+e(t(...labels[key]))+'</dt><dd>'+e(number(model.counts[key]))+'</dd></div>').join('')+'</dl></section>':'';
+  return urgent+current+'<div class="ab-board-grid">'+layout.filter(row=>row.visible&&!summarySections.includes(row.id)).map(row=>{
    if(row.id==='summary')return summarySections.some(visible)?'<div class="ab-board-wide">'+summary()+'</div>':'';
    return bodies[row.id]?'<section class="ab-board-module ab-board-'+row.size+'" data-board-module="'+row.id+'"><h2>'+moduleTitle(row.id)+'</h2><div>'+bodies[row.id]()+'</div></section>':'';
   }).join('')+'</div>';
@@ -184,10 +189,10 @@
      const rows=data.overview.evaluations,ids=[...new Set([...data.companies.map(r=>r.id),...rows.map(r=>r.companyId)])];
      overlay(t('تقييم الشركات','Company evaluations'),tableView([t('الشركة','Company'),t('التقييم','Evaluation')],ids.map(companyId=>{
       const scores=rows.filter(r=>r.companyId===companyId&&r.score!=null),score=scores.length?scores.reduce((sum,r)=>sum+r.score,0)/scores.length:null;
-      return [action(companyName(companyId),'company-performance:'+companyId),e(score==null?missing():number(Math.round(score/100))+'%')];
+      return [action(companyName(companyId),'company-performance:'+companyId),scoreHTML(score)];
      })));
     }else if(kind==='company-performance'){
-     overlay(t('العاملون في ','Employees at ')+companyName(id),tableView([t('الموظف','Employee'),t('الوظيفة','Job'),t('التقييم','Evaluation'),t('المستهدف / المحصّل / المتبقي','Target / collected / remaining')],data.overview.evaluations.filter(r=>r.companyId===id).map(r=>[e(r.name),e(r.jobTitle||'—'),e(r.score==null?missing():number(r.score/100)+'%'),e((r.collections||[]).map(c=>[money(c.target,c.currency),money(c.actual,c.currency),money(c.remaining,c.currency)].join(' / ')).join(' · ')||'—')])));
+     overlay(t('العاملون في ','Employees at ')+companyName(id),tableView([t('الموظف','Employee'),t('الوظيفة','Job'),t('التقييم','Evaluation'),t('المستهدف / المحصّل / المتبقي','Target / collected / remaining')],data.overview.evaluations.filter(r=>r.companyId===id).map(r=>[e(r.name),e(r.jobTitle||'—'),scoreHTML(r.score),e((r.collections||[]).map(c=>[money(c.target,c.currency),money(c.actual,c.currency),money(c.remaining,c.currency)].join(' / ')).join(' · ')||'—')])));
     }else if(kind==='marketing'){
      overlay(moduleTitle('contracts'),tableView([t('الشركة','Company'),t('مؤكد','Confirmed'),t('الهدف','Target'),t('الفرص المفتوحة','Open opportunities')],(data.overview.marketingCompanies||[]).map(r=>[action(companyName(r.companyId),'marketing-company:'+r.companyId),number(r.contracts.length),r.target==null?t('لا يوجد هدف محدد','No target configured'):number(r.target),number(r.open)])));
     }else if(kind==='marketing-company'){
