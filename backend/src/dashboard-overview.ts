@@ -125,7 +125,7 @@ export async function dashboardOverview(c: any, m: any, cipher: any, input: {
   const performance = companies.map((co: any) => {
     const collections = [...totals.values()].filter(row => row.companyId === co.id)
       .map(row => ratio(row.periodCollected, row.periodDue)).filter((value): value is number => value !== null);
-    return {companyId: co.id, collection: average(collections), opportunities: filtered.has('marketing') && marketingCompanies.has(co.id) ? marketingCounts.get(co.id) || 0 : null,
+    return {companyId: co.id, collection: average(collections), collectionScoped:financialIds.has(co.id), opportunities: filtered.has('marketing') && marketingCompanies.has(co.id) ? marketingCounts.get(co.id) || 0 : null,
       target: marketingTargets.get(co.id) ?? null,
       ...taskMetrics(tasksByCompany.get(co.id)||[], date),
       taskScope:filtered.has('tasks')&&(tasksByCompany.has(co.id)||hrRight(m,'task_manage',co.id)||taskRight(m,'assign',co.id))};

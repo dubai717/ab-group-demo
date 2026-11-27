@@ -48,7 +48,10 @@
  const formatAmount=value=>new Intl.NumberFormat(getLocale()==='ar'?'ar-AE':'en-AE',{minimumFractionDigits:2,maximumFractionDigits:3}).format(value);
  const textValue=value=>value===null||value===undefined?'—':String(value);
  const statusEmpty=()=>t('لا توجد سجلات ضمن النطاق','No records in scope');
- const noMeasure=()=>t('لا توجد بيانات كافية لحساب النسبة','Insufficient data to calculate a rate');
+ const noMeasure=()=>t('لا توجد بيانات','No data');
+ const noTarget=()=>t('لا يوجد هدف محدد','No target configured');
+ const percent=value=>e(value??0)+'%';
+ const detailPercent=(value,note=noMeasure())=>percent(value)+(value===null?` <small class="dashboard-rate-note">${e(note)}</small>`:'');
  const panel=(title,content,kind='')=>`<section class="dashboard-panel ${kind}"><h3>${e(title)}</h3><div class="dashboard-panel-body">${content}</div></section>`;
  function overviewTable(headers,rows,footer=[]){
   return `<div class="dashboard-compact-scroll" tabindex="0"><table><thead><tr>${headers.map(label=>`<th scope="col">${e(label)}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.map(row=>`<tr>${row.map(value=>`<td>${value}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${headers.length}">${statusEmpty()}</td></tr>`}</tbody>${footer.length?`<tfoot>${footer.map(row=>`<tr>${row.map(value=>`<td>${value}</td>`).join('')}</tr>`).join('')}</tfoot>`:''}</table></div>`;
@@ -138,8 +141,8 @@
    `${t('مهام مكتملة','Completed tasks')} ${taskAmount(report.staff,'done')}`,true]);
   return entries.length?panel(t('الأداء','Performance'),`<p class="dashboard-metric-period">${e(report.specialPeriod?t('حسب الفترة المختارة','Selected period'):t('الشهر','Month')+' '+report.month)}</p><div class="dashboard-gauges">${entries.map(([key,value,caption,clickable])=>`<div class="dashboard-gauge">
    <h4>${clickable?`<button type="button" class="secondary-btn" data-overview-metric="${key}">${t(...metricNames[key])}</button>`:e(t(...metricNames[key]))}</h4>
-   <div class="dashboard-gauge-arc" style="--progress:${Math.min(100,Math.max(0,value||0))*1.8}deg"><strong>${value===null?'—':e(value)+'%'}</strong></div>
-   ${value===null?`<small>${noMeasure()}</small>`:''}<div>${caption}</div>
+   <div class="dashboard-gauge-arc" style="--progress:${Math.min(100,Math.max(0,value||0))*1.8}deg"><strong>${percent(value)}</strong></div>
+   ${value===null?`<small>${key==='marketing'&&taskAmount(report.rows,'opportunities')>0?noTarget():noMeasure()}</small>`:''}<div>${caption}</div>
   </div>`).join('')}</div>`):'';
  }
  function openPerformance(key){
@@ -151,14 +154,15 @@
    const canStaff=report.staffReady&&report.staff.some(staff=>staff.companyId===row.companyId)&&(key==='collection'||key==='staff'||key==='management');
    const extra=key==='marketing'?e(t('الفرص','Opportunities')+' '+textValue(row.opportunities)+' / '+textValue(row.target)):
     canStaff?`<button type="button" class="secondary-btn" data-overview-staff="${e(row.companyId)}">${key==='collection'?t('عرض المحصّلين','View collectors'):t('عرض الموظفين','View employees')}</button>`:'—';
-   return [e(companyName(row.companyId)),value===null?'—':e(value)+'%',extra];
+   const scoped=key==='collection'?row.collectionScoped:key==='marketing'?row.opportunities!==null:row.taskScope||canStaff;
+   return [e(companyName(row.companyId)),scoped?detailPercent(value,key==='marketing'&&row.opportunities>0?noTarget():noMeasure()):'—',extra];
   });
   bankDialog(title,overviewTable(headers,rows),dialog=>{
    for(const b of dialog.querySelectorAll('[data-overview-staff]'))b.onclick=()=>{
     const staff=report.staff.filter(row=>row.companyId===b.dataset.overviewStaff&&(key!=='collection'||row.collections.due>0));
     bankDialog(companyName(b.dataset.overviewStaff),overviewTable(
      [t('الموظف','Employee'),t('المكتملة','Completed'),t('المستحقة','Due'),key==='collection'?t('إنجاز مهام التحصيل','Collection task completion'):t('نسبة الإنجاز','Completion rate')],
-     staff.map(row=>{const metrics=key==='collection'?row.collections:row;const rate=score(metrics,'staff');return [e(row.name),metrics.done,metrics.due,rate===null?'—':e(rate)+'%'];})));
+     staff.map(row=>{const metrics=key==='collection'?row.collections:row;const rate=score(metrics,'staff');return [e(row.name),metrics.done,metrics.due,detailPercent(rate)];})));
    };
   });
  }

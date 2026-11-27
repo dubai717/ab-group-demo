@@ -7,6 +7,14 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
  await p.locator('#dashboard-company').selectOption(f.otherCompany);
  const overview=p.locator('.dashboard-panel').filter({has:p.getByRole('heading',{name:'الملخص المالي حسب الشركة',exact:true})});
  await overview.getByText('0.00',{exact:true}).first().waitFor();
+ const collection=p.locator('.dashboard-gauge').filter({has:p.locator('[data-overview-metric=collection]')});
+ await collection.getByText('0%',{exact:true}).waitFor();
+ await collection.getByText('لا توجد بيانات',{exact:true}).waitFor();
+ await collection.locator('[data-overview-metric=collection]').click();
+ const companyPerformance=p.locator('dialog.dashboard-bank-dialog[open]');
+ await companyPerformance.getByText('لا توجد بيانات',{exact:true}).waitFor();
+ assert.match(await companyPerformance.innerText(),/0%/);
+ await companyPerformance.locator('[data-bank-close]').click();
  const movement=p.getByRole('button',{name:/الإضافات 0 · الخروج 0$/}).first();
  await movement.waitFor();
  assert.deepEqual(await movement.locator('b').allTextContents(),['0','0']);
