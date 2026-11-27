@@ -23,7 +23,7 @@ const output=process.env.AB_DASHBOARD_SCREENSHOTS||'work';
   const sidebar=page.locator('.app-shell > .sidebar');
   await sidebar.waitFor();
   const navigation=await sidebar.locator('[data-page]').evaluateAll(items=>items.map(item=>item.dataset.page));
-  assert.deepEqual(navigation.slice(0,4),['dashboard','users','companies','bankAccounts']);
+  assert.deepEqual(navigation.slice(0,4),['dashboard','customers','vehicles','financialManagement']);
   await page.locator('#dashboard-company').selectOption(fixture.companyId);
   await page.locator('[data-board-action=overall]:enabled').waitFor();
   await page.locator('.ab-board-gauge').first().scrollIntoViewIfNeeded();
@@ -218,6 +218,6 @@ const output=process.env.AB_DASHBOARD_SCREENSHOTS||'work';
    assert.equal(await select.inputValue(),fixture.permissionTargetId);
   }
   assert.deepEqual(errors,[]);
-  console.log('PASS original sidebar with adjacent dashboard, stacked dialogs, stored layout, bank/task drilldowns, read-only preview, AR/EN at 1440/768/390');
+  console.log('PASS sidebar with adjacent dashboard, stacked dialogs, stored layout, bank/task drilldowns, read-only preview, AR/EN at 1440/768/390');
  }catch(error){console.error(await page.locator("[role=alert]").allTextContents(),errors);throw error;}finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

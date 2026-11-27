@@ -1372,3 +1372,16 @@ form .record-field-control:disabled,form .record-field-control[readonly]{color:v
 .dashboard-record-counts {display:block;margin-block:.75rem}
 .dashboard-count-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr));gap:.6rem;margin-block:.6rem}
 .dashboard-record-counts summary {cursor:pointer}
+
+.sidebar .sidebar-nav {gap:4px;}
+.sidebar .nav-item {width:100%;gap:10px;padding:8px 10px;text-align:start;}
+.sidebar-icon {display:block;inline-size:19px;block-size:19px;flex:none;}
+.sidebar-group-toggle {background:rgba(255,255,255,.09);}
+.sidebar-chevron {margin-inline-start:auto;flex:none;}
+.sidebar-chevron .sidebar-icon {inline-size:16px;block-size:16px;}
+.sidebar-group-toggle[aria-expanded="false"] .sidebar-chevron {transform:rotate(-90deg);}
+[dir="rtl"] .sidebar-group-toggle[aria-expanded="false"] .sidebar-chevron {transform:rotate(90deg);}
+.sidebar-subnav {display:grid;margin-inline-start:8px;padding-inline-start:6px;border-radius:0 0 10px 10px;background:rgba(255,255,255,.05);}
+.sidebar-subnav[hidden] {display:none;}
+.sidebar-subnav .nav-item {font-size:.9rem;font-weight:600;padding-block:6px;}
+.ws-menu-open .sidebar-nav {overflow-y:auto;}

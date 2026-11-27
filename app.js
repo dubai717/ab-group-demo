@@ -452,7 +452,7 @@ function setCurrentUser(user) {
 function getSidebarItems(user) {
   const allItems = [
     { id: 'dashboard', label: localeText('dashboard'), permission: 'view_dashboard' },
-    { id: 'users', label: localeText('users'), permission: 'view_users' },
+    { id: 'users', label: getLocale()==='ar'?'المستخدمون والصلاحيات':'Users & permissions', permission: 'view_users' },
     { id: 'roles', label: localeText('roles'), permission: 'view_dashboard' },
     { id: 'departments', label: localeText('departments'), permission: 'view_company' },
     { id: 'companies', label: localeText('companies'), permission: 'view_company' },
@@ -477,6 +477,89 @@ function getSidebarItems(user) {
   }
 
   return allItems.filter(item => ['bankAccounts', 'users'].includes(item.id) || isUserAllowed(user, item.permission));
+}
+
+const sidebarIcons = {
+  dashboard: '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>',
+  customers: '<circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 4a3 3 0 0 1 0 6m1 4a5 5 0 0 1 4 5v2"/>',
+  vehicles: '<path d="M3 16V6h12v10H3Zm12-7h4l2 3v4h-6"/><circle cx="7" cy="17" r="2"/><circle cx="18" cy="17" r="2"/>',
+  financialManagement: '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 4 16 4 16 0V6M4 10c0 4 16 4 16 0M4 14c0 4 16 4 16 0"/>',
+  approvalCenter: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+  tasks: '<rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 3v4m6-4v4m-6 5h6m-6 4h6"/>',
+  reports: '<path d="M4 4v16h16M8 16v-3m5 3V9m5 7V5"/>',
+  notifications: '<path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 12a2 2 0 0 0 4 0"/>',
+  businessDevelopment: '<path d="M3 10v4h5l11 5V5L8 10H3Zm5 4 2 6h3l-2-5m10-5 2 2-2 2"/>',
+  systemSettings: '<path d="M10 3h4l1 3 3-1 2 3-2 2 1 3 3 1-2 4-3-1-2 2v2h-5l-1-3-3 1-2-4 2-2v-3L3 9l2-4 3 1z"/><circle cx="12" cy="12" r="3"/>',
+  contractingCompanies: '<path d="M2 21h20M5 21V5h10v16m0-11h4v11M8 8h4m-4 4h4m-4 4h4"/>',
+  marketing: '<path d="M4 20h16M5 15l5-5 4 2 6-7m-5 0h5v5"/>',
+  users: '<circle cx="8" cy="7" r="3"/><path d="M2 20v-2a6 6 0 0 1 8-5m6 0 5 2v3c0 2-2 3-5 4-3-1-5-2-5-4v-3z"/>',
+  companies: '<path d="M3 21h18M6 21V4h12v17M9 8h1m4 0h1m-6 4h1m4 0h1m-5 9v-5h4v5"/>',
+  bankAccounts: '<path d="m3 9 9-5 9 5H3Zm2 3v6m5-6v6m4-6v6m5-6v6M3 21h18"/>',
+  investors: '<path d="M3 20h18M6 17v-3m5 3v-6m5 6V8m-9 1 5-5 3 1 4-3"/>',
+  personnel: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="10" r="2"/><path d="M5 16a3 3 0 0 1 6 0m3-7h4m-4 4h4"/>',
+  documentCenter: '<path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  logout: '<path d="M10 4H5v16h5m3-12 4 4-4 4m-5-4h12"/>',
+  chevron: '<path d="m6 9 6 6 6-6"/>'
+};
+
+const sidebarGroups = [
+  {id:'businessDevelopment', labels:['التسويق وجلب الأعمال','Marketing & business acquisition'], pages:['contractingCompanies','marketing']},
+  {id:'systemSettings', labels:['إعدادات النظام','System settings'], pages:['users','companies','bankAccounts','investors','personnel','documentCenter']}
+];
+const sidebarMainPages = ['dashboard','customers','vehicles','financialManagement','approvalCenter','tasks','reports','notifications'];
+const sidebarState = {actor:null, page:null, expanded:new Set()};
+
+function sidebarIcon(id) {
+  return `<svg class="sidebar-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${sidebarIcons[id]}</svg>`;
+}
+
+function renderSidebarNavigation(items, user) {
+  const activePage = WorkspaceUI.group(app.state.currentPage);
+  if (sidebarState.actor !== user.id) {
+    sidebarState.actor = user.id;
+    sidebarState.page = null;
+    sidebarState.expanded = new Set(sidebarGroups.map(group=>group.id));
+  }
+  if (sidebarState.page !== activePage) {
+    sidebarState.page = activePage;
+    const activeGroup = sidebarGroups.find(group=>group.pages.includes(activePage));
+    if (activeGroup) sidebarState.expanded.add(activeGroup.id);
+  }
+
+  const byId = new Map(items.map(item=>[item.id,item]));
+  const renderPage = id => {
+    const item = byId.get(id);
+    if (!item) return '';
+    const active = activePage === id;
+    return `<button type="button" class="nav-item${active?' active':''}" data-page="${id}" ${active?'aria-current="page"':''}>${sidebarIcon(id)}<span>${item.label}</span></button>`;
+  };
+
+  const groups = sidebarGroups.map(({id,labels,pages})=>{
+    const children = pages.map(renderPage).join('');
+    if (!children) return '';
+    const open = sidebarState.expanded.has(id);
+    const label = labels[getLocale()==='ar'?0:1];
+    return `<div class="sidebar-group">
+      <button type="button" class="nav-item sidebar-group-toggle" data-sidebar-group="${id}" aria-expanded="${open}" aria-controls="sidebar-${id}">
+        ${sidebarIcon(id)}<span>${label}</span><span class="sidebar-chevron">${sidebarIcon('chevron')}</span>
+      </button>
+      <div class="sidebar-subnav" id="sidebar-${id}" ${open?'':'hidden'}>${children}</div>
+    </div>`;
+  });
+  return sidebarMainPages.map(renderPage).join('')+groups.join('');
+}
+
+function bindSidebarGroups() {
+  document.querySelectorAll('[data-sidebar-group]').forEach(button=>{
+    button.onclick = ()=>{
+      const id = button.dataset.sidebarGroup;
+      const open = !sidebarState.expanded.has(id);
+      if (open) sidebarState.expanded.add(id);
+      else sidebarState.expanded.delete(id);
+      button.setAttribute('aria-expanded',String(open));
+      document.getElementById(button.getAttribute('aria-controls')).hidden = !open;
+    };
+  });
 }
 
 function render() {
@@ -506,7 +589,8 @@ function render() {
   if(ContractingCompaniesUI.canEnter())sidebarItems.push({id:'contractingCompanies',label:getLocale()==='ar'?'الشركات المتعاقدة':'Contracting Companies'});
   if(MarketingUI.canEnter())sidebarItems.push({id:'marketing',label:getLocale()==='ar'?'التسويق وتطوير الأعمال':'Marketing & business development'});
   if(InvestorUI.canEnter())sidebarItems.push({id:'investors',label:getLocale()==='ar'?'المستثمرون':'Investors'});
-  if(globalThis.ABCentral?.enabled&&currentUser.roleId==='investor'){sidebarItems.splice(0,sidebarItems.length,{id:'investors',label:getLocale()==='ar'?'لوحة المستثمر':'Investor portal'});if(app.state.currentPage==='dashboard')app.state.currentPage='investors';}
+  const investorPortal = globalThis.ABCentral?.enabled&&currentUser.roleId==='investor';
+  if(investorPortal){sidebarItems.splice(0,sidebarItems.length,{id:'investors',label:getLocale()==='ar'?'لوحة المستثمر':'Investor portal'});if(app.state.currentPage==='dashboard')app.state.currentPage='investors';}
   appEl.innerHTML = `
     <div class="app-shell">
       <aside class="sidebar">
@@ -519,16 +603,12 @@ function render() {
           </div>
         </div>
 
-        <button type="button" class="ws-menu-toggle" data-ws-menu aria-expanded="false">${getLocale()==='ar'?'القائمة الرئيسية':'Main menu'}</button><nav class="sidebar-nav">
-          ${sidebarItems.map(item => `
-            <button class="nav-item ${WorkspaceUI.group(app.state.currentPage) === item.id ? 'active' : ''}" data-page="${item.id}">
-              ${item.label}
-            </button>
-          `).join('')}
+        <button type="button" class="ws-menu-toggle" data-ws-menu aria-expanded="false">${getLocale()==='ar'?'القائمة الرئيسية':'Main menu'}</button><nav class="sidebar-nav" aria-label="${getLocale()==='ar'?'القائمة الرئيسية':'Main menu'}">
+          ${renderSidebarNavigation(sidebarItems,currentUser)}
         </nav>
 
         <div class="sidebar-footer">
-          <button class="nav-item" data-action="logout">${localeText('logout')}</button>
+          <button type="button" class="nav-item" data-action="logout">${sidebarIcon('logout')}<span>${localeText('logout')}</span></button>
         </div>
       </aside>
 
@@ -1122,6 +1202,7 @@ function bindGlobalEvents() {
   AuthFlows.bindApp();
   BankAccounts.bind();
   CompanyDocuments.bind();
+  bindSidebarGroups();
   document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', async () => {
       const allowed=await WorkspaceUI.leave();WorkspaceUI.closeMenu();if(!allowed)return;
