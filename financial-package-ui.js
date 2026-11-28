@@ -123,6 +123,11 @@
             group.querySelector('legend').hidden = true;
         }
         const form=dialog.querySelector('form');
+        const scopeHint=document.createElement('p');
+        scopeHint.className='full muted';
+        scopeHint.textContent=t('تعريف البند مشترك بين جميع الشركات. يعتمد الترحيل على الربط المحاسبي المعتمد للشركة المختارة.',
+            'This item definition is shared across all companies. Posting uses the approved mapping for the selected company.');
+        form.prepend(scopeHint);
         const classification=document.createElement('fieldset');
         classification.className='fp-item-classification full';
         classification.innerHTML='<legend>'+e(t('تصنيف المستند المحاسبي','Accounting document classification'))+'</legend>';

@@ -87,6 +87,10 @@ test('one group item is available to current and new companies, with separately 
         assert(review.differences.includes('recurrence'));
         assert(review.differences.includes('payment'));
         assert(review.differences.includes('revenueId'));
+        const newCompanyReview=(await book(co3)).itemDefinitionReview.find((row:any)=>row.nameEn===payload.nameEn);
+        assert(newCompanyReview.differences.includes('revenueId'));
+        assert.deepEqual(newCompanyReview.codes,review.codes);
+        assert.equal((await find(co3)).mappingReady,false);
         assert.notEqual(duplicate.id, shared.id);
         assert.equal((await f.admin.query('select item_id from ab.finance_invoice_links where invoice_id=$1',[first.id])).rows[0].item_id, shared.id);
 

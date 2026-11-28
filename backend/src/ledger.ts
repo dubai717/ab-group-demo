@@ -28,7 +28,7 @@ const catalogueScopeReady=async(c:any)=>Boolean((await c.query(
     "select 1 from pg_attribute where attrelid='ab.finance_items'::regclass and attname='catalogue_company_ids' and not attisdropped"
 )).rowCount);
 const canChangeItem=(m:any,co:string)=>financeRight(m,'ledger_item_manage',co)||financeRight(m,'ledger_item_edit',co);
-async function definitionReview(c:any,cipher:any,m:any,items:any[]){
+async function definitionReview(c:any,cipher:any,m:any,items:any[],definitions:Map<string,any>){
     const names=new Map<string,any[]>();
     for(const item of items){
         if(item.category==='monthly_followup')continue;
@@ -39,24 +39,47 @@ async function definitionReview(c:any,cipher:any,m:any,items:any[]){
     }
     const duplicateGroups=[...names.values()].filter(matches=>matches.length>1);
     if(!duplicateGroups.length)return [];
-    const scope=m.state.companies.filter((co:any)=>financeRight(m,'ledger_view',co.id)).map((co:any)=>co.id);
+    const scope:string[]=m.state.companies.filter((co:any)=>financeRight(m,'ledger_view',co.id)).map((co:any)=>co.id);
     const duplicates=new Set(duplicateGroups.flatMap(matches=>matches.map(row=>row.id)));
     const policies=new Map<string,any[]>();
+    const mappings=new Map<string,any>();
     const rows=(await c.query(`select key,value from ab.settings
-        where key ~ '^financial-package-v1:(monthly-followup|fees|relations):' and split_part(key,':',3)=any($1::text[])`,[scope])).rows;
+        where (key ~ '^financial-package-v1:(monthly-followup|fees|relations):' and split_part(key,':',3)=any($1::text[]))
+           or (split_part(key,':',1)='ledger-item-mapping'
+               and split_part(key,':',2)=any($2::text[]) and split_part(key,':',3)=any($1::text[]))`,
+        [scope,[...duplicates]])).rows;
+    const canInspect=(itemId:string,companyId:string)=>{
+        const permission=definitions.get(itemId)?.permission;
+        return !permission||financeRight(m,permission,companyId);
+    };
     for(const row of rows){
+        const [,kindOrItem,companyId]=row.key.split(':');
+        if(row.key.startsWith('ledger-item-mapping:')){
+            if(canInspect(kindOrItem,companyId))mappings.set(row.key,cipher.open(row.value.cipher));
+            continue;
+        }
         const policy=cipher.open(row.value.cipher);
-        if(!duplicates.has(policy.itemId))continue;
+        if(!duplicates.has(policy.itemId)||!canInspect(policy.itemId,companyId))continue;
         const list=policies.get(policy.itemId)||[];
-        list.push({kind:row.key.split(':')[1],companyId:policy.companyId,condition:policy.condition,
+        list.push({kind:kindOrItem,companyId,condition:policy.condition,
             effectiveOn:policy.effectiveOn,threshold:policy.threshold,amount:policy.amount,enabled:policy.enabled});
         policies.set(policy.itemId,list);
     }
     return duplicateGroups.map(matches=>{
         const fields=['active','category','priority','invoice','receipt','payment','permission','methods','recurrence','recurrenceStart',
             'recurringAmount','annualMonth','dueDateBasis',...itemAccountFields,'companyRules'];
-        const value=(row:any,key:string)=>key==='companyRules'?(policies.get(row.id)||[]).map(rule=>JSON.stringify(rule)).sort():
-            row[key]??(key==='methods'?[...(row.details.methods||[])].sort():row.details[key]??null);
+        const accountsByItem=new Map(matches.map(row=>{
+            const definition=definitions.get(row.id);
+            const mappingsByCompany=scope.filter(co=>canInspect(row.id,co)).map(co=>
+                itemAccountMapping(companyItemData(definition,co,mappings.get(itemMappingKey(row.id,co)))||{}));
+            return [row.id,mappingsByCompany] as const;
+        }));
+        const value=(row:any,key:string)=>{
+            // Review values across authorized companies, without exposing the underlying account identifiers.
+            if(itemAccountFields.some(field=>field===key))return accountsByItem.get(row.id)?.map(mapping=>mapping[key]);
+            return key==='companyRules'?(policies.get(row.id)||[]).map(rule=>JSON.stringify(rule)).sort():
+                row[key]??(key==='methods'?[...(row.details.methods||[])].sort():row.details[key]??null);
+        };
         return {nameAr:matches[0].name_ar,nameEn:matches[0].name_en,codes:matches.map(row=>row.code),
             differences:fields.filter(key=>new Set(matches.map(row=>JSON.stringify(value(row,key)))).size>1)};
     });
@@ -74,11 +97,13 @@ export async function ledgerWorkbench(c:any,m:any,s:any,cipher:any,companyId:str
             let rows = (await c.query('select * from ab.' + tab + (global ? '' : ' where company_id=$1') + ' order by created_at desc limit 20001', global ? [] : [co])).rows;
             requireOk(rows.length<=20000,422,'registerTooLarge');
             if (tab === 'finance_items') {
+                const definitions=new Map<string,any>();
                 out[tab]=rows.flatMap((row:any)=>{
                     const {payload_cipher,catalogue_company_ids,...record}=row;
                     const {mappingPending,...definition}=cipher.open(payload_cipher);
                     if((row.category==='monthly_followup'&&!definition.companyIds?.includes(co))||
                         (definition.permission&&!financeRight(m,definition.permission,co)))return [];
+                    definitions.set(row.id,{...definition,mappingPending});
                     const override=mappings.get(itemMappingKey(row.id,co));
                     const local=companyItemData({...definition,mappingPending},co,override);
                     const canEdit=row.category!=='monthly_followup'&&!override&&definition.companyIds?.includes(co)&&
@@ -86,7 +111,7 @@ export async function ledgerWorkbench(c:any,m:any,s:any,cipher:any,companyId:str
                     const details={...definition,...itemAccountMapping(local||{}),companyIds:canEdit?definition.companyIds:[co]};
                     return [{...record,details,canEdit,mappingReady:!!local&&validItemAccounts(local,itemCharts)}];
                 });
-                out.itemDefinitionReview=await definitionReview(c,cipher,m,out[tab]);
+                out.itemDefinitionReview=await definitionReview(c,cipher,m,out[tab],definitions);
                 continue;
             }
             if (tab === 'finance_kpi_facts' && !financeRight(m, 'ledger_audit', co))
