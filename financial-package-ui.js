@@ -12,10 +12,11 @@
     const choices = o => Object.entries(o).map(([id, v]) => ({ id, name: t(...v) }));
     const itemName = r => getLocale() === 'ar' ? r.name_ar : r.name_en;
     const button = (action, title, id = '') => `<button type="button" class="secondary-btn" data-fp="${action}" data-id="${e(id)}">${e(title)}</button>`;
+    const pendingMapping = () => t('بانتظار إعداد الربط المحاسبي', 'Awaiting accounting mapping');
     const can = key => ctx?.book.rights.includes('ledger_' + key), options = () => ctx.book.finance_items.map(r => ({ id: r.id, name: itemName(r) }));
     const accounts = () => ctx.book.finance_accounts.filter(r => r.active).map(r => ({ id: r.id, name: getLocale() === 'ar' ? r.name_ar : r.name_en }));
     const call = (path, method, body, key) => ctx.api('package/' + path, method, body, key), confirmChange = () => confirm(t('راجع التغييرات. هل تؤكد حفظها؟ لن يُغير الحفظ تحصيلات سابقة.', 'Review the changes. Confirm saving? Previous collections will remain unchanged.'));
-    const msg = err => ({ itemRemovalSchemaPending:t('مسح البند غير المستخدم يتطلب اعتماد تحديث قاعدة البيانات.','Removing unused items requires the reviewed database update.'), monthlyDueRequired:t('أدخل مبلغ الاستحقاق الشهري للبند.','Enter the monthly due amount for the item.'), invalidCostCentre:t('اختر مركز تكلفة نشطاً تابعاً للشركة.','Choose an active cost centre for this company.'),duplicateCostCentre:t('يوجد مركز تكلفة بالاسم نفسه.','A cost centre with this name already exists.'), vehicleFollowupPolicyRequired: t('رسوم المركبة والفئة تُحسب بعد أكثر من 60 يوماً وفي أول الشهر فقط.', 'Vehicle/category fees use more than 60 days and month start only.'), pvDraftGuardReviewRequired: t('تعديل مبلغ سند الصرف محمي بحارس قاعدة البيانات. جرى تجهيز التغيير للمراجعة المالية دون تطبيقه.', 'Payment amount amendment is protected by the database guard. The change is prepared for financial review, without applying it.'), financialActivationRequired: t('التطبيق المالي يتطلب موافقة المالك المحددة. بقيت البيانات والأرصدة محفوظة.', 'Financial activation requires specific owner approval. Data and balances remain intact.'), revisionConflict: t('تغيرت البيانات؛ حدّث المعاينة وأعد المحاولة.', 'Data changed. Refresh the preview and retry.'), retroactiveFinancialRuleForbidden: t('لا يجوز تاريخ سريان سابق دون اعتماد مالي محدد.', 'A past effective date requires specific financial approval.'), principalMappingReviewRequired: t('أصل التمويل وأموال الغير تحتاج ربطاً محاسبياً معتمداً، ولا يجوز تسجيلها إيراداً للخدمات.', 'Principal and third-party funds require an approved accounting mapping and cannot be service revenue.'), accountMappingRequired: t('اختر ربطاً محاسبياً معتمداً من الإعدادات المتقدمة.', 'Choose an approved accounting mapping in advanced settings.'), unsafeInvoiceCancellation: t('لا يمكن إلغاء فاتورة مرتبطة بتحصيل أو تسوية، أو فاتورة مستحقة حالياً.', 'A due, collected or adjusted invoice cannot be cancelled.'), overlappingEntitlement: t('توجد علاقة استحقاق متداخلة للبند والعميل.', 'An overlapping entitlement exists for this customer and item.') })[err.message] || t('تعذر إتمام العملية. البيانات المدخلة محفوظة: ', 'Operation failed. Inputs remain: ') + err.message;
+    const msg = err => ({ itemAccountingMappingPending:pendingMapping(), usedItemMappingImmutable:t('الربط مستخدم في مستندات محفوظة.', 'This mapping is used by retained documents.'), itemRemovalSchemaPending:t('مسح البند غير المستخدم يتطلب اعتماد تحديث قاعدة البيانات.','Removing unused items requires the reviewed database update.'), monthlyDueRequired:t('أدخل مبلغ الاستحقاق الشهري للبند.','Enter the monthly due amount for the item.'), invalidCostCentre:t('اختر مركز تكلفة نشطاً تابعاً للشركة.','Choose an active cost centre for this company.'),duplicateCostCentre:t('يوجد مركز تكلفة بالاسم نفسه.','A cost centre with this name already exists.'), vehicleFollowupPolicyRequired: t('رسوم المركبة والفئة تُحسب بعد أكثر من 60 يوماً وفي أول الشهر فقط.', 'Vehicle/category fees use more than 60 days and month start only.'), pvDraftGuardReviewRequired: t('تعديل مبلغ سند الصرف محمي بحارس قاعدة البيانات. جرى تجهيز التغيير للمراجعة المالية دون تطبيقه.', 'Payment amount amendment is protected by the database guard. The change is prepared for financial review, without applying it.'), financialActivationRequired: t('التطبيق المالي يتطلب موافقة المالك المحددة. بقيت البيانات والأرصدة محفوظة.', 'Financial activation requires specific owner approval. Data and balances remain intact.'), revisionConflict: t('تغيرت البيانات؛ حدّث المعاينة وأعد المحاولة.', 'Data changed. Refresh the preview and retry.'), retroactiveFinancialRuleForbidden: t('لا يجوز تاريخ سريان سابق دون اعتماد مالي محدد.', 'A past effective date requires specific financial approval.'), principalMappingReviewRequired: t('أصل التمويل وأموال الغير تحتاج ربطاً محاسبياً معتمداً، ولا يجوز تسجيلها إيراداً للخدمات.', 'Principal and third-party funds require an approved accounting mapping and cannot be service revenue.'), accountMappingRequired: t('اختر ربطاً محاسبياً معتمداً من الإعدادات المتقدمة.', 'Choose an approved accounting mapping in advanced settings.'), unsafeInvoiceCancellation: t('لا يمكن إلغاء فاتورة مرتبطة بتحصيل أو تسوية، أو فاتورة مستحقة حالياً.', 'A due, collected or adjusted invoice cannot be cancelled.'), overlappingEntitlement: t('توجد علاقة استحقاق متداخلة للبند والعميل.', 'An overlapping entitlement exists for this customer and item.') })[err.message] || t('تعذر إتمام العملية. البيانات المدخلة محفوظة: ', 'Operation failed. Inputs remain: ') + err.message;
     function scopedForm(title, fields, save) { const company = ctx.co, actor = ABCentral.actor.id; return CenterForms.form(title, fields, (d, key) => { if (ctx?.co !== company || ABCentral.actor?.id !== actor)
         throw Error(t('تغير نطاق العمل؛ أعد فتح النموذج.', 'Scope changed. Reopen the form.')); return save(d, key); }); }
     async function safely(fn) { try {
@@ -27,6 +28,48 @@
     function table(key, rows, cols, actions = () => '', open) { return FinancialTables.table(ctx.scope, [...cols.map(([, title]) => title), t('الإجراءات', 'Actions')], rows.map(r => [...cols.map(([name]) => e(WorkspaceUI.dateTime(r[name]))), (open ? `<button hidden type="button" data-fp-open="${e(r.id)}" data-kind="${key}">${t('تفاصيل', 'Details')}</button>` : '') + actions(r)]), { key: 'package:' + key, columns: [...cols.map(([name]) => name), null], rawRows: rows, companyId: ctx.co }); }
     function detail(title, pairs) { const d = document.createElement('dialog'); d.className = 'record-form-dialog'; d.dataset.centerOwned = '1'; d.innerHTML = '<h2>' + e(title) + '</h2>' + RecordLayout.values(pairs) + `<button class="secondary-btn" data-close>${t('إغلاق', 'Close')}</button>`; document.body.append(d); d.querySelector('[data-close]').onclick = () => { d.close(); d.remove(); }; FloatingRecords.open(d); return d; }
     let selectedItem = null;
+    function itemMappingEditor(record) {
+        const d=record.details;
+        const fields=[f('currency','العملة','Currency','text',ctx.book.config.currency||'AED')];
+        const choices=[
+            ['receivableId','حساب المستحقات','Receivables account',d.invoice||d.receipt],
+            ['revenueId','حساب الإيرادات أو الأمانات','Income or liability account',d.invoice],
+            ['expenseId','حساب المصروف','Expense account',d.payment],
+            ['payableId','حساب الدائنين','Payables account',d.payment],
+            ['taxAccountId','حساب الضريبة','Tax account',false]
+        ];
+        for(const [key,ar,en,required] of choices){
+            if(!required&&key!=='taxAccountId')continue;
+            const companyAccounts=accounts().filter(account=>ctx.book.finance_chart.some(chart=>chart.active&&chart.definition_id===account.id));
+            fields.push(f(key,ar,en,'text',d[key]||'',companyAccounts,required));
+        }
+        fields.push(f('taxRate','نسبة الضريبة','Tax rate','text',d.taxRate||'0'));
+        scopedForm(t('اعتماد الربط المحاسبي لهذه الشركة','Approve accounting mapping for this company'),fields,
+            async(values,key)=>safely(async()=>{
+                for(const name of Object.keys(values))if(name.endsWith('Id')&&!values[name])delete values[name];
+                await ctx.api('items/'+record.id+'/accounting-mapping','POST',{...values,companyId:ctx.co,confirm:true},key);
+                await ctx.refresh();
+            }));
+    }
+    const reviewFields = {
+        active:['الحالة','Status'], category:['التصنيف','Classification'], priority:['الأولوية','Priority'], invoice:['فاتورة','Invoice'],
+        receipt:['سند قبض','Receipt voucher'], payment:['سند صرف','Payment voucher'],
+        permission:['الصلاحية','Permission'],methods:['طرق الإصدار','Issue methods'],recurrence:['الدورية','Recurrence'],
+        recurrenceStart:['بداية الدورية','Recurrence start'],recurringAmount:['المبلغ الدوري','Recurring amount'],
+        annualMonth:['شهر الاستحقاق السنوي','Annual due month'],dueDateBasis:['أساس الاستحقاق','Due date basis'],
+        receivableId:['حساب المستحقات','Receivables account'], revenueId:['حساب الإيراد','Income account'],
+        expenseId:['حساب المصروف','Expense account'], payableId:['حساب الدائنين','Payables account'],
+        taxAccountId:['حساب الضريبة','Tax account'],taxRate:['نسبة الضريبة','Tax rate'],companyRules:['قواعد الرسوم والاستحقاق','Fee and entitlement rules']
+    };
+    function itemReview() {
+        const rows=(ctx.book.itemDefinitionReview||[]).map(r=>({
+            name:getLocale()==='ar'?r.nameAr:r.nameEn,codes:r.codes.join(' · '),
+            differences:r.differences.map(key=>t(...reviewFields[key])).join(' · ')||t('مطابقة ظاهرياً','Apparently matching')
+        }));
+        if(!rows.length)return '';
+        return '<details><summary>'+e(t('بنود متشابهة تحتاج مراجعة قبل التوحيد','Similar items to review before consolidation'))+'</summary>'+
+            table('item-definition-review',rows,[['name',t('البند','Item')],['codes',t('المراجع الحالية','Current references')],['differences',t('مواضع الاختلاف','Differences')]])+'</details>';
+    }
     function itemEditor(existing) {
         const editingCompany=ctx.co;
         const rule=ctx.book.package.monthlyFollowups?.find(r=>r.itemId===existing?.id);
@@ -121,16 +164,20 @@
         const record=selectedItem?.company===ctx.co&&selectedItem.actor===ABCentral.actor.id
             ?ctx.book.finance_items.find(r=>r.id===selectedItem.id):null;
         const register=table('items',ctx.book.finance_items.map(r=>({...r,displayName:itemName(r),
-            recurrenceName:t(...(recurrence[r.details.recurrence]||recurrence.none)),state:r.active?t('نشط','Active'):t('غير نشط','Inactive')})),
+            recurrenceName:t(...(recurrence[r.details.recurrence]||recurrence.none)),state:r.active?(r.mappingReady?t('نشط','Active'):pendingMapping()):t('غير نشط','Inactive')})),
             [['code',t('رقم البند','Item number')],['displayName',t('البند','Item')],['recurrenceName',t('دورية الاستحقاق','Recurrence')],['state',t('الحالة','Status')]],()=>'',true);
         const tools=(can('item_manage')||can('item_create'))?button('new-item',t('تعريف بند مالي','Define financial item')):'';
-        if(!record)return '<section class="fp-item-register"><h3>'+e(t('سجل البنود المحاسبية','Accounting item register'))+'</h3>'+tools+register+'</section>';
+        const scopeNote='<p>'+e(t('تعريف البند مشترك. يُعتمد الربط المحاسبي لكل شركة.','Item definitions are shared. Accounting mappings are approved per company.'))+'</p>';
+        if(!record)return '<section class="fp-item-register"><h3>'+e(t('سجل البنود المحاسبية','Accounting item register'))+'</h3>'+scopeNote+tools+itemReview()+register+'</section>';
         const edit=record.canEdit;
         return '<section class="fp-item-detail"><h3>'+e(itemName(record))+'</h3>'+
             RecordLayout.values([[t('رقم البند','Item number'),record.code],
+                [t('الربط المحاسبي للشركة','Company accounting mapping'),record.mappingReady?t('جاهز','Ready'):pendingMapping()],
                 [t('تصنيف المستند','Document classification'),['invoice','receipt','payment'].filter(k=>record.details[k])
                     .map(k=>({invoice:t('فاتورة','Invoice'),receipt:t('سند قبض','Receipt voucher'),payment:t('سند صرف','Payment voucher')})[k]).join(' · ')]])+
             button('item-register',t('العودة إلى سجل البنود','Back to item register'))+
+            (record.active&&record.category!=='monthly_followup'&&can('configure')
+                ?button('item-mapping',t('اعتماد الربط المحاسبي لهذه الشركة','Approve accounting mapping for this company'),record.id):'')+
             (edit?button('item-edit',t('تعديل البند','Edit item'),record.id)+button('item-remove',t('مسح أو تعطيل البند','Remove or disable item'),record.id):'')+
             '<h4>'+e(t(...names.entitlements))+'</h4>'+body('entitlements',context,record)+
             '<h4>'+e(t(...names.compliance))+'</h4>'+body('compliance',context,record)+'</section>';
@@ -225,6 +272,7 @@
             if(action==='tax-adjustment'){taxAdjustmentEditor();return;}
             if(action==='tax-bridge'){taxBridgeEditor();return;}
             if(action==='item-register'){selectedItem=null;render();return;}
+            if(action==='item-mapping'){itemMappingEditor(ctx.book.finance_items.find(r=>r.id===key));return;}
             if(action==='item-edit'){itemEditor(ctx.book.finance_items.find(r=>r.id===key));return;}
             if(action==='item-remove'){
                 if(!confirm(t('مسح البند غير المستخدم أو تعطيل البند المستخدم مع حفظ تاريخه؟','Remove an unused item or disable a used item and keep its history?')))return;

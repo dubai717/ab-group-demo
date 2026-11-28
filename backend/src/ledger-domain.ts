@@ -1,3 +1,4 @@
+import { approvedItemMapping, checkItemAccounts, companyItemData, itemAccountCharts, itemMappingKey, validItemAccounts } from './item-accounting-mapping.js';
 import {reversalCostCentre} from './cost-centres.js';
 import {contractingParty,exactFinancialParty} from './contracting-access.js';
 import { randomUUID } from 'node:crypto';
@@ -39,13 +40,29 @@ export async function config(c: any, cipher: any, co: string) { const r = (await
 export async function chart(c: any, co: string, currency: string, id: string, kind?: string) { const r = (await c.query('select c.*,a.active definition_active from ab.finance_chart c left join ab.finance_accounts a on a.id=c.definition_id where c.id=$1', [id])).rows[0]; requireOk(r && r.active && r.definition_active !== false && r.company_id === co && r.currency === currency && (!kind || r.kind === kind), 422, 'accountMappingRequired'); return r; }
 export async function resolve(c: any, co: string, currency: string, definition: string) { const r = (await c.query('select id from ab.finance_chart where company_id=$1 and currency=$2 and definition_id=$3', [co, currency, definition])).rows[0]; requireOk(r, 422, 'accountMappingRequired'); return chart(c, co, currency, r.id); }
 export async function item(c: any, cipher: any, m: any, id: string, co: string, allowInactive = false) {
-    const r = (await c.query('select * from ab.finance_items where id=$1', [id])).rows[0];
+    const r = (await c.query('select * from ab.finance_items where id=$1 for share', [id])).rows[0];
     requireOk(r && (allowInactive || r.active), 422, 'invalidItem');
-    const d = cipher.open(r.payload_cipher);
-    requireOk(!d.companyIds?.length || d.companyIds.includes(co), 403, 'denied');
-    if (d.permission)
-        requireOk(financeRight(m, d.permission, co));
-    return { ...r, data: d };
+    const definition = cipher.open(r.payload_cipher);
+    const data = companyItemData(definition, co, await approvedItemMapping(c, cipher, r.id, co));
+    if (r.category === 'monthly_followup')
+        requireOk(definition.companyIds?.includes(co), 403, 'denied');
+    if (definition.permission)
+        requireOk(financeRight(m, definition.permission, co));
+    requireOk(data, 409, 'itemAccountingMappingPending');
+    return { ...r, data };
+}
+export async function financialItemChoices(c:any,cipher:any,m:any,co:string){
+    const charts=await itemAccountCharts(c,co);
+    const mappings=new Map((await c.query("select key,value from ab.settings where key like 'ledger-item-mapping:%:'||$1",[co])).rows
+        .map((row:any)=>[row.key,cipher.open(row.value.cipher)]));
+    return (await c.query('select * from ab.finance_items where active order by name_ar,name_en')).rows.flatMap((row:any)=>{
+        const definition=cipher.open(row.payload_cipher);
+        if((row.category==='monthly_followup'&&!definition.companyIds?.includes(co))||
+            (definition.permission&&!financeRight(m,definition.permission,co)))return [];
+        const local=companyItemData(definition,co,mappings.get(itemMappingKey(row.id,co)));
+        return [{id:row.id,nameAr:row.name_ar,nameEn:row.name_en,invoice:!!definition.invoice,receipt:!!definition.receipt,
+            payment:!!definition.payment,mappingReady:!!local&&validItemAccounts(local,charts)}];
+    });
 }
 export const line = (a: any, delta: bigint) => ({ companyId: a.company_id, chartId: a.id, bankAccountId: a.bank_account_id || null, currency: a.currency, debit: L.money(delta > 0n ? delta : 0n), credit: L.money(delta < 0n ? -delta : 0n) });
 export async function journal(c: any, cipher: any, s: any, co: string, date: string, currency: string, key: string, lines: any[], payload: any, posted = true, reversalOf?: string) {
@@ -98,6 +115,7 @@ export async function invoice(c: any, cipher: any, m: any, s: any, d: any) {
 export async function linkInvoice(c: any, cipher: any, m: any, s: any, id: string, it: any, date: string, key: string) {
     const i = (await c.query('select * from ab.vehicle_invoices where id=$1', [id])).rows[0];
     requireOk(i, 404, 'notFound');
+    await checkItemAccounts(c,it.data,i.company_id,i.currency);
     await c.query('insert into ab.finance_invoice_links(id,tenant_id,company_id,invoice_id,item_id,issued_on,source_key,created_by)values($1,$2,$3,$4,$5,$6,$7,$8)', [randomUUID(), s.tenant_id, i.company_id, id, it.id, date, key, s.user_id]);
     const ar = await resolve(c, i.company_id, i.currency, it.data.receivableId), income = await resolve(c, i.company_id, i.currency, it.data.revenueId);
     requireOk(ar.kind === 'asset' && ['income', 'liability'].includes(income.kind), 422, 'accountMappingRequired');
@@ -163,7 +181,9 @@ export async function allocateReceipt(c: any, s: any, r: any, cipher: any) {
     return left;
 }
 export async function postReceipt(c: any, cipher: any, m: any, s: any, r: any, method: string, date: string) {
-    const it = await item(c, cipher, m, r.item_id, r.company_id, true), cfg = await config(c, cipher, r.company_id), debit = await chart(c, r.company_id, r.currency, method === 'cash' ? cfg.custodyAccountId : cfg.chequeTransitAccountId, 'asset'), ar = await resolve(c, r.company_id, r.currency, it.data.receivableId), credit = await chart(c, r.company_id, r.currency, cfg.customerCreditAccountId, 'liability');
+    const it = await item(c, cipher, m, r.item_id, r.company_id, true);
+    await checkItemAccounts(c,it.data,r.company_id,r.currency);
+    const cfg = await config(c, cipher, r.company_id), debit = await chart(c, r.company_id, r.currency, method === 'cash' ? cfg.custodyAccountId : cfg.chequeTransitAccountId, 'asset'), ar = await resolve(c, r.company_id, r.currency, it.data.receivableId), credit = await chart(c, r.company_id, r.currency, cfg.customerCreditAccountId, 'liability');
     const extra = await allocateReceipt(c, s, r, cipher), settled = L.units(r.amount) - extra, lines = [line(debit, L.units(r.amount))];
     if (settled)
         lines.push(line(ar, -settled));
@@ -178,6 +198,7 @@ export async function createFinancialVoucher(c: any, cipher:any, m: any, s: any,
         company(m, d.companyId);
         const it = await item(c, cipher, m, d.itemId, d.companyId);
         requireOk(it.data.payment, 403, 'denied');
+        await checkItemAccounts(c,it.data,d.companyId,d.currency);
         if (d.customerId)
             await customer(c, m, d.customerId, d.companyId);
         const key = randomUUID(), n = await number(c, s.tenant_id, 'voucher');

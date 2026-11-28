@@ -4,7 +4,7 @@ import { requireOk, ApiError, deferReadAudit } from './core.js';
 import { has, audit } from './data.js';
 import { number, today } from './vehicle-domain.js';
 import { financeRight } from './finance.js';
-import { L, event, journal, resolve, chart, line, balance, createFinancialVoucher,config as financialConfig } from './ledger-domain.js';
+import { L, event, journal, resolve, chart, line, balance, createFinancialVoucher,item,config as financialConfig } from './ledger-domain.js';
 const CustomerPolicy = createRequire(import.meta.url)('../../customer-policy.js');
 export const H = createRequire(import.meta.url)('../../personnel-policy.js') as {
     rights: string[];
@@ -134,12 +134,12 @@ export async function payrollPreview(c: any, cipher: any, e: any, month: string)
 export async function accruePayroll(c: any, cipher: any, m: any, s: any, e: any, slip: any, data: any) {
     const cfg = await settings(c, cipher, slip.company_id);
     requireOk(cfg.payrollItemId, 409, 'payrollFinancialMappingRequired');
-    const it = (await c.query('select * from ab.finance_items where id=$1', [cfg.payrollItemId])).rows[0];
-    requireOk(it?.active, 422, 'invalidItem');
-    const mapping = cipher.open(it.payload_cipher), payable = await resolve(c, slip.company_id, slip.currency, mapping.payableId), lines: any[] = [];requireOk(payable.kind==='liability'&&!payable.bank_account_id,422,'payrollLiabilityRequired');
+    const {id:itemId,data:mapping}=await item(c,cipher,m,cfg.payrollItemId,slip.company_id);
+    const payable = await resolve(c, slip.company_id, slip.currency, mapping.payableId), lines: any[] = [];requireOk(payable.kind==='liability'&&!payable.bank_account_id,422,'payrollLiabilityRequired');
     for (const a of data.allocations) {
         need(m, 'payroll_approve', a.companyId);
-        const expense = await resolve(c, a.companyId, slip.currency, mapping.expenseId);
+        const target=a.companyId===slip.company_id?mapping:(await item(c,cipher,m,cfg.payrollItemId,a.companyId)).data;
+        const expense = await resolve(c, a.companyId, slip.currency, target.expenseId);
         requireOk(expense.kind === 'expense', 422, 'accountMappingRequired');
         if (a.companyId === slip.company_id)
             lines.push(line(expense, H.units(a.amount)));
@@ -160,6 +160,6 @@ export async function accruePayroll(c: any, cipher: any, m: any, s: any, e: any,
         await journal(c, cipher, s, slip.company_id, today(), slip.currency, 'payroll:' + slip.id, lines.filter((r: any) => H.units(r.debit) || H.units(r.credit)), { payrollId: slip.id, employeeId: e.id, month: slip.month });
     if (!H.units(data.net))
         return null;
-    const v = await createFinancialVoucher(c, cipher, m, s, { companyId: slip.company_id, itemId: it.id, amount: data.net, currency: slip.currency, issuedOn: today(), beneficiary: profile(e, cipher).nameEn || profile(e, cipher).nameAr, reason: 'Approved payroll ' + data.month, sourceKey: 'payroll:' + slip.id }, { alreadyAccrued: true, payableOverrideId: payable.id, payrollId: slip.id });
+    const v = await createFinancialVoucher(c, cipher, m, s, { companyId: slip.company_id, itemId, amount: data.net, currency: slip.currency, issuedOn: today(), beneficiary: profile(e, cipher).nameEn || profile(e, cipher).nameAr, reason: 'Approved payroll ' + data.month, sourceKey: 'payroll:' + slip.id }, { alreadyAccrued: true, payableOverrideId: payable.id, payrollId: slip.id });
     return v.id;
 }

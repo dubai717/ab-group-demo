@@ -6,7 +6,7 @@ import { H, hrRight, need, employee, employeeIn, settings, auditHR, makeTask, no
 import {createRequire} from 'node:module';
 const CustomerPolicy=createRequire(import.meta.url)('../../customer-policy.js');
 import { today,vehicleData } from './vehicle-domain.js';
-import { L, resolve, line, journal, balance, createFinancialVoucher } from './ledger-domain.js';
+import { L, resolve, line, journal, balance, createFinancialVoucher, item as ledgerItem } from './ledger-domain.js';
 export async function personnelFollowup(c: any, cipher: any, m: any, s: any, co: string) {
     need(m, 'configure', co);
     for (const u of (await c.query('select u.auth_id from ab.users u join ab.hr_employees e on e.user_id=u.id where e.company_id=$1', [co])).rows)
@@ -168,9 +168,8 @@ export function registerPersonnelWorkflows(app: any, route: any, cipher: any) {
     app.post('/api/personnel/terminations/:id/settle', route(async (c: any, m: any, s: any, r: any) => { const d = z.object({ eosAmount: money, leaveAmount: money, otherAmount: money, legalBasis: text, keysReviewed: z.literal(true), legalReviewed: z.literal(true), reason: text }).strict().parse(r.body), t = (await c.query('select * from ab.hr_terminations where id=$1', [id.parse(r.params.id)])).rows[0]; requireOk(t, 404, 'notFound'); need(m, 'clearance', t.company_id); need(m, 'eos_view', t.company_id); requireOk(t.state === 'Approved' && t.last_on.toISOString().slice(0, 10) <= today(), 409, 'terminationNotDue'); const e = (await c.query('select * from ab.hr_employees where id=$1', [t.employee_id])).rows[0], check = await clearance(c, e); requireOk(check.financiallyClear, 409, 'clearancePending'); const estimate = await legalEOS(c, cipher, e, t.last_on.toISOString().slice(0, 10)); requireOk(estimate.available, 409, 'legalRegimeReviewRequired'); requireOk(H.units(d.eosAmount) <= H.units(estimate.remaining), 422, 'eosExceedsRemaining'); const cfg = await settings(c, cipher, t.company_id), total = H.units(d.eosAmount) + H.units(d.leaveAmount) + H.units(d.otherAmount); let voucherId = null; if (total) {
         requireOk(cfg.finalSettlementItemId, 409, 'settlementMappingRequired');
         const comp = (await c.query('select * from ab.hr_compensation where employee_id=$1 order by effective_on desc,version desc limit 1', [e.id])).rows[0];
-        const item = (await c.query('select * from ab.finance_items where id=$1', [cfg.finalSettlementItemId])).rows[0];
-        requireOk(item?.active, 422, 'invalidItem');
-        const mapping = cipher.open(item.payload_cipher), payable = await resolve(c, t.company_id, comp.currency, mapping.payableId), expense = await resolve(c, t.company_id, comp.currency, mapping.expenseId);
+        const item=await ledgerItem(c,cipher,m,cfg.finalSettlementItemId,t.company_id);
+        const mapping = item.data, payable = await resolve(c, t.company_id, comp.currency, mapping.payableId), expense = await resolve(c, t.company_id, comp.currency, mapping.expenseId);
         requireOk(expense.kind === 'expense' && payable.kind === 'liability', 422, 'accountMappingRequired');
         let remaining = H.units(d.eosAmount), covered = 0n;
         const lines: any[] = [];

@@ -1,3 +1,4 @@
+import { approvedItemMapping, checkItemAccounts, companyItemData, itemAccountCharts, itemAccountFields, itemAccountMapping, itemMappingKey, validItemAccounts } from './item-accounting-mapping.js';
 import {registerAccountingImports, importedReference, originalReference, accountingImportLock} from './accounting-imports.js';
 import {costCentreSnapshot} from './cost-centres.js';
 import {reviewDepositReceipt} from './deposit-review.js';
@@ -27,24 +28,72 @@ const catalogueScopeReady=async(c:any)=>Boolean((await c.query(
     "select 1 from pg_attribute where attrelid='ab.finance_items'::regclass and attname='catalogue_company_ids' and not attisdropped"
 )).rowCount);
 const canChangeItem=(m:any,co:string)=>financeRight(m,'ledger_item_manage',co)||financeRight(m,'ledger_item_edit',co);
+async function definitionReview(c:any,cipher:any,m:any,items:any[]){
+    const names=new Map<string,any[]>();
+    for(const item of items){
+        if(item.category==='monthly_followup')continue;
+        const key=normalize(item.name_ar)+'\u0000'+normalize(item.name_en);
+        const matches=names.get(key)||[];
+        matches.push(item);
+        names.set(key,matches);
+    }
+    const duplicateGroups=[...names.values()].filter(matches=>matches.length>1);
+    if(!duplicateGroups.length)return [];
+    const scope=m.state.companies.filter((co:any)=>financeRight(m,'ledger_view',co.id)).map((co:any)=>co.id);
+    const duplicates=new Set(duplicateGroups.flatMap(matches=>matches.map(row=>row.id)));
+    const policies=new Map<string,any[]>();
+    const rows=(await c.query(`select key,value from ab.settings
+        where key ~ '^financial-package-v1:(monthly-followup|fees|relations):' and split_part(key,':',3)=any($1::text[])`,[scope])).rows;
+    for(const row of rows){
+        const policy=cipher.open(row.value.cipher);
+        if(!duplicates.has(policy.itemId))continue;
+        const list=policies.get(policy.itemId)||[];
+        list.push({kind:row.key.split(':')[1],companyId:policy.companyId,condition:policy.condition,
+            effectiveOn:policy.effectiveOn,threshold:policy.threshold,amount:policy.amount,enabled:policy.enabled});
+        policies.set(policy.itemId,list);
+    }
+    return duplicateGroups.map(matches=>{
+        const fields=['active','category','priority','invoice','receipt','payment','permission','methods','recurrence','recurrenceStart',
+            'recurringAmount','annualMonth','dueDateBasis',...itemAccountFields,'companyRules'];
+        const value=(row:any,key:string)=>key==='companyRules'?(policies.get(row.id)||[]).map(rule=>JSON.stringify(rule)).sort():
+            row[key]??(key==='methods'?[...(row.details.methods||[])].sort():row.details[key]??null);
+        return {nameAr:matches[0].name_ar,nameEn:matches[0].name_en,codes:matches.map(row=>row.code),
+            differences:fields.filter(key=>new Set(matches.map(row=>JSON.stringify(value(row,key)))).size>1)};
+    });
+}
 export async function ledgerWorkbench(c:any,m:any,s:any,cipher:any,companyId:string){
         const co = id.parse(companyId);
         need(m, 'view', co);
         const tables = ['finance_accounts', 'finance_items', 'finance_chart', 'finance_funds', 'finance_vouchers', 'finance_deposits', 'finance_custody_transfers', 'finance_journals', 'finance_periods', 'finance_cards', 'finance_card_charges', 'finance_statements', 'finance_intercompany', 'finance_kpi_facts'];
         const out: any = { companyId: co, rights: L.rights.filter((r: string) => financeRight(m, r, co)), config: await config(c, cipher, co), banks: m.bank.list().filter((b: any) => b.companyId === co), users: m.state.users.filter((u: any) => u.status === 'Active').map((u: any) => ({ id: u.id, name: u.nameEn || u.fullName || u.username })), scope: 'posted ledger only; no inferred opening balances; currencies kept separate' };
+        const itemCharts=await itemAccountCharts(c,co);
+        const mappings=new Map((await c.query("select key,value from ab.settings where key like 'ledger-item-mapping:%:'||$1",[co])).rows
+            .map((row:any)=>[row.key,cipher.open(row.value.cipher)]));
         for (const tab of tables) {
             const global = ['finance_accounts', 'finance_items'].includes(tab);
             let rows = (await c.query('select * from ab.' + tab + (global ? '' : ' where company_id=$1') + ' order by created_at desc limit 20001', global ? [] : [co])).rows;
             requireOk(rows.length<=20000,422,'registerTooLarge');
-            if (tab === 'finance_items')
-                rows = rows.filter((r: any) => { const d = cipher.open(r.payload_cipher); return !d.companyIds?.length || d.companyIds.includes(co); });
+            if (tab === 'finance_items') {
+                out[tab]=rows.flatMap((row:any)=>{
+                    const {payload_cipher,catalogue_company_ids,...record}=row;
+                    const {mappingPending,...definition}=cipher.open(payload_cipher);
+                    if((row.category==='monthly_followup'&&!definition.companyIds?.includes(co))||
+                        (definition.permission&&!financeRight(m,definition.permission,co)))return [];
+                    const override=mappings.get(itemMappingKey(row.id,co));
+                    const local=companyItemData({...definition,mappingPending},co,override);
+                    const canEdit=row.category!=='monthly_followup'&&!override&&definition.companyIds?.includes(co)&&
+                        definition.companyIds.every((id:string)=>financeRight(m,'ledger_view',id)&&canChangeItem(m,id));
+                    const details={...definition,...itemAccountMapping(local||{}),companyIds:canEdit?definition.companyIds:[co]};
+                    return [{...record,details,canEdit,mappingReady:!!local&&validItemAccounts(local,itemCharts)}];
+                });
+                out.itemDefinitionReview=await definitionReview(c,cipher,m,out[tab]);
+                continue;
+            }
             if (tab === 'finance_kpi_facts' && !financeRight(m, 'ledger_audit', co))
                 rows = rows.filter((r: any) => r.employee_id === s.user_id);
             out[tab] = rows.map((r: any) => {
                 const details=r.payload_cipher?cipher.open(r.payload_cipher):undefined;
-                const canEdit=tab==='finance_items'&&r.category!=='monthly_followup'&&details?.companyIds?.length>0&&
-                    details.companyIds.every((id:string)=>financeRight(m,'ledger_view',id)&&canChangeItem(m,id));
-                return {...r,...(details?{details}:{}),...(tab==='finance_items'?{canEdit}:{}),payload_cipher:undefined};
+                return {...r,...(details?{details}:{}),payload_cipher:undefined};
             });
         }
         out.custodyRecipients=m.state.users.filter((u:any)=>u.status==='Active'&&u.id!==s.user_id&&financeRight({...m,actor:u},'ledger_receive',co)).map((u:any)=>({id:u.id,nameAr:u.nameAr||u.nameEn||u.username,nameEn:u.nameEn||u.nameAr||u.username}));
@@ -141,10 +190,41 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         requireOk(companyIds.includes(rule.companyId),403,'denied');
         await saveMonthlyFollowup(c,cipher,m,s,{...rule,itemId,confirm:true});
     }
+    const mappingSchema=z.object({companyId:id,currency,receivableId:opt,revenueId:opt,expenseId:opt,payableId:opt,taxAccountId:opt,
+        taxRate:z.string().regex(/^\d{1,2}(\.\d{1,3})?$/).default('0'),confirm:z.literal(true)}).strict();
+    app.post('/api/ledger/items/:id/accounting-mapping',route(async(c:any,m:any,s:any,req:any)=>{
+        const d=mappingSchema.parse(req.body), key=id.parse(req.params.id);
+        need(m,'view',d.companyId);
+        need(m,'configure',d.companyId);
+        company(m,d.companyId);
+        const row=(await c.query('select * from ab.finance_items where id=$1 for update',[key])).rows[0];
+        requireOk(row?.active&&row.category!=='monthly_followup',422,'invalidItem');
+        const definition=cipher.open(row.payload_cipher);
+        if(definition.permission)requireOk(financeRight(m,definition.permission,d.companyId),403,'denied');
+        const before=await approvedItemMapping(c,cipher,key,d.companyId), mapping=itemAccountMapping(d);
+        const existing=companyItemData(definition,d.companyId,before);
+        if(existing&&itemAccountFields.some(field=>itemAccountMapping(existing)[field]!==mapping[field])){
+            const used=(await c.query(`select 1 from ab.finance_invoice_links where company_id=$1 and item_id=$2
+                union all select 1 from ab.finance_receipts where company_id=$1 and item_id=$2
+                union all select 1 from ab.finance_vouchers where company_id=$1 and item_id=$2
+                union all select 1 from ab.finance_card_splits where company_id=$1 and item_id=$2 limit 1`,[d.companyId,key])).rowCount;
+            requireOk(!used,409,'usedItemMappingImmutable');
+        }
+        if(row.code.startsWith('FI-')&&definition.invoice&&['loan','finance','work_amount','investor'].includes(row.category)){
+            const account=(await c.query('select kind from ab.finance_accounts where id=$1',[mapping.revenueId])).rows[0];
+            requireOk(account?.kind==='liability',422,'principalMappingReviewRequired');
+        }
+        await checkItemAccounts(c,{...definition,...mapping},d.companyId,d.currency);
+        await c.query('insert into ab.settings values($1,$2,$3) on conflict(tenant_id,key) do update set value=excluded.value',
+            [s.tenant_id,itemMappingKey(key,d.companyId),{cipher:cipher.seal(mapping)}]);
+        await event(c,cipher,s,d.companyId,key,'item_mapping_approved',existing?itemAccountMapping(existing):null,mapping);
+        return {id:key,companyId:d.companyId};
+    }));
     async function validateItem(c: any, m: any, d: any, creating=false) {
         requireOk(d.category!=='monthly_followup'&&!d.code?.startsWith('MF-'),422,'followupItemManagedByRule');
         if(d.templateItemId){for(const co of d.companyIds){const source=await item(c,cipher,m,d.templateItemId,co);requireOk(source.category===d.category,422,'templateClassificationMismatch');for(const k of ['receivableId','revenueId','expenseId','payableId','taxAccountId','taxRate'])d[k]=source.data[k]||(k==='taxRate'?'0':undefined);}delete d.templateItemId;}
-        if(d.code?.startsWith('FI-')&&d.invoice&&['loan','finance','work_amount','investor'].includes(d.category)){if(['loan','finance','investor'].includes(d.category))requireOk(d.recurrence==='contract',422,'principalScheduleRequired');const mapping=(await c.query('select kind from ab.finance_accounts where id=$1',[d.revenueId])).rows[0];requireOk(mapping?.kind==='liability',422,'principalMappingReviewRequired');}
+        const hasMapping=itemAccountFields.some(k=>k==='taxRate'?L.units(d.taxRate)>0n:!!d[k]);
+        if(d.code?.startsWith('FI-')&&d.invoice&&['loan','finance','work_amount','investor'].includes(d.category)){if(['loan','finance','investor'].includes(d.category))requireOk(d.recurrence==='contract',422,'principalScheduleRequired');if(hasMapping){const mapping=(await c.query('select kind from ab.finance_accounts where id=$1',[d.revenueId])).rows[0];requireOk(mapping?.kind==='liability',422,'principalMappingReviewRequired');}}
 
         for (const co of d.companyIds){
             need(m,'view',co);
@@ -153,19 +233,21 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         for (const k of ['receivableId', 'revenueId', 'expenseId', 'payableId', 'taxAccountId'])
             if (d[k])
                 {requireOk((await c.query('select 1 from ab.finance_accounts where id=$1 and active', [d[k]])).rowCount,422,'accountMappingRequired');for(const co of d.companyIds)requireOk((await c.query('select 1 from ab.finance_chart where definition_id=$1 and company_id=$2 and active',[d[k],co])).rowCount,422,'accountMappingRequired');}
+        if(!hasMapping)return true;
         requireOk(!d.invoice || d.receivableId && d.revenueId, 422, 'accountMappingRequired');
         requireOk(!d.payment || d.expenseId && d.payableId, 422, 'accountMappingRequired');
         requireOk(L.units(d.taxRate) === 0n || !!d.taxAccountId, 422, 'taxAccountRequired');
+        return false;
     }
     app.post('/api/ledger/items', route(async (c: any, m: any, s: any, req: any) => {
         const {monthlyFollowup,...d}=itemRequest.parse(req.body);
         if(!d.code){await c.query("insert into ab.vehicle_numbers(tenant_id,kind,next_number)select $1,'financial_item',coalesce(max(substring(code from 4)::bigint),0)+1 from ab.finance_items where code ~ '^FI-[0-9]{1,18}$' on conflict(tenant_id,kind)do update set next_number=greatest(ab.vehicle_numbers.next_number,excluded.next_number)",[s.tenant_id]);d.code='FI-'+String(await number(c,s.tenant_id,'financial_item')).padStart(6,'0');}d.recurrenceBinding='explicit';
-        await validateItem(c, m, d, true);
+        const mappingPending=await validateItem(c, m, d, true);
         const key = randomUUID();
         const scoped=await catalogueScopeReady(c);
         await c.query('insert into ab.finance_items(id,tenant_id,code,name_ar,name_en,category,priority,active,payload_cipher,created_by'+
             (scoped?',catalogue_company_ids':'')+')values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10'+(scoped?',$11':'')+')',
-            [key,s.tenant_id,d.code,d.nameAr,d.nameEn,d.category,d.priority,d.active,cipher.seal(d),s.user_id,...(scoped?[d.companyIds]:[])]);
+            [key,s.tenant_id,d.code,d.nameAr,d.nameEn,d.category,d.priority,d.active,cipher.seal({...d,mappingPending}),s.user_id,...(scoped?[d.companyIds]:[])]);
         for (const co of d.companyIds)
             await event(c, cipher, s, co, key, 'item_created', null, d);
         await saveItemFollowup(c,m,s,key,d.companyIds,monthlyFollowup);
@@ -178,7 +260,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         requireOk(!d.code||d.code===old.code,409,'itemCodeImmutable');d.code=old.code;d.recurrenceBinding=before.recurrenceBinding||'legacy';requireOk(d.priority===old.priority,409,'priorityManagedSeparately');
         requireOk(before.companyIds?.length>0,403,'denied');
         for(const co of before.companyIds){need(m,'view',co);requireOk(canChangeItem(m,co));}
-        await validateItem(c, m, d);
+        const mappingPending=await validateItem(c, m, d);
         if ((await c.query('select 1 from ab.finance_invoice_links where item_id=$1 union all select 1 from ab.finance_receipts where item_id=$1 union all select 1 from ab.finance_vouchers where item_id=$1 limit 1', [old.id])).rowCount)
             for (const k of ['receivableId', 'revenueId', 'expenseId', 'payableId', 'category', 'taxAccountId', 'taxRate'])
                 requireOk((d as any)[k] === before[k], 409, 'usedItemMappingImmutable');
@@ -186,7 +268,7 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
         const writeScope=scopeReady&&(old.catalogue_company_ids||m.actor.roleId==='owner');
         await c.query('update ab.finance_items set code=$2,name_ar=$3,name_en=$4,category=$5,priority=$6,active=$7,payload_cipher=$8'+
             (writeScope?',catalogue_company_ids=$9':'')+' where id=$1',
-            [old.id,d.code,d.nameAr,d.nameEn,d.category,d.priority,d.active,cipher.seal(d),...(writeScope?[d.companyIds]:[])]);
+            [old.id,d.code,d.nameAr,d.nameEn,d.category,d.priority,d.active,cipher.seal({...d,mappingPending}),...(writeScope?[d.companyIds]:[])]);
         for (const co of d.companyIds)
             await event(c, cipher, s, co, old.id, 'item_updated', before, d);
         await saveItemFollowup(c,m,s,old.id,d.companyIds,monthlyFollowup);
@@ -209,7 +291,9 @@ export function registerLedger(app: any, call: any, cipher: any, options:any={})
             union all select 1 from ab.finance_vouchers where item_id=$1
             union all select 1 from ab.finance_card_splits where item_id=$1
         ) used`,[key])).rows[0].used||await hasItemRules(c,cipher,data.companyIds,key);
-        const disabled=used||row.catalogue_company_ids===null;
+        const externalMappings=(await c.query("select 1 from ab.settings where key like $1 limit 1",['ledger-item-mapping:'+key+':%'])).rowCount;
+        if(externalMappings)requireOk(m.actor.roleId==='owner',403,'ownerOnly');
+        const disabled=Boolean(used||externalMappings||row.catalogue_company_ids===null);
         if(disabled)await c.query('update ab.finance_items set active=false where id=$1',[key]);
         else {
             requireOk(await catalogueScopeReady(c)&&(await c.query("select has_table_privilege(current_user,'ab.finance_items','DELETE') allowed")).rows[0].allowed,409,'itemRemovalSchemaPending');
